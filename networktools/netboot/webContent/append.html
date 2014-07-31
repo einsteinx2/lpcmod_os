@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>Gentoox Loader: Net Boot</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<STYLE TYPE="text/css" MEDIA=screen>
+<!--
+  body {
+    background-color: #ffffff;
+    color: black;
+    text-align: center;
+    margin-right: 110px
+  }
+  div {
+    color: #000033;
+    font-size: 14px;
+    font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif;
+    padding: 10px
+  }
+  h1 {
+    color: #000033;
+    font-size: 24px;
+    font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif
+  }
+  a {
+    color: #000088;
+    text-decoration: none
+  }
+  input {
+    color: #000033
+  }
+  a:hover, a:active {
+    text-decoration: underline
+  }
+  h2 {
+    color: #000033;
+    font-size: 20px;
+    font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif
+  }
+-->
+</STYLE>
+</HEAD>
+<BODY style="background-color: #FFFFCC">
+
+<DIV>
+ <img src="/105">
+ <H1>Gentoox Loader: Net Boot (Step 3 of 3)</H1>
+</DIV>
+
+<DIV>
+Please type your append line (exclude the leading &quot;append&quot; word).<br>
+Some useful defaults are:<p><b>Resctoox</b>: <font face="Courier" size="1">nettage:192.168.1.13:255.255.255.0:192.168.1.1 load_ramdisk=1 prompt_ramdisk=0 
+ramdisk_size=26215 rw root=/dev/ram kbd-reset quiet</font><br><b>Gentoox</b>: <font face="Courier" size="1">init=/linuxrc root=/dev/ram0 kbd-reset 
+video=xbox:640x480,nohwcursor,hoc=13,voc=13</font></DIV>
+
+<DIV>
+<FORM METHOD="POST" ENCTYPE="multipart/form-data" ACTION="/105">
+Append: <input type="text" name="append" size="79">
+<INPUT TYPE="submit" VALUE="Send"></FORM>
+</DIV>
+
+</BODY>
+</HTML>

@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML>
+<HEAD>
+<TITLE>Gentoox Loader: Net Boot</TITLE>
+<META http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<STYLE TYPE="text/css" MEDIA=screen>
+<!--
+  body {
+    background-color: #ffffff;
+    color: black;
+    text-align: center;
+    margin-right: 110px
+  }
+  div {
+    color: #000033;
+    font-size: 14px;
+    font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif;
+    padding: 10px
+  }
+  h1 {
+    color: #000033;
+    font-size: 24px;
+    font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif
+  }
+  a {
+    color: #000088;
+    text-decoration: none
+  }
+  input {
+    color: #000033
+  }
+  a:hover, a:active {
+    text-decoration: underline
+  }
+  h2 {
+    color: #000033;
+    font-size: 20px;
+    font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif
+  }
+-->
+</STYLE>
+</HEAD>
+<BODY style="background-color: #FFFFCC">
+
+<DIV>
+ <img src="/105">
+ <H1>Gentoox Loader: Net Boot (Step 2 of 3)</H1>
+</DIV>
+
+<DIV>
+Please select an initrd.&nbsp; This may be gzip compressed or uncompressed 
+(though compressed is recommended!)&nbsp; This file may be up to approximately 
+15MiB in size.  You may leave this field blank to skip this stage if an initrd is not required</DIV>
+
+<DIV>
+<FORM METHOD="POST" ENCTYPE="multipart/form-data" ACTION="/103">
+Select initrd File: <INPUT TYPE="file" NAME="initrd">
+<INPUT TYPE="submit" VALUE="Send">
+</FORM>
+</DIV>
+
+</BODY>
+</HTML>
