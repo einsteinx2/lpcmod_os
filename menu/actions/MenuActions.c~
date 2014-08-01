@@ -53,8 +53,7 @@ void BootModBios(void *data) {
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
 	#endif
 */
-	I2CRebootQuick();
-	//I2CTransmitWord(0x10, 0x0201);   // reset XBOX
+	I2CTransmitWord(0x10, 0x0201);   // reset XBOX
 	while(1);
 }
 
@@ -67,10 +66,8 @@ void BootModBios2(void *data) {
 	#ifdef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
 	#endif
+	I2CTransmitWord(0x10, 0x0201);   // reset XBOX
 */
-	I2CRebootQuick();
-	//I2CTransmitWord(0x10, 0x0201);   // reset XBOX
-
 	while(1);
 }
 
@@ -90,7 +87,7 @@ void BootFromCD(void *data) {
 	}
 	DrawBootMenu(config);
 }
-/*
+
 void BootFromNet(void *whatever) {
    extern unsigned char *videosavepage;
    memcpy((void*)FB_START,videosavepage,FB_SIZE);
@@ -99,7 +96,6 @@ void BootFromNet(void *whatever) {
    initialiseNetwork();
    netBoot();
 }
-*/
 
 void DrawBootMenu(void *rootEntry) {
 	//entry is the pointer to the root config entry

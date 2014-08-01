@@ -11,6 +11,7 @@
 #include "boot.h"
 #include "BootFlash.h"
 #include <stdio.h>
+#include "memory_layout.h"
 
 int sprintf(char * buf, const char *fmt, ...);
 
@@ -416,3 +417,19 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba )
 	if(pof->m_pcallbackFlash!=NULL) if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_END, 0, 0)) return false;
 	return true;
 }
+
+u8 GetByteFromFlash(int myaddress) {
+  OBJECT_FLASH of;
+  of.m_pbMemoryMappedStartAddress = (u8 *)LPCFlashadress;
+  return xGetByteFromFlash(&of, myaddress);
+}
+
+u8 xGetByteFromFlash(OBJECT_FLASH *myflash, int myaddress) {
+  return myflash->m_pbMemoryMappedStartAddress[myaddress]; }
+
+void WriteToIO(u16 _port, u8 _data)
+{
+   __asm__ ("out %%al, %%dx" : : "a" (_data), "d" (_port));
+}
+
+

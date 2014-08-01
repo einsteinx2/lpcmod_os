@@ -61,7 +61,7 @@ void IconMenuInit(void) {
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT1;
 	iconPtr->szCaption = "Boot 512KB bank";
-	iconPtr->functionPtr = BootModBios2;
+	iconPtr->functionPtr = AdvancedMenu;
 	iconPtr->functionDataPtr = NULL;
 	AddIcon(iconPtr);
 	

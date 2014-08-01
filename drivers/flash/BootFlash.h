@@ -63,3 +63,7 @@ bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft );
 bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof);
 bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba );
 
+void WriteToIO(u16 address, u8 data);
+u8 GetByteFromFlash(int myaddress); 
+u8 xGetByteFromFlash( OBJECT_FLASH * myflash, int myaddress);
+
