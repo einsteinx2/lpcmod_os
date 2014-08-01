@@ -11,11 +11,14 @@
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "FlashMenuActions.h"
+#include "lpcmod_v1.h"
 
-TEXTMENU* FlashMenuInit(void) {
+TEXTMENU* FlashMenuInit(char bank) {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
 	int i=0;
+
+	WriteToIO(BNK_CONTROL, bank);	// switch to proper bank
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));

@@ -29,7 +29,7 @@ TEXTMENU *TextMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Flash Menu");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit();
+	itemPtr->functionDataPtr = (void *)BankSelectMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
 #endif
 

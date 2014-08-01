@@ -181,7 +181,7 @@ int run_lwip(int A, int B, int C, int D, int P)
 		if (!ebd_wait(&netif, TCP_TMR_INTERVAL)) {
 			if (divisor++ == 60 * 4) {
 				if (first && netif.dhcp->state != DHCP_BOUND) {
-					printk ("192.168.1.13 (DHCP failed)\n");
+					printk ("192.168.0.250 (DHCP failed)\n");
 					dhcp_stop (&netif);
 					IP4_ADDR(&gw, 192,168,0,1);
 					IP4_ADDR(&ipaddr, 192,168,0,250);
@@ -209,11 +209,11 @@ int run_lwip(int A, int B, int C, int D, int P)
 						applicationStarted = 1;
 						printk("           Starting Net Flash...");
 						netflash_init();
-					}/* else if(A == 1337) {
+					} else if(A == 1337) {
 						applicationStarted = 1;
 						printk("           Starting Web Update...");
 						webupdate_init();
-					} else if(A == 1338) {
+					}/* else if(A == 1338) {
 						applicationStarted = 1;
 						printk("           Starting Net Boot...");
 						netboot_init();
