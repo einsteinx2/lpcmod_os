@@ -13,12 +13,12 @@
 #include "FlashMenuActions.h"
 #include "lpcmod_v1.h"
 
-TEXTMENU* FlashMenuInit(char bank) {
+TEXTMENU* FlashMenuInit() {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
 	int i=0;
 
-	WriteToIO(BNK_CONTROL, bank);	// switch to proper bank
+
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));

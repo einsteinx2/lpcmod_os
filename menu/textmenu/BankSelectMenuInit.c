@@ -17,7 +17,7 @@ TEXTMENU *BankSelectMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Bank0 (512KB)");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit(BNK512);
+	itemPtr->functionDataPtr = (void *)FlashMenuInit(switchBank(BNK512));
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//Bank1 (256KB)
@@ -25,7 +25,7 @@ TEXTMENU *BankSelectMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Bank1 (256KB)");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit(BNK256);
+	itemPtr->functionDataPtr = (void *)FlashMenuInit(switchBank(BNK256));
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//Bank2 (OS)
@@ -33,7 +33,7 @@ TEXTMENU *BankSelectMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Bank2 (OS)");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit(BNKOS);
+	itemPtr->functionDataPtr = (void *)FlashMenuInit(switchBank(BNKOS));
 	TextMenuAddItem(menuPtr, itemPtr);
 	
 	return menuPtr;

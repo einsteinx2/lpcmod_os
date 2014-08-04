@@ -59,21 +59,21 @@ void IconMenuInit(void) {
 */
 
 	iconPtr = (ICON *)malloc(sizeof(ICON));
-	iconPtr->iconSlot = ICON_SOURCE_SLOT1;
+	iconPtr->iconSlot = ICON_SOURCE_SLOT4;
 	iconPtr->szCaption = "Boot 512KB bank";
 	iconPtr->functionPtr = BootModBios2;
 	iconPtr->functionDataPtr = NULL;
 	AddIcon(iconPtr);
 	
 	iconPtr = (ICON *)malloc(sizeof(ICON));
-	iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+	iconPtr->iconSlot = ICON_SOURCE_SLOT3;
 	iconPtr->szCaption = "Boot 256KB bank";
 	iconPtr->functionPtr = BootModBios;
 	iconPtr->functionDataPtr = NULL;
 	AddIcon(iconPtr);
 	
 	iconPtr = (ICON *)malloc(sizeof(ICON));
-	iconPtr->iconSlot = ICON_SOURCE_SLOT3;
+	iconPtr->iconSlot = ICON_SOURCE_SLOT2;
 	iconPtr->szCaption = "Boot OnBoard BIOS";
 	iconPtr->functionPtr = BootOriginalBios;
 	iconPtr->functionDataPtr = NULL;

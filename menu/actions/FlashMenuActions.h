@@ -14,3 +14,5 @@ void FlashBiosFromCD(void *cdromId);
 void enableNetflash(void *whatever);
 void enableWebupdate(void *whatever);
 
+void switchBank(char bank);
+

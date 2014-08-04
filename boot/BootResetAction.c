@@ -118,9 +118,9 @@ extern void BootResetAction ( void ) {
 
 	printk("\n\n");
 	if (cromwell_config==XROMWELL) {
-		printk("           \2Gentoox Loader (XBE) v" VERSION "\n\n\2");
+		printk("           \2LPCMod OS (XBE) v" VERSION "\n\n\2");
 	} else if (cromwell_config==CROMWELL) {
-		printk("           \2Gentoox Loader (ROM) v" VERSION "\n\n\2");
+		printk("           \2LPCMod OS (ROM) v" VERSION "\n\n\2");
 	}
 
 	VIDEO_ATTR=0xff00ff00;
@@ -130,9 +130,9 @@ extern void BootResetAction ( void ) {
 
 	
 	VIDEO_ATTR=0xff00ff00;
-	printk("           Gentoox");
+	printk("           LPCMod OS");
 	VIDEO_ATTR=0xffc8c8c8;
-	printk(" (c) ShALLaX - http://gentoox.shallax.com - ");
+	printk(" THIS IS A WIP BUILD ");
 
 	if (xbox_ram > 64) {
 		VIDEO_ATTR=0xff00ff00;

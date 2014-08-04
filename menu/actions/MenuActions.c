@@ -45,7 +45,7 @@ void BootOriginalBios(void *data) {
 
 // Booting 256k Modbios
 void BootModBios(void *data) {
-	WriteToIO(BNK_CONTROL, BNK256);	// switch to 256k user bank
+	switchBank(BNK256);	// switch to 256k user bank
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
 /*	#endif
@@ -60,7 +60,7 @@ void BootModBios(void *data) {
 
 // Booting 512k Modbios
 void BootModBios2(void *data) {
-	WriteToIO(BNK_CONTROL, BNK512);	// switch to 512k user bank
+	switchBank(BNK512);	// switch to 512k user bank
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
 /*	#endif

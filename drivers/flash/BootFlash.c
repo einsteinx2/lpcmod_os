@@ -432,4 +432,11 @@ void WriteToIO(u16 _port, u8 _data)
    __asm__ ("out %%al, %%dx" : : "a" (_data), "d" (_port));
 }
 
+u8 ReadFromIO(u16 address)
+{
+   unsigned char data;
+   __asm__ __volatile__ ("inb %w1,%0":"=a" (data):"Nd" (address));
+   return data;
+}
+
 

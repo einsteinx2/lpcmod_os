@@ -9,6 +9,7 @@
 #include "FlashMenuActions.h"
 
 #include "include/boot.h"
+#include "include/lpcmod_v1.h"
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "FlashMenuActions.h"
@@ -82,3 +83,7 @@ void enableWebupdate(void *whatever) {
 #endif
 }
 
+void switchBank(char bank)
+{
+		WriteToIO(BNK_CONTROL, bank);	// switch to proper bank
+}		
