@@ -68,3 +68,6 @@ u8 ReadFromIO(u16 address);
 u8 GetByteFromFlash(int myaddress); 
 u8 xGetByteFromFlash( OBJECT_FLASH * myflash, int myaddress);
 
+//Copy into memory 3*256 bytes of settings for LPCMod OS from flash and place it in LPCmodSettings struct.
+void BootFlashGetOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings);
+

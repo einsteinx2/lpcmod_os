@@ -1,6 +1,6 @@
 ////////////////////// compile-time options ////////////////////////////////
 
-//Gentoox Loader version number
+//LPCMod OS version number
 #define VERSION "0.1 (beta)"
 
 // selects between the supported video modes, see boot.h for enum listing those available

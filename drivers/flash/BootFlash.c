@@ -439,4 +439,11 @@ u8 ReadFromIO(u16 address)
    return data;
 }
 
+void BootFlashGetOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings) {
+	int i;
+	for (i = 0; i < 0x300; i++){		//Length of reserved flash space for persistent setting data.
+		*((u8*)LPCmodSettings + i) = pof->m_pbMemoryMappedStartAddress[0x3f000 + i];		//Starts at 0x3f000 in flash
+	}
+}
+
 

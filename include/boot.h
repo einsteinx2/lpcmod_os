@@ -345,4 +345,59 @@ int strlen(const char * s);
 int sprintf(char * buf, const char *fmt, ...);
 char * strncpy(char * dest,const char *src,int count);
 char * strstr(const char * s1,const char * s2);
+
+
+//Configuration parameters saved in flash
+
+
+typedef struct _OSsettings {
+	u8	migrateSetttings;		//Flag to indicate if settings in this struct should be carried over a OS update.
+	u8	reserved[15];
+	u8	activeBank;				//Default Flash bank to load BIOS from.
+	u8	Quickboot;				//Bypass OS and load selected bank in "activeBank"
+	u8	selectedMenuItem;		//Default selected item in OS menu when booting into it.
+	u8	fanSpeed;				//Why not
+	u8	reserved1[16];
+	char	biosName0[20];		//512KB bank name. 20 caracters max to properly display on LCD.
+	char	biosName1[20];		//256KB bank name
+	char	biosName2[20];		//Reserved for future use.
+	char	biosName3[20];		//Reserved for future use.
+	char	biosName4[20];		//Reserved for future use.
+	char	biosName5[20];		//Reserved for future use.
+	char	biosName6[20];		//Reserved for future use.
+	char	biosName7[20];		//Reserved for future use.
+	u8	reserved2[43];
+	u8	enableNetwork;			//Future use. For now, network is enabled only by NetFlash or WebUpdate
+	u8	useDHCP;				//Self Explanatory
+	u8	staticIP[4];			//Only useful when useDHCP is set to false.
+	u8	staticGateway[4];		//Only useful when useDHCP is set to false.
+	u8	staticDNS1[4];			//Only useful when useDHCP is set to false.
+	u8	staticDNS2[4];			//Only useful when useDHCP is set to false.
+}_OSsettings;					//For a total of 256 bytes
+
+typedef struct _LCDsettings {
+	u8 migrateLCD;				//Flag to indicate if settings in this struct should be carried over a OS update.
+	u8 enable5V;				//Flag to indicate if +5V rail should be enabled(for LCD power)
+	u8 lcdType;					//HD44780 only for now
+	u8 backlight;				//7-bit value
+	u8 contrast;				//7-bit value
+	u8 displayMsgBoot;			//Display text on LCD while booting
+	u8 customTextBoot;			//Display custom text instead of default text on while booting
+	u8 displayBIOSNameBoot;		//Display BIOS name of active bank when booting
+	u8 reserved0[7];
+	char customString0[20];		//1 of 4 strings to be displayed either when in OS or while booting.
+	char customString1[20];		//20 caracters max to properly display on LCD.
+	char customString2[20];
+	char customString3[20];
+	u8 reserved1[161];
+}_LCDsettings;					//For a total of 256 bytes
+
+typedef struct _LPCmodSettings {
+	_OSsettings OSsettings;
+	_LCDsettings LCDsettings;
+	EEPROMDATA bakeeprom;
+} _LPCmodSettings;
+
+
+_LPCmodSettings LPCmodSettings;
 #endif // _Boot_H_

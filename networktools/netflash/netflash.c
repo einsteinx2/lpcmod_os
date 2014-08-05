@@ -57,13 +57,11 @@ struct http_state {
 static char http_file0[] = 
 #include "webContent/main.html.h"
 ;
+
 static char http_file1[] = 
-#include "webContent/gentoox.png.h"
-;
-static char http_file2[] = 
 #include "webContent/ok.html.h"
 ;
-static char http_file3[] = 
+static char http_file2[] = 
 #include "webContent/fail.html.h"
 ;
 static char http_file404[] = "HTTP/1.1 404 NOT FOUND\r\nContent-Type: text/html\r\nContent-Length: 11\r\n\r\nHello 404!\n";
@@ -73,13 +71,12 @@ struct http_file {
 	int len;
 	char *data;
 };
-static struct http_file http_files[6]={
+static struct http_file http_files[5]={
 	{sizeof (http_file0) - 1, http_file0},       /* 0 */
 	{sizeof (http_file1) - 1, http_file1},       /* 1 */
 	{sizeof (http_file2) - 1, http_file2},       /* 2 */
-	{sizeof (http_file3) - 1, http_file3},       /* 3 */
-	{sizeof (http_file404) - 1, http_file404},   /* 4 */
-	{sizeof (http_file500) - 1, http_file500},   /* 5 */
+	{sizeof (http_file404) - 1, http_file404},   /* 3 */
+	{sizeof (http_file500) - 1, http_file500},   /* 4 */
 };
 
 static void conn_err(void *arg, err_t err) {

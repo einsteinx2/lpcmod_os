@@ -555,8 +555,8 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
 		//Cromwell locks drives in high security mode (NOT maximum security mode).
 		//This means that even if you lose the normal (user) password, you can
 		//unlock them again using the master password set below.
-		//Master password is GENTOOX (in ascii, NULL padded)
-		char *master_password="GENTOOX";
+		//Master password is TEAMASSEMBLY (in ascii, NULL padded)
+		char *master_password="TEAMASSEMBLY";
 		
 		//We first lock the drive with the master password
 		//Just in case we ever need to unlock it in an emergency

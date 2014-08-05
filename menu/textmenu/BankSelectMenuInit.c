@@ -1,6 +1,9 @@
 #include "lpcmod_v1.h"
 #include "TextMenu.h"
 
+TEXTMENU* FlashMenuInit512(void);
+TEXTMENU* FlashMenuInit256(void);
+TEXTMENU* FlashMenuInitOS(void);
 
 TEXTMENU *BankSelectMenuInit(void) {
 	
@@ -17,7 +20,7 @@ TEXTMENU *BankSelectMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Bank0 (512KB)");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit(switchBank(BNK512));
+	itemPtr->functionDataPtr = (void *)FlashMenuInit512;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//Bank1 (256KB)
@@ -25,7 +28,7 @@ TEXTMENU *BankSelectMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Bank1 (256KB)");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit(switchBank(BNK256));
+	itemPtr->functionDataPtr = (void *)FlashMenuInit256;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//Bank2 (OS)
@@ -33,8 +36,23 @@ TEXTMENU *BankSelectMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Bank2 (OS)");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)FlashMenuInit(switchBank(BNKOS));
+	itemPtr->functionDataPtr = (void *)FlashMenuInitOS;
 	TextMenuAddItem(menuPtr, itemPtr);
 	
 	return menuPtr;
+}
+
+TEXTMENU* FlashMenuInit512() {
+	switchBank(BNK512);
+	return ((TEXTMENU*)FlashMenuInit());
+}
+
+TEXTMENU* FlashMenuInit256() {
+	switchBank(BNK256);
+	return ((TEXTMENU*)FlashMenuInit());
+}
+
+TEXTMENU* FlashMenuInitOS() {
+	switchBank(BNKOS);
+	return ((TEXTMENU*)FlashMenuInit());
 }

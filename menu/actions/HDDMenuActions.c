@@ -20,7 +20,7 @@ void LockHDD(void *driveId) {
 		printk("           Unable to calculate drive password - eeprom corrupt?");
 		return;
 	}
-	printk("\n\n\n\n\n           Gentoox Loader locks drives with a master password of\n\n           \"\2GENTOOX\2\"\n\n\n           Please remember this ");
+	printk("\n\n\n\n\n           LPCMod OS locks drives with a master password of\n\n           \"\TEAMASSEMBLY\2\"\n\n\n           Please remember this ");
 	printk("as it could save your drive!\n\n");
 	printk("           The normal password (user password) the drive is\n           being locked with is as follows:\n\n");
 	printk("                              ");

@@ -197,6 +197,13 @@ extern void BootResetAction ( void ) {
 	}
 #endif
 */
+
+//Retreive LPCMod OS settings from flash
+OBJECT_FLASH of;
+memset(&of,0x00,sizeof(of));
+of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+BootFlashGetOSSettings(&of, &LPCmodSettings);
+
 #ifndef SILENT_MODE
 	printk("           BOOT: start USB init\n");
 #endif

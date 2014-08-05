@@ -76,7 +76,7 @@ void writeBiosIdentifier(unsigned char *cromimage, int biosSize) {
 	memcpy(BiosHeader->Magic,"AUTO",4);
 	BiosHeader->HeaderVersion=1;
 	BiosHeader->BiosSize= biosSize;
-	sprintf(BiosHeader->Name,"Gentoox Loader %s",VERSION);
+	sprintf(BiosHeader->Name,"LPCMod OS %s",VERSION);
 						               
 	BiosHeader->XboxVersion =       BiosID_Version10 |
 	                                BiosID_Version11 |
@@ -335,7 +335,6 @@ int romcopy (
 	// Ok, we have loaded both images, we can continue
 	
 	// this is very nasty, but simple , we Dump a GDT to the TOP rom
-		
         memset(&loaderimage[0x3fe00],0x90,512);
         memset(&loaderimage[0x3ffd0],0x00,32);
         loaderimage[0x3ffcf] = 0xfc;
