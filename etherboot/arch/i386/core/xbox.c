@@ -44,7 +44,7 @@ int initialiseNetwork(void)
 	//print_config();
 	if (eth_probe(dev) == -1)
 	{
-		//printk("eth_probe failed\n");
+		printk("eth_probe failed\n");
 	}
 }
 
