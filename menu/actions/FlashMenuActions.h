@@ -8,6 +8,10 @@
  ***************************************************************************/
 #include "include/config.h"
 
+void FlashBiosFromHDD512(void *fname);
+void FlashBiosFromHDD256(void *fname);
+void FlashBiosFromHDDOS(void *fname);
+
 void FlashBiosFromHDD(void *fname);
 void FlashBiosFromCD(void *cdromId);
 

@@ -245,8 +245,8 @@ if(LPCmodSettings->LCDsettings->displayBIOSNameBoot == 0xFF)
 	VIDEO_ATTR=0xffc8c8c8;
 	printk("           Initializing IDE Controller\n");
 #endif
-	BootIdeWaitNotBusy(0x1f0);
-       	wait_ms(200);
+	//BootIdeWaitNotBusy(0x1f0);
+       	//wait_ms(200);
 #ifndef SILENT_MODE
 	printk("           Ready\n");
 #endif	

@@ -21,6 +21,21 @@
 extern void cromwellError(void);
 extern void dots(void);
 
+void FlashBiosFromHDD512(void *fname) {
+	switchBank(BNK512);
+	FlashBiosFromHDD(fname);
+}
+
+void FlashBiosFromHDD256(void *fname) {
+	switchBank(BNK256);
+	FlashBiosFromHDD(fname);
+}
+
+void FlashBiosFromHDDOS(void *fname) {
+	switchBank(BNKOS);
+	FlashBiosFromHDD(fname);
+}
+
 void FlashBiosFromHDD(void *fname) {
 #ifdef FLASH
 	int res;
@@ -44,7 +59,7 @@ void FlashBiosFromHDD(void *fname) {
 	res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
 
 	printk("\n\n\n\n\n           Flash failed");
-   CloseFATXPartition(partition);
+   	CloseFATXPartition(partition);
 	dots();
 	cromwellError();
 	while(1);
@@ -86,4 +101,4 @@ void enableWebupdate(void *whatever) {
 void switchBank(char bank)
 {
 		WriteToIO(BNK_CONTROL, bank);	// switch to proper bank
-}		
+}			

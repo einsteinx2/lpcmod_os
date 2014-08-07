@@ -14,17 +14,15 @@
 #include "lpcmod_v1.h"
 
 
-TEXTMENU* FlashMenuInit() {
+TEXTMENU* FlashMenuInit(void) {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
 	int i=0;
 
-
-
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
 	strcpy(menuPtr->szCaption, "Flash Menu");
-	
+
 #ifdef LWIP
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

@@ -1,7 +1,6 @@
 #include "lpcmod_v1.h"
 #include "include/config.h"
 #include "TextMenu.h"
-#include "FlashMenuActions.h"
 #include "include/boot.h"
 
 TEXTMENU* BankSelectInit(void *bank);
