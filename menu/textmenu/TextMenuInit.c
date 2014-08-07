@@ -20,9 +20,18 @@ TEXTMENU *TextMenuInit(void) {
 	//Create the root menu - MANDATORY
 	menuPtr = malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "LPCMod v1 Main Menu");
+	strcpy(menuPtr->szCaption, "LPCMod v1 configuration menu");
 	menuPtr->firstMenuItem=NULL;
 	
+	//LPCMod(modchip) SETTINGS MENU
+	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption, "LPCMod Settings");
+	itemPtr->functionPtr=DrawChildTextMenu;
+	itemPtr->functionDataPtr = (void *)ModchipMenuInit();
+	TextMenuAddItem(menuPtr, itemPtr);
+
+
 #ifdef FLASH
 	//FLASH MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

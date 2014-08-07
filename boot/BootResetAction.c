@@ -16,6 +16,7 @@
 #include "BootEEPROM.h"
 #include "BootFlash.h"
 #include "BootFATX.h"
+#include "lib/LPCMod/BootLPCMod.h"
 #include "xbox.h"
 #include "cpu.h"
 #include "config.h"
@@ -29,7 +30,7 @@ int nTempCursorMbrX, nTempCursorMbrY;
 extern volatile int nInteruptable;
 
 volatile CURRENT_VIDEO_MODE_DETAILS vmode;
-extern KNOWN_FLASH_TYPE aknownflashtypesDefault[];
+//extern KNOWN_FLASH_TYPE aknownflashtypesDefault[];
 
 void ClearScreen (void) {
 	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
@@ -71,6 +72,36 @@ extern void BootResetAction ( void ) {
 	// Reset the AGP bus and start with good condition
 	BootAGPBUSInitialization();
 	
+	//Retreive LPCMod OS settings from flash
+	OBJECT_FLASH of;
+	memset(&of,0x00,sizeof(of));
+	of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+	BootFlashGetOSSettings(&of, &LPCmodSettings);
+
+	if(LPCmodSettings.OSsettings.migrateSetttings == 0xFF ||
+	   LPCmodSettings.OSsettings.activeBank == 0xFF ||
+	   LPCmodSettings.OSsettings.Quickboot == 0xFF ||
+	   LPCmodSettings.OSsettings.selectedMenuItem == 0xFF ||
+	   LPCmodSettings.OSsettings.fanSpeed == 0xFF ||
+	   LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
+	   LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
+	   LPCmodSettings.OSsettings.useDHCP == 0xFF ||
+	   LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
+	   LPCmodSettings.LCDsettings.enable5V == 0xFF ||
+	   LPCmodSettings.LCDsettings.lcdType == 0xFF ||
+	   LPCmodSettings.LCDsettings.nbLines == 0xFF ||
+	   LPCmodSettings.LCDsettings.lineLength == 0xFF ||
+	   LPCmodSettings.LCDsettings.backlight == 0xFF ||
+	   LPCmodSettings.LCDsettings.contrast == 0xFF ||
+	   LPCmodSettings.LCDsettings.displayMsgBoot == 0xFF ||
+	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
+	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
+			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
+			BootFlashSaveOSSettings(&of, &LPCmodSettings);		//Put some initial values in there.
+	}
+
+
+
 	// We disable The CPU Cache
        	cache_disable();
 	// We Update the Microcode of the CPU
@@ -198,42 +229,7 @@ extern void BootResetAction ( void ) {
 #endif
 */
 
-//Retreive LPCMod OS settings from flash
-OBJECT_FLASH of;
-memset(&of,0x00,sizeof(of));
-of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-BootFlashGetOSSettings(&of, &LPCmodSettings);
-/*if(LPCmodSettings->OSsettings->migrateSetttings == 0xFF)
-	LPCmodSettings->OSsettings->migrateSetttings = 0;
-if(LPCmodSettings->OSsettings->activeBank == 0xFF)
-	LPCmodSettings->OSsettings->activeBank = 0;
-if(LPCmodSettings->OSsettings->Quickboot == 0xFF)
-	LPCmodSettings->OSsettings->Quickboot = 0;
-if(LPCmodSettings->OSsettings->selectedMenuItem == 0xFF)
-	LPCmodSettings->OSsettings->selectedMenuItem = 0;
-if(LPCmodSettings->OSsettings->fanSpeed == 0xFF)
-	LPCmodSettings->OSsettings->fanSpeed = 20;
-if(LPCmodSettings->OSsettings->enableNetwork == 0xFF)
-	LPCmodSettings->OSsettings->enableNetwork = 0;
-if(LPCmodSettings->OSsettings->useDHCP == 0xFF)
-	LPCmodSettings->OSsettings->useDHCP = 0;
 
-if(LPCmodSettings->LCDsettings->migrateLCD == 0xFF)
-	LPCmodSettings->LCDsettings->migrateLCD = 0;
-if(LPCmodSettings->LCDsettings->enable5V == 0xFF)
-	LPCmodSettings->LCDsettings->enable5V = 0;
-if(LPCmodSettings->LCDsettings->lcdType == 0xFF)
-	LPCmodSettings->LCDsettings->lcdType = 0;
-if(LPCmodSettings->LCDsettings->backlight == 0xFF)
-	LPCmodSettings->LCDsettings->backlight = 0;
-if(LPCmodSettings->LCDsettings->contrast == 0xFF)
-	LPCmodSettings->LCDsettings->contrast = 0;
-if(LPCmodSettings->LCDsettings->displayMsgBoot == 0xFF)
-	LPCmodSettings->LCDsettings->displayMsgBoot = 0;
-if(LPCmodSettings->LCDsettings->customTextBoot == 0xFF)
-	LPCmodSettings->LCDsettings->customTextBoot = 0;
-if(LPCmodSettings->LCDsettings->displayBIOSNameBoot == 0xFF)
-	LPCmodSettings->LCDsettings->displayBIOSNameBoot = 0;*/
 
 #ifndef SILENT_MODE
 	printk("           BOOT: start USB init\n");

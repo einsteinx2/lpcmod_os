@@ -338,18 +338,16 @@ char *strrchr0(char *string, char ch);
 void setLED(char *pattern);
 int strlen(const char * s);
 int sprintf(char * buf, const char *fmt, ...);
-char * strncpy(char * dest,const char *src,int count);
+//char * strncpy(char * dest,const char *src,int count);
 char * strstr(const char * s1,const char * s2);
 
 int strlen(const char * s);
 int sprintf(char * buf, const char *fmt, ...);
-char * strncpy(char * dest,const char *src,int count);
+//char * strncpy(char * dest,const char *src,int count);
 char * strstr(const char * s1,const char * s2);
 
 
 //Configuration parameters saved in flash
-
-
 typedef struct _OSsettings {
 	u8	migrateSetttings;		//Flag to indicate if settings in this struct should be carried over a OS update.
 	u8	reserved[15];
@@ -357,7 +355,8 @@ typedef struct _OSsettings {
 	u8	Quickboot;				//Bypass OS and load selected bank in "activeBank"
 	u8	selectedMenuItem;		//Default selected item in OS menu when booting into it.
 	u8	fanSpeed;				//Why not
-	u8	reserved1[16];
+	u8	bootTimeout;
+	u8	reserved1[15];
 	char	biosName0[20];		//512KB bank name. 20 caracters max to properly display on LCD.
 	char	biosName1[20];		//256KB bank name
 	char	biosName2[20];		//Reserved for future use.
@@ -379,12 +378,14 @@ typedef struct _LCDsettings {
 	u8 migrateLCD;				//Flag to indicate if settings in this struct should be carried over a OS update.
 	u8 enable5V;				//Flag to indicate if +5V rail should be enabled(for LCD power)
 	u8 lcdType;					//HD44780 only for now
+	u8 nbLines;
+	u8 lineLength;
 	u8 backlight;				//7-bit value
 	u8 contrast;				//7-bit value
 	u8 displayMsgBoot;			//Display text on LCD while booting
 	u8 customTextBoot;			//Display custom text instead of default text on while booting
 	u8 displayBIOSNameBoot;		//Display BIOS name of active bank when booting
-	u8 reserved0[7];
+	u8 reserved0[5];
 	char customString0[20];		//1 of 4 strings to be displayed either when in OS or while booting.
 	char customString1[20];		//20 caracters max to properly display on LCD.
 	char customString2[20];

@@ -446,4 +446,24 @@ void BootFlashGetOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings) 
 	}
 }
 
+void BootFlashSaveOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings) {
+
+// A bit hacky, but easier to maintain.
+const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+#include "flashtypes.h"
+};
+
+	u8 * lastBlock = (u8 *)malloc(4*1024);	//4KB allocation
+
+	if(BootFlashGetDescriptor(pof, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {		//Still got flash to interface?
+
+		memcpy(lastBlock,(const u8*)(pof->m_pbMemoryMappedStartAddress) + 0x3f000, 4*1024);	//Copy content of flash into temp memory allocation.
+		if(memcmp(lastBlock,(u8*)LPCmodSettings,sizeof(_LPCmodSettings))) {			//At least one setting changed from what's currently in flash.
+			memcpy(lastBlock,(const u8*)LPCmodSettings,sizeof(_LPCmodSettings));	//Copy settings at the start of the 4KB block.
+			BootReflash(lastBlock,0x3f000,4*1024);
+		}
+
+	}
+}
+
 

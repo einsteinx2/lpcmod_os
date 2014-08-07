@@ -54,9 +54,11 @@ typedef struct {
 	u32 m_dwLengthInBytes;
 } KNOWN_FLASH_TYPE;
 
+
 // requires pof->m_pbMemoryMappedStartAddress set to start address of flash in memory on entry
 
 int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
+int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 void BootReflashAndReset_RAM(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 
 bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft );
@@ -70,4 +72,7 @@ u8 xGetByteFromFlash( OBJECT_FLASH * myflash, int myaddress);
 
 //Copy into memory 3*256 bytes of settings for LPCMod OS from flash and place it in LPCmodSettings struct.
 void BootFlashGetOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings);
+
+//Copy into flash 3*256 bytes of settings for LPCMod OS from memory and place it in the last 4KB block of the flash chip.
+void BootFlashSaveOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings);
 

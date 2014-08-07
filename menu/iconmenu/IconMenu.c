@@ -22,7 +22,7 @@
 #include "sha1.h"
 #include "BootFATX.h"
 #include "xbox.h"
-#include "BootFlash.h"
+//#include "BootFlash.h"
 #include "cpu.h"
 #include "BootIde.h"
 #include "MenuActions.h"
@@ -159,6 +159,7 @@ void IconMenu(void) {
 	int nTempCursorResumeX, nTempCursorResumeY ;
 	int nTempCursorX, nTempCursorY;
 	int nModeDependentOffset=(vmode.width-640)/2;  
+	u8 varBootTimeWait = BOOT_TIMEWAIT;				//Just to have a default value.
 	
 	nTempCursorResumeX=nTempCursorMbrX;
 	nTempCursorResumeY=nTempCursorMbrY;
@@ -184,6 +185,10 @@ void IconMenu(void) {
 	IconMenuDraw(nModeDependentOffset, nTempCursorY);
 //#endif
 	COUNT_start = IoInputDword(0x8008);
+	if(LPCmodSettings.OSsettings.bootTimeout == 0)
+		temp = 0;									//Disable boot timeout
+	else
+		varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;
 	//Main menu event loop.
 	while(1)
 	{
@@ -237,7 +242,7 @@ void IconMenu(void) {
 		if(temp != 0) {
 			temp = IoInputDword(0x8008) - COUNT_start;
 			oldIconTimeRemain = iconTimeRemain;
-         iconTimeRemain = BOOT_TIMEWAIT - temp/0x369E99;
+         iconTimeRemain = varBootTimeWait - temp/0x369E99;
 			if(oldIconTimeRemain != iconTimeRemain) {
 				changed = 1;
 				memcpy((void*)FB_START,videosavepage,FB_SIZE);
@@ -250,7 +255,7 @@ void IconMenu(void) {
 			VIDEO_CURSOR_POSX=nTempCursorResumeX;
 			VIDEO_CURSOR_POSY=nTempCursorResumeY;
 			
-			if (temp>(0x369E99*BOOT_TIMEWAIT)) timedOut=1;
+			if (temp>(0x369E99*varBootTimeWait)) timedOut=1;
 			//Icon selected - invoke function pointer.
 			if (selectedIcon->functionPtr!=NULL) selectedIcon->functionPtr(selectedIcon->functionDataPtr);
 			//If we come back to this menu, make sure we are redrawn, and that we replace the saved video page
