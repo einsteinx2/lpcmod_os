@@ -4,7 +4,7 @@
 #define BNK512  0x00
 #define BNK256  0x02
 #define BNKOS  0x03
-
+#define BNKTSOP 0x04
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE	0x00
 
