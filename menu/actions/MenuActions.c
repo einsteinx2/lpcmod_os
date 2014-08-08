@@ -39,7 +39,6 @@ void BootOriginalBios(void *data) {
 	#endif
 */
 	I2CRebootQuick();
-	//I2CTransmitWord(0x10, 0x0201);   // reset XBOX
 	while(1);
 }	
 
@@ -54,7 +53,6 @@ void BootModBios(void *data) {
 	#endif
 */
 	I2CRebootQuick();
-	//I2CTransmitWord(0x10, 0x0201);   // reset XBOX
 	while(1);
 }
 
@@ -69,8 +67,6 @@ void BootModBios2(void *data) {
 	#endif
 */
 	I2CRebootQuick();
-	//I2CTransmitWord(0x10, 0x0201);   // reset XBOX
-
 	while(1);
 }
 

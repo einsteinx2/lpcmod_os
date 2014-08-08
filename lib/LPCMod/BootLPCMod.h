@@ -14,4 +14,6 @@
 
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 
+u8 LPCMod_HW_rev(void);
+
 #endif // _BootLPCMod_H_

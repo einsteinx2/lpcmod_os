@@ -22,6 +22,7 @@
 #include "config.h"
 #include "video.h"
 #include "memory_layout.h"
+#include "lpcmod_v1.h"
 
 JPEG jpegBackdrop;
 
@@ -43,9 +44,11 @@ void ClearScreen (void) {
 extern void BootResetAction ( void ) {
 	bool fMbrPresent=false;
 	bool fSeenActive=false;
+	bool fHasHardware=false;
 	int nFATXPresent=false;
 	int nTempCursorX, nTempCursorY;
 	int n, nx;
+	OBJECT_FLASH of;
 	
 	memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
 	memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);
@@ -72,11 +75,15 @@ extern void BootResetAction ( void ) {
 	// Reset the AGP bus and start with good condition
 	BootAGPBUSInitialization();
 	
-	//Retreive LPCMod OS settings from flash
-	OBJECT_FLASH of;
-	memset(&of,0x00,sizeof(of));
-	of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-	BootFlashGetOSSettings(&of, &LPCmodSettings);
+	if(LPCMod_HW_rev() == SYSCON_ID){
+		fHasHardware = true;
+	}
+	if(fHasHardware){		//Don't try to read from flash if none is detected
+		//Retreive LPCMod OS settings from flash
+		memset(&of,0xFF,sizeof(of));
+		of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+		BootFlashGetOSSettings(&of, &LPCmodSettings);
+	}
 
 	if(LPCmodSettings.OSsettings.migrateSetttings == 0xFF ||
 	   LPCmodSettings.OSsettings.activeBank == 0xFF ||
@@ -97,7 +104,8 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
 			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
-			BootFlashSaveOSSettings(&of, &LPCmodSettings);		//Put some initial values in there.
+			if(fHasHardware)									//Certainly don't write to flash if no proper hardware was detected!
+				BootFlashSaveOSSettings(&of, &LPCmodSettings);		//Put some initial values in there.
 	}
 
 

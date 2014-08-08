@@ -12,6 +12,7 @@
 #include "BootFlash.h"
 #include <stdio.h>
 #include "memory_layout.h"
+#include "lpcmod_v1.h"
 
 int sprintf(char * buf, const char *fmt, ...);
 
@@ -452,7 +453,7 @@ void BootFlashSaveOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings)
 const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
 #include "flashtypes.h"
 };
-
+if(LPCMod_HW_rev() == SYSCON_ID){		//Additionnal Check to be sure a LPCMod chip is detected.
 	u8 * lastBlock = (u8 *)malloc(4*1024);	//4KB allocation
 
 	if(BootFlashGetDescriptor(pof, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {		//Still got flash to interface?
@@ -462,8 +463,10 @@ const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
 			memcpy(lastBlock,(const u8*)LPCmodSettings,sizeof(_LPCmodSettings));	//Copy settings at the start of the 4KB block.
 			BootReflash(lastBlock,0x3f000,4*1024);
 		}
-
 	}
+	free(lastBlock);
+}
+
 }
 
 

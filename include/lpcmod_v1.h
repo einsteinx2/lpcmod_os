@@ -16,4 +16,7 @@
 #define LCD_BL		0xF700
 #define LCD_CT		0xF703
 
+#define SYSCON_REG	0xF701
+#define SYSCON_ID	0x15	//Spoof SmartXX OPX using lower nibble. Highest nibble is what's different from SmartXX.
+
 #endif

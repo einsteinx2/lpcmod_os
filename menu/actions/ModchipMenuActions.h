@@ -12,4 +12,9 @@
 void decrementActiveBank(void * activeBank);
 void incrementActiveBank(void * activeBank);
 
+void decrementbootTimeout(void * bootTimeout);
+void incrementbootTimeout(void * bootTimeout);
+
+void toggleQuickboot(void * Quickboot);
+
 #endif

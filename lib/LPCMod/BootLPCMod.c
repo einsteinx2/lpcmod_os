@@ -1,7 +1,10 @@
 #include "boot.h"
 #include "VideoInitialization.h"
 #include "BootLPCMod.h"
+#include "lpcmod_v1.h"
 
+
+//Sets default values to most important settings.
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->OSsettings.migrateSetttings = 0;
 	LPCmodSettings->OSsettings.activeBank = 0;
@@ -22,4 +25,9 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->LCDsettings.displayMsgBoot = 0;
 	LPCmodSettings->LCDsettings.customTextBoot = 0;
 	LPCmodSettings->LCDsettings.displayBIOSNameBoot = 0;
+}
+
+//Probes CPLD for chip revision and return a single byte ID.
+u8 LPCMod_HW_rev(void){
+	return(ReadFromIO(SYSCON_REG));
 }

@@ -18,6 +18,10 @@ TEXTMENU *ModchipMenuInit(void) {
 	sprintf(itemPtr->szCaption,"Idle timeout : %ds", LPCmodSettings.OSsettings.bootTimeout);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionLeftPtr=decrementbootTimeout;
+	itemPtr->functionLeftDataPtr = &LPCmodSettings.OSsettings.bootTimeout;
+	itemPtr->functionRightPtr=incrementbootTimeout;
+	itemPtr->functionRightDataPtr = &LPCmodSettings.OSsettings.bootTimeout;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -25,6 +29,10 @@ TEXTMENU *ModchipMenuInit(void) {
 	sprintf(itemPtr->szCaption,"Quickboot : %s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionLeftPtr=toggleQuickboot;
+	itemPtr->functionLeftDataPtr = &LPCmodSettings.OSsettings.Quickboot;
+	itemPtr->functionRightPtr=toggleQuickboot;
+	itemPtr->functionRightDataPtr = &LPCmodSettings.OSsettings.Quickboot;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
