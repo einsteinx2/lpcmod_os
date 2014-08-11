@@ -356,7 +356,8 @@ typedef struct _OSsettings {
 	u8	selectedMenuItem;		//Default selected item in OS menu when booting into it.
 	u8	fanSpeed;				//Why not
 	u8	bootTimeout;
-	u8	reserved1[15];
+	u8	LEDColor;
+	u8	reserved1[14];
 	char	biosName0[20];		//512KB bank name. 20 caracters max to properly display on LCD.
 	char	biosName1[20];		//256KB bank name
 	char	biosName2[20];		//Reserved for future use.

@@ -9,12 +9,12 @@
  *                                                                         *
  ***************************************************************************/
 
-void decrementActiveBank(void * activeBank);
-void incrementActiveBank(void * activeBank);
+void decrementActiveBank(void * itemStr);
+void incrementActiveBank(void * itemStr);
 
-void decrementbootTimeout(void * bootTimeout);
-void incrementbootTimeout(void * bootTimeout);
+void decrementbootTimeout(void * itemStr);
+void incrementbootTimeout(void * itemStr);
 
-void toggleQuickboot(void * Quickboot);
+void toggleQuickboot(void * itemStr);
 
 #endif

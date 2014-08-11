@@ -108,16 +108,14 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 				fMore=false;  // good situation
 
 				// Set LED to oxox.
-				inputLED();
+				//inputLED();
 
 			} else { // failed program
 				printk("Programming persistent settings failed...\n");
-				errorLED();
 				while(1);
 			}
 		} else { // failed erase
 			printk("Erasing persistent settings failed...\n");
-			uberLED();
 			while(1);
 		}
 	}

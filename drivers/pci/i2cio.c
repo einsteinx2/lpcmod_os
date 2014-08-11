@@ -9,6 +9,7 @@
 
 #include "boot.h"
 #include "BootFlash.h"
+#include "memory_layout.h"
 
 /*
 	WriteToSMBus()	by Lehner Franz (franz@caos.at)
@@ -213,23 +214,17 @@ bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp)
 }
 
 void I2CRebootQuick(void) {
-	OBJECT_FLASH of;
-	BootFlashSaveOSSettings(&of, &LPCmodSettings);
 	WriteToSMBus(0x10,0x02,1,0x01);
 	while (1);
 }
 
 
 void I2CRebootSlow(void) {
-	OBJECT_FLASH of;
-	BootFlashSaveOSSettings(&of, &LPCmodSettings);
 	WriteToSMBus(0x10,0x02,1,0x40);
 	while (1);
 }
 
 void I2CPowerOff(void) {
-	OBJECT_FLASH of;
-	BootFlashSaveOSSettings(&of, &LPCmodSettings);
 	WriteToSMBus(0x10,0x02,1,0x80);
 	while (1);
 }

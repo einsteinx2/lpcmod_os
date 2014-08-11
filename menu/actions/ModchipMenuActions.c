@@ -9,18 +9,23 @@
 #include "ModchipMenuActions.h"
 #include "TextMenu.h"
 #include "lpcmod_v1.h"
+#include "boot.h"
+#include "LEDMenuActions.h"
 
 
-void decrementActiveBank(void * activeBank) {
-	switch(*(u8 *)activeBank){
+void decrementActiveBank(void * itemStr) {
+	switch(LPCmodSettings.OSsettings.activeBank){
 	case BNK512:
-		*(u8 *)activeBank = BNKTSOP;
+		LPCmodSettings.OSsettings.activeBank = BNKTSOP;
+		sprintf(itemStr,"Quickboot bank : TSOP");
 		break;
 	case BNK256:
-		*(u8 *)activeBank = BNK512;
+		LPCmodSettings.OSsettings.activeBank = BNK512;
+		sprintf(itemStr,"Quickboot bank : 512KB");
 		break;
 	case BNKTSOP:
-		*(u8 *)activeBank = BNK256;
+		LPCmodSettings.OSsettings.activeBank = BNK256;
+		sprintf(itemStr,"Quickboot bank : 256KB");
 		break;
 	}
 	return;
@@ -28,33 +33,39 @@ void decrementActiveBank(void * activeBank) {
 
 
 
-void incrementActiveBank(void * activeBank) {
-	switch(*(u8 *)activeBank){
+void incrementActiveBank(void * itemStr) {
+	switch(LPCmodSettings.OSsettings.activeBank){
 	case BNK512:
-		*(u8 *)activeBank = BNK256;
+		LPCmodSettings.OSsettings.activeBank = BNK256;
+		sprintf(itemStr,"Quickboot bank : 256KB");
 		break;
 	case BNK256:
-		*(u8 *)activeBank = BNKTSOP;
+		LPCmodSettings.OSsettings.activeBank = BNKTSOP;
+		sprintf(itemStr,"Quickboot bank : TSOP");
 		break;
 	case BNKTSOP:
-		*(u8 *)activeBank = BNK512;
+		LPCmodSettings.OSsettings.activeBank = BNK512;
+		sprintf(itemStr,"Quickboot bank : 512KB");
 		break;
 	}
 	return;
 }
 
 
-void decrementbootTimeout(void * bootTimeout){
-	if(*(u8 *)bootTimeout > 0)	//Logic
-		*(u8 *)bootTimeout -= 1;
+void decrementbootTimeout(void * itemStr){
+	if(LPCmodSettings.OSsettings.bootTimeout > 0)	//Logic
+		LPCmodSettings.OSsettings.bootTimeout -= 1;
+	sprintf(itemStr, "Idle timeout : %ds", LPCmodSettings.OSsettings.bootTimeout);
 	return;
 }
-void incrementbootTimeout(void * bootTimeout){
-	if(*(u8 *)bootTimeout < 240)	//I've got to set a limit there.
-			*(u8 *)bootTimeout += 1;
+void incrementbootTimeout(void * itemStr){
+	if(LPCmodSettings.OSsettings.bootTimeout < 240)	//I've got to set a limit there.
+		LPCmodSettings.OSsettings.bootTimeout += 1;
+	sprintf(itemStr, "Idle timeout : %ds", LPCmodSettings.OSsettings.bootTimeout);
 	return;
 }
 
-void toggleQuickboot(void * Quickboot){
-	*(bool *)Quickboot += 1;
+void toggleQuickboot(void * itemStr){
+	(bool)(LPCmodSettings.OSsettings.Quickboot) += 1;
+	sprintf(itemStr,"Quickboot : %s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
 }

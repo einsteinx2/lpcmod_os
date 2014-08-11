@@ -9,6 +9,7 @@ TEXTMENU *ModchipMenuInit(void) {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
 
+
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
 	strcpy(menuPtr->szCaption, "LPCMod settings");
@@ -19,9 +20,9 @@ TEXTMENU *ModchipMenuInit(void) {
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	itemPtr->functionLeftPtr=decrementbootTimeout;
-	itemPtr->functionLeftDataPtr = &LPCmodSettings.OSsettings.bootTimeout;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
 	itemPtr->functionRightPtr=incrementbootTimeout;
-	itemPtr->functionRightDataPtr = &LPCmodSettings.OSsettings.bootTimeout;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -30,9 +31,9 @@ TEXTMENU *ModchipMenuInit(void) {
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	itemPtr->functionLeftPtr=toggleQuickboot;
-	itemPtr->functionLeftDataPtr = &LPCmodSettings.OSsettings.Quickboot;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
 	itemPtr->functionRightPtr=toggleQuickboot;
-	itemPtr->functionRightDataPtr = &LPCmodSettings.OSsettings.Quickboot;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -46,9 +47,9 @@ TEXTMENU *ModchipMenuInit(void) {
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	itemPtr->functionLeftPtr=decrementActiveBank;
-	itemPtr->functionLeftDataPtr = &LPCmodSettings.OSsettings.activeBank;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
 	itemPtr->functionRightPtr=incrementActiveBank;
-	itemPtr->functionRightDataPtr = &LPCmodSettings.OSsettings.activeBank;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

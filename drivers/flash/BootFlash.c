@@ -440,28 +440,39 @@ u8 ReadFromIO(u16 address)
    return data;
 }
 
-void BootFlashGetOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings) {
+void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
+	OBJECT_FLASH of;
+	
+	memset(&of,0xFF,sizeof(of));
+	of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+	
 	int i;
 	for (i = 0; i < 0x300; i++){		//Length of reserved flash space for persistent setting data.
-		*((u8*)LPCmodSettings + i) = pof->m_pbMemoryMappedStartAddress[0x3f000 + i];		//Starts at 0x3f000 in flash
+		*((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];		//Starts at 0x3f000 in flash
 	}
 }
 
-void BootFlashSaveOSSettings(OBJECT_FLASH *pof, _LPCmodSettings *LPCmodSettings) {
+void BootFlashSaveOSSettings(_LPCmodSettings *LPCmodSettings) {
+OBJECT_FLASH of;
 
 // A bit hacky, but easier to maintain.
 const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
 #include "flashtypes.h"
 };
+memset(&of,0xFF,sizeof(of));
+of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+
 if(LPCMod_HW_rev() == SYSCON_ID){		//Additionnal Check to be sure a LPCMod chip is detected.
 	u8 * lastBlock = (u8 *)malloc(4*1024);	//4KB allocation
 
-	if(BootFlashGetDescriptor(pof, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {		//Still got flash to interface?
-
-		memcpy(lastBlock,(const u8*)(pof->m_pbMemoryMappedStartAddress) + 0x3f000, 4*1024);	//Copy content of flash into temp memory allocation.
-		if(memcmp(lastBlock,(u8*)LPCmodSettings,sizeof(_LPCmodSettings))) {			//At least one setting changed from what's currently in flash.
-			memcpy(lastBlock,(const u8*)LPCmodSettings,sizeof(_LPCmodSettings));	//Copy settings at the start of the 4KB block.
+	if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {		//Still got flash to interface?
+		memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + 0x3f000, 4*1024);	//Copy content of flash into temp memory allocation.
+		if(memcmp(lastBlock,(u8*)LPCmodSettings,sizeof(*LPCmodSettings))) {			//At least one setting changed from what's currently in flash.
+			memcpy(lastBlock,(const u8*)LPCmodSettings,sizeof(*LPCmodSettings));	//Copy settings at the start of the 4KB block.
+			//LEDHigh(NULL);
 			BootReflash(lastBlock,0x3f000,4*1024);
+			LEDRed(NULL);		//Here only to debug everytime flash is updated.
+			while(1);		//Will hang with solid Red LED. Just reboot console and don,t change any setting.
 		}
 	}
 	free(lastBlock);

@@ -30,6 +30,7 @@ void AdvancedMenu(void *textmenu) {
 
 // Booting Original Bios
 void BootOriginalBios(void *data) {
+	BootFlashSaveOSSettings( &LPCmodSettings);
 	WriteToIO(DISABLE_MOD, LPCMOD_TRUE);	// switch to original bios
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
@@ -44,6 +45,7 @@ void BootOriginalBios(void *data) {
 
 // Booting 256k Modbios
 void BootModBios(void *data) {
+	BootFlashSaveOSSettings( &LPCmodSettings);
 	switchBank(BNK256);	// switch to 256k user bank
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
@@ -58,6 +60,7 @@ void BootModBios(void *data) {
 
 // Booting 512k Modbios
 void BootModBios2(void *data) {
+	BootFlashSaveOSSettings( &LPCmodSettings);
 	switchBank(BNK512);	// switch to 512k user bank
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
@@ -71,6 +74,7 @@ void BootModBios2(void *data) {
 }
 
 void BootFromCD(void *data) {
+	BootFlashSaveOSSettings( &LPCmodSettings);
 	//We have to go an extra step when the CD icon is selected, as unlike
 	//the other boot modes, we have not parsed the linuxboot.cfg file yet.
 	int nTempCursorY = VIDEO_CURSOR_POSY; 
@@ -187,6 +191,7 @@ void BootFromEtherboot(void *data) {
 
 #ifdef FLASH
 void FlashBios(void *data) {
+	BootFlashSaveOSSettings( &LPCmodSettings);
 	BootLoadFlashCD();
 }
 #endif

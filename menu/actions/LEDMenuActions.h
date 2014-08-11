@@ -9,17 +9,18 @@
  *                                                                         *
  ***************************************************************************/
 
-void LEDGood(void *);
-void LEDError(void *);
-void LEDBusy(void *);
-void LEDImportant(void *);
-void LEDInput(void *);
-void LEDDownloading(void *);
-void LEDUber(void *);
-void LEDHigh(void *);
-void LEDMid(void *);
-void LEDLow(void *);
-void LEDHeader(char *name, char *pattern);
-void LEDFooter(void);
+#define LED_OFF	0x0;
+#define LED_GREEN	0x1;
+#define LED_RED		0x2;
+#define LED_ORANGE 0x3;
+#define LED_CYCLE	0x4;
+#define LED_FIRSTBOOT	0x5;
+
+void LEDGreen(void *);
+void LEDRed(void *);
+void LEDOrange(void *);
+void LEDCycle(void *);
+void LEDOff(void *);
+void LEDFirstBoot(void *);
 
 #endif

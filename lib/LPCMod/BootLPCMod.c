@@ -2,6 +2,7 @@
 #include "VideoInitialization.h"
 #include "BootLPCMod.h"
 #include "lpcmod_v1.h"
+#include "LEDMenuActions.h"
 
 
 //Sets default values to most important settings.
@@ -12,6 +13,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->OSsettings.selectedMenuItem = 0;
 	LPCmodSettings->OSsettings.fanSpeed = DEFAULT_FANSPEED;
 	LPCmodSettings->OSsettings.bootTimeout = BOOT_TIMEWAIT;
+	LPCmodSettings->OSsettings.LEDColor = LED_GREEN;
 	LPCmodSettings->OSsettings.enableNetwork = 0;
 	LPCmodSettings->OSsettings.useDHCP = 0;
 
@@ -25,6 +27,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->LCDsettings.displayMsgBoot = 0;
 	LPCmodSettings->LCDsettings.customTextBoot = 0;
 	LPCmodSettings->LCDsettings.displayBIOSNameBoot = 0;
+	LEDCycle(NULL);
 }
 
 //Probes CPLD for chip revision and return a single byte ID.

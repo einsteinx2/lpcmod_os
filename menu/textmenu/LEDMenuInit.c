@@ -21,71 +21,36 @@ TEXTMENU* LEDMenuInit(void) {
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Good");
-	itemPtr->functionPtr=LEDGood;
+	strcpy(itemPtr->szCaption, "Green");
+	itemPtr->functionPtr=LEDGreen;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Error");
-	itemPtr->functionPtr=LEDError;
+	strcpy(itemPtr->szCaption, "Red");
+	itemPtr->functionPtr=LEDRed;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Busy");
-	itemPtr->functionPtr=LEDBusy;
+	strcpy(itemPtr->szCaption, "Orange");
+	itemPtr->functionPtr=LEDOrange;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Important");
-	itemPtr->functionPtr=LEDImportant;
+	strcpy(itemPtr->szCaption, "Cycling");
+	itemPtr->functionPtr=LEDCycle;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
-
+	
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Input");
-	itemPtr->functionPtr=LEDInput;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Downloading");
-	itemPtr->functionPtr=LEDDownloading;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Uber load");
-	itemPtr->functionPtr=LEDUber;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "High load");
-	itemPtr->functionPtr=LEDHigh;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Mid load");
-	itemPtr->functionPtr=LEDMid;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Low load");
-	itemPtr->functionPtr=LEDLow;
+	strcpy(itemPtr->szCaption, "Off");
+	itemPtr->functionPtr=LEDOff;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 

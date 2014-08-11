@@ -80,9 +80,8 @@ extern void BootResetAction ( void ) {
 	}
 	if(fHasHardware){		//Don't try to read from flash if none is detected
 		//Retreive LPCMod OS settings from flash
-		memset(&of,0xFF,sizeof(of));
-		of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-		BootFlashGetOSSettings(&of, &LPCmodSettings);
+		
+		BootFlashGetOSSettings(&LPCmodSettings);
 	}
 
 	if(LPCmodSettings.OSsettings.migrateSetttings == 0xFF ||
@@ -91,6 +90,7 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.OSsettings.selectedMenuItem == 0xFF ||
 	   LPCmodSettings.OSsettings.fanSpeed == 0xFF ||
 	   LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
+	   LPCmodSettings.OSsettings.LEDColor == 0xFF ||
 	   LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
 	   LPCmodSettings.OSsettings.useDHCP == 0xFF ||
 	   LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
@@ -105,7 +105,7 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
 			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
 			if(fHasHardware)									//Certainly don't write to flash if no proper hardware was detected!
-				BootFlashSaveOSSettings(&of, &LPCmodSettings);		//Put some initial values in there.
+				BootFlashSaveOSSettings(&LPCmodSettings);		//Put some initial values in there.
 	}
 
 
