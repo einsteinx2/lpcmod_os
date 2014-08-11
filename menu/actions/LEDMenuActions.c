@@ -15,24 +15,30 @@
 
 void LEDGreen(void *whatever) {
 	setLED("gggg");
+	LPCmodSettings.OSsettings.LEDColor = LED_GREEN;
 }
 
 void LEDRed(void *whatever) {
 	setLED("rrrr");
+	LPCmodSettings.OSsettings.LEDColor = LED_RED;
 }
 
 void LEDOrange(void *whatever) {
 	setLED("oooo");
+	LPCmodSettings.OSsettings.LEDColor = LED_ORANGE;
 }
 
 void LEDCycle(void *whatever) {
 	setLED("rgog");
+	LPCmodSettings.OSsettings.LEDColor = LED_CYCLE;
 }
 
 void LEDOff(void *whatever) {
 	setLED("xxxx");
+	LPCmodSettings.OSsettings.LEDColor = LED_OFF;
 }
 
 void LEDFirstBoot(void *whatever) {
 	setLED("roro");
+	LPCmodSettings.OSsettings.LEDColor = LED_GREEN;	//Set for next boot
 }

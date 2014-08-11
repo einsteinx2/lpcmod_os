@@ -14,7 +14,7 @@ TEXTMENU *BankSelectMenuInit(void) {
 	
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "Select Flash bank to flash");
+	strcpy(menuPtr->szCaption, "Select flash bank to flash");
 	
 
 	//Bank0 (512KB)
@@ -54,7 +54,7 @@ TEXTMENU* BankSelectInit(void *bank) {
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "Flash Menu");
+	strcpy(menuPtr->szCaption, "Flash menu");
 
 	switchBank(*(char *)bank);
 	

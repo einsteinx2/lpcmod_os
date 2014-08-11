@@ -44,8 +44,8 @@ void ClearScreen (void) {
 extern void BootResetAction ( void ) {
 	bool fMbrPresent=false;
 	bool fSeenActive=false;
-	bool fHasHardware=false;
 	int nFATXPresent=false;
+	bool fHasHardware=false;				//Flag used to determine if a LPCMod is detected.
 	int nTempCursorX, nTempCursorY;
 	int n, nx;
 	OBJECT_FLASH of;
@@ -74,7 +74,6 @@ extern void BootResetAction ( void ) {
 	BootPciPeripheralInitialization();
 	// Reset the AGP bus and start with good condition
 	BootAGPBUSInitialization();
-	
 	if(LPCMod_HW_rev() == SYSCON_ID){
 		fHasHardware = true;
 	}
@@ -136,7 +135,7 @@ extern void BootResetAction ( void ) {
 		);
 	}
 	// display solid red frontpanel LED while we start up
-	setLED("rrrr");
+	//setLED("rrrr");
 	// paint the backdrop
 #ifndef DEBUG_MODE
 	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
@@ -211,7 +210,7 @@ extern void BootResetAction ( void ) {
 
 	VIDEO_ATTR=0xffffffff;
 
-	busyLED();
+	//busyLED();
 
 	// set Ethernet MAC address from EEPROM
 	{
@@ -272,8 +271,8 @@ extern void BootResetAction ( void ) {
 	nTempCursorMbrY=VIDEO_CURSOR_POSY;
 
 //	printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
-	IconMenuInit();
-	inputLED();
+	IconMenuInit(fHasHardware);
+	//inputLED();
 	IconMenu();
 
 	//Should never come back here.

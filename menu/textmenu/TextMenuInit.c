@@ -9,26 +9,58 @@
 
 #include "include/config.h"
 #include "TextMenu.h"
-
+#include "lpcmod_v1.h"
 #include "VideoInitialization.h"
 
 TEXTMENU *TextMenuInit(void) {
 	
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
+	bool fHasHardware=false;
 	
 	//Create the root menu - MANDATORY
 	menuPtr = malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
 	strcpy(menuPtr->szCaption, "LPCMod v1 configuration menu");
 	menuPtr->firstMenuItem=NULL;
+
+	if(LPCMod_HW_rev() == SYSCON_ID)
+		fHasHardware = true;
 	
-	//LPCMod(modchip) SETTINGS MENU
+	if(fHasHardware) {							//No need to display this menu if no modchip is present.
+		//LPCMod(modchip) SETTINGS MENU
+		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+		strcpy(itemPtr->szCaption, "LPCMod settings");
+		itemPtr->functionPtr=DrawChildTextMenu;
+		itemPtr->functionDataPtr = (void *)ModchipMenuInit();
+		TextMenuAddItem(menuPtr, itemPtr);
+	}
+
+	//SYSTEM SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "LPCMod Settings");
+	strcpy(itemPtr->szCaption, "System settings");
 	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)ModchipMenuInit();
+	itemPtr->functionDataPtr = (void *)SystemMenuInit();
+	TextMenuAddItem(menuPtr, itemPtr);
+
+	if(fHasHardware) {							//No need to display this menu if no modchip is present.
+		//LCD SETTINGS MENU
+		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+		strcpy(itemPtr->szCaption, "LCD settings");
+		itemPtr->functionPtr=DrawChildTextMenu;
+		itemPtr->functionDataPtr = (void *)LCDMenuInit();
+		TextMenuAddItem(menuPtr, itemPtr);
+	}
+
+	//TOOLS MENU
+	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption, "Tools");
+	itemPtr->functionPtr=DrawChildTextMenu;
+	itemPtr->functionDataPtr = (void *)ToolsMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
 
 
@@ -36,24 +68,16 @@ TEXTMENU *TextMenuInit(void) {
 	//FLASH MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Flash Menu");
+	strcpy(itemPtr->szCaption, "Flash menu");
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)BankSelectMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
 #endif
 
-	//VIDEO SETTINGS MENU
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Video Settings");
-	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)VideoMenuInit();
-	TextMenuAddItem(menuPtr, itemPtr);
-
 	//HDD MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "HDD Menu");
+	strcpy(itemPtr->szCaption, "HDD menu");
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)HDDMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
@@ -61,23 +85,15 @@ TEXTMENU *TextMenuInit(void) {
 	//CD MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "CD Menu");
+	strcpy(itemPtr->szCaption, "CD menu");
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)CDMenuInit();
-	TextMenuAddItem(menuPtr, itemPtr);
-	
-	// LED Menu
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "LED Menu");
-	itemPtr->functionPtr=DrawChildTextMenu;
-	itemPtr->functionDataPtr = (void *)LEDMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	// Info Menu
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Info Menu");
+	strcpy(itemPtr->szCaption, "Info menu");
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)InfoMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
@@ -85,7 +101,7 @@ TEXTMENU *TextMenuInit(void) {
 	// Power Menu
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Power Menu");
+	strcpy(itemPtr->szCaption, "Power menu");
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)ResetMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);

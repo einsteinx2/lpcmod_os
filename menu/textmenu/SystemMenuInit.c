@@ -8,49 +8,55 @@
  ***************************************************************************/
 
 #include "include/boot.h"
+#include "BootIde.h"
 #include "TextMenu.h"
-#include "LEDMenuActions.h"
 
-TEXTMENU* LEDMenuInit(void) {
+TEXTMENU *SystemMenuInit(void) {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
-	
+	int i=0;
+
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "LED menu");
+	strcpy(menuPtr->szCaption, "System settings");
 
+	//LED SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Green");
-	itemPtr->functionPtr=LEDGreen;
+	sprintf(itemPtr->szCaption,"LED");
+	itemPtr->functionPtr=DrawChildTextMenu;
+	itemPtr->functionDataPtr = (void *)LEDMenuInit();
+	TextMenuAddItem(menuPtr, itemPtr);
+
+	//VIDEO STANDARD SETTINGS MENU
+	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption, "Video standard");
+	itemPtr->functionPtr=DrawChildTextMenu;
+	itemPtr->functionDataPtr = (void *)VideoMenuInit();
+	TextMenuAddItem(menuPtr, itemPtr);
+
+	//VIDEO FORMAT SETTINGS MENU
+	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption, "Video format");
+	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 
+	//DVD REGION SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Red");
-	itemPtr->functionPtr=LEDRed;
+	strcpy(itemPtr->szCaption, "DVD region");
+	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 
+	//DVD REGION SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Orange");
-	itemPtr->functionPtr=LEDOrange;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Cycling");
-	itemPtr->functionPtr=LEDCycle;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-	
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Off");
-	itemPtr->functionPtr=LEDOff;
+	strcpy(itemPtr->szCaption, "Game region");
+	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 

@@ -19,7 +19,9 @@
 #define SYSCON_REG	0xF701
 #define SYSCON_ID	0x15	//Spoof SmartXX OPX using lower nibble. Highest nibble is what's different from SmartXX.
 
+#define HD44780		0x0
 
+/*
 #define ADR_ACTIVEBANK 0xFF010
 #define ADR_QUICKBOOT 0xFF011
 #define ADR_ACTIVEITEM 0xFF012
@@ -56,6 +58,8 @@
 #define ADR_LCDSTRING0 0xFF124
 #define ADR_LCDSTRING0 0xFF138
 #define ADR_LCDSTRING0 0xFF14C
+*/
+
 
 
 

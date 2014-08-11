@@ -14,16 +14,19 @@
 #include "BootIde.h"
 #include "IconMenu.h"
 #include "MenuActions.h"
+#include "lpcmod_v1.h"
 /*
 void InitFatXIcons(void);
 void InitNativeIcons(void);
 void InitWebBootIcons(void);
 void InitNetBootIcons(void);
 */
-void IconMenuInit(void) {
+void IconMenuInit(bool fHasHardware) {
 //	int i=0;
 	ICON *iconPtr=NULL;
+
 //Not used for lpcmod OS.
+
 
 
 /*
@@ -57,7 +60,7 @@ void IconMenuInit(void) {
 	InitNetBootIcons();
 #endif
 */
-
+if(fHasHardware) {
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT4;
 	iconPtr->szCaption = "Boot 512KB bank";
@@ -71,6 +74,7 @@ void IconMenuInit(void) {
 	iconPtr->functionPtr = BootModBios;
 	iconPtr->functionDataPtr = NULL;
 	AddIcon(iconPtr);
+}
 	
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT2;
