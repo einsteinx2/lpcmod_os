@@ -100,8 +100,13 @@ typedef struct _EEPROMDATA {
 EEPROMDATA eeprom;
 
 void BootEepromReadEntireEEPROM(void);
+void BootEepromReloadEEPROM(EEPROMDATA * realeeprom);
+void BootEepromCompareAndWriteEEPROM(EEPROMDATA * realeeprom);
 void BootEepromPrintInfo(void);
+void BootEepromWriteEntireEEPROM(void);
 void EepromCRC(unsigned char *crc, unsigned char *data, long dataLen);
 void EepromSetVideoStandard(VIDEO_STANDARD standard);
 void EepromSetWidescreen(int enable);
+
+void assertWriteEEPROM(void);
 #endif // _BootEEPROM_H_

@@ -2,6 +2,7 @@
 #include "include/config.h"
 #include "TextMenu.h"
 #include "include/boot.h"
+#include "LCDMenuActions.h"
 
 TEXTMENU *LCDMenuInit(void) {
 
@@ -15,8 +16,8 @@ TEXTMENU *LCDMenuInit(void) {
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Enable LCD : %s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionPtr= LCDToggleEN5V;
+	itemPtr->functionDataPtr= itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

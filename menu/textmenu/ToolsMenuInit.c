@@ -7,32 +7,46 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
-#include "BootIde.h"
 #include "TextMenu.h"
+#include "ToolsMenuActions.h"
+#include "lpcmod_v1.h"
 
 TEXTMENU *ToolsMenuInit(void) {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
+	bool fHasHardware=false;
 	int i=0;
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "System settings");
+	strcpy(menuPtr->szCaption, "Tools");
 
-	//Save EEPROM data to flash
+	if(LPCMod_HW_rev() == SYSCON_ID)
+				fHasHardware = true;
+
+	if(fHasHardware) {
+		//Save EEPROM data to flash
+		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+		sprintf(itemPtr->szCaption,"Save EEPROM to modchip");
+		itemPtr->functionPtr= saveEEPromToFlash;
+		itemPtr->functionDataPtr = NULL;
+		TextMenuAddItem(menuPtr, itemPtr);
+
+		//Restore EEPROM data from flash
+		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+		strcpy(itemPtr->szCaption, "Restore EEPROM from modchip");
+		itemPtr->functionPtr= restoreEEPromFromFlash;
+		itemPtr->functionDataPtr = NULL;
+		TextMenuAddItem(menuPtr, itemPtr);
+	}
+
+	//Wipe EEPROM section that holds non-vital data.
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Save EEPROM to modchip");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr = NULL;
-	TextMenuAddItem(menuPtr, itemPtr);
-
-	//Restore EEPROM data from flash
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Restore EEPROM from modchip");
-	itemPtr->functionPtr= NULL;
+	strcpy(itemPtr->szCaption, "Reset system settings");
+	itemPtr->functionPtr= wipeEEPromUserSettings;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 

@@ -1,5 +1,3 @@
-#ifndef _INFOMENUACTIONS_H_
-#define _INFOMENUACTIONS_H_
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -9,10 +7,10 @@
  *                                                                         *
  ***************************************************************************/
 
-void ShowTemperature(void *);
-void ShowVideo(void *);
-void ShowEeprom(void *);
-void InfoHeader(char *title);
-void InfoFooter(void);
+#include "boot.h"
+#include "LCDMenuActions.h"
 
-#endif
+void LCDToggleEN5V(void * itemStr){
+	LPCmodSettings.LCDsettings.enable5V = ~LPCmodSettings.LCDsettings.enable5V;
+	sprintf(itemStr,"Enable LCD : %s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
+}

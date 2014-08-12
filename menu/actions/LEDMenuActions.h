@@ -8,13 +8,14 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-
-#define LED_OFF	0x0;
-#define LED_GREEN	0x1;
-#define LED_RED		0x2;
-#define LED_ORANGE 0x3;
-#define LED_CYCLE	0x4;
-#define LED_FIRSTBOOT	0x5;
+enum LEDconfig {
+LED_OFF = 0x0,
+LED_GREEN = 0x1,
+LED_RED = 0x2,
+LED_ORANGE = 0x3,
+LED_CYCLE = 0x4,
+LED_FIRSTBOOT = 0x5
+};
 
 void LEDGreen(void *);
 void LEDRed(void *);
@@ -22,5 +23,7 @@ void LEDOrange(void *);
 void LEDCycle(void *);
 void LEDOff(void *);
 void LEDFirstBoot(void *);
+
+void initialSetLED(u8 ledChoice);
 
 #endif

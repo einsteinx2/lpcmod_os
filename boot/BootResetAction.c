@@ -46,6 +46,7 @@ extern void BootResetAction ( void ) {
 	bool fSeenActive=false;
 	int nFATXPresent=false;
 	bool fHasHardware=false;				//Flag used to determine if a LPCMod is detected.
+	bool fFirstBoot=false;
 	int nTempCursorX, nTempCursorY;
 	int n, nx;
 	OBJECT_FLASH of;
@@ -79,7 +80,6 @@ extern void BootResetAction ( void ) {
 	}
 	if(fHasHardware){		//Don't try to read from flash if none is detected
 		//Retreive LPCMod OS settings from flash
-		
 		BootFlashGetOSSettings(&LPCmodSettings);
 	}
 
@@ -102,9 +102,15 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.displayMsgBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
+	   		fFirstBoot = true;
 			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
 			if(fHasHardware)									//Certainly don't write to flash if no proper hardware was detected!
 				BootFlashSaveOSSettings(&LPCmodSettings);		//Put some initial values in there.
+	}
+	if(fFirstBoot)
+		LEDFirstBoot(NULL);
+	else{
+		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
 	}
 
 

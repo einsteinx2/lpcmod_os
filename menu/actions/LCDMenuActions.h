@@ -1,5 +1,5 @@
-#ifndef _INFOMENUACTIONS_H_
-#define _INFOMENUACTIONS_H_
+#ifndef _LCDMENUACTIONS_H_
+#define _LCDMENUACTIONS_H_
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -9,10 +9,6 @@
  *                                                                         *
  ***************************************************************************/
 
-void ShowTemperature(void *);
-void ShowVideo(void *);
-void ShowEeprom(void *);
-void InfoHeader(char *title);
-void InfoFooter(void);
+void LCDToggleEN5V(void * itemStr);
 
 #endif

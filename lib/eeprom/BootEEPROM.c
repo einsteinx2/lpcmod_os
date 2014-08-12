@@ -10,6 +10,25 @@ void BootEepromReadEntireEEPROM() {
 	}
 }
 
+void BootEepromReloadEEPROM(EEPROMDATA * realeeprom) {
+	int i;
+	u8 *pb=(u8 *)realeeprom;
+	for(i = 0; i < 256; i++) {
+		*pb++ = I2CTransmitByteGetReturn(0x54, i);
+	}
+}
+
+void BootEepromCompareAndWriteEEPROM(EEPROMDATA * realeeprom){
+	int i;
+	for(i = 0; i < sizeof(EEPROMDATA); i++){
+		if(memcmp(((u8 *)&eeprom) + i,((u8 *)realeeprom) + i,1)){				//Compare byte by byte.
+			//WriteToSMBus(0x54,i,1,((u8 *)&eeprom) + i);						//Physical EEPROM's content is different from what's held in memory.
+			setLED("rgrg");
+			while(1);						//Debug, no real write for now. Just hang with led sequence.
+		}
+	}
+}
+
 void BootEepromPrintInfo() {
 	VIDEO_ATTR=0xffc8c8c8;
 	printk("MAC : ");
@@ -56,6 +75,14 @@ void BootEepromPrintInfo() {
 	VIDEO_ATTR=0xffc8c8c8;
 }
 
+void BootEepromWriteEntireEEPROM(void){
+	int i;
+	u8 *pb=(u8 *)&eeprom;
+	for(i = 0; i < 256; i++) {
+		WriteToSMBus(0x54,i,1,*pb++);
+	}
+}
+
 /* The EepromCRC algorithm was obtained from the XKUtils 0.2 source released by 
  * TeamAssembly under the GNU GPL.  
  * Specifically, from XKCRC.cpp 
@@ -89,41 +116,57 @@ void EepromSetWidescreen(int enable) {
 	//Changing this setting requires that Checksum3 
 	//be recalculated.
 	
-	unsigned char sum[4];
+	//unsigned char sum[4];
 	if (enable) {
 		//Enable WS
-		WriteToSMBus(0x54, 0x96, 0, 1);
+		//WriteToSMBus(0x54, 0x96, 0, 1);
 		eeprom.VideoFlags[2] = 0x01;
 	} 
 	else {
 		//Disable WSS
-		WriteToSMBus(0x54, 0x96, 0, 0);
+		//WriteToSMBus(0x54, 0x96, 0, 0);
 		eeprom.VideoFlags[2] = 0x00;
 	}
 
+	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
+/*
 	EepromCRC(sum,eeprom.TimeZoneBias,0x5b);
 	WriteToSMBus(0x54, 0x60, 1, sum[0]);
 	WriteToSMBus(0x54, 0x61, 1, sum[1]);
 	WriteToSMBus(0x54, 0x62, 1, sum[2]);
-	WriteToSMBus(0x54, 0x63, 1, sum[3]);
+	WriteToSMBus(0x54, 0x63, 1, sum[3]);*/
 }
 
 void EepromSetVideoStandard(VIDEO_STANDARD standard) {
 	//Changing this setting requires that Checksum2
 	//be recalculated.
-	unsigned char sum[4]; 
+	//unsigned char sum[4];
 	unsigned int i;
 
+
+
+/*
+ * EEPROM will be written only once at exit.
+ */
 	//Write the four bytes to the EEPROM
-	for (i=0; i<4; ++i) {
-		WriteToSMBus(0x54,0x58+i, 1, (u8)(standard>>(8*i))&0xff);
-	}
+	//for (i=0; i<4; ++i) {
+	//	WriteToSMBus(0x54,0x58+i, 1, (u8)(standard>>(8*i))&0xff);
+	//}
 
 	memcpy(eeprom.VideoStandard, &standard, 0x04);
-	
+	EepromCRC(eeprom.Checksum2,eeprom.SerialNumber,0x28);
+/*
 	EepromCRC(sum,eeprom.SerialNumber,0x28);
 	WriteToSMBus(0x54, 0x30, 0, sum[0]);
 	WriteToSMBus(0x54, 0x31, 0, sum[1]);
 	WriteToSMBus(0x54, 0x32, 0, sum[2]);
 	WriteToSMBus(0x54, 0x33, 0, sum[3]);
+*/
+}
+
+void assertWriteEEPROM(void){
+	EEPROMDATA realeeprom;
+	BootEepromReloadEEPROM(&realeeprom);
+	BootEepromCompareAndWriteEEPROM(&realeeprom);	//If there is at least one change that requires to write back to physical EEPROM. This function will write it.
+	return;
 }

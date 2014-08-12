@@ -9,13 +9,16 @@
 #include "ResetMenuActions.h"
 
 void SlowReboot(void *ignored){
+	assertWriteEEPROM();
 	I2CRebootSlow();
 }
 
 void QuickReboot(void *ignored){
+	assertWriteEEPROM();
 	I2CRebootQuick();
 }
 
 void PowerOff(void *ignored) {
+	assertWriteEEPROM();
 	I2CPowerOff();
 }

@@ -13,6 +13,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->OSsettings.selectedMenuItem = 0;
 	LPCmodSettings->OSsettings.fanSpeed = DEFAULT_FANSPEED;
 	LPCmodSettings->OSsettings.bootTimeout = BOOT_TIMEWAIT;
+	LPCmodSettings->OSsettings.LEDColor = LED_GREEN;	//Set for next boot
 	LPCmodSettings->OSsettings.enableNetwork = 0;
 	LPCmodSettings->OSsettings.useDHCP = 0;
 
@@ -26,7 +27,6 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->LCDsettings.displayMsgBoot = 0;
 	LPCmodSettings->LCDsettings.customTextBoot = 0;
 	LPCmodSettings->LCDsettings.displayBIOSNameBoot = 0;
-	LEDFirstBoot(NULL);
 }
 
 //Probes CPLD for chip revision and return a single byte ID.

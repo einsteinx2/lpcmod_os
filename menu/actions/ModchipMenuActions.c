@@ -66,6 +66,6 @@ void incrementbootTimeout(void * itemStr){
 }
 
 void toggleQuickboot(void * itemStr){
-	(bool)(LPCmodSettings.OSsettings.Quickboot) += 1;
+	(LPCmodSettings.OSsettings.Quickboot) = ~(LPCmodSettings.OSsettings.Quickboot);
 	sprintf(itemStr,"Quickboot : %s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
 }

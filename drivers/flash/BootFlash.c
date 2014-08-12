@@ -471,8 +471,8 @@ if(LPCMod_HW_rev() == SYSCON_ID){		//Additionnal Check to be sure a LPCMod chip 
 			memcpy(lastBlock,(const u8*)LPCmodSettings,sizeof(*LPCmodSettings));	//Copy settings at the start of the 4KB block.
 			//LEDHigh(NULL);
 			BootReflash(lastBlock,0x3f000,4*1024);
-			LEDRed(NULL);		//Here only to debug everytime flash is updated.
-			while(1);		//Will hang with solid Red LED. Just reboot console and don,t change any setting.
+			//LEDRed(NULL);		//Here only to debug everytime flash is updated.
+			//while(1);		//Will hang with solid Red LED. Just reboot console and don,t change any setting.
 		}
 	}
 	free(lastBlock);

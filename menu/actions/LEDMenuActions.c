@@ -40,5 +40,18 @@ void LEDOff(void *whatever) {
 
 void LEDFirstBoot(void *whatever) {
 	setLED("roro");
-	LPCmodSettings.OSsettings.LEDColor = LED_GREEN;	//Set for next boot
+	LPCmodSettings.OSsettings.LEDColor = LED_GREEN;		//Just in case
+}
+
+void initialSetLED(u8 ledChoice) {
+	if(ledChoice == LED_RED)
+			LEDRed(NULL);
+	else if(ledChoice == LED_ORANGE)
+			LEDOrange(NULL);
+	else if(ledChoice == LED_CYCLE)
+			LEDCycle(NULL);
+	else if(ledChoice == LED_OFF)
+			LEDOff(NULL);
+	else
+			LEDGreen(NULL);
 }
