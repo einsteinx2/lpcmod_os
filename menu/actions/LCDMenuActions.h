@@ -10,5 +10,12 @@
  ***************************************************************************/
 
 void LCDToggleEN5V(void * itemStr);
+void LCDIncrementBacklight(void * itemStr);
+void LCDDecrementBacklight(void * itemStr);
+void LCDIncrementContrast(void * itemStr);
+void LCDDecrementContrast(void * itemStr);
+void LCDToggleDisplayBootMsg(void * itemStr);
+void LCDToggledisplayBIOSNameBoot(void * itemStr);
+
 
 #endif

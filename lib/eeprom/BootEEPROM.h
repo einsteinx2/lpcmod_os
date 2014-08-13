@@ -20,13 +20,15 @@
 
 //EEPROM Data structe value enums
 typedef enum { 
-	ZONE_NONE = 0x00,
-	ZONE1 = 0x01,
-	ZONE2 = 0x02,
-	ZONE3 = 0x03,
-	ZONE4 = 0x04,
-	ZONE5 = 0x05,
-	ZONE6 = 0x06
+	ZONE_NONE = 0x00,	//Region Clear
+	ZONE1 = 0x01,		//USA
+	ZONE2 = 0x02,		//Europe
+	ZONE3 = 0x03,		//India
+	ZONE4 = 0x04,		//Australia
+	ZONE5 = 0x05,		//USSR
+	ZONE6 = 0x06,		//China
+	ZONE_FREE = 0x07,	//Free
+	ZONE_AIRLINES = 0x08//Airlines
 } DVD_ZONE;
 
 typedef enum {
@@ -109,4 +111,7 @@ void EepromSetVideoStandard(VIDEO_STANDARD standard);
 void EepromSetWidescreen(int enable);
 
 void assertWriteEEPROM(void);
+void changeDVDRegion(u8 value);
+int getGameRegionValue(void);
+void setGameRegionValue(u8 value);
 #endif // _BootEEPROM_H_

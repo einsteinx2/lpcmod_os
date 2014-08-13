@@ -228,3 +228,7 @@ void I2CPowerOff(void) {
 	WriteToSMBus(0x10,0x02,1,0x80);
 	while (1);
 }
+
+void I2CSetFanSpeed(u8 speed){
+	WriteToSMBus(0x10,0x10,1,speed >> 1);	//Send new speed to PIC
+}

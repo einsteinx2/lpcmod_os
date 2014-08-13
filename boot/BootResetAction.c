@@ -46,7 +46,7 @@ extern void BootResetAction ( void ) {
 	bool fSeenActive=false;
 	int nFATXPresent=false;
 	bool fHasHardware=false;				//Flag used to determine if a LPCMod is detected.
-	bool fFirstBoot=false;
+	bool fFirstBoot=false;					//Flag to indicate first boot since flash update
 	int nTempCursorX, nTempCursorY;
 	int n, nx;
 	OBJECT_FLASH of;
@@ -102,16 +102,31 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.displayMsgBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
-	   		fFirstBoot = true;
+			fFirstBoot = true;
 			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.									//Certainly don't write to flash if no proper hardware was detected!
 			BootFlashSaveOSSettings();		//Put some initial values in there.
 	}
-	if(fFirstBoot)
-		LEDFirstBoot(NULL);
-	else{
+	else {	//We have settings, why not use them now.
+		if(LPCmodSettings.OSsettings.Quickboot)
+			//Test. If B button is held down during bootup, it will boot 256KB bank.
+			if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){
+				BootModBios();
+			}	//Same but A button for 512KB bank. Logic will be inverted once proven working.
+			else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){
+				BootModBios2();
+			}
 		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+		I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
 	}
 
+	if(fFirstBoot){
+		LEDFirstBoot(NULL);
+		LPCmodSettings.OSsettings.bootTimeout = 0;		//No countdown since it's the first boot since a flash update.
+	}													//Configure your device first.
+	else{
+		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+		I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+	}
 
 
 	// We disable The CPU Cache

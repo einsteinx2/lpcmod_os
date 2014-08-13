@@ -13,5 +13,8 @@ void saveEEPromToFlash(void *whatever);
 void restoreEEPromFromFlash(void *whatever);
 
 void wipeEEPromUserSettings(void *whatever);
+void memtest(void * whatever);
+void ToolFooter(void);
+int testBank(int bank);
 
 #endif

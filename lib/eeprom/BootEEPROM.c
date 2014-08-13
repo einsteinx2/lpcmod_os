@@ -1,6 +1,7 @@
 #include "boot.h"
 #include "VideoInitialization.h"
 #include "BootEEPROM.h"
+#include "rc4.h"
 
 void BootEepromReadEntireEEPROM() {
 	int i;
@@ -23,7 +24,7 @@ void BootEepromCompareAndWriteEEPROM(EEPROMDATA * realeeprom){
 	u8 *pb = (u8 *)&eeprom;
 	u8 *pc = (u8 *)realeeprom;
 	for(i = 0; i < sizeof(EEPROMDATA); i++){
-		if(memcmp(pb[i],pc[i],1)){				//Compare byte by byte.
+		if(memcmp(pb + i,pc + i,1)){				//Compare byte by byte.
 			WriteToSMBus(0x54,i,1,pb[i]);						//Physical EEPROM's content is different from what's held in memory.
 			//setLED("rgrg");
 			//while(1);						//Debug, no real write for now. Just hang with led sequence.
@@ -171,4 +172,120 @@ void assertWriteEEPROM(void){
 	BootEepromReloadEEPROM(&realeeprom);
 	BootEepromCompareAndWriteEEPROM(&realeeprom);	//If there is at least one change that requires to write back to physical EEPROM. This function will write it.
 	return;
+}
+
+void changeDVDRegion(u8 value){
+	eeprom.DVDPlaybackKitZone[0] = value;
+	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
+}
+
+int getGameRegionValue(void){
+	int result = -1;
+	u8 baKeyHash[20];
+	u8 baDataHashConfirm[20];
+	u8 baEepromDataLocalCopy[0x30];
+	struct rc4_key RC4_key;
+	int version = 0;
+	int counter;
+	u8 gameRegion=0;
+
+	for (counter=7;counter<13;counter++)
+	{
+	   	memset(&RC4_key,0,sizeof(rc4_key));
+	   	memcpy(&baEepromDataLocalCopy[0], &eeprom, 0x30);
+
+	               // Calculate the Key-Hash
+		HMAC_hdd_calculation(counter, baKeyHash, &baEepromDataLocalCopy[0], 20, NULL);
+
+		//initialize RC4 key
+		rc4_prepare_key(baKeyHash, 20, &RC4_key);
+
+	    //decrypt data (from eeprom) with generated key
+		rc4_crypt(&baEepromDataLocalCopy[20],28,&RC4_key);		//Whole crypted block
+		//rc4_crypt(&baEepromDataLocalCopy[28],20,&RC4_key);		//"real" data
+
+	    // Calculate the Confirm-Hash
+		HMAC_hdd_calculation(counter, baDataHashConfirm, &baEepromDataLocalCopy[20], 8, &baEepromDataLocalCopy[28], 20, NULL);
+
+		if (!memcmp(baEepromDataLocalCopy,baDataHashConfirm,0x14)) {
+			// Confirm Hash is correct
+			// Copy actual Xbox Version to Return Value
+			version=counter;
+			// exits the loop
+			break;
+		}
+	}
+	if(version == 13)
+		result = XBE_INVALID;
+	else {
+		memcpy(&gameRegion,&baEepromDataLocalCopy[28+16],4);
+		if(gameRegion == JAPAN)
+			result = JAPAN;
+		else if(gameRegion == EURO_AUSTRALIA)
+			result = EURO_AUSTRALIA;
+		else if(gameRegion == NORTH_AMERICA)
+			result = NORTH_AMERICA;
+		else
+			result = XBE_INVALID;
+	}
+	return result;
+}
+
+void setGameRegionValue(u8 value){
+	int result = -1;
+	u8 baKeyHash[20];
+	u8 baDataHashConfirm[20];
+	u8 baEepromDataLocalCopy[0x30];
+	struct rc4_key RC4_key;
+	int version = 0;
+	int counter;
+	u32 gameRegion = value;
+
+	for (counter=9;counter<13;counter++)
+	{
+		memset(&RC4_key,0,sizeof(rc4_key));
+		memcpy(&baEepromDataLocalCopy[0], &eeprom, 0x30);
+
+	    // Calculate the Key-Hash
+		HMAC_hdd_calculation(counter, baKeyHash, &baEepromDataLocalCopy[0], 20, NULL);
+
+		//initialize RC4 key
+		rc4_prepare_key(baKeyHash, 20, &RC4_key);
+
+	  	//decrypt data (from eeprom) with generated key
+		rc4_crypt(&baEepromDataLocalCopy[20],28,&RC4_key);		//Whole crypted block
+		//rc4_crypt(&baEepromDataLocalCopy[28],20,&RC4_key);		//"real" data
+
+		// Calculate the Confirm-Hash
+		HMAC_hdd_calculation(counter, baDataHashConfirm, &baEepromDataLocalCopy[20], 8, &baEepromDataLocalCopy[28], 20, NULL);
+
+		if (!memcmp(baEepromDataLocalCopy,baDataHashConfirm,0x14)) {
+			// Confirm Hash is correct
+			// Copy actual Xbox Version to Return Value
+			version=counter;
+			// exits the loop
+			break;
+		}
+	}
+	if (version == 13) return;	//error, let's not do something stupid here. Leave with dignity.
+	//else we know the version
+	memcpy(&baEepromDataLocalCopy[28+16],&gameRegion,4);
+
+	// Calculate the Confirm-Hash
+	HMAC_hdd_calculation(version, baDataHashConfirm, &baEepromDataLocalCopy[20], 8, &baEepromDataLocalCopy[28], 20, NULL);
+
+	memcpy(baEepromDataLocalCopy,baDataHashConfirm,20);
+
+	// Calculate the Key-Hash
+	HMAC_hdd_calculation(version, baKeyHash, &baEepromDataLocalCopy[0], 20, NULL);
+
+	//initialize RC4 key
+	rc4_prepare_key(baKeyHash, 20, &RC4_key);
+
+	//decrypt data (from eeprom) with generated key
+	rc4_crypt(&baEepromDataLocalCopy[20],28,&RC4_key);
+
+	// Save back to EEprom
+	memcpy(&eeprom,&baEepromDataLocalCopy[0], 0x30);
+
 }

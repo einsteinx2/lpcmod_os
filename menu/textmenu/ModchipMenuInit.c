@@ -55,7 +55,7 @@ TEXTMENU *ModchipMenuInit(void) {
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Reset all settings");
-	itemPtr->functionPtr= NULL;
+	itemPtr->functionPtr= resetSettings;
 	itemPtr->functionDataPtr= NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 

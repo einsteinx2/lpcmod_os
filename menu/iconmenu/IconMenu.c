@@ -159,7 +159,7 @@ void IconMenu(void) {
 	int nTempCursorResumeX, nTempCursorResumeY ;
 	int nTempCursorX, nTempCursorY;
 	int nModeDependentOffset=(vmode.width-640)/2;  
-	u8 varBootTimeWait = BOOT_TIMEWAIT;				//Just to have a default value.
+	u8 varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout; //BOOT_TIMEWAIT;				//Just to have a default value.
 	
 	nTempCursorResumeX=nTempCursorMbrX;
 	nTempCursorResumeY=nTempCursorMbrY;

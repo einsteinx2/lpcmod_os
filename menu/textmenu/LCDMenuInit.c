@@ -43,6 +43,10 @@ TEXTMENU *LCDMenuInit(void) {
 	sprintf(itemPtr->szCaption,"Backlight : %d%%", LPCmodSettings.LCDsettings.backlight);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionLeftPtr=LCDDecrementBacklight;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=LCDIncrementBacklight;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -50,13 +54,21 @@ TEXTMENU *LCDMenuInit(void) {
 	sprintf(itemPtr->szCaption,"Contrast: %d%%", LPCmodSettings.LCDsettings.contrast);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionLeftPtr=LCDDecrementContrast;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=LCDIncrementContrast;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Display message at boot : %s", LPCmodSettings.LCDsettings.displayMsgBoot? "Yes" : "No");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionPtr= LCDToggleDisplayBootMsg;
+	itemPtr->functionDataPtr= itemPtr->szCaption;
+	itemPtr->functionLeftPtr=LCDToggleDisplayBootMsg;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=LCDToggleDisplayBootMsg;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

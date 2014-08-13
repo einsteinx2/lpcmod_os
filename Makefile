@@ -124,6 +124,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/ToolsMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/Confirm.o
 OBJECTS-CROM += $(TOPDIR)/obj/ModchipMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDMenuActions.o
+OBJECTS-CROM += $(TOPDIR)/obj/SystemMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LoadLinux.o
 OBJECTS-CROM += $(TOPDIR)/obj/setup.o
 OBJECTS-CROM += $(TOPDIR)/obj/iso9660.o

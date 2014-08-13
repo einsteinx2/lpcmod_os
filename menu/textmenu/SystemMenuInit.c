@@ -10,11 +10,32 @@
 #include "include/boot.h"
 #include "BootIde.h"
 #include "TextMenu.h"
+#include "SystemMenuActions.h"
 
 TEXTMENU *SystemMenuInit(void) {
 	TEXTMENUITEM *itemPtr;
 	TEXTMENU *menuPtr;
-	int i=0;
+
+	//I know, I know... There are multiple definitions of these in the code. I don't care. It's not like they are going to change much.
+	//String enum for DVD_ZONE
+	char *DVDregiontext[9] = {
+		"Region Clear",
+		"USA (1)",
+		"Europe (2)",
+		"India (3)",
+		"Australia (4)",
+		"USSR (5)",
+		"China (6)",
+		"Free (7)",
+		"Airlines (8)"
+	};
+	char *Gameregiontext[5] = {
+		"Unknown/Error",
+		"NTSC-U",
+		"NTSC-J",
+		"n/a",
+		"PAL"
+	};
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
@@ -34,6 +55,10 @@ TEXTMENU *SystemMenuInit(void) {
 	sprintf(itemPtr->szCaption,"Fan speed : %d%%", LPCmodSettings.OSsettings.fanSpeed);
 	itemPtr->functionPtr=NULL;
 	itemPtr->functionDataPtr = NULL;
+	itemPtr->functionLeftPtr=decrementFanSpeed;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=incrementFanSpeed;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//VIDEO STANDARD SETTINGS MENU
@@ -55,17 +80,25 @@ TEXTMENU *SystemMenuInit(void) {
 	//DVD REGION SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "DVD region");
+	sprintf(itemPtr->szCaption, "DVD region : %s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
+	itemPtr->functionLeftPtr=decrementDVDRegion;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=incrementDVDRegion;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
-	//DVD REGION SETTINGS MENU
+	//GAME REGION SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Game region");
+	sprintf(itemPtr->szCaption, "Game region : %s",Gameregiontext[getGameRegionValue()]);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
+	itemPtr->functionLeftPtr=decrementGameRegion;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=incrementGameRegion;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	return menuPtr;
