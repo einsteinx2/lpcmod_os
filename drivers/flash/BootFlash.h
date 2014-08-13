@@ -74,5 +74,5 @@ u8 xGetByteFromFlash( OBJECT_FLASH * myflash, int myaddress);
 void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings);
 
 //Copy into flash 3*256 bytes of settings for LPCMod OS from memory and place it in the last 4KB block of the flash chip.
-void BootFlashSaveOSSettings(_LPCmodSettings *LPCmodSettings);
+void BootFlashSaveOSSettings(void);
 

@@ -18,6 +18,10 @@ TEXTMENU *LCDMenuInit(void) {
 	sprintf(itemPtr->szCaption,"Enable LCD : %s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
 	itemPtr->functionPtr= LCDToggleEN5V;
 	itemPtr->functionDataPtr= itemPtr->szCaption;
+	itemPtr->functionLeftPtr=LCDToggleEN5V;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=LCDToggleEN5V;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

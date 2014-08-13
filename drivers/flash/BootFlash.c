@@ -452,7 +452,7 @@ void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
 	}
 }
 
-void BootFlashSaveOSSettings(_LPCmodSettings *LPCmodSettings) {
+void BootFlashSaveOSSettings(void) {
 OBJECT_FLASH of;
 
 // A bit hacky, but easier to maintain.
@@ -467,8 +467,8 @@ if(LPCMod_HW_rev() == SYSCON_ID){		//Additionnal Check to be sure a LPCMod chip 
 
 	if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {		//Still got flash to interface?
 		memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + 0x3f000, 4*1024);	//Copy content of flash into temp memory allocation.
-		if(memcmp(lastBlock,(u8*)LPCmodSettings,sizeof(*LPCmodSettings))) {			//At least one setting changed from what's currently in flash.
-			memcpy(lastBlock,(const u8*)LPCmodSettings,sizeof(*LPCmodSettings));	//Copy settings at the start of the 4KB block.
+		if(memcmp(lastBlock,(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {			//At least one setting changed from what's currently in flash.
+			memcpy(lastBlock,(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));	//Copy settings at the start of the 4KB block.
 			//LEDHigh(NULL);
 			BootReflash(lastBlock,0x3f000,4*1024);
 			//LEDRed(NULL);		//Here only to debug everytime flash is updated.

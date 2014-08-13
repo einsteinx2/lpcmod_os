@@ -103,9 +103,8 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
 	   		fFirstBoot = true;
-			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
-			if(fHasHardware)									//Certainly don't write to flash if no proper hardware was detected!
-				BootFlashSaveOSSettings(&LPCmodSettings);		//Put some initial values in there.
+			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.									//Certainly don't write to flash if no proper hardware was detected!
+			BootFlashSaveOSSettings();		//Put some initial values in there.
 	}
 	if(fFirstBoot)
 		LEDFirstBoot(NULL);

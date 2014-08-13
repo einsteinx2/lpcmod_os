@@ -11,6 +11,6 @@
 #include "LCDMenuActions.h"
 
 void LCDToggleEN5V(void * itemStr){
-	LPCmodSettings.LCDsettings.enable5V = ~LPCmodSettings.LCDsettings.enable5V;
+	LPCmodSettings.LCDsettings.enable5V = LPCmodSettings.LCDsettings.enable5V? 0 : 1;
 	sprintf(itemStr,"Enable LCD : %s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
 }

@@ -7,18 +7,22 @@
  *                                                                         *
  ***************************************************************************/
 #include "ResetMenuActions.h"
+//#include "boot.h"
 
 void SlowReboot(void *ignored){
 	assertWriteEEPROM();
+	BootFlashSaveOSSettings();
 	I2CRebootSlow();
 }
 
 void QuickReboot(void *ignored){
 	assertWriteEEPROM();
+	BootFlashSaveOSSettings();
 	I2CRebootQuick();
 }
 
 void PowerOff(void *ignored) {
 	assertWriteEEPROM();
+	BootFlashSaveOSSettings();
 	I2CPowerOff();
 }

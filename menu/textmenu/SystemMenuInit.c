@@ -27,6 +27,14 @@ TEXTMENU *SystemMenuInit(void) {
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)LEDMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
+	
+	//FAN SPEED
+	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	sprintf(itemPtr->szCaption,"Fan speed : %d%%", LPCmodSettings.OSsettings.fanSpeed);
+	itemPtr->functionPtr=NULL;
+	itemPtr->functionDataPtr = NULL;
+	TextMenuAddItem(menuPtr, itemPtr);
 
 	//VIDEO STANDARD SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

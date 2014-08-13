@@ -28,8 +28,8 @@ TEXTMENU *ModchipMenuInit(void) {
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Quickboot : %s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionPtr= toggleQuickboot;
+	itemPtr->functionDataPtr= itemPtr->szCaption;
 	itemPtr->functionLeftPtr=toggleQuickboot;
 	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
 	itemPtr->functionRightPtr=toggleQuickboot;

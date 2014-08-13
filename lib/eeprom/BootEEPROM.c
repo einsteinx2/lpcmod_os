@@ -20,11 +20,13 @@ void BootEepromReloadEEPROM(EEPROMDATA * realeeprom) {
 
 void BootEepromCompareAndWriteEEPROM(EEPROMDATA * realeeprom){
 	int i;
+	u8 *pb = (u8 *)&eeprom;
+	u8 *pc = (u8 *)realeeprom;
 	for(i = 0; i < sizeof(EEPROMDATA); i++){
-		if(memcmp(((u8 *)&eeprom) + i,((u8 *)realeeprom) + i,1)){				//Compare byte by byte.
-			//WriteToSMBus(0x54,i,1,((u8 *)&eeprom) + i);						//Physical EEPROM's content is different from what's held in memory.
-			setLED("rgrg");
-			while(1);						//Debug, no real write for now. Just hang with led sequence.
+		if(memcmp(pb[i],pc[i],1)){				//Compare byte by byte.
+			WriteToSMBus(0x54,i,1,pb[i]);						//Physical EEPROM's content is different from what's held in memory.
+			//setLED("rgrg");
+			//while(1);						//Debug, no real write for now. Just hang with led sequence.
 		}
 	}
 }
@@ -79,7 +81,7 @@ void BootEepromWriteEntireEEPROM(void){
 	int i;
 	u8 *pb=(u8 *)&eeprom;
 	for(i = 0; i < 256; i++) {
-		WriteToSMBus(0x54,i,1,*pb++);
+		WriteToSMBus(0x54,i,1,pb[i]);
 	}
 }
 

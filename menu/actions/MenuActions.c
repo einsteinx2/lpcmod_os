@@ -30,7 +30,7 @@ void AdvancedMenu(void *textmenu) {
 
 // Booting Original Bios
 void BootOriginalBios(void *data) {
-	BootFlashSaveOSSettings( &LPCmodSettings);
+	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
 	WriteToIO(DISABLE_MOD, LPCMOD_TRUE);	// switch to original bios
 //	#ifndef NOANI_MENU
@@ -46,7 +46,7 @@ void BootOriginalBios(void *data) {
 
 // Booting 256k Modbios
 void BootModBios(void *data) {
-	BootFlashSaveOSSettings( &LPCmodSettings);
+	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
 	switchBank(BNK256);	// switch to 256k user bank
 //	#ifndef NOANI_MENU
@@ -62,7 +62,7 @@ void BootModBios(void *data) {
 
 // Booting 512k Modbios
 void BootModBios2(void *data) {
-	BootFlashSaveOSSettings( &LPCmodSettings);
+	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
 	switchBank(BNK512);	// switch to 512k user bank
 //	#ifndef NOANI_MENU
@@ -77,7 +77,7 @@ void BootModBios2(void *data) {
 }
 
 void BootFromCD(void *data) {
-	BootFlashSaveOSSettings( &LPCmodSettings);
+	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
 	//We have to go an extra step when the CD icon is selected, as unlike
 	//the other boot modes, we have not parsed the linuxboot.cfg file yet.
@@ -195,7 +195,7 @@ void BootFromEtherboot(void *data) {
 
 #ifdef FLASH
 void FlashBios(void *data) {
-	BootFlashSaveOSSettings( &LPCmodSettings);
+	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
 	BootLoadFlashCD();
 }
