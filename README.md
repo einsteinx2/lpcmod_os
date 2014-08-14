@@ -7,10 +7,11 @@ This code is based on the excellent Gentoox Loader software which is based on Cr
 
 For now, I was only able to build a working binary under Linux.
 Here's my working setup:
-Lubuntu x86 14.04
-Make 3.81
-gcc-3.3 "3.3.6 (Ubuntu 1:3.3.6-15ubuntu6)" TARGET=i486-linux-gnu
-ld 2.24
+
+* Lubuntu x86 14.04
+* Make 3.81
+* gcc-3.3 "3.3.6 (Ubuntu 1:3.3.6-15ubuntu6)" TARGET=i486-linux-gnu
+* ld 2.24
 
 
 ### Important information ###
