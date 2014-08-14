@@ -23,6 +23,7 @@
 #include "video.h"
 #include "memory_layout.h"
 #include "lpcmod_v1.h"
+//#include "lib/LPCMod/BootLCD.h"
 
 JPEG jpegBackdrop;
 
@@ -75,6 +76,9 @@ extern void BootResetAction ( void ) {
 	BootPciPeripheralInitialization();
 	// Reset the AGP bus and start with good condition
 	BootAGPBUSInitialization();
+
+	LEDRed();		//Signal the user to press Eject button to avoid Quickboot.
+
 	if(LPCMod_HW_rev() == SYSCON_ID){
 		fHasHardware = true;
 	}
@@ -105,28 +109,20 @@ extern void BootResetAction ( void ) {
 			fFirstBoot = true;
 			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.									//Certainly don't write to flash if no proper hardware was detected!
 			BootFlashSaveOSSettings();		//Put some initial values in there.
-	}
-	else {	//We have settings, why not use them now.
-		if(LPCmodSettings.OSsettings.Quickboot)
-			//Test. If B button is held down during bootup, it will boot 256KB bank.
-			if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){
-				BootModBios();
-			}	//Same but A button for 512KB bank. Logic will be inverted once proven working.
-			else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){
-				BootModBios2();
-			}
-		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
-		I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+			LEDFirstBoot(NULL);
+			LPCmodSettings.OSsettings.bootTimeout = 0;		//No countdown since it's the first boot since a flash update.
+															//Configure your device first.
 	}
 
-	if(fFirstBoot){
-		LEDFirstBoot(NULL);
-		LPCmodSettings.OSsettings.bootTimeout = 0;		//No countdown since it's the first boot since a flash update.
-	}													//Configure your device first.
-	else{
-		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+	BootLCDInit();		//Basic init. Do it even if no LCD is connected on the system.
+
+	//Stuff to do right after loading persistent settings from flash.
+	if(!fFirstBoot){										//No need to change fan speed on first boot.
 		I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+		assertInitLCD();						//Function in charge of checking if a init of LCD is needed.
+		//further init here.
 	}
+
 
 
 	// We disable The CPU Cache
@@ -154,8 +150,6 @@ extern void BootResetAction ( void ) {
 			&jpegBackdrop
 		);
 	}
-	// display solid red frontpanel LED while we start up
-	//setLED("rrrr");
 	// paint the backdrop
 #ifndef DEBUG_MODE
 	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
@@ -282,6 +276,24 @@ extern void BootResetAction ( void ) {
 	VIDEO_CURSOR_POSY=nTempCursorY;
 	VIDEO_CURSOR_POSX=0;
 	VIDEO_CURSOR_POSY=0;
+
+
+
+	//Load up some more custom settings right before booting to OS.
+	if(!fFirstBoot){
+		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+
+		if(LPCmodSettings.OSsettings.Quickboot){
+				//Test. If B button is held down during bootup, it will boot 256KB bank.
+				if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){
+					BootModBios();
+				}	//Same but A button for 512KB bank. Logic will be inverted once proven working.
+				else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){
+					BootModBios2();
+				}
+		}
+	}
+
 
 	BootIdeInit();
 

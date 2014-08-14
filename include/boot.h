@@ -358,7 +358,7 @@ typedef struct _OSsettings {
 	u8	bootTimeout;
 	u8	LEDColor;
 	u8	reserved1[14];
-	char	biosName0[20];		//512KB bank name. 20 caracters max to properly display on LCD.
+	char	biosName0[20];		//512KB bank name. 20 characters max to properly display on LCD.
 	char	biosName1[20];		//256KB bank name
 	char	biosName2[20];		//Reserved for future use.
 	char	biosName3[20];		//Reserved for future use.
@@ -379,8 +379,8 @@ typedef struct _LCDsettings {
 	u8 migrateLCD;				//Flag to indicate if settings in this struct should be carried over a OS update.
 	u8 enable5V;				//Flag to indicate if +5V rail should be enabled(for LCD power)
 	u8 lcdType;					//HD44780 only for now
-	u8 nbLines;
-	u8 lineLength;
+	u8 nbLines;					//User puts 4, meens 2 lines from HD44780 POV
+	u8 lineLength;				//Should be 16 or 20 most of the time.
 	u8 backlight;				//7-bit value
 	u8 contrast;				//7-bit value
 	u8 displayMsgBoot;			//Display text on LCD while booting
@@ -388,7 +388,7 @@ typedef struct _LCDsettings {
 	u8 displayBIOSNameBoot;		//Display BIOS name of active bank when booting
 	u8 reserved0[5];
 	char customString0[20];		//1 of 4 strings to be displayed either when in OS or while booting.
-	char customString1[20];		//20 caracters max to properly display on LCD.
+	char customString1[20];		//20 characters max to properly display on LCD.
 	char customString2[20];
 	char customString3[20];
 	u8 reserved1[161];
@@ -402,4 +402,33 @@ typedef struct _LPCmodSettings {
 
 
 _LPCmodSettings LPCmodSettings;
+
+
+
+typedef struct Disp_controller {
+	int DisplayType;
+	int enable;
+	int	LineSize;
+	int	TimingCMD;
+	int	TimingData;
+
+	u8	Line1Start;
+	u8	Line2Start;
+	u8	Line3Start;
+	u8	Line4Start;
+
+	void	(*Init)(struct Disp_controller *xLCD);
+	void	(*Command)(struct Disp_controller *xLCD, u8 value);
+	void	(*Data)(struct Disp_controller *xLCD, u8 value);
+
+	void	(*WriteIO)(struct Disp_controller *xLCD, u32 value);
+	void	(*Poll)(struct Disp_controller *xLCD);
+
+	void	(*PrintLine1)(struct Disp_controller *xLCD,char *text);
+	void	(*PrintLine2)(struct Disp_controller *xLCD,char *text);
+	void	(*PrintLine3)(struct Disp_controller *xLCD,char *text);
+	void	(*PrintLine4)(struct Disp_controller *xLCD,char *text);
+} _xLCD;	//Will be know as xLCD from now on.
+
+_xLCD *xLCD;
 #endif // _Boot_H_
