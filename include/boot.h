@@ -357,7 +357,12 @@ typedef struct _OSsettings {
 	u8	fanSpeed;				//Why not
 	u8	bootTimeout;
 	u8	LEDColor;
-	u8	reserved1[14];
+	u8	TSOPcontrol;			//variable contains the following settings: bit0=active?
+								//											bit1=Split4ways?
+								//											bit2=A19 value
+								//											bit3=A18 value
+								//Make sur to mask properly when using this variable.
+	u8	reserved1[13];
 	char	biosName0[20];		//512KB bank name. 20 characters max to properly display on LCD.
 	char	biosName1[20];		//256KB bank name
 	char	biosName2[20];		//Reserved for future use.
@@ -421,7 +426,7 @@ typedef struct Disp_controller {
 	void	(*Command)(struct Disp_controller *xLCD, u8 value);
 	void	(*Data)(struct Disp_controller *xLCD, u8 value);
 
-	void	(*WriteIO)(struct Disp_controller *xLCD, u32 value);
+	void	(*WriteIO)(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait);
 	void	(*Poll)(struct Disp_controller *xLCD);
 
 	void	(*PrintLine1)(struct Disp_controller *xLCD,char *text);
@@ -431,4 +436,20 @@ typedef struct Disp_controller {
 } _xLCD;	//Will be know as xLCD from now on.
 
 _xLCD *xLCD;
+
+//Xbox motherboard revision enum.
+typedef enum {
+	DEVKIT = 0x00,	//Includes a bunch of revisions
+	DEBUGKIT = 0x01,		//2 know version ID
+	REV1_0 = 0x02,		//1.0
+	REV1_1 = 0x03,		//1.1
+	REV1_2 = 0x04,		//1.2/1.3
+	REV1_4 = 0x05,		//1.4/1.5
+	REV1_6 = 0x06,		//1.6/1.6b
+	REVUNKNOWN = 0x07	//dafuk?
+} XBOX_REVISION;
+
+
+//Put here to make it global (yeah yeah... I don't care. There are far worst things done in the VHDL code of the modchip trust me!)
+u8 mbVersion;
 #endif // _Boot_H_

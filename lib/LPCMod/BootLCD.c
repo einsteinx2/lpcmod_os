@@ -58,24 +58,21 @@ void assertInitLCD(void){
 
 void WriteLCDInit(struct Disp_controller *xLCD){
 
+	//It's been at least 15ms since boot.
 	//Start of init, with delay
-	//xLCD->WriteIO(xLCD,(u32)0x1001F);
+	xLCD->WriteIO(xLCD,0x33,0,4100);		//Use a single call to write twice function set 0b0011 with 4.1ms delay
+	xLCD->WriteIO(xLCD,0x32,0,1500);		//Again a single call to write but this time write 0b0011 in first and 0b0010 in second
+											//Second write could be shorter but meh...
 
-	//Switch to 4-bit mode
-	WriteLCDIO_strobe(xLCD,DISPLAY_FUNCTION_SET | DISPLAY_DL_FLAG,0,4000);	//Arbitrary delay value.
-	WriteLCDIO_strobe(xLCD,DISPLAY_FUNCTION_SET | DISPLAY_DL_FLAG,0,1500);	//Could probably be shorter
-	WriteLCDIO_strobe(xLCD,DISPLAY_FUNCTION_SET | DISPLAY_DL_FLAG,0,1500);	//but meh..
+	//LCD is now in 4-bit mode.
 
-	//init display driver
-	WriteLCDIO_strobe(xLCD,DISPLAY_FUNCTION_SET,0,1500);
-
-	xLCD->Command(xLCD,DISP_FUNCTION_SET | DISP_N_FLAG | DISP_RE_FLAG);
-	xLCD->Command(xLCD,DISP_SEGRAM_SET);
-	xLCD->Command(xLCD,DISP_EXT_CONTROL | DISP_NW_FLAG);
+	xLCD->Command(xLCD,DISP_FUNCTION_SET | DISP_N_FLAG | DISP_RE_FLAG);	//2 lines and 5x10 dots character resolution.
+	xLCD->Command(xLCD,DISP_SEGRAM_SET);								//Set CGRAM address to 0x0
+	xLCD->Command(xLCD,DISP_CONTROL | DISP_NW_FLAG);				//Display OFF, Cursor OFF, Cursor blink ON.
 
 
 	xLCD->Command(xLCD,DISP_FUNCTION_SET | DISP_N_FLAG);	// Set interface length and 1 line
-	xLCD->Command(xLCD,DISP_CONTROL | DISP_D_FLAG);
+	xLCD->Command(xLCD,DISP_CONTROL | DISP_D_FLAG);			//Display ON.
 	xLCD->Command(xLCD,DISP_CLEAR);
 	xLCD->Command(xLCD,DISP_ENTRY_MODE_SET | DISP_ID_FLAG);
 
@@ -86,65 +83,51 @@ void WriteLCDInit(struct Disp_controller *xLCD){
 }
 
 void WriteLCDCommand(struct Disp_controller *xLCD, u8 value){
-	u8 temp = value & 0xf0;
-
-	//Send higher nibble
-	temp = temp >> 4;
-	WriteLCDIO_strobe(xLCD, temp, 0, xLCD->TimingCMD);
-
-	//Send lower nibble
-	temp = value&0x0f;
-	WriteLCDIO_strobe(xLCD,temp,0,xLCD->TimingCMD);
-
+	xLCD->WriteIO(xLCD, value, 0, xLCD->TimingCMD);		//RS=0 for commands.
 	return;
 }
 
 void WriteLCDData(struct Disp_controller *xLCD, u8 value){
-	u8 temp = value & 0xf0;
-	// Send higher nibble
-	temp = temp >>4;
-	WriteLCDIO_strobe(xLCD,temp, DISPLAY_RS, xLCD->TimingData);
-	// We send the Lower Bits
-	temp = value & 0x0f;
-	WriteLCDIO_strobe(xLCD,temp, DISPLAY_RS, xLCD->TimingData);
+	xLCD->WriteIO(xLCD,value, DISPLAY_RS, xLCD->TimingData);
 }
 
 void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait){
 	u8 lsbNibble = 0;
 	u8 msbNibble = 0;
-	
-	lsbNibble = ((value & 0x0f) << 3) | (RS << 1);	
-	msbNibble = ((value & 0xf0) >> 1) | (RS << 1);
-	
+													//data is b7,b6,b5,b4,b3,b2,b1,b0
+    lsbNibble = ((data & 0x0f) << 3) | (RS << 1);   //Maps         0,b3,b2,b1,b0,E,RS,0
+    msbNibble = ((data & 0xf0) >> 1) | (RS << 1);   //Maps         0,b7,b6,b5,b4,E,RS,0
+	                                                //data must be x,D7,D6,D5,D4,E,RS,x
+    												//E signal value is added below as it's the "clock"
 	//High nibble first
 	//Initially place the data
 	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
-	waitus(delay);	
+	wait_us(1);	//needs to be at least 40ns
 	
 	msbNibble |= DISPLAY_E;
 	//Raise E signal line
 	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
-	waitus(delay);
+	wait_us(1);	//needs to be at least 230ns
 	
 	msbNibble ^= DISPLAY_E;
 	//Drop E signal line
 	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
-	waitus(delay);
+	wait_us(wait);
 	
 	//Low nibble in second
 	//Initially place the data
 	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-	waitus(delay);	
+	wait_us(1);	//needs to be at least 40ns
 	
 	lsbNibble |= DISPLAY_E;
 	//Raise E signal line
 	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-	waitus(delay);
+	wait_us(1);	//needs to be at least 230ns
 	
 	lsbNibble ^= DISPLAY_E;
 	//Drop E signal line
 	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-	waitus(delay);
+	wait_us(wait);
 	
 	return;
 }

@@ -75,13 +75,67 @@ if(fHasHardware) {
 	iconPtr->functionDataPtr = NULL;
 	AddIcon(iconPtr);
 }
-	
+if(fHasHardware && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){	//TSOP control active
+	if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02) {	//Split 4-Way
+		iconPtr = (ICON *)malloc(sizeof(ICON));
+		iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+		iconPtr->szCaption = "Boot OnBoard Bank0";
+		iconPtr->functionPtr = BootOriginalBios;
+		iconPtr->functionDataPtr = malloc(sizeof(u8));
+				*(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS;	//send 0x05
+		AddIcon(iconPtr);
+
+		iconPtr = (ICON *)malloc(sizeof(ICON));
+		iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+		iconPtr->szCaption = "Boot OnBoard Bank1";
+		iconPtr->functionPtr = BootOriginalBios;
+		iconPtr->functionDataPtr = malloc(sizeof(u8));
+				*(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS | TSOP_256_SWITCH;	//send 0x15
+		AddIcon(iconPtr);
+
+		iconPtr = (ICON *)malloc(sizeof(ICON));
+		iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+		iconPtr->szCaption = "Boot OnBoard Bank2";
+		iconPtr->functionPtr = BootOriginalBios;
+		iconPtr->functionDataPtr = malloc(sizeof(u8));
+				*(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS | TSOP_512_SWITCH;	//send 0x0F
+		AddIcon(iconPtr);
+
+		iconPtr = (ICON *)malloc(sizeof(ICON));
+		iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+		iconPtr->szCaption = "Boot OnBoard Bank3";
+		iconPtr->functionPtr = BootOriginalBios;
+		iconPtr->functionDataPtr = malloc(sizeof(u8));
+				*(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS | TSOP_512_SWITCH | TSOP_256_SWITCH;	//send 0x1F
+		AddIcon(iconPtr);
+	}
+	else{										//Split 2-Way
+		iconPtr = (ICON *)malloc(sizeof(ICON));
+		iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+		iconPtr->szCaption = "Boot OnBoard Bank0";
+		iconPtr->functionPtr = BootOriginalBios;
+		iconPtr->functionDataPtr = malloc(sizeof(u8));
+				*(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL;	//send 0x03
+		AddIcon(iconPtr);
+
+		iconPtr = (ICON *)malloc(sizeof(ICON));
+		iconPtr->iconSlot = ICON_SOURCE_SLOT2;
+		iconPtr->szCaption = "Boot OnBoard Bank1";
+		iconPtr->functionPtr = BootOriginalBios;
+		iconPtr->functionDataPtr = malloc(sizeof(u8));
+				*(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_512_SWITCH;	//send 0x0B
+		AddIcon(iconPtr);
+	}
+}
+else {										//No split.
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT2;
 	iconPtr->szCaption = "Boot OnBoard BIOS";
 	iconPtr->functionPtr = BootOriginalBios;
-	iconPtr->functionDataPtr = NULL;
+	iconPtr->functionDataPtr = malloc(sizeof(u8));
+			*(u8*)iconPtr->functionDataPtr = TSOP_BOOT;	//send 0x01
 	AddIcon(iconPtr);
+}
 
 #ifdef ADVANCED_MENU
 	iconPtr = (ICON *)malloc(sizeof(ICON));

@@ -52,6 +52,20 @@ extern void BootResetAction ( void ) {
 	int n, nx;
 	OBJECT_FLASH of;
 	
+
+	//Length of array is set depending on how many revision can be uniquely identified.
+	//Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
+	char *xbox_mb_rev[8] = {
+		"DevKit",
+		"DebugKit",
+		"1.0",
+		"1.1",
+		"1.2/1.3",
+		"1.4/1.5",
+		"1.6/1.6b",
+		"Unknown"
+	};
+
 	memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
 	memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);
 	memcpy(&cromwell_loadbank,(void*)(0x03A00000+0x28),4);
@@ -94,6 +108,7 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.OSsettings.fanSpeed == 0xFF ||
 	   LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
 	   LPCmodSettings.OSsettings.LEDColor == 0xFF ||
+	   LPCmodSettings.OSsettings.TSOPcontrol == 0xFF ||
 	   LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
 	   LPCmodSettings.OSsettings.useDHCP == 0xFF ||
 	   LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
@@ -184,13 +199,16 @@ extern void BootResetAction ( void ) {
 	VIDEO_ATTR=0xff00ff00;
 	printk("           LPCMod OS");
 	VIDEO_ATTR=0xffc8c8c8;
-	printk(" THIS IS A WIP BUILD ");
+	printk(" THIS IS A WIP BUILD\n ");
 
 	if (xbox_ram > 64) {
 		VIDEO_ATTR=0xff00ff00;
 	} else {
 		VIDEO_ATTR=0xffffa20f;
 	}
+
+   mbVersion = I2CGetXboxMBRev();
+   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
    printk("RAM: %d", xbox_ram);
    printk("MiB\n");
    
@@ -297,7 +315,7 @@ extern void BootResetAction ( void ) {
 
 	BootIdeInit();
 
-	printk("\n\n\n\n\n");
+	printk("\n\n\n\n");
 
 	nTempCursorMbrX=VIDEO_CURSOR_POSX;
 	nTempCursorMbrY=VIDEO_CURSOR_POSY;

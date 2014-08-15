@@ -36,7 +36,7 @@ void BootFromEtherboot(void *);
 #endif
 
 // Booting Original Bios
-void BootOriginalBios(void *);
+void BootOriginalBios(void * data);
 
 // Booting 256k Modbios
 void BootModBios(void *);

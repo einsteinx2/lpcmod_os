@@ -74,3 +74,27 @@ void resetSettings(void *whatever){
 	initialLPCModOSBoot(&LPCmodSettings);
 	QuickReboot();
 }
+
+void toggleTSOPControl(void * itemPtr){
+	TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
+	if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){			//If already active
+		LPCmodSettings.OSsettings.TSOPcontrol &= 0xFE;	//Make sure to toggle only bit0.
+	}
+	else{
+		LPCmodSettings.OSsettings.TSOPcontrol |= 0x01;	//Make sure to toggle only bit0.
+	}
+	sprintf(tempItemPtr->szCaption,"Control Xbox TSOP : %s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01? "Yes" : "No");
+	sprintf(tempItemPtr->nextMenuItem->szCaption, "Xbox TSOP split : %s",
+		(LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?	((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
+}
+
+void toggleTSOPSplit(void * itemStr){
+	if((LPCmodSettings.OSsettings.TSOPcontrol & 0x02) || !(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){	//If TSOPControl bit1 is set or bit0 is not
+		LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;	//Make sure to toggle only bit1.
+	}
+	else {
+		LPCmodSettings.OSsettings.TSOPcontrol |= 0x02;	//Make sure to toggle only bit1.
+	}
+	sprintf(itemStr, "Xbox TSOP split : %s",
+			(LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?	((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
+}

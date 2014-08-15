@@ -13,8 +13,8 @@
 //bit3 = D5
 //bit4 = D6
 //bit5 = D7
-#define DISPLAY_E 		0x04
-#define DISPLAY_RS		0x02
+#define DISPLAY_E 		0x04		//Mapped for LPCMod output format.
+#define DISPLAY_RS		0x02		//Mapped for LPCMod output format.
 #define DISPLAY_FUNCTION_SET 	0x20
 #define DISPLAY_DL_FLAG 	0x10	//4 bit mode flag
 #define DISP_CLEAR		0x01
@@ -37,7 +37,6 @@
 #define DISP_DDRAM_SET		0x80
 #define DISP_RE_FLAG  0x04
 #define DISP_SEGRAM_SET  0x40
-#define DISP_EXT_CONTROL 0x08
 #define DISP_NW_FLAG  0x01
 
 void BootLCDInit(void);

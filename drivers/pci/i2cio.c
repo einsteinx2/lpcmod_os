@@ -233,3 +233,44 @@ void I2CSetFanSpeed(u8 speed){
 	WriteToSMBus(0x10,0x05,1,1);		//Activate manual fan speed control
 	WriteToSMBus(0x10,0x06,1,speed >> 1);	//Send new speed to PIC
 }
+
+
+//Return coded Xbox revision. Check enum in boot.h
+//Thanks XBMC team for the code.
+//TODO: switch case for cleaner look?
+u8 I2CGetXboxMBRev(void){
+	u8 result = REVUNKNOWN;
+	u8 temp;
+	char ver[3];
+	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[0]);
+	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[1]);
+	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[2]);
+
+	if ( !strcmp(ver,("01D")) || !strcmp(ver,("D01")) || !strcmp(ver,("1D0")) || !strcmp(ver,("0D1"))) {
+		result = DEVKIT;
+	}
+	else if (!strcmp(ver,("DBG")) || !strcmp(ver,("B11"))){
+		result = DEBUGKIT;
+	}
+	else if (!strcmp(ver,("P01"))){
+		result = REV1_0;
+	}
+	else if (!strcmp(ver,("P05"))){
+		result = REV1_1;
+	}
+	else if (!strcmp(ver,("P11")) || !strcmp(ver,("1P1")) || !strcmp(ver,("11P"))){
+		if(ReadfromSMBus(0x6A, 0x00, 0, (u32 *)&temp) == 0){
+			result = REV1_4;
+		}
+		else {
+			result = REV1_2;
+		}
+	}
+	else if (!strcmp(ver,("P2L"))){
+		result = REV1_6;
+	}
+	else {
+		result = REVUNKNOWN;
+	}
+	return result;
+}

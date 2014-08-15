@@ -14,6 +14,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->OSsettings.fanSpeed = DEFAULT_FANSPEED;
 	LPCmodSettings->OSsettings.bootTimeout = BOOT_TIMEWAIT;
 	LPCmodSettings->OSsettings.LEDColor = LED_GREEN;	//Set for next boot
+	LPCmodSettings->OSsettings.TSOPcontrol = 0;
 	LPCmodSettings->OSsettings.enableNetwork = 0;
 	LPCmodSettings->OSsettings.useDHCP = 0;
 	LPCmodSettings->OSsettings.biosName0[0] = 0;

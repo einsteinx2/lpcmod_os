@@ -8,6 +8,14 @@
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE	0x00
 
+//Bit to send on DISABLE_MOD "register" to control OnBoard TSOP.
+//Will only be used if Xboxr rev is 1.0 or 1.1.
+#define TSOP_BOOT		0x01
+#define TSOP_CONTROL	0x02
+#define TSOP_4_BANKS	0x04
+#define TSOP_512_SWITCH	0x08
+#define TSOP_256_SWITCH	0x10
+
 
 #define BNK_CONTROL	0xF710
 #define DISABLE_MOD	0xF711

@@ -32,7 +32,7 @@ void AdvancedMenu(void *textmenu) {
 void BootOriginalBios(void *data) {
 	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
-	WriteToIO(DISABLE_MOD, LPCMOD_TRUE);	// switch to original bios
+	WriteToIO(DISABLE_MOD, *(u8*)data);	// switch to original bios
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
 /*	#endif

@@ -54,7 +54,14 @@ TEXTMENU* BankSelectInit(void *bank) {
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "Flash menu");
+	if((*(char *)bank) == BNKOS)
+		strcpy(menuPtr->szCaption, "Flash menu : OS bank");
+	else if((*(char *)bank) == BNK256)
+		strcpy(menuPtr->szCaption, "Flash menu : 256KB bank");
+	else if((*(char *)bank) == BNK512)
+		strcpy(menuPtr->szCaption, "Flash menu : 512KB bank");
+	else
+		strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
 	switchBank(*(char *)bank);
 	
