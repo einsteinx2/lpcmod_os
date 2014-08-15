@@ -59,7 +59,7 @@ void assertInitLCD(void){
 void WriteLCDInit(struct Disp_controller *xLCD){
 
 	//Start of init, with delay
-	xLCD->WriteIO(xLCD,(u32)0x1001F);
+	//xLCD->WriteIO(xLCD,(u32)0x1001F);
 
 	//Switch to 4-bit mode
 	WriteLCDIO_strobe(xLCD,DISPLAY_FUNCTION_SET | DISPLAY_DL_FLAG,0,4000);	//Arbitrary delay value.
@@ -109,12 +109,43 @@ void WriteLCDData(struct Disp_controller *xLCD, u8 value){
 	WriteLCDIO_strobe(xLCD,temp, DISPLAY_RS, xLCD->TimingData);
 }
 
-void WriteLCDIO(struct Disp_controller *xLCD, u32 value){
-	u8 temp = value & 0xff;	//Just to be sure
-	temp = WriteLCDNibbleGen(temp);
-
-	WriteToIO(LCD_DATA, temp);
-	wait_us(value>>16);
+void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait){
+	u8 lsbNibble = 0;
+	u8 msbNibble = 0;
+	
+	lsbNibble = ((value & 0x0f) << 3) | (RS << 1);	
+	msbNibble = ((value & 0xf0) >> 1) | (RS << 1);
+	
+	//High nibble first
+	//Initially place the data
+	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
+	waitus(delay);	
+	
+	msbNibble |= DISPLAY_E;
+	//Raise E signal line
+	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
+	waitus(delay);
+	
+	msbNibble ^= DISPLAY_E;
+	//Drop E signal line
+	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
+	waitus(delay);
+	
+	//Low nibble in second
+	//Initially place the data
+	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
+	waitus(delay);	
+	
+	lsbNibble |= DISPLAY_E;
+	//Raise E signal line
+	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
+	waitus(delay);
+	
+	lsbNibble ^= DISPLAY_E;
+	//Drop E signal line
+	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
+	waitus(delay);
+	
 	return;
 }
 
@@ -207,13 +238,13 @@ u8 WriteLCDNibbleGen(u8 value){
 
 
 void WriteLCDIO_strobe(struct Disp_controller *xLCD, u8 data, u8 flag, u32 waitTime){
-	xLCD->WriteIO(xLCD, ((waitTime << 16) | (flag << 8) | data));
+	//xLCD->WriteIO(xLCD, ((waitTime << 16) | (flag << 8) | data));
 
-	flag |= LCDEnable;
-	xLCD->WriteIO(xLCD, ((waitTime << 16) | (flag << 8) | data));
+	flag |= DISPLAY_E;
+	//xLCD->WriteIO(xLCD, ((waitTime << 16) | (flag << 8) | data));
 
-	flag ^= LCDEnable;
-	xLCD->WriteIO(xLCD, ((waitTime << 16) | (flag << 8) | data));
+	flag ^= DISPLAY_E;		//Drop E signal line low
+	//xLCD->WriteIO(xLCD, ((waitTime << 16) | (flag << 8) | data));
 }
 
 void WriteLCDTrimString(char * StringOut, char * stringIn){

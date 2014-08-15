@@ -7,10 +7,16 @@
 #define _BootLCD_H_
 
 //Various predefined values to write to LCD to init.
-#define LCDEnable 		0x04
-#define DISPLAY_RS	0x2
-#define DISPLAY_FUNCTION_SET 0x2
-#define DISPLAY_DL_FLAG 0x1
+//bit0 = RS
+//bit1 = E
+//bit2 = D4
+//bit3 = D5
+//bit4 = D6
+//bit5 = D7
+#define DISPLAY_E 		0x04
+#define DISPLAY_RS		0x02
+#define DISPLAY_FUNCTION_SET 	0x20
+#define DISPLAY_DL_FLAG 	0x10	//4 bit mode flag
 #define DISP_CLEAR		0x01
 #define DISP_HOME		0x02
 #define DISP_ENTRY_MODE_SET	0x04
@@ -45,7 +51,7 @@ void assertInitLCD(void);
 void WriteLCDInit(struct Disp_controller *xLCD);
 void WriteLCDCommand(struct Disp_controller *xLCD, u8 value);
 void WriteLCDData(struct Disp_controller *xLCD, u8 value);
-void WriteLCDIO(struct Disp_controller *xLCD, u32 value);
+void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait);
 void WriteLCDPoll(struct Disp_controller *xLCD);
 void WriteLCDLine1(struct Disp_controller *xLCD, char *lineText);
 void WriteLCDLine2(struct Disp_controller *xLCD, char *lineText);

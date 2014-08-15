@@ -34,14 +34,14 @@ void LCDDecrementBacklight(void * itemStr){
 void LCDIncrementContrast(void * itemStr){
 	if(LPCmodSettings.LCDsettings.contrast < 99)
 		LPCmodSettings.LCDsettings.contrast += 1;
-	sprintf(itemStr, "Backlight : %d%%", LPCmodSettings.LCDsettings.contrast);
+	sprintf(itemStr, "Contrast : %d%%", LPCmodSettings.LCDsettings.contrast);
 	setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 }
 
 void LCDDecrementContrast(void * itemStr){
 	if(LPCmodSettings.LCDsettings.contrast > 0)
 		LPCmodSettings.LCDsettings.contrast -= 1;
-	sprintf(itemStr, "Backlight : %d%%", LPCmodSettings.LCDsettings.contrast);
+	sprintf(itemStr, "Contrast : %d%%", LPCmodSettings.LCDsettings.contrast);
 	setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 }
 
