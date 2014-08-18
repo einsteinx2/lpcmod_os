@@ -45,6 +45,12 @@ typedef enum {
 	EURO_AUSTRALIA = 0x04
 } XBE_REGION;
 
+typedef enum {
+	FULLSCREEN = 0x00,
+	WIDESCREEN = 0x01,
+	LETTERBOX = 0x10
+} VID_FORMAT;
+
 
 //Structure that holds contents of 256 byte EEPROM image..
 typedef struct _EEPROMDATA {
@@ -113,5 +119,5 @@ void EepromSetWidescreen(int enable);
 void assertWriteEEPROM(void);
 void changeDVDRegion(u8 value);
 int getGameRegionValue(void);
-void setGameRegionValue(u8 value);
+int setGameRegionValue(u8 value);
 #endif // _BootEEPROM_H_

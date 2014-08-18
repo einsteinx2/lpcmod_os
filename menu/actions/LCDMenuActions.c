@@ -18,31 +18,35 @@ void LCDToggleEN5V(void * itemStr){
 }
 
 void LCDIncrementBacklight(void * itemStr){
-	if(LPCmodSettings.LCDsettings.backlight < 99)
+	if(LPCmodSettings.LCDsettings.backlight < 100)
 		LPCmodSettings.LCDsettings.backlight += 1;
 	sprintf(itemStr, "Backlight : %d%%", LPCmodSettings.LCDsettings.backlight);
-	setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
+	if(LPCmodSettings.LCDsettings.enable5V)
+		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 }
 
 void LCDDecrementBacklight(void * itemStr){
 	if(LPCmodSettings.LCDsettings.backlight > 0)
 		LPCmodSettings.LCDsettings.backlight -= 1;
 	sprintf(itemStr, "Backlight : %d%%", LPCmodSettings.LCDsettings.backlight);
-	setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
+	if(LPCmodSettings.LCDsettings.enable5V)
+		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 }
 
 void LCDIncrementContrast(void * itemStr){
-	if(LPCmodSettings.LCDsettings.contrast < 99)
+	if(LPCmodSettings.LCDsettings.contrast < 100)
 		LPCmodSettings.LCDsettings.contrast += 1;
 	sprintf(itemStr, "Contrast : %d%%", LPCmodSettings.LCDsettings.contrast);
-	setLCDContrast(LPCmodSettings.LCDsettings.contrast);
+	if(LPCmodSettings.LCDsettings.enable5V)
+		setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 }
 
 void LCDDecrementContrast(void * itemStr){
 	if(LPCmodSettings.LCDsettings.contrast > 0)
 		LPCmodSettings.LCDsettings.contrast -= 1;
 	sprintf(itemStr, "Contrast : %d%%", LPCmodSettings.LCDsettings.contrast);
-	setLCDContrast(LPCmodSettings.LCDsettings.contrast);
+	if(LPCmodSettings.LCDsettings.enable5V)
+		setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 }
 
 void LCDToggleDisplayBootMsg(void * itemStr){

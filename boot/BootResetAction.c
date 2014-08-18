@@ -97,6 +97,8 @@ extern void BootResetAction ( void ) {
 		fHasHardware = true;
 	}
 	if(fHasHardware){		//Don't try to read from flash if none is detected
+		//Make sure we'll be reading from OS Bank
+		switchBank(BNKOS);
 		//Retreive LPCMod OS settings from flash
 		BootFlashGetOSSettings(&LPCmodSettings);
 	}
@@ -208,7 +210,7 @@ extern void BootResetAction ( void ) {
 	}
 
    mbVersion = I2CGetXboxMBRev();
-   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
+   printk("          Xbox revision: %s ", xbox_mb_rev[mbVersion]);
    printk("RAM: %d", xbox_ram);
    printk("MiB\n");
    
@@ -300,16 +302,6 @@ extern void BootResetAction ( void ) {
 	//Load up some more custom settings right before booting to OS.
 	if(!fFirstBoot){
 		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
-
-		if(LPCmodSettings.OSsettings.Quickboot){
-				//Test. If B button is held down during bootup, it will boot 256KB bank.
-				if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){
-					BootModBios();
-				}	//Same but A button for 512KB bank. Logic will be inverted once proven working.
-				else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){
-					BootModBios2();
-				}
-		}
 	}
 
 

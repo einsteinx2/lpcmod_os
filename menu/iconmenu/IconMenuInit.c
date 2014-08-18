@@ -64,15 +64,17 @@ if(fHasHardware) {
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT4;
 	iconPtr->szCaption = "Boot 512KB bank";
-	iconPtr->functionPtr = BootModBios2;
-	iconPtr->functionDataPtr = NULL;
+	iconPtr->functionPtr = BootModBios;
+	iconPtr->functionDataPtr = malloc(sizeof(u8));
+		*(u8*)iconPtr->functionDataPtr = BNK512;
 	AddIcon(iconPtr);
 	
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT3;
 	iconPtr->szCaption = "Boot 256KB bank";
 	iconPtr->functionPtr = BootModBios;
-	iconPtr->functionDataPtr = NULL;
+	iconPtr->functionDataPtr = malloc(sizeof(u8));
+		*(u8*)iconPtr->functionDataPtr = BNK256;
 	AddIcon(iconPtr);
 }
 if(fHasHardware && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){	//TSOP control active

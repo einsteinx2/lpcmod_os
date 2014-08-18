@@ -36,6 +36,28 @@ TEXTMENU *SystemMenuInit(void) {
 		"n/a",
 		"PAL"
 	};
+	char *VideoFormattext[17] = {
+		"Full screen",
+		"Widescreen",
+		//not used
+		"0x02",
+		"0x03",
+		"0x04",
+		"0x05",
+		"0x06",
+		"0x07",
+		"0x08",
+		"0x09",
+		"0x0A",
+		"0x0B",
+		"0x0C",
+		"0x0D",
+		"0x0E",
+		"0x0F",
+		//just easier to manage that way.
+		"Letterbox"
+	};
+	
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
@@ -72,9 +94,13 @@ TEXTMENU *SystemMenuInit(void) {
 	//VIDEO FORMAT SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption, "Video format");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr = NULL;
+	sprintf(itemPtr->szCaption, "Video format : %s", VideoFormattext[eeprom.VideoFlags[2]]);
+	itemPtr->functionPtr= incrementVideoformat;
+	itemPtr->functionDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftPtr=decrementVideoformat;
+	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightPtr=incrementVideoformat;
+	itemPtr->functionRightDataPtr = itemPtr->szCaption;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//DVD REGION SETTINGS MENU

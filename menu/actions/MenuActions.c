@@ -48,23 +48,7 @@ void BootOriginalBios(void *data) {
 void BootModBios(void *data) {
 	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
-	switchBank(BNK256);	// switch to 256k user bank
-//	#ifndef NOANI_MENU
-	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-/*	#endif
-	#ifdef NOANI_MENU
-	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
-	#endif
-*/
-	I2CRebootQuick();
-	while(1);
-}
-
-// Booting 512k Modbios
-void BootModBios2(void *data) {
-	BootFlashSaveOSSettings();
-	assertWriteEEPROM();
-	switchBank(BNK512);	// switch to 512k user bank
+	switchBank(*(u8*)data);	// switch to 256k user bank
 //	#ifndef NOANI_MENU
 	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
 /*	#endif

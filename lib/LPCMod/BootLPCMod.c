@@ -31,8 +31,8 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 	LPCmodSettings->LCDsettings.lcdType = 0;
 	LPCmodSettings->LCDsettings.nbLines = HDD4780_DEFAULT_NBLINES;
 	LPCmodSettings->LCDsettings.lineLength = HDD4780_DEFAULT_LINELGTH;
-	LPCmodSettings->LCDsettings.backlight = 0;
-	LPCmodSettings->LCDsettings.contrast = 0;
+	LPCmodSettings->LCDsettings.backlight = 50;
+	LPCmodSettings->LCDsettings.contrast = 40;
 	LPCmodSettings->LCDsettings.displayMsgBoot = 0;
 	LPCmodSettings->LCDsettings.customTextBoot = 0;
 	LPCmodSettings->LCDsettings.displayBIOSNameBoot = 0;

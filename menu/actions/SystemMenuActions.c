@@ -34,13 +34,13 @@ void incrementGameRegion(void * itemStr){
 	int gameRegion = getGameRegionValue();
 	switch(gameRegion){
 		case NORTH_AMERICA:
-			setGameRegionValue(JAPAN);
+			gameRegion = setGameRegionValue(JAPAN);
 			break;
 		case JAPAN:
-			setGameRegionValue(EURO_AUSTRALIA);
+			gameRegion = setGameRegionValue(EURO_AUSTRALIA);
 			break;
 		case EURO_AUSTRALIA:
-			setGameRegionValue(NORTH_AMERICA);
+			gameRegion = setGameRegionValue(NORTH_AMERICA);
 			break;
 		default:
 			break;
@@ -59,13 +59,13 @@ void decrementGameRegion(void * itemStr){
 	int gameRegion = getGameRegionValue();
 	switch(gameRegion){
 		case NORTH_AMERICA:
-			setGameRegionValue(EURO_AUSTRALIA);
+			gameRegion = setGameRegionValue(EURO_AUSTRALIA);
 			break;
 		case JAPAN:
-			setGameRegionValue(NORTH_AMERICA);
+			gameRegion = setGameRegionValue(NORTH_AMERICA);
 			break;
 		case EURO_AUSTRALIA:
-			setGameRegionValue(JAPAN);
+			gameRegion = setGameRegionValue(JAPAN);
 			break;
 		}
 	sprintf(itemStr, "Game region : %s",Gameregiontext[gameRegion]);
@@ -106,5 +106,85 @@ void decrementDVDRegion(void * itemStr){
 	if(eeprom.DVDPlaybackKitZone[0]  > 0)
 		eeprom.DVDPlaybackKitZone[0] -= 1;
 	sprintf(itemStr, "DVD region : %s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
+}
+
+void incrementVideoformat(void * itemStr){
+	char *VideoFormattext[17] = {
+		"Full screen",
+		"Widescreen",
+		//not used
+		"0x02",
+		"0x03",
+		"0x04",
+		"0x05",
+		"0x06",
+		"0x07",
+		"0x08",
+		"0x09",
+		"0x0A",
+		"0x0B",
+		"0x0C",
+		"0x0D",
+		"0x0E",
+		"0x0F",
+		//just easier to manage that way.
+		"Letterbox"
+	};
+	switch(eeprom.VideoFlags[2]) {
+		case FULLSCREEN:
+			eeprom.VideoFlags[2] = WIDESCREEN;
+			break;
+		case WIDESCREEN:
+			eeprom.VideoFlags[2] = LETTERBOX;
+			break;
+		case LETTERBOX:
+			eeprom.VideoFlags[2] = FULLSCREEN;
+			break;
+		default:
+		eeprom.VideoFlags[2] = FULLSCREEN;
+			break;
+	}
+	sprintf(itemStr, "Video format : %s", VideoFormattext[eeprom.VideoFlags[2]]);
+	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
+}
+
+void decrementVideoformat(void * itemStr){
+	char *VideoFormattext[17] = {
+		"Full screen",
+		"Widescreen",
+		//not used
+		"0x02",
+		"0x03",
+		"0x04",
+		"0x05",
+		"0x06",
+		"0x07",
+		"0x08",
+		"0x09",
+		"0x0A",
+		"0x0B",
+		"0x0C",
+		"0x0D",
+		"0x0E",
+		"0x0F",
+		//just easier to manage that way.
+		"Letterbox"
+	};
+	switch(eeprom.VideoFlags[2]) {
+		case FULLSCREEN:
+			eeprom.VideoFlags[2] = LETTERBOX;
+			break;
+		case WIDESCREEN:
+			eeprom.VideoFlags[2] = FULLSCREEN;
+			break;
+		case LETTERBOX:
+			eeprom.VideoFlags[2] = WIDESCREEN;
+			break;
+		default:
+		eeprom.VideoFlags[2] = FULLSCREEN;
+			break;
+	}
+	sprintf(itemStr, "Video format : %s", VideoFormattext[eeprom.VideoFlags[2]]);
 	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }

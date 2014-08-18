@@ -119,6 +119,11 @@ void EepromSetWidescreen(int enable) {
 	//Changing this setting requires that Checksum3 
 	//be recalculated.
 	
+	//Possible values are:
+	//0x00 : Full Screen
+	//0x01 : Widescreen
+	//0x10 : LetterBox
+	
 	//unsigned char sum[4];
 	if (enable) {
 		//Enable WS
@@ -231,7 +236,7 @@ int getGameRegionValue(void){
 	return result;
 }
 
-void setGameRegionValue(u8 value){
+int setGameRegionValue(u8 value){
 	int result = -1;
 	u8 baKeyHash[20];
 	u8 baDataHashConfirm[20];
@@ -287,5 +292,8 @@ void setGameRegionValue(u8 value){
 
 	// Save back to EEprom
 	memcpy(&eeprom,&baEepromDataLocalCopy[0], 0x30);
+	
+	//Everything went well, return new gameRegion.
+	return gameRegion;
 
 }
