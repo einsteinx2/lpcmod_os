@@ -15,23 +15,25 @@ TEXTMENU *LCDMenuInit(void) {
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Enable LCD : %s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
+	strcpy(itemPtr->szCaption,"Enable LCD : ");
+	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
 	itemPtr->functionPtr= LCDToggleEN5V;
-	itemPtr->functionDataPtr= itemPtr->szCaption;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
 	itemPtr->functionLeftPtr=LCDToggleEN5V;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=LCDToggleEN5V;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption,"LCD type : ");
 	switch(LPCmodSettings.LCDsettings.lcdType) {
 		case HD44780 :
-			sprintf(itemPtr->szCaption,"LCD type : HD44780");
+			strcpy(itemPtr->szParameter,"HD44780");
 			break;
 		default:
-			sprintf(itemPtr->szCaption,"LCD type : Unknown");
+			strcpy(itemPtr->szParameter,"Unknown");
 			break;
 	}
 	itemPtr->functionPtr= NULL;
@@ -40,47 +42,52 @@ TEXTMENU *LCDMenuInit(void) {
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Backlight : %d%%", LPCmodSettings.LCDsettings.backlight);
+	strcpy(itemPtr->szCaption,"Backlight : ");
+	sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.LCDsettings.backlight);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	itemPtr->functionLeftPtr=LCDDecrementBacklight;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=LCDIncrementBacklight;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Contrast: %d%%", LPCmodSettings.LCDsettings.contrast);
+	strcpy(itemPtr->szCaption,"Contrast : ");
+	sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.LCDsettings.contrast);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	itemPtr->functionLeftPtr=LCDDecrementContrast;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=LCDIncrementContrast;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Display message at boot : %s", LPCmodSettings.LCDsettings.displayMsgBoot? "Yes" : "No");
+	strcpy(itemPtr->szCaption,"Display message at boot : ");
+	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.displayMsgBoot? "Yes" : "No");
 	itemPtr->functionPtr= LCDToggleDisplayBootMsg;
-	itemPtr->functionDataPtr= itemPtr->szCaption;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
 	itemPtr->functionLeftPtr=LCDToggleDisplayBootMsg;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=LCDToggleDisplayBootMsg;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Display booting BIOS name : %s", LPCmodSettings.LCDsettings.displayBIOSNameBoot? "Yes" : "No");
+	strcpy(itemPtr->szCaption,"Display booting BIOS name : ");
+	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.displayBIOSNameBoot? "Yes" : "No");
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Display custom text at boot : %s", LPCmodSettings.LCDsettings.customTextBoot? "Yes" : "No");
+	sprintf(itemPtr->szCaption,"Display custom text at boot : ");
+	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.customTextBoot? "Yes" : "No");
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	TextMenuAddItem(menuPtr, itemPtr);

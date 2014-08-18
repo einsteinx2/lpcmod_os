@@ -24,6 +24,10 @@ TEXTMENU *TextMenuInit(void) {
 	strcpy(menuPtr->szCaption, "LPCMod v1 configuration menu");
 	menuPtr->firstMenuItem=NULL;
 
+	//No entry in this menu will have a configurable parameter.
+	//Set first character to NULL to indicate no string is to be shown.
+	itemPtr->szParameter[0]=0;
+
 	if(LPCMod_HW_rev() == SYSCON_ID)
 		fHasHardware = true;
 	

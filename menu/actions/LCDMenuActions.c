@@ -13,14 +13,14 @@
 
 void LCDToggleEN5V(void * itemStr){
 	LPCmodSettings.LCDsettings.enable5V = LPCmodSettings.LCDsettings.enable5V? 0 : 1;
-	sprintf(itemStr,"Enable LCD : %s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
+	sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.enable5V? "Yes" : "No");
 	assertInitLCD();
 }
 
 void LCDIncrementBacklight(void * itemStr){
 	if(LPCmodSettings.LCDsettings.backlight < 100)
 		LPCmodSettings.LCDsettings.backlight += 1;
-	sprintf(itemStr, "Backlight : %d%%", LPCmodSettings.LCDsettings.backlight);
+	sprintf(itemStr, "%d%%", LPCmodSettings.LCDsettings.backlight);
 	if(LPCmodSettings.LCDsettings.enable5V)
 		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 }
@@ -28,7 +28,7 @@ void LCDIncrementBacklight(void * itemStr){
 void LCDDecrementBacklight(void * itemStr){
 	if(LPCmodSettings.LCDsettings.backlight > 0)
 		LPCmodSettings.LCDsettings.backlight -= 1;
-	sprintf(itemStr, "Backlight : %d%%", LPCmodSettings.LCDsettings.backlight);
+	sprintf(itemStr, "%d%%", LPCmodSettings.LCDsettings.backlight);
 	if(LPCmodSettings.LCDsettings.enable5V)
 		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 }
@@ -36,7 +36,7 @@ void LCDDecrementBacklight(void * itemStr){
 void LCDIncrementContrast(void * itemStr){
 	if(LPCmodSettings.LCDsettings.contrast < 100)
 		LPCmodSettings.LCDsettings.contrast += 1;
-	sprintf(itemStr, "Contrast : %d%%", LPCmodSettings.LCDsettings.contrast);
+	sprintf(itemStr, "%d%%", LPCmodSettings.LCDsettings.contrast);
 	if(LPCmodSettings.LCDsettings.enable5V)
 		setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 }
@@ -44,17 +44,17 @@ void LCDIncrementContrast(void * itemStr){
 void LCDDecrementContrast(void * itemStr){
 	if(LPCmodSettings.LCDsettings.contrast > 0)
 		LPCmodSettings.LCDsettings.contrast -= 1;
-	sprintf(itemStr, "Contrast : %d%%", LPCmodSettings.LCDsettings.contrast);
+	sprintf(itemStr, "%d%%", LPCmodSettings.LCDsettings.contrast);
 	if(LPCmodSettings.LCDsettings.enable5V)
 		setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 }
 
 void LCDToggleDisplayBootMsg(void * itemStr){
 	LPCmodSettings.LCDsettings.displayMsgBoot? 0 : 1;
-	sprintf(itemStr,"Display message at boot : %s", LPCmodSettings.LCDsettings.displayMsgBoot? "Yes" : "No");
+	sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.displayMsgBoot? "Yes" : "No");
 }
 
 void LCDToggledisplayBIOSNameBoot(void * itemStr){
 	LPCmodSettings.LCDsettings.displayBIOSNameBoot? 0 : 1;
-	sprintf(itemStr,"Display booting BIOS name : %s", LPCmodSettings.LCDsettings.displayBIOSNameBoot? "Yes" : "No");
+	sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.displayBIOSNameBoot? "Yes" : "No");
 }

@@ -21,6 +21,10 @@ TEXTMENU *CDMenuInit(void) {
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
 	strcpy(menuPtr->szCaption, "CD Menu");
 
+	//No entry in this menu will have a configurable parameter.
+	//Set first character to NULL to indicate no string is to be shown.
+	itemPtr->szParameter[0]=0;
+
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Eject CD");

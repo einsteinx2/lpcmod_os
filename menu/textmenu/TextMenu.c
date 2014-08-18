@@ -8,6 +8,7 @@
  ***************************************************************************/
 
 #include "TextMenu.h"
+#include "lib/LPCMod/BootLCD.h"
 int breakOutOfMenu=0;
 u32 temp, oldTemp; 
 int timeRemain = 0;
@@ -38,6 +39,7 @@ void TextMenuAddItem(TEXTMENU *menu, TEXTMENUITEM *newMenuItem) {
 void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUITEM *selectedItem) {
 	TEXTMENUITEM *item=NULL;
 	int menucount;
+	int i;
 	
 	VIDEO_CURSOR_POSX=75;
 	VIDEO_CURSOR_POSY=125;
@@ -95,8 +97,43 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 		if (item == selectedItem) VIDEO_ATTR=0xffef37;
 		else VIDEO_ATTR=0xffffff;
 		//Font size 2=big.
-		printk("\n\2               %s\n",item->szCaption);
+		printk("\n\2               %s",item->szCaption);
+		if(item->szParameter[0] != 0)
+			printk("%s\n", item->szParameter);
+		else
+			printk("\n");
 		item=item->nextMenuItem;
+		//LCD string print.
+		if(xLCD->enable){
+			bool colon=false;
+			char titleLine[xLCD->LineSize + 1];
+			titleLine[xLCD->LineSize] = 0;					//End of line character.
+			memset(titleLine,0x20,xLCD->LineSize);			//Fill with "Space" characters.
+			for(i = 0; i < strlen(item->szCaption); i++){
+
+					if(item->szCaption[i] != ':'){
+						if( i < xLCD->LineSize)
+							titleLine[i] = item->szCaption[i];					//Copy characters as long as we're under 20 characters or no ':' was encountered.
+					}
+					else{
+						if( i < xLCD->LineSize)
+							titleLine[i] = item->szCaption[i];					//Print out the ':' character anyway.
+						colon = true;
+						break;												//Leave the for-loop as no other character will be printed on this line.
+					}
+			}
+			xLCD->PrintLine3(xLCD, JUSTIFYLEFT, titleLine);
+			if(colon) {
+				memset(titleLine,0x20,xLCD->LineSize);			//Fill with "Space" characters.
+				u8 nbChars = strlen(item->szParameter);			//Number of character in string
+				for (i = 0; i < nbChars; i++){					//Justify text to the right of the screen.
+					titleLine[xLCD->LineSize - nbChars + i] = item->szParameter[i];
+				}
+				xLCD->PrintLine4(xLCD, JUSTIFYLEFT, titleLine);
+				colon = false;
+			}
+
+		}
 	}
 	VIDEO_ATTR=0xffffff;
 }

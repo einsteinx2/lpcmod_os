@@ -10,16 +10,16 @@
 #include "boot.h"
 
 void incrementFanSpeed(void * itemStr){
-	if(LPCmodSettings.OSsettings.fanSpeed < 98)	//Logic
+	if(LPCmodSettings.OSsettings.fanSpeed < 99)	//Logic
 		LPCmodSettings.OSsettings.fanSpeed += 2;	//Actual value range of PIC is from 0 to 50 which maps to 0 to 100 here.
-	sprintf(itemStr, "Fan speed : %d%%", LPCmodSettings.OSsettings.fanSpeed);
+	sprintf(itemStr, "%d%%", LPCmodSettings.OSsettings.fanSpeed);
 	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);	//Send new speed to PIC
 }
 
 void decrementFanSpeed(void * itemStr){
-	if(LPCmodSettings.OSsettings.fanSpeed > 12)	//For now, I won't allow anyone to set their fan below 10% speed. Come on...
+	if(LPCmodSettings.OSsettings.fanSpeed > 11)	//For now, I won't allow anyone to set their fan below 10% speed. Come on...
 		LPCmodSettings.OSsettings.fanSpeed -= 2;
-	sprintf(itemStr, "Fan speed : %d%%", LPCmodSettings.OSsettings.fanSpeed);
+	sprintf(itemStr, "%d%%", LPCmodSettings.OSsettings.fanSpeed);
 	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);	//Send new speed to PIC
 }
 
@@ -45,7 +45,7 @@ void incrementGameRegion(void * itemStr){
 		default:
 			break;
 		}
-	sprintf(itemStr, "Game region : %s",Gameregiontext[gameRegion]);
+	sprintf(itemStr, "%s",Gameregiontext[gameRegion]);
 }
 
 void decrementGameRegion(void * itemStr){
@@ -68,7 +68,7 @@ void decrementGameRegion(void * itemStr){
 			gameRegion = setGameRegionValue(JAPAN);
 			break;
 		}
-	sprintf(itemStr, "Game region : %s",Gameregiontext[gameRegion]);
+	sprintf(itemStr, "%s",Gameregiontext[gameRegion]);
 }
 
 void incrementDVDRegion(void * itemStr){
@@ -86,7 +86,7 @@ void incrementDVDRegion(void * itemStr){
 	};
 	if(eeprom.DVDPlaybackKitZone[0] < 8)
 		eeprom.DVDPlaybackKitZone[0] += 1;
-	sprintf(itemStr, "DVD region : %s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+	sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
 	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
 
@@ -105,7 +105,7 @@ void decrementDVDRegion(void * itemStr){
 	};
 	if(eeprom.DVDPlaybackKitZone[0]  > 0)
 		eeprom.DVDPlaybackKitZone[0] -= 1;
-	sprintf(itemStr, "DVD region : %s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+	sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
 	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
 
@@ -145,7 +145,7 @@ void incrementVideoformat(void * itemStr){
 		eeprom.VideoFlags[2] = FULLSCREEN;
 			break;
 	}
-	sprintf(itemStr, "Video format : %s", VideoFormattext[eeprom.VideoFlags[2]]);
+	sprintf(itemStr, "%s", VideoFormattext[eeprom.VideoFlags[2]]);
 	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
 
@@ -185,6 +185,6 @@ void decrementVideoformat(void * itemStr){
 		eeprom.VideoFlags[2] = FULLSCREEN;
 			break;
 	}
-	sprintf(itemStr, "Video format : %s", VideoFormattext[eeprom.VideoFlags[2]]);
+	sprintf(itemStr, "%s", VideoFormattext[eeprom.VideoFlags[2]]);
 	EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }

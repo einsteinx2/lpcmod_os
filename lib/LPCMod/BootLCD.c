@@ -24,6 +24,7 @@ void BootLCDInit(void){
 	xLCD->PrintLine2 = WriteLCDLine2;
 	xLCD->PrintLine3 = WriteLCDLine3;
 	xLCD->PrintLine4 = WriteLCDLine4;
+	xLCD->ClearLine = WriteLCDClearLine;
 }
 
 void toggleEN5V(u8 value){
@@ -54,10 +55,10 @@ void assertInitLCD(void){
 		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 		xLCD->Init(xLCD);
 		xLCD->LineSize = LPCmodSettings.LCDsettings.lineLength;
-		xLCD->PrintLine1(xLCD, "LPCMod V1");				//Remove or change after proven working.
-		xLCD->PrintLine2(xLCD, "Yay LCD!");
-		xLCD->PrintLine3(xLCD, "OS dev is going well");
-		xLCD->PrintLine4(xLCD, "-bennydiamond");
+		xLCD->PrintLine1(xLCD, CENTERSTRING, "LPCMod V1");				//Remove or change after proven working.
+		xLCD->PrintLine2(xLCD, CENTERSTRING, "Yay LCD!");
+		xLCD->PrintLine3(xLCD, CENTERSTRING, "OS dev is going well");
+		xLCD->PrintLine4(xLCD, CENTERSTRING, "-bennydiamond");
 	}
 	if(LPCmodSettings.LCDsettings.enable5V == 0) {
 		xLCD->enable = 0;		//Whatever happens, this statement will be valid.
@@ -142,12 +143,17 @@ void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait){
 	return;
 }
 
-void WriteLCDLine1(struct Disp_controller *xLCD, char *lineText){
+void WriteLCDLine1(struct Disp_controller *xLCD, bool centered, char *lineText){
 	int i;
 	char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];	//For the escape character at the end.
 
-	//Play with the string to center it on the LCD unit.
-	WriteLCDTrimString(LineBuffer, lineText);
+	if(centered){
+		//Play with the string to center it on the LCD unit.
+		WriteLCDCenterString(LineBuffer, lineText);
+	}
+	else
+		WriteLCDFitString(LineBuffer, lineText);
+
 
 
 	//Place cursor
@@ -159,12 +165,16 @@ void WriteLCDLine1(struct Disp_controller *xLCD, char *lineText){
 	}
 }
 
-void WriteLCDLine2(struct Disp_controller *xLCD, char *lineText){
+void WriteLCDLine2(struct Disp_controller *xLCD, bool centered, char *lineText){
 	int i;
 	char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];	//For the escape character at the end.
 
-	//Play with the string to center it on the LCD unit.
-	WriteLCDTrimString(LineBuffer, lineText);
+	if(centered){
+		//Play with the string to center it on the LCD unit.
+		WriteLCDCenterString(LineBuffer, lineText);
+	}
+	else
+		WriteLCDFitString(LineBuffer, lineText);
 
 
 	//Place cursor
@@ -176,13 +186,16 @@ void WriteLCDLine2(struct Disp_controller *xLCD, char *lineText){
 	}
 }
 
-void WriteLCDLine3(struct Disp_controller *xLCD, char *lineText){
+void WriteLCDLine3(struct Disp_controller *xLCD, bool centered, char *lineText){
 	int i;
 	char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];	//For the escape character at the end.
 
-	//Play with the string to center it on the LCD unit.
-	WriteLCDTrimString(LineBuffer, lineText);
-
+	if(centered){
+		//Play with the string to center it on the LCD unit.
+		WriteLCDCenterString(LineBuffer, lineText);
+	}
+	else
+		WriteLCDFitString(LineBuffer, lineText);
 
 	//Place cursor
 	WriteLCDSetPos(xLCD,0,2);	// Write to third line
@@ -193,12 +206,16 @@ void WriteLCDLine3(struct Disp_controller *xLCD, char *lineText){
 	}
 }
 
-void WriteLCDLine4(struct Disp_controller *xLCD, char *lineText){
+void WriteLCDLine4(struct Disp_controller *xLCD, bool centered, char *lineText){
 	int i;
 	char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];	//For the escape character at the end.
 
-	//Play with the string to center it on the LCD unit.
-	WriteLCDTrimString(LineBuffer, lineText);
+	if(centered){
+		//Play with the string to center it on the LCD unit.
+		WriteLCDCenterString(LineBuffer, lineText);
+	}
+	else
+		WriteLCDFitString(LineBuffer, lineText);
 
 
 	//Place cursor
@@ -211,26 +228,50 @@ void WriteLCDLine4(struct Disp_controller *xLCD, char *lineText){
 }
 
 
-void WriteLCDTrimString(char * StringOut, char * stringIn){
+void WriteLCDCenterString(char * StringOut, char * stringIn){
 	int i;
-	memset(StringOut,0x0,LPCmodSettings.LCDsettings.lineLength);	//Let's get clean a little.
+	memset(StringOut,0x0,xLCD->LineSize);	//Let's get clean a little.
 
 	//Skip first character.
 	if (stringIn[0]=='\2') {
-		strncpy(StringOut,&stringIn[1],LPCmodSettings.LCDsettings.lineLength - 1);		//We skipped the first character.
+		strncpy(StringOut,&stringIn[1],xLCD->LineSize - 1);		//We skipped the first character.
 	} else {
-		strncpy(StringOut,stringIn,LPCmodSettings.LCDsettings.lineLength);	//Line length is 20 characters
+		strncpy(StringOut,stringIn,xLCD->LineSize);	//Line length is 20 characters
 	}
-	StringOut[LPCmodSettings.LCDsettings.lineLength] = 0;			//Escape character at the end(21st character) that's for sure
+	StringOut[xLCD->LineSize] = 0;			//Escape character at the end(21st character) that's for sure
 	i = strlen(StringOut);
 	//String length is shorter than what can be displayed on a single line of the LCD unit.
 	if (i < xLCD->LineSize) {
-		char szTemp1[LPCmodSettings.LCDsettings.lineLength];
+		char szTemp1[xLCD->LineSize];
 		u8 rest = (xLCD->LineSize-i) / 2;
 
 		//Print "space"(0x20 in ascii) in the whole array.
-		memset(szTemp1,0x20,LPCmodSettings.LCDsettings.lineLength);
+		memset(szTemp1,0x20,xLCD->LineSize);
 		memcpy(&szTemp1[rest],StringOut,i);	//Place actual text in the middle of the array.
+		memcpy(StringOut,szTemp1,xLCD->LineSize);
+		//LineBuffer now contains our text, centered on a single LCD unit's line.
+	}
+}
+
+void WriteLCDFitString(char * StringOut, char * stringIn){
+	int i;
+	memset(StringOut,0x0,xLCD->LineSize);	//Let's get clean a little.
+
+	//Skip first character.
+	if (stringIn[0]=='\2') {
+		strncpy(StringOut,&stringIn[1],xLCD->LineSize - 1);		//We skipped the first character.
+	} else {
+		strncpy(StringOut,stringIn,xLCD->LineSize);	//Line length is 20 characters
+	}
+	StringOut[xLCD->LineSize] = 0;			//Escape character at the end(21st character) that's for sure
+	i = strlen(StringOut);
+	//String length is shorter than what can be displayed on a single line of the LCD unit.
+	if (i < xLCD->LineSize) {
+		char szTemp1[xLCD->LineSize];
+
+		//Print "space"(0x20 in ascii) in the whole array.
+		memset(szTemp1,0x20,xLCD->LineSize);
+		memcpy(szTemp1,StringOut,i);	//Place actual text justified to the left.
 		memcpy(StringOut,szTemp1,xLCD->LineSize);
 		//LineBuffer now contains our text, centered on a single LCD unit's line.
 	}
@@ -254,4 +295,15 @@ void WriteLCDSetPos(struct Disp_controller *xLCD, u8 pos, u8 line) {
 
   xLCD->Command(xLCD,DISP_DDRAM_SET | cursorPtr);
 	
+}
+
+void WriteLCDClearLine(struct Disp_controller *xLCD, u8 line) {
+	//Array of function pointers to let "line" value decide which function needs to be called.
+	void (*WriteLineFctPtr[4])(struct Disp_controller *xLCD, bool centered, char *lineText) = {(xLCD->PrintLine1), (xLCD->PrintLine2), (xLCD->PrintLine3), (xLCD->PrintLine4)};
+
+	char empty[xLCD->LineSize];
+	memset(empty,0x20,xLCD->LineSize);
+
+	//Call the proper function for the desired line.
+	(*WriteLineFctPtr[line])(xLCD, JUSTIFYLEFT, empty);
 }

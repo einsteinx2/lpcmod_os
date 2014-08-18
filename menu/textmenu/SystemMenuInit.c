@@ -67,6 +67,7 @@ TEXTMENU *SystemMenuInit(void) {
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"LED");
+	itemPtr->szParameter[0]=0;
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)LEDMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
@@ -74,19 +75,22 @@ TEXTMENU *SystemMenuInit(void) {
 	//FAN SPEED
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Fan speed : %d%%", LPCmodSettings.OSsettings.fanSpeed);
+	strcpy(itemPtr->szCaption,"Fan speed : ");
+	sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.OSsettings.fanSpeed);
 	itemPtr->functionPtr=NULL;
 	itemPtr->functionDataPtr = NULL;
 	itemPtr->functionLeftPtr=decrementFanSpeed;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=incrementFanSpeed;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//VIDEO STANDARD SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "Video standard");
+	itemPtr->szParameter[0]=0;
+	itemPtr->szParameter[0]=0;
 	itemPtr->functionPtr=DrawChildTextMenu;
 	itemPtr->functionDataPtr = (void *)VideoMenuInit();
 	TextMenuAddItem(menuPtr, itemPtr);
@@ -94,37 +98,40 @@ TEXTMENU *SystemMenuInit(void) {
 	//VIDEO FORMAT SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption, "Video format : %s", VideoFormattext[eeprom.VideoFlags[2]]);
+	strcpy(itemPtr->szCaption, "Video format : ");
+	sprintf(itemPtr->szParameter, "%s", VideoFormattext[eeprom.VideoFlags[2]]);
 	itemPtr->functionPtr= incrementVideoformat;
-	itemPtr->functionDataPtr = itemPtr->szCaption;
+	itemPtr->functionDataPtr = itemPtr->szParameter;
 	itemPtr->functionLeftPtr=decrementVideoformat;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=incrementVideoformat;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//DVD REGION SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption, "DVD region : %s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+	strcpy(itemPtr->szCaption, "DVD region : ");
+	sprintf(itemPtr->szParameter, "%s", DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
 	itemPtr->functionLeftPtr=decrementDVDRegion;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=incrementDVDRegion;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	//GAME REGION SETTINGS MENU
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption, "Game region : %s",Gameregiontext[getGameRegionValue()]);
+	strcpy(itemPtr->szCaption, "Game region : ");
+	sprintf(itemPtr->szParameter, "%s", Gameregiontext[getGameRegionValue()]);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr = NULL;
 	itemPtr->functionLeftPtr=decrementGameRegion;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=incrementGameRegion;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	return menuPtr;

@@ -16,43 +16,46 @@ TEXTMENU *ModchipMenuInit(void) {
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Idle timeout : %ds", LPCmodSettings.OSsettings.bootTimeout);
+	strcpy(itemPtr->szCaption,"Idle timeout : ");
+	sprintf(itemPtr->szParameter, "%ds", LPCmodSettings.OSsettings.bootTimeout);
 	itemPtr->functionPtr= NULL;
 	itemPtr->functionDataPtr= NULL;
 	itemPtr->functionLeftPtr=decrementbootTimeout;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=incrementbootTimeout;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Quickboot : %s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
+	strcpy(itemPtr->szCaption,"Quickboot : ");
+	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
 	itemPtr->functionPtr= toggleQuickboot;
-	itemPtr->functionDataPtr= itemPtr->szCaption;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
 	itemPtr->functionLeftPtr=toggleQuickboot;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=toggleQuickboot;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption,"Quickboot bank : ");
 	if(LPCmodSettings.OSsettings.activeBank == BNK512)
-		sprintf(itemPtr->szCaption,"Quickboot bank : 512KB");
+		strcpy(itemPtr->szParameter,"512KB");
 	else if (LPCmodSettings.OSsettings.activeBank == BNK256)
-		sprintf(itemPtr->szCaption,"Quickboot bank : 256KB");
+		strcpy(itemPtr->szParameter,"256KB");
 	else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP)
-		sprintf(itemPtr->szCaption,"Quickboot bank : TSOP");
+		strcpy(itemPtr->szParameter,"TSOP");
 	itemPtr->functionPtr=incrementActiveBank;
-	itemPtr->functionDataPtr = itemPtr->szCaption;
+	itemPtr->functionDataPtr = itemPtr->szParameter;
 	itemPtr->functionLeftPtr=decrementActiveBank;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=incrementActiveBank;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
-if(mbVersion <= REV1_1){		//Don't show this when Xbox motherboard is 1.2 or higher.
+if(mbVersion == REV1_1 || mbVersion == REV1_0){		//Don't show this when Xbox motherboard is not 1.0/1.1.
 /*
  * The 2 following menu entries must be in line.
  *
@@ -60,9 +63,10 @@ if(mbVersion <= REV1_1){		//Don't show this when Xbox motherboard is 1.2 or high
  */
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Control Xbox TSOP : %s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01? "Yes" : "No");
+	strcpy(itemPtr->szCaption,"Control Xbox TSOP : ");
+	sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01? "Yes" : "No");
 	itemPtr->functionPtr= toggleTSOPControl;
-	itemPtr->functionDataPtr= itemPtr->szCaption;;
+	itemPtr->functionDataPtr= itemPtr;
 	itemPtr->functionLeftPtr=toggleTSOPControl;
 	itemPtr->functionLeftDataPtr = itemPtr;
 	itemPtr->functionRightPtr=toggleTSOPControl;
@@ -70,19 +74,21 @@ if(mbVersion <= REV1_1){		//Don't show this when Xbox motherboard is 1.2 or high
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	sprintf(itemPtr->szCaption,"Xbox TSOP split : %s",		//Print "No" if Control Xbox TSOP is set to "No"
+	strcpy(itemPtr->szCaption,"Xbox TSOP split : ");
+	sprintf(itemPtr->szParameter, "%s",		//Print "No" if Control Xbox TSOP is set to "No"
 			(LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?	((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
 	itemPtr->functionPtr= toggleTSOPSplit;
-	itemPtr->functionDataPtr= itemPtr->szCaption;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
 	itemPtr->functionLeftPtr=toggleTSOPSplit;
-	itemPtr->functionLeftDataPtr = itemPtr->szCaption;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=toggleTSOPSplit;
-	itemPtr->functionRightDataPtr = itemPtr->szCaption;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 }
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Reset all settings");
+	itemPtr->szParameter[0] = 0;
 	itemPtr->functionPtr= resetSettings;
 	itemPtr->functionDataPtr= NULL;
 	TextMenuAddItem(menuPtr, itemPtr);

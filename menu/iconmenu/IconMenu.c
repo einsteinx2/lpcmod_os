@@ -28,6 +28,7 @@
 #include "MenuActions.h"
 #include "config.h"
 #include "IconMenu.h"
+#include "lib/LPCMod/BootLCD.h"
 
 #define TRANSPARENTNESS 0x30
 #define SELECTED 0xff
@@ -87,6 +88,10 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 			VIDEO_CURSOR_POSY=nYOffset+20;
 			VIDEO_ATTR=0xffffff;
 			printk("%s\n",iconPtr->szCaption);
+			//LCD string print.
+			if(xLCD->enable){
+				xLCD->PrintLine2(xLCD, JUSTIFYLEFT, iconPtr->szCaption);
+			}
 		}
 		else opaqueness = TRANSPARENTNESS;
 		

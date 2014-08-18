@@ -21,6 +21,10 @@ TEXTMENU *HDDMenuInit(void) {
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
 	strcpy(menuPtr->szCaption, "HDD Menu");
 
+	//No entry in this menu will have a configurable parameter.
+	//Set first character to NULL to indicate no string is to be shown.
+	itemPtr->szParameter[0]=0;
+
 	for (i=0; i<2; ++i) {
 		if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
 			//If it's not ATAPI, it must be IDE

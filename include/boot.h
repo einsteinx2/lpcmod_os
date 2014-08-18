@@ -429,10 +429,12 @@ typedef struct Disp_controller {
 	void	(*WriteIO)(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait);
 	void	(*Poll)(struct Disp_controller *xLCD);
 
-	void	(*PrintLine1)(struct Disp_controller *xLCD,char *text);
-	void	(*PrintLine2)(struct Disp_controller *xLCD,char *text);
-	void	(*PrintLine3)(struct Disp_controller *xLCD,char *text);
-	void	(*PrintLine4)(struct Disp_controller *xLCD,char *text);
+	void	(*PrintLine1)(struct Disp_controller *xLCD, bool centered, char *text);
+	void	(*PrintLine2)(struct Disp_controller *xLCD, bool centered, char *text);
+	void	(*PrintLine3)(struct Disp_controller *xLCD, bool centered, char *text);
+	void	(*PrintLine4)(struct Disp_controller *xLCD, bool centered, char *text);
+
+	void    (*ClearLine)(struct Disp_controller *xLCD, u8 line);
 } _xLCD;	//Will be know as xLCD from now on.
 
 _xLCD *xLCD;

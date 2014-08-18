@@ -17,6 +17,10 @@ TEXTMENU *ToolsMenuInit(void) {
 	bool fHasHardware=false;
 	int i=0;
 
+	//No entry in this menu will have a configurable parameter.
+	//Set first character to NULL to indicate no string is to be shown.
+	itemPtr->szParameter[0]=0;
+
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
 	strcpy(menuPtr->szCaption, "Tools");

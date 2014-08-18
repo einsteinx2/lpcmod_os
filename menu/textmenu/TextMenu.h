@@ -29,6 +29,8 @@ extern int breakOutOfMenu;
 typedef struct TEXTMENUITEM {
 	//Menu item text
 	char szCaption[MENUCAPTIONSIZE+1];
+	//Parameter value text
+	char szParameter[MENUCAPTIONSIZE+1];
 	//Pointer to function to run when menu item selected.
 	//If NULL, menuitem will not do anything when selected
 	void (*functionPtr) (void *);
