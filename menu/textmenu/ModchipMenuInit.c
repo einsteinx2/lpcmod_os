@@ -12,7 +12,7 @@ TEXTMENU *ModchipMenuInit(void) {
 
 	menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "LPCMod settings");
+	strcpy(menuPtr->szCaption, "XBlast settings");
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

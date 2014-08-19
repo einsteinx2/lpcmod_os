@@ -91,6 +91,8 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 			//LCD string print.
 			if(xLCD->enable){
 				xLCD->PrintLine2(xLCD, JUSTIFYLEFT, iconPtr->szCaption);
+				xLCD->ClearLine(xLCD,2);
+				xLCD->ClearLine(xLCD,3);
 			}
 		}
 		else opaqueness = TRANSPARENTNESS;

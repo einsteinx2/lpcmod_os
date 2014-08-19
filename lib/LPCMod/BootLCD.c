@@ -7,8 +7,8 @@
 void BootLCDInit(void){
 	xLCD->enable = 0;	//Set it unintialized for now.
 	xLCD->LineSize = HDD4780_DEFAULT_LINELGTH;	//Default for common 4 lines LCDs
-	xLCD->TimingCMD = 2000;						//Arbitrary but safe.
-	xLCD->TimingData = 1000;
+	xLCD->TimingCMD = 1500;						//Arbitrary but safe.
+	xLCD->TimingData = 90;
 	xLCD->Line1Start = 0x00;
 	xLCD->Line2Start = 0x40;	//Check the datasheet if you don't believe me.
 	xLCD->Line3Start = 0x14;
@@ -55,10 +55,7 @@ void assertInitLCD(void){
 		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 		xLCD->Init(xLCD);
 		xLCD->LineSize = LPCmodSettings.LCDsettings.lineLength;
-		xLCD->PrintLine1(xLCD, CENTERSTRING, "LPCMod V1");				//Remove or change after proven working.
-		xLCD->PrintLine2(xLCD, CENTERSTRING, "Yay LCD!");
-		xLCD->PrintLine3(xLCD, CENTERSTRING, "OS dev is going well");
-		xLCD->PrintLine4(xLCD, CENTERSTRING, "-bennydiamond");
+		xLCD->PrintLine1(xLCD, CENTERSTRING, "XBlast mod V1");				//Remove or change after proven working.
 	}
 	if(LPCmodSettings.LCDsettings.enable5V == 0) {
 		xLCD->enable = 0;		//Whatever happens, this statement will be valid.
@@ -113,12 +110,12 @@ void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait){
 	//High nibble first
 	//Initially place the data
 	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
-	wait_us(100);	//needs to be at least 40ns
+	wait_us(90);	//needs to be at least 40ns
 	
 	msbNibble |= DISPLAY_E;
 	//Raise E signal line
 	WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x	
-	wait_us(100);	//needs to be at least 230ns
+	wait_us(90);	//needs to be at least 230ns
 	
 	msbNibble ^= DISPLAY_E;
 	//Drop E signal line
@@ -128,12 +125,12 @@ void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait){
 	//Low nibble in second
 	//Initially place the data
 	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-	wait_us(100);	//needs to be at least 40ns
+	wait_us(90);	//needs to be at least 40ns
 	
 	lsbNibble |= DISPLAY_E;
 	//Raise E signal line
 	WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-	wait_us(100);	//needs to be at least 230ns
+	wait_us(90);	//needs to be at least 230ns
 	
 	lsbNibble ^= DISPLAY_E;
 	//Drop E signal line

@@ -21,7 +21,7 @@ TEXTMENU *TextMenuInit(void) {
 	//Create the root menu - MANDATORY
 	menuPtr = malloc(sizeof(TEXTMENU));
 	memset(menuPtr,0x00,sizeof(TEXTMENU));
-	strcpy(menuPtr->szCaption, "LPCMod v1 configuration menu");
+	strcpy(menuPtr->szCaption, "XBlast v1 settings");
 	menuPtr->firstMenuItem=NULL;
 
 	//No entry in this menu will have a configurable parameter.
@@ -35,7 +35,7 @@ TEXTMENU *TextMenuInit(void) {
 		//LPCMod(modchip) SETTINGS MENU
 		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-		strcpy(itemPtr->szCaption, "LPCMod settings");
+		strcpy(itemPtr->szCaption, "XBlast settings");
 		itemPtr->functionPtr=DrawChildTextMenu;
 		itemPtr->functionDataPtr = (void *)ModchipMenuInit();
 		TextMenuAddItem(menuPtr, itemPtr);
