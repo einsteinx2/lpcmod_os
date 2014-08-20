@@ -46,7 +46,16 @@ TEXTMENU *ModchipMenuInit(void) {
 	else if (LPCmodSettings.OSsettings.activeBank == BNK256)
 		strcpy(itemPtr->szParameter,"256KB");
 	else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP)
-		strcpy(itemPtr->szParameter,"TSOP");
+		if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)
+			strcpy(itemPtr->szParameter,"TSOP bank0");			//Show this string if TSOP is split.
+		else
+			strcpy(itemPtr->szParameter,"TSOP");				//TSOP is not split.
+	else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP1)
+		strcpy(itemPtr->szParameter,"TSOP bank1");
+	else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP2)
+		strcpy(itemPtr->szParameter,"TSOP bank2");
+	else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP3)
+		strcpy(itemPtr->szParameter,"TSOP bank3");
 	itemPtr->functionPtr=incrementActiveBank;
 	itemPtr->functionDataPtr = itemPtr->szParameter;
 	itemPtr->functionLeftPtr=decrementActiveBank;

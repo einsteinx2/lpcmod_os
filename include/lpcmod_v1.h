@@ -4,7 +4,10 @@
 #define BNK512  0x00
 #define BNK256  0x02
 #define BNKOS  0x03
-#define BNKTSOP 0x04
+#define BNKTSOP 0x04			//Also for bank0 in case TSOP is split
+#define BNKTSOP1 0x05
+#define BNKTSOP2 0x06
+#define BNKTSOP3 0x07
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE	0x00
 
@@ -13,8 +16,8 @@
 #define TSOP_BOOT		0x01
 #define TSOP_CONTROL	0x02
 #define TSOP_4_BANKS	0x04
-#define TSOP_512_SWITCH	0x08
-#define TSOP_256_SWITCH	0x10
+#define TSOP_512_SWITCH	0x10
+#define TSOP_256_SWITCH	0x20
 
 
 #define BNK_CONTROL	0xF710

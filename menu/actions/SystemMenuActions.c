@@ -12,6 +12,8 @@
 void incrementFanSpeed(void * itemStr){
 	if(LPCmodSettings.OSsettings.fanSpeed < 99)	//Logic
 		LPCmodSettings.OSsettings.fanSpeed += 2;	//Actual value range of PIC is from 0 to 50 which maps to 0 to 100 here.
+	if(LPCmodSettings.OSsettings.fanSpeed % 2)		//Failsafe in the near-impossible event that the value of fanSpeed would be odd.
+		LPCmodSettings.OSsettings.fanSpeed -= 1;
 	sprintf(itemStr, "%d%%", LPCmodSettings.OSsettings.fanSpeed);
 	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);	//Send new speed to PIC
 }
@@ -19,6 +21,8 @@ void incrementFanSpeed(void * itemStr){
 void decrementFanSpeed(void * itemStr){
 	if(LPCmodSettings.OSsettings.fanSpeed > 11)	//For now, I won't allow anyone to set their fan below 10% speed. Come on...
 		LPCmodSettings.OSsettings.fanSpeed -= 2;
+	if(LPCmodSettings.OSsettings.fanSpeed % 2)		//Failsafe in the near-impossible event that the value of fanSpeed would be odd.
+		LPCmodSettings.OSsettings.fanSpeed += 1;
 	sprintf(itemStr, "%d%%", LPCmodSettings.OSsettings.fanSpeed);
 	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);	//Send new speed to PIC
 }

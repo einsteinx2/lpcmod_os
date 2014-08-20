@@ -1,5 +1,3 @@
-#ifndef _TOOLSMENUACTIONS_H_
-#define _TOOLSMENUACTIONS_H_
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -9,16 +7,17 @@
  *                                                                         *
  ***************************************************************************/
 
-void saveEEPromToFlash(void *whatever);
-void restoreEEPromFromFlash(void *whatever);
+/* This is where you should customise your calls to the onscreen keyboard.
+ * The code in KeyboardMenu.c should normally be left alone.
+ */
+#include "include/config.h"
+#include "BootIde.h"
+#include "KeyboardMenu.h"
+//#include "KeyboardActions.h"		//your time will come
+#include "lpcmod_v1.h"
 
-void wipeEEPromUserSettings(void *whatever);
 
-void showMemTest(void);
-void memtest(void * whatever);
-int testBank(int bank);
-
-void ToolHeader(char *title);
-void ToolFooter(void);
-
-#endif
+void KeyboardMenuInit(void *itemStr) {
+	KeyboardMenuDraw((char *)itemStr);			//Function that lets you navigate the keyboard.
+												//Prints the edited string and place cursor at the end of it
+}

@@ -58,7 +58,7 @@ TEXTMENU *ToolsMenuInit(void) {
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption, "128MB RAM test");
-	itemPtr->functionPtr= memtest;
+	itemPtr->functionPtr= showMemTest;
 	itemPtr->functionDataPtr = NULL;
 	TextMenuAddItem(menuPtr, itemPtr);
 

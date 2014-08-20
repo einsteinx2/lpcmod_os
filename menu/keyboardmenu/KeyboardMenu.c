@@ -7,113 +7,29 @@
  *                                                                         *
  ***************************************************************************/
 /*
- * Redesigned icon menu, allowing icons to be added/removed at runtime.
- * 02/10/04 - David Pye dmp@davidmpye.dyndns.org
- * You should not need to edit this file in normal circumstances - icons are
- * added/removed via boot/IconMenuInit.c
+ * Onscreen keyboard interface.
+ * 14/08/20 - Benjamin Fiset-Deschenes
+ * You should not need to edit this file in normal circumstances - Call to
+ * the keyboard should be made through KeyboardMenuInit.c
  */
 
 #include "boot.h"
 #include "video.h"
-#include "memory_layout.h"
-#include <shared.h>
-#include <filesys.h>
-#include "rc4.h"
-#include "sha1.h"
-#include "BootFATX.h"
 #include "xbox.h"
-//#include "BootFlash.h"
-#include "cpu.h"
-#include "BootIde.h"
-#include "MenuActions.h"
+//#include "MenuActions.h"
 #include "config.h"
-#include "IconMenu.h"
+#include "KeyboardMenu.h"
 #include "lib/LPCMod/BootLCD.h"
 
-#define TRANSPARENTNESS 0x30
-#define SELECTED 0xff
-
-ICON *firstIcon=NULL;
-ICON *selectedIcon=NULL;
-ICON *firstVisibleIcon=NULL;
-ICON *lastVisibleIcon=NULL;
-int timedOut=0;
-int iconTimeRemain = 0;
-u32 temp=1;
-
-unsigned char *videosavepage;
 
 
-
-void AddIcon(ICON *newIcon) {
-	ICON *iconPtr = firstIcon;
-	ICON *currentIcon = NULL;
-	while (iconPtr != NULL) {
-		currentIcon = iconPtr;
-		iconPtr = iconPtr->nextIcon;
-	}
-	
-	if (currentIcon==NULL) { 
-		//This is the first icon in the chain
-		firstIcon = newIcon;
-	}
-	//Append to the end of the chain
-	else currentIcon->nextIcon = newIcon;
-	iconPtr = newIcon;
-	iconPtr->nextIcon = NULL;
-	iconPtr->previousIcon = currentIcon; 
-}
-
-static void IconMenuDraw(int nXOffset, int nYOffset) {
+void KeyboardMenuDraw(char * itemStr) {
 	ICON *iconPtr;
 	ICON *iconSeeker;
 	int iconcount;
 	u8 opaqueness;
 	int tempX, tempY;
 
-	if (firstVisibleIcon==NULL){
-		firstVisibleIcon = firstIcon;
-	}
-
-	if (selectedIcon==NULL){
-		selectedIcon = firstIcon;
-
-		//Highlight the icon pointed by the Active Bank setting.
-		//We have to start somewhere. Why not with the first icon in the list?
-		iconSeeker = firstIcon;
-		//While there are still icons to check.
-		//"iconSeeker->nextIcon != NULL" condition will work out just fine as long as "Advanced settings" icon is last in line.
-		while(iconSeeker->nextIcon != NULL){
-			//Does the bankID field of current icon contains the value we're looking for?
-			if(iconSeeker->bankID == LPCmodSettings.OSsettings.activeBank){
-				//Yes. Identify as selected icon and get out of while loop.
-				selectedIcon = iconSeeker;
-				//If selectedIcon is last before "Advanced settings"
-				if(selectedIcon->nextIcon->nextIcon == NULL){
-					//iconPtr must point at least 2 icons before end of list
-					//to properly show 3 icons on IconMenu.
-					iconPtr = selectedIcon->previousIcon;
-				}
-				else{
-					iconPtr = selectedIcon;
-				}
-				break;
-			}
-			//move on to next icon in list.
-			iconSeeker = iconSeeker->nextIcon;
-		}
-	}
-
-	//Failsafe in case above condition would fail (why?).
-	if(iconPtr == NULL)
-		iconPtr = firstVisibleIcon;
-
-	//There are max 3 (three) 'bays' for displaying icons in - we only draw the 3.
-	for (iconcount=0; iconcount<3; iconcount++) {
-		if (iconPtr==NULL) {
-			//No more icons to draw
-			return;
-		}
 		if (iconPtr==selectedIcon) {
 			//Selected icon has less transparency
 			//and has a caption drawn underneath it
@@ -142,7 +58,6 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 		);
 		lastVisibleIcon = iconPtr;
 		iconPtr = iconPtr->nextIcon;
-	}
 
 	// If there is an icon off screen to the left, draw this icon.
 	if(firstVisibleIcon->previousIcon != NULL) {
@@ -190,7 +105,7 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 	VIDEO_CURSOR_POSY = tempY;
 }
 
-void IconMenu(void) {
+void KeyboardMenu(void) {
         
 	u32 COUNT_start;
 	int oldIconTimeRemain = 0;
@@ -200,7 +115,6 @@ void IconMenu(void) {
 	int nTempCursorResumeX, nTempCursorResumeY ;
 	int nTempCursorX, nTempCursorY;
 	int nModeDependentOffset=(vmode.width-640)/2;  
-	u8 varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout; //BOOT_TIMEWAIT;				//Just to have a default value.
 	
 	nTempCursorResumeX=nTempCursorMbrX;
 	nTempCursorResumeY=nTempCursorMbrY;
@@ -214,11 +128,6 @@ void IconMenu(void) {
 	
 	VIDEO_CURSOR_POSX=((252+nModeDependentOffset)<<2);
 	VIDEO_CURSOR_POSY=nTempCursorY-100;
-
-	if(LPCmodSettings.OSsettings.bootTimeout == 0)
-		temp = 0;									//Disable boot timeout
-	else
-		varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;
 
 //#ifndef SILENT_MODE
 	//In silent mode, don't draw the menu the first time.
@@ -280,16 +189,7 @@ void IconMenu(void) {
 			}
 			temp=0;
 		}
-		//If anybody has toggled the xpad left/right, disable the timeout.
-		if(temp != 0) {
-			temp = IoInputDword(0x8008) - COUNT_start;
-			oldIconTimeRemain = iconTimeRemain;
-         iconTimeRemain = varBootTimeWait - temp/0x369E99;
-			if(oldIconTimeRemain != iconTimeRemain) {
-				changed = 1;
-				memcpy((void*)FB_START,videosavepage,FB_SIZE);
-			}
-		}
+
 		
 		if ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) || risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_START) == 1 || 
 				(u32)(temp>(0x369E99*varBootTimeWait))) {

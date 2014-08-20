@@ -53,6 +53,7 @@ void assertInitLCD(void){
 		xLCD->enable = LPCmodSettings.LCDsettings.enable5V;
 		setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
+		wait_ms(5);					//Wait a precautionary 5ms before initializing the LCD to let power stabilize.
 		xLCD->Init(xLCD);
 		xLCD->LineSize = LPCmodSettings.LCDsettings.lineLength;
 		xLCD->PrintLine1(xLCD, CENTERSTRING, "XBlast mod V1");				//Remove or change after proven working.
