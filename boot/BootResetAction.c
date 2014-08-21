@@ -210,8 +210,8 @@ extern void BootResetAction ( void ) {
 	}
 
    mbVersion = I2CGetXboxMBRev();
-   printk("          Xbox revision: %s ", xbox_mb_rev[mbVersion]);
-   printk("RAM: %d", xbox_ram);
+   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
+   printk("     RAM: %d", xbox_ram);
    printk("MiB\n");
    
 	VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;

@@ -240,13 +240,19 @@ void I2CSetFanSpeed(u8 speed){
 //TODO: switch case for cleaner look?
 u8 I2CGetXboxMBRev(void){
 	u8 result = REVUNKNOWN;
-	u8 temp;
-	char ver[3] = "000";
-	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[0]);
-	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[1]);
-	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[2]);
+	u32 temp;
+	u32 ver32[3];
+	char ver[4] = "000";
+	ver[3] = 0;		//Terminator.
+	ReadfromSMBus(0x10, 0x01, 1, &ver32[1]);
+	ReadfromSMBus(0x10, 0x01, 1, &ver32[2]);
+	ReadfromSMBus(0x10, 0x01, 1, &ver32[0]);
+	
+	ver[0] = ver32[0];
+	ver[1] = ver32[1];
+	ver[2] = ver32[2];
 	//FIXME remove once fixed
-	printk("          MB_string: %s\n", ver);
+	printk("          Debug MB_string: %s\n", ver);
 
 	if ( !strcmp(ver,("01D")) || !strcmp(ver,("D01")) || !strcmp(ver,("1D0")) || !strcmp(ver,("0D1"))) {
 		result = DEVKIT;
@@ -261,7 +267,7 @@ u8 I2CGetXboxMBRev(void){
 		result = REV1_1;
 	}
 	else if (!strcmp(ver,("P11")) || !strcmp(ver,("1P1")) || !strcmp(ver,("11P"))){
-		if(ReadfromSMBus(0x6A, 0x00, 0, (u32 *)&temp) == 0){
+		if(ReadfromSMBus(0x6A, 0x00, 0, &temp) == 0){
 			result = REV1_4;
 		}
 		else {

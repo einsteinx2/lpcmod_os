@@ -14,7 +14,7 @@ void restoreEEPromFromFlash(void *whatever);
 
 void wipeEEPromUserSettings(void *whatever);
 
-void showMemTest(void);
+void showMemTest(void *whatever);
 void memtest(void * whatever);
 int testBank(int bank);
 

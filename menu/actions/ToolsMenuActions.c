@@ -32,7 +32,7 @@ void wipeEEPromUserSettings(void *whatever){
 	memset(eeprom.TimeZoneBias,0x00,0x5b);	//Start from Checksum3 address in struct and write 0x00 up to UNKNOWN6.
 }
 
-void showMemTest(void){
+void showMemTest(void *whatever){
 	ToolHeader("128MB RAM test");
 	memtest(NULL);
 	ToolFooter();
