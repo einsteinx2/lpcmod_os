@@ -8,6 +8,7 @@
 #define BNKTSOP1 0x05
 #define BNKTSOP2 0x06
 #define BNKTSOP3 0x07
+#define NOBNKID  0xFF
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE	0x00
 

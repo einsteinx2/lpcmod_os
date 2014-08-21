@@ -88,11 +88,17 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 			if(iconSeeker->bankID == LPCmodSettings.OSsettings.activeBank){
 				//Yes. Identify as selected icon and get out of while loop.
 				selectedIcon = iconSeeker;
-				//If selectedIcon is last before "Advanced settings"
-				if(selectedIcon->nextIcon->nextIcon == NULL){
-					//iconPtr must point at least 2 icons before end of list
-					//to properly show 3 icons on IconMenu.
-					iconPtr = selectedIcon->previousIcon;
+				//Just to be sure before digging deeper. Should always be true.
+				if(selectedIcon->nextIcon != NULL){
+					//If selectedIcon is last before "Advanced settings"
+					if(selectedIcon->nextIcon->nextIcon == NULL){
+						//iconPtr must point at least 2 icons before end of list
+						//to properly show 3 icons on IconMenu.
+						iconPtr = selectedIcon->previousIcon;
+					}
+					else{
+						iconPtr = selectedIcon;
+					}
 				}
 				else{
 					iconPtr = selectedIcon;
