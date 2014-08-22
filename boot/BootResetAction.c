@@ -91,6 +91,8 @@ extern void BootResetAction ( void ) {
 	// Reset the AGP bus and start with good condition
 	BootAGPBUSInitialization();
 
+	I2CTransmitByteGetReturn(0x10, 0x11);		//Dummy IRQ read to clear it.
+	I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
 	LEDRed();		//Signal the user to press Eject button to avoid Quickboot.
 
 	if(LPCMod_HW_rev() == SYSCON_ID){
@@ -125,7 +127,8 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
 			fFirstBoot = true;
 			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
-			BootFlashSaveOSSettings();		//Put some initial values in there.
+			//OS sometimes lock on after a fresh flash. Disabling to see if that's causing it.(probably)
+			//BootFlashSaveOSSettings();		//Put some initial values in there.
 			LEDFirstBoot(NULL);
 			LPCmodSettings.OSsettings.bootTimeout = 0;		//No countdown since it's the first boot since a flash update.
 															//Configure your device first.
@@ -140,6 +143,10 @@ extern void BootResetAction ( void ) {
 		//further init here.
 	}
 
+	/* Here, the interrupts are Switched on now */
+	BootPciInterruptEnable();
+	/* We allow interrupts */
+	nInteruptable = 1;
 
 
 	// We disable The CPU Cache
@@ -153,7 +160,7 @@ extern void BootResetAction ( void ) {
 	BootDetectMemorySize();     
 	
 	BootEepromReadEntireEEPROM();
-        
+
 	// Load and Init the Background image
 	// clear the Video Ram
 	memset((void *)FB_START,0x00,0x400000);
@@ -165,22 +172,30 @@ extern void BootResetAction ( void ) {
 		BootVideoJpegUnpackAsRgb(
 			(u8 *)&_start_backdrop,
 			&jpegBackdrop
-		);//Certainly don't write to flash if no proper hardware was detected!
+		);
 	}
+
+	I2CTransmitWord(0x10, 0x1a01); // Enable interrupts
+	I2CTransmitWord(0x10, 0x1b04); // Scratch register write. Skip boot animation.
+	I2CTransmitWord(0x10, 0x1901); // no reset on eject
+	I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+
+	//Before displaying anything on the screen, let's check if someone pressed on Eject button.
+	if(!fFirstBoot){
+			wait_ms(100);
+			if(I2CTransmitByteGetReturn(0x10, 0x11) == 0x20){	//Eject button pressed generated interrupt.
+				//Debug for now. Invert behavior. Pressing Eject botting will automatically boot from 512KB bank.
+				u8 temp = BNK512;
+				BootModBios(&temp);
+			}
+	}
+
+
 	// paint the backdrop
 #ifndef DEBUG_MODE
 	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 #endif
 
-	I2CTransmitWord(0x10, 0x1a01); // unknown, done immediately after reading out eeprom data
-	I2CTransmitWord(0x10, 0x1b04); // unknown
-	
-	/* Here, the interrupts are Switched on now */
-	BootPciInterruptEnable();
-        /* We allow interrupts */
-	nInteruptable = 1;	
-
-	I2CTransmitWord(0x10, 0x1901); // no reset on eject
          
 	VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
 	VIDEO_CURSOR_POSY=vmode.ymargin;

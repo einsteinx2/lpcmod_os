@@ -19,7 +19,7 @@ void toggleQuickboot(void * itemStr);
 
 void resetSettings(void *whatever);
 
-void toggleTSOPControl(void * itemStr);
-void toggleTSOPSplit(void * itemStr);
+void toggleTSOPControl(void * itemPtr);
+void toggleTSOPSplit(void * itemPtr);
 
 #endif

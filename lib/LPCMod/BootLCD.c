@@ -48,9 +48,9 @@ void setLCDBacklight(u8 value){
 }
 
 void assertInitLCD(void){
-	if(LPCmodSettings.LCDsettings.enable5V && xLCD->enable == 0){	//Display should be ON but is not initialized.
+	if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD->enable == 0){	//Display should be ON but is not initialized.
 		toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
-		xLCD->enable = LPCmodSettings.LCDsettings.enable5V;
+		xLCD->enable = 1;
 		setLCDContrast(LPCmodSettings.LCDsettings.contrast);
 		setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
 		wait_ms(5);					//Wait a precautionary 5ms before initializing the LCD to let power stabilize.
