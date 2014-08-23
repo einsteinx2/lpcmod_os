@@ -38,11 +38,6 @@ TEXTMENU *ModchipMenuInit(void) {
 	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
-/*
- * The 3 following menu entries must be in line.
- *
- *
- */
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption,"Quickboot bank : ");
@@ -70,7 +65,11 @@ TEXTMENU *ModchipMenuInit(void) {
 	TextMenuAddItem(menuPtr, itemPtr);
 
 if(mbVersion == REV1_1 || mbVersion == REV1_0){		//Don't show this when Xbox motherboard is not 1.0/1.1.
-
+/*
+ * The 2 following menu entries must be in line.
+ *
+ *
+ */
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption,"Control Xbox TSOP : ");
@@ -88,18 +87,12 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){		//Don't show this when Xbox mot
 	sprintf(itemPtr->szParameter, "%s",		//Print "No" if Control Xbox TSOP is set to "No"
 			(LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?	((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
 	itemPtr->functionPtr= toggleTSOPSplit;
-	itemPtr->functionDataPtr= itemPtr;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
 	itemPtr->functionLeftPtr=toggleTSOPSplit;
-	itemPtr->functionLeftDataPtr = itemPtr;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
 	itemPtr->functionRightPtr=toggleTSOPSplit;
-	itemPtr->functionRightDataPtr = itemPtr;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 }
-
-/*
- *
- * If you change order of the 3 entries above, make sure to modify functions of these entries in ModchipMenuActions.c
- *
- */
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

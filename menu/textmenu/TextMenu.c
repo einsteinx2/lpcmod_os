@@ -97,7 +97,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 		if (item == selectedItem){ 
 			VIDEO_ATTR=0xffef37;
 			
-			if(xLCD->enable == 1){
+			if(xLCD->enable){
 				bool colon=false;
 				char titleLine[xLCD->LineSize + 1];
 				xLCD->PrintLine2(xLCD, JUSTIFYLEFT, menu->szCaption);
