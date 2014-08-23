@@ -124,7 +124,7 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
 			fFirstBoot = true;
-			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
+			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.									//Certainly don't write to flash if no proper hardware was detected!
 			BootFlashSaveOSSettings();		//Put some initial values in there.
 			LEDFirstBoot(NULL);
 			LPCmodSettings.OSsettings.bootTimeout = 0;		//No countdown since it's the first boot since a flash update.
@@ -165,7 +165,7 @@ extern void BootResetAction ( void ) {
 		BootVideoJpegUnpackAsRgb(
 			(u8 *)&_start_backdrop,
 			&jpegBackdrop
-		);//Certainly don't write to flash if no proper hardware was detected!
+		);
 	}
 	// paint the backdrop
 #ifndef DEBUG_MODE
