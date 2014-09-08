@@ -34,6 +34,7 @@
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 #include "lwip/tcp.h"
+#include "include/lpcmod_v1.h"
 
 struct http_state {
 	unsigned char retries;
@@ -87,6 +88,7 @@ static void conn_err(void *arg, err_t err) {
 }
 
 static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
+  int res;
   tcp_arg(pcb, NULL);
   tcp_sent(pcb, NULL);
   tcp_recv(pcb, NULL);
@@ -97,9 +99,38 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
 		busyLED();
 		//printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
 		memcpy ((void*)0x100000, hs->bios_start, hs->bios_len);
-		BootReflashAndReset((void*)0x100000,0,hs->bios_len);
-		while (1)
-			;
+		if(currentFlashBank == BNKOS){
+			res = BootReflashAndReset((void*)0x100000,0,hs->bios_len);
+		}
+		else{
+			res = BootReflash((void*)0x100000,0,hs->bios_len);
+		}
+		if(res != 0) {
+			cromwellError();
+			printk("\n\n\n\n\n           Flash failed...");
+			switch(res){
+				case 1:
+					printk("\n           Unknown flash device.");
+					break;
+				case 2:
+					printk("\n           Cannot write to device");
+					break;
+				case 3:
+					printk("\n           File size error : %u", hs->bios_len);
+					break;
+				case 4:
+					printk("\n           Invalid XBlast OS update file");
+					break;
+				default:
+					printk("\n           Unknown error! Congrats, you're not supposed to be here.");
+					break;
+			}
+		}
+		else {
+			printk("\n           Flashing successful!!!");
+		}
+		FlashFooter();
+		return;
   }
 
   if (hs->postdata)
@@ -389,6 +420,6 @@ void netflash_init(void) {
   pcb = tcp_listen(pcb);
   tcp_accept(pcb, http_accept);
   cromwellSuccess();
-  printk("\n\n\n\n\n           Go to 'http://ip.address.shown.above' to flash your BIOS.\n");
-  downloadingLED();
+  printk("\n\n\           Go to 'http://ip.address.shown.above' to flash your BIOS.\n");
+  //downloadingLED();
 }

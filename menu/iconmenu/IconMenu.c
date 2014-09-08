@@ -35,8 +35,8 @@
 
 ICON *firstIcon=NULL;
 ICON *selectedIcon=NULL;
-ICON *firstVisibleIcon=NULL;
-ICON *lastVisibleIcon=NULL;
+ICON *firstVisibleIcon=NULL;	//Could also have been named rightIcon
+ICON *lastVisibleIcon=NULL;		//and leftIcon since only 3 icons are shown on the iconMenu.
 int timedOut=0;
 int iconTimeRemain = 0;
 u32 temp=1;
@@ -65,48 +65,17 @@ void AddIcon(ICON *newIcon) {
 }
 
 static void IconMenuDraw(int nXOffset, int nYOffset) {
-	ICON *iconPtr;
-	ICON *iconSeeker;
+	ICON *iconPtr;			//Icon the code is currently working on.
+	ICON *iconSeeker;		//Pointer to the icon we want to be selected at boot.
 	int iconcount;
 	u8 opaqueness;
 	int tempX, tempY;
 
-	if (firstVisibleIcon==NULL){
-		firstVisibleIcon = firstIcon;
-	}
-
-	if (selectedIcon==NULL){
-		selectedIcon = firstIcon;
-
-		//Highlight the icon pointed by the Active Bank setting.
-		//We have to start somewhere. Why not with the first icon in the list?
-		iconSeeker = firstIcon;
-		//While there are still icons to check.
-		//"iconSeeker->nextIcon != NULL" condition will work out just fine as long as "Advanced settings" icon is last in line.
-		while(iconSeeker->nextIcon != NULL){
-			//Does the bankID field of current icon contains the value we're looking for?
-			if(iconSeeker->bankID == LPCmodSettings.OSsettings.activeBank){
-				//Yes. Identify as selected icon and get out of while loop.
-				selectedIcon = iconSeeker;
-				//If selectedIcon is last before "Advanced settings"
-				if(selectedIcon->nextIcon->nextIcon == NULL){
-					//iconPtr must point at least 2 icons before end of list
-					//to properly show 3 icons on IconMenu.
-					iconPtr = selectedIcon->previousIcon;
-				}
-				else{
-					iconPtr = selectedIcon;
-				}
-				break;
-			}
-			//move on to next icon in list.
-			iconSeeker = iconSeeker->nextIcon;
-		}
-	}
-
-	//Failsafe in case above condition would fail (why?).
-	if(iconPtr == NULL)
-		iconPtr = firstVisibleIcon;
+	//Seeking icon with desired bankID value must be done when both firstVisibleIcon and selectedIcon are NULL.
+	//This way, seeking desired icon will only occur at initial draw.
+	if (firstVisibleIcon==NULL) firstVisibleIcon = firstIcon;
+	if (selectedIcon==NULL) selectedIcon = firstIcon;
+	iconPtr = firstVisibleIcon;
 
 	//There are max 3 (three) 'bays' for displaying icons in - we only draw the 3.
 	for (iconcount=0; iconcount<3; iconcount++) {
@@ -122,18 +91,12 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 			VIDEO_CURSOR_POSY=nYOffset+20;
 			VIDEO_ATTR=0xffffff;
 			printk("%s\n",iconPtr->szCaption);
-			//LCD string print.
-			//if(xLCD->enable){
-			//	xLCD->PrintLine2(xLCD, JUSTIFYLEFT, iconPtr->szCaption);
-			//	xLCD->ClearLine(xLCD,2);
-			//	xLCD->ClearLine(xLCD,3);
-			//}
 		}
 		else opaqueness = TRANSPARENTNESS;
 		
 		BootVideoJpegBlitBlend(
 			(u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(140*(iconcount+1))) * 4),
-			vmode.width, // dest bLPCmodSettingsytes per line
+			vmode.width, // dest bytes per line
 			&jpegBackdrop, // source jpeg object
 			(u8 *)(jpegBackdrop.pData+(iconPtr->iconSlot * jpegBackdrop.bpp)),
 			0xff00ff|(((u32)opaqueness)<<24),
@@ -200,7 +163,8 @@ void IconMenu(void) {
 	int nTempCursorResumeX, nTempCursorResumeY ;
 	int nTempCursorX, nTempCursorY;
 	int nModeDependentOffset=(vmode.width-640)/2;  
-	u8 varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout; //BOOT_TIMEWAIT;				//Just to have a default value.
+	u8 varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;		//Just to have a default value.
+	char *timeoutString;							//To display timeout countdown on xLCD
 	
 	nTempCursorResumeX=nTempCursorMbrX;
 	nTempCursorResumeY=nTempCursorMbrY;
@@ -230,6 +194,14 @@ void IconMenu(void) {
 	VIDEO_ATTR=0xffffffff;
 	IconMenuDraw(nModeDependentOffset, nTempCursorY);
 //#endif
+	//Initial LCD string print.
+	if(xLCD.enable == 1){
+		if(LPCmodSettings.LCDsettings.customTextBoot == 0){
+			xLCD.PrintLine2(CENTERSTRING, selectedIcon->szCaption);
+			xLCD.ClearLine(2);
+			xLCD.ClearLine(3);
+		}
+	}
 	COUNT_start = IoInputDword(0x8008);
 	//Main menu event loop.
 	while(1)
@@ -284,20 +256,39 @@ void IconMenu(void) {
 		if(temp != 0) {
 			temp = IoInputDword(0x8008) - COUNT_start;
 			oldIconTimeRemain = iconTimeRemain;
-         iconTimeRemain = varBootTimeWait - temp/0x369E99;
+         		iconTimeRemain = varBootTimeWait - temp/0x369E99;
 			if(oldIconTimeRemain != iconTimeRemain) {
 				changed = 1;
 				memcpy((void*)FB_START,videosavepage,FB_SIZE);
 			}
 		}
 		
-		if ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) || risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_START) == 1 || 
-				(u32)(temp>(0x369E99*varBootTimeWait))) {
+		if ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) || risefall_xpad_STATE(XPAD_STATE_START) == 1 || 
+			(u32)(temp>(0x369E99*varBootTimeWait))) {
 			memcpy((void*)FB_START,videosavepage,FB_SIZE);
 			VIDEO_CURSOR_POSX=nTempCursorResumeX;
 			VIDEO_CURSOR_POSY=nTempCursorResumeY;
 			
-			if (temp>(0x369E99*varBootTimeWait)) timedOut=1;
+			if (temp>(0x369E99*varBootTimeWait)){
+				timedOut=1;
+
+			}
+			if(xLCD.enable == 1){
+				if(selectedIcon->nextIcon != NULL){ //Last Icon in line is Advanced Settings.
+					if(LPCmodSettings.LCDsettings.displayMsgBoot == 0){	//Other icons boots banks so LCD rules apply here.
+						xLCD.Command(DISP_CLEAR);
+					}
+					else if(LPCmodSettings.LCDsettings.customTextBoot == 0){
+						if(LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0){
+							xLCD.ClearLine(1);
+						}
+						else{
+							xLCD.PrintLine2(CENTERSTRING, &(selectedIcon->szCaption[5])); //Skip "Boot " character string.
+						}
+						xLCD.ClearLine(2); //Clear countdown line on screen since countdown is over and we're about to boot.
+					}
+				}
+			}
 			//Icon selected - invoke function pointer.
 			if (selectedIcon->functionPtr!=NULL) selectedIcon->functionPtr(selectedIcon->functionDataPtr);
 			//If we come back to this menu, make sure we are redrawn, and that we replace the saved video page
@@ -308,6 +299,20 @@ void IconMenu(void) {
 		if (changed) {
 			BootVideoClearScreen(&jpegBackdrop, nTempCursorY, VIDEO_CURSOR_POSY+1);
 			IconMenuDraw(nModeDependentOffset, nTempCursorY);
+			//LCD string print.
+			if(xLCD.enable == 1){
+				if(LPCmodSettings.LCDsettings.customTextBoot == 0){
+					xLCD.PrintLine2(CENTERSTRING, selectedIcon->szCaption);
+					if(temp != 0) {
+						sprintf(timeoutString, "Auto boot in %ds", iconTimeRemain);
+						xLCD.PrintLine3(CENTERSTRING, timeoutString);
+					}
+					else {
+						xLCD.ClearLine(2);
+					}
+					xLCD.ClearLine(3);
+				}
+			}
 			changed=0;
 		}
 		

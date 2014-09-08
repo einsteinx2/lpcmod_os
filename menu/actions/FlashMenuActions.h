@@ -19,4 +19,4 @@ void enableNetflash(void *whatever);
 void enableWebupdate(void *whatever);
 
 void switchBank(char bank);
-
+void FlashFooter(void);

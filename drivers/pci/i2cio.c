@@ -241,16 +241,13 @@ void I2CSetFanSpeed(u8 speed){
 u8 I2CGetXboxMBRev(void){
 	u8 result = REVUNKNOWN;
 	u32 temp;
-	u32 ver32[3];
 	char ver[4] = "000";
 	ver[3] = 0;		//Terminator.
-	ReadfromSMBus(0x10, 0x01, 1, &ver32[1]);
-	ReadfromSMBus(0x10, 0x01, 1, &ver32[2]);
-	ReadfromSMBus(0x10, 0x01, 1, &ver32[0]);
-	
-	ver[0] = ver32[0];
-	ver[1] = ver32[1];
-	ver[2] = ver32[2];
+	I2CTransmitWord(0x10, 0x0100);				//Reset ID counter.
+	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[0]);
+	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[1]);
+	ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[2]);
+
 	//FIXME remove once fixed
 	printk("          Debug MB_string: %s\n", ver);
 

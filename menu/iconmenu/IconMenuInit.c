@@ -21,7 +21,7 @@ void InitNativeIcons(void);
 void InitWebBootIcons(void);
 void InitNetBootIcons(void);
 */
-void IconMenuInit(bool fHasHardware) {
+void IconMenuInit(void) {
 //	int i=0;
 	ICON *iconPtr=NULL;
 
@@ -152,6 +152,7 @@ else {										//No split.
 	iconPtr = (ICON *)malloc(sizeof(ICON));
 	iconPtr->iconSlot = ICON_SOURCE_SLOT0;
 	iconPtr->szCaption = "Advanced";
+	iconPtr->bankID = NOBNKID;
 	iconPtr->functionPtr = AdvancedMenu;
 	iconPtr->functionDataPtr = (void *)TextMenuInit();
 	AddIcon(iconPtr);

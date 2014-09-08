@@ -50,11 +50,17 @@ void LCDDecrementContrast(void * itemStr){
 }
 
 void LCDToggleDisplayBootMsg(void * itemStr){
-	LPCmodSettings.LCDsettings.displayMsgBoot? 0 : 1;
+	LPCmodSettings.LCDsettings.displayMsgBoot = LPCmodSettings.LCDsettings.displayMsgBoot? 0 : 1;
 	sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.displayMsgBoot? "Yes" : "No");
 }
 
 void LCDToggledisplayBIOSNameBoot(void * itemStr){
-	LPCmodSettings.LCDsettings.displayBIOSNameBoot? 0 : 1;
+	LPCmodSettings.LCDsettings.displayBIOSNameBoot = LPCmodSettings.LCDsettings.displayBIOSNameBoot? 0 : 1;
 	sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.displayBIOSNameBoot? "Yes" : "No");
+}
+
+void LCDToggledisplayCustomTextBoot(void * itemStr){
+	LPCmodSettings.LCDsettings.customTextBoot = LPCmodSettings.LCDsettings.customTextBoot? 0 : 1;
+	sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.customTextBoot? "Yes" : "No");
+	initialLCDPrint();
 }

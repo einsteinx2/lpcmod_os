@@ -15,6 +15,7 @@
 
 // history for the Rising - falling events
 unsigned char xpad_button_history[7];
+u8 xpad_state_history;
 
 /* Stores time and XPAD state */
 struct xpad_data XPAD_current[4];
@@ -167,6 +168,7 @@ void XPADInit(void)
 		memset(&XPAD_last[n], 0, sizeof(struct xpad_data));
 	}
 	memset(&xpad_button_history, 0, sizeof(xpad_button_history));
+	xpad_state_history = 0;
 	
 	usbprintk("XPAD probe %p ",xpad_probe);
 	if (usb_register(&xpad_driver) < 0) {

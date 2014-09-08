@@ -96,6 +96,7 @@ ebd_wait(struct netif *netif, u16_t time)
 			  netif->input(p, netif);
 			  break;
 		  case ETHTYPE_ARP:
+			  uberLED();
 			  etharp_arp_input(netif, &ethaddr, p);
 			  break;
 		  default:
@@ -165,13 +166,11 @@ int run_lwip(int A, int B, int C, int D, int P)
    dhcp_start(&netif);
 
 	netif_set_default(&netif);
-
-	inputLED();
 	
    int divisor = 0;
 	int first = 1;
 	while (1) {
-		if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_C) == 1) {
+		if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X) == 1) {
 			if(resetCount >= 3) {
 				I2CRebootSlow();
 			}

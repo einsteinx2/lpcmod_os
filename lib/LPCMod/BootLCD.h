@@ -51,18 +51,19 @@ void setLCDContrast(u8 value);
 void setLCDBacklight(u8 value);
 
 void assertInitLCD(void);
+void initialLCDPrint(void);
 
-void WriteLCDInit(struct Disp_controller *xLCD);
-void WriteLCDCommand(struct Disp_controller *xLCD, u8 value);
-void WriteLCDData(struct Disp_controller *xLCD, u8 value);
-void WriteLCDIO(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait);
-void WriteLCDLine1(struct Disp_controller *xLCD, bool centered, char *lineText);
-void WriteLCDLine2(struct Disp_controller *xLCD, bool centered, char *lineText);
-void WriteLCDLine3(struct Disp_controller *xLCD, bool centered, char *lineText);
-void WriteLCDLine4(struct Disp_controller *xLCD, bool centered, char *lineText);
+void WriteLCDInit(void);
+void WriteLCDCommand(u8 value);
+void WriteLCDData(u8 value);
+void WriteLCDIO(u8 data, bool RS, u16 wait);
+void WriteLCDLine1(bool centered, char *lineText);
+void WriteLCDLine2(bool centered, char *lineText);
+void WriteLCDLine3(bool centered, char *lineText);
+void WriteLCDLine4(bool centered, char *lineText);
 void WriteLCDCenterString(char * StringOut, char * stringIn);
 void WriteLCDFitString(char * StringOut, char * stringIn);
-void WriteLCDSetPos(struct Disp_controller *xLCD, u8 pos, u8 line);
-void WriteLCDClearLine(struct Disp_controller *xLCD, u8 line);
+void WriteLCDSetPos(u8 pos, u8 line);
+void WriteLCDClearLine(u8 line);
 
 #endif // _BootLCD_H_

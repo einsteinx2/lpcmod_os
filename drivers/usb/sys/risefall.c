@@ -4,16 +4,17 @@
 
 // This is for the Xpad
 extern unsigned char xpad_button_history[7];
+extern u8 xpad_state_history;
 
 // This is for the Keyboard
-extern unsigned int current_keyboard_key;
+// extern unsigned int current_keyboard_key;
 
 int risefall_xpad_BUTTON(unsigned char selected_Button) {
 	
 	int xpad_id; 
-	int match;
+//	int match;
 	extern int xpad_num;
-	
+/*
 	// USB keyboard section 
 	
 	match=0;
@@ -51,10 +52,11 @@ int risefall_xpad_BUTTON(unsigned char selected_Button) {
 	
 	match=0;
 	if (!remotekeyIsRepeat) {
+*/
 		/* We only grab the key event when the button is first pressed.
 		 * If it's being held down, we ignore the multiple events this 
 		 * generates */
-		
+/*
 		switch (selected_Button) {
 			case TRIGGER_XPAD_KEY_A:
 		   		if (current_remote_key == RC_KEY_SELECT) match=1;
@@ -83,8 +85,10 @@ int risefall_xpad_BUTTON(unsigned char selected_Button) {
 			return 1;
 		}
 	}
+	*/
        	
 	// Xbox controller section
+	// A, B, X, Y, Black and White buttons sub section
 	if (selected_Button < 6) {
        	
 		unsigned char Button;
@@ -99,10 +103,11 @@ int risefall_xpad_BUTTON(unsigned char selected_Button) {
 		if ((Button==0x00)&&(xpad_button_history[selected_Button]==1)) {
 			// Button Falling Edge
 			xpad_button_history[selected_Button] = 0;		
-			return -1;
+			return 0;
 		}	
 	}
  	
+	// Directional pad sub section
  	if ((selected_Button > 5) & (selected_Button < 10) ) {
 	
 		unsigned char Buttonmask;
@@ -132,6 +137,30 @@ int risefall_xpad_BUTTON(unsigned char selected_Button) {
 			xpad_button_history[6] ^= Buttonmask;  // Flip the Bit
 			return -1;
  		}
+	}
+
+ 	// Analog triggers sub section
+	if(selected_Button == TRIGGER_XPAD_TRIGGER_RIGHT){
+		if(XPAD_current[0].trig_right > 200){
+			return 1;
+		}
+	}
+	if(selected_Button == TRIGGER_XPAD_TRIGGER_LEFT){
+		if(XPAD_current[0].trig_left > 200){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+// Useful for Start and Back button
+int risefall_xpad_STATE(unsigned char selected_Button) {
+	if((XPAD_current[0].state == selected_Button) && (xpad_state_history != selected_Button)){
+		xpad_state_history = selected_Button;
+		return 1;
+	}
+	if(XPAD_current[0].state == 0){
+		xpad_state_history = 0;
 	}
 	return 0;
 }

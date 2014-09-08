@@ -12,6 +12,9 @@
  
  // header for BootFlash.c
 
+#define SHOWGUI 1
+#define NOGUI 0
+
 // callback events
 // note that if you receive *_START, you will always receive *_END even if an error is detected
  typedef enum {
@@ -42,7 +45,6 @@ typedef struct {
 	u32 m_dwStartOffset;
 	u32 m_dwLengthUsedArea;
 	CALLBACK_FLASH m_pcallbackFlash;
-	bool m_fDetectedUsing28xxxConventions;
 	bool m_fIsBelievedCapableOfWriteAndErase;
 } OBJECT_FLASH;
 
@@ -59,11 +61,12 @@ typedef struct {
 
 int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
+int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 void BootReflashAndReset_RAM(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 
 bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft );
-bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof);
-bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba );
+bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof, bool showGUI);
+bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba, bool showGUI);
 
 void WriteToIO(u16 address, u8 data);
 u8 ReadFromIO(u16 address);
@@ -76,3 +79,5 @@ void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings);
 //Copy into flash 3*256 bytes of settings for LPCMod OS from memory and place it in the last 4KB block of the flash chip.
 void BootFlashSaveOSSettings(void);
 
+
+int assertOSUpdateValidInput(u8 * inputFile);

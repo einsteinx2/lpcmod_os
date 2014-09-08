@@ -57,4 +57,5 @@ typedef struct TEXTMENU {
 	int visibleCount;
 } TEXTMENU;
 
+extern char bypassConfirmDialog[100];
 #endif

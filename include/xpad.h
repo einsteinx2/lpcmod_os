@@ -28,11 +28,11 @@ int risefall_xpad_BUTTON(unsigned char selected_Button);
 #define XPAD_STATE_RIGHT 8
      
 #define TRIGGER_XPAD_KEY_A   		0
-#define TRIGGER_XPAD_KEY_B		1
-#define TRIGGER_XPAD_KEY_C		2
-#define TRIGGER_XPAD_KEY_D        	3
-#define TRIGGER_XPAD_KEY_START    	4
-#define TRIGGER_XPAD_KEY_BACK     	5
+#define TRIGGER_XPAD_KEY_B			1
+#define TRIGGER_XPAD_KEY_X			2
+#define TRIGGER_XPAD_KEY_Y        	3
+#define TRIGGER_XPAD_KEY_BLACK    	4
+#define TRIGGER_XPAD_KEY_WHITE     	5
 
 #define TRIGGER_XPAD_PAD_UP 		6
 #define TRIGGER_XPAD_PAD_DOWN 		7
@@ -40,4 +40,7 @@ int risefall_xpad_BUTTON(unsigned char selected_Button);
 #define TRIGGER_XPAD_PAD_RIGHT 		9
 
 #define TRIGGER_XPAD_PAD_KEYSTROKE	10
+
+#define TRIGGER_XPAD_TRIGGER_RIGHT	11
+#define TRIGGER_XPAD_TRIGGER_LEFT 	12
 

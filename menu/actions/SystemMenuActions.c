@@ -35,6 +35,9 @@ void incrementGameRegion(void * itemStr){
 			"n/a",
 			"PAL"
 		};
+	if(ConfirmDialog("         Confirm change Game region?", 0))
+		return;
+		
 	int gameRegion = getGameRegionValue();
 	switch(gameRegion){
 		case NORTH_AMERICA:
@@ -60,6 +63,9 @@ void decrementGameRegion(void * itemStr){
 			"n/a",
 			"PAL"
 		};
+	if(ConfirmDialog("         Confirm change Game region?",0))
+		return;
+		
 	int gameRegion = getGameRegionValue();
 	switch(gameRegion){
 		case NORTH_AMERICA:

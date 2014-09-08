@@ -96,42 +96,6 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 		//Selected item in yellow
 		if (item == selectedItem){ 
 			VIDEO_ATTR=0xffef37;
-			
-			if(xLCD->enable){
-				bool colon=false;
-				char titleLine[xLCD->LineSize + 1];
-				xLCD->PrintLine2(xLCD, JUSTIFYLEFT, menu->szCaption);
-				titleLine[xLCD->LineSize] = 0;					//End of line character.
-				memset(titleLine,0x20,xLCD->LineSize);			//Fill with "Space" characters.
-				for(i = 0; i < strlen(selectedItem->szCaption); i++){
-
-					if(selectedItem->szCaption[i] != ':'){
-						if( i < xLCD->LineSize)
-							titleLine[i] = selectedItem->szCaption[i];					//Copy characters as long as we're under 20 characters or no ':' was encountered.
-					}
-					else{
-						if( i < xLCD->LineSize)
-							titleLine[i] = selectedItem->szCaption[i];					//Print out the ':' character anyway.
-						colon = true;
-						break;												//Leave the for-loop as no other character will be printed on this line.
-					}
-				}
-				xLCD->PrintLine3(xLCD, JUSTIFYLEFT, titleLine);
-				if(colon) {
-					memset(titleLine,0x20,xLCD->LineSize);			//Fill with "Space" characters.
-					u8 nbChars = strlen(selectedItem->szParameter);			//Number of character in string
-					for (i = 0; i < nbChars; i++){					//Justify text to the right of the screen.
-						titleLine[xLCD->LineSize - nbChars + i] = selectedItem->szParameter[i];
-					}
-					xLCD->PrintLine4(xLCD, JUSTIFYLEFT, titleLine);
-					colon = false;
-				}
-				else{
-					xLCD->ClearLine(xLCD,3);
-				}
-
-			}
-			
 		}
 		else VIDEO_ATTR=0xffffff;
 		//Font size 2=big.
@@ -145,6 +109,39 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 		
 	}
 	VIDEO_ATTR=0xffffff;
+	if(xLCD.enable == 1){
+		bool colon=false;
+		char titleLine[xLCD.LineSize + 1];
+		xLCD.PrintLine2(JUSTIFYLEFT, menu->szCaption);
+		titleLine[xLCD.LineSize] = 0;					//End of line character.
+		memset(titleLine,0x20,xLCD.LineSize);			//Fill with "Space" characters.
+		for(i = 0; i < strlen(selectedItem->szCaption); i++){
+			if(selectedItem->szCaption[i] != ':'){
+				if( i < xLCD.LineSize)
+					titleLine[i] = selectedItem->szCaption[i];					//Copy characters as long as we're under 20 characters or no ':' was encountered.
+			}
+			else{
+				if( i < xLCD.LineSize)
+					titleLine[i] = selectedItem->szCaption[i];					//Print out the ':' character anyway.
+				colon = true;
+				break;												//Leave the for-loop as no other character will be printed on this line.
+			}
+		}
+		xLCD.PrintLine3(JUSTIFYLEFT, titleLine);
+		if(colon) {
+			memset(titleLine,0x20,xLCD.LineSize);			//Fill with "Space" characters.
+			u8 nbChars = strlen(selectedItem->szParameter);		//Number of character in string
+			for (i = 0; i < nbChars; i++){				//Justify text to the right of the screen.
+				titleLine[xLCD.LineSize - nbChars + i] = selectedItem->szParameter[i];
+			}
+			xLCD.PrintLine4(JUSTIFYLEFT, titleLine);
+			colon = false;
+		}
+		else{
+			xLCD.ClearLine(3);
+		}
+
+	}
 }
 
 void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
@@ -207,7 +204,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
 				TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
 			}
 		}
-		else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_START) == 1 || (u32)temp>(0x369E99*MENU_TIMEWAIT)) {
+		else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1 || (u32)temp>(0x369E99*MENU_TIMEWAIT)) {
 			temp = 0;
 			BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 			VIDEO_ATTR=0xffffff;
@@ -270,10 +267,58 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
 			//We need to redraw ourselves
 			TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
 		}
-		else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_BACK) == 1) {
+/*		else if (risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
+			oldTemp = temp;
+			temp = 0;
+			if(oldTemp != 0) {
+					BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+			}
+
+			VIDEO_ATTR=0xffffff;
+			//Menu item selected - invoke function pointer.
+			if (selectedMenuItem->functionRightPtr!=NULL) {
+				selectedMenuItem->functionRightPtr(selectedMenuItem->functionRightDataPtr);
+				//Clear the screen again	
+				BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+				VIDEO_ATTR=0xffffff;
+				//Did the function that was run set the 'Quit the menu' flag?
+				if (breakOutOfMenu) {
+					breakOutOfMenu=0;
+					return;
+				}
+			}
+			//We need to redraw ourselves
+			TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
+		}
+		else if (risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1) {
+			oldTemp = temp;
+			temp = 0;
+			if(oldTemp != 0) {
+					BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+			}
+
+			VIDEO_ATTR=0xffffff;
+			//Menu item selected - invoke function pointer.
+			if (selectedMenuItem->functionLeftPtr!=NULL) {
+				selectedMenuItem->functionLeftPtr(selectedMenuItem->functionLeftDataPtr);
+				//Clear the screen again	
+				BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+				VIDEO_ATTR=0xffffff;
+				//Did the function that was run set the 'Quit the menu' flag?
+				if (breakOutOfMenu) {
+					breakOutOfMenu=0;
+					return;
+				}
+			}
+			//We need to redraw ourselves
+			TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
+		}
+*/
+		else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1) {
 			BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 			VIDEO_ATTR=0xffffff;
 			temp = 0;
+			bypassConfirmDialog[0] = 0;	//reset for confirmDialog
 			return;
 		}
 

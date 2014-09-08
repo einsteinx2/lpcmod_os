@@ -80,16 +80,24 @@ TEXTMENU *LCDMenuInit(void) {
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	strcpy(itemPtr->szCaption,"Display booting BIOS name : ");
 	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.displayBIOSNameBoot? "Yes" : "No");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionPtr= LCDToggledisplayBIOSNameBoot;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
+	itemPtr->functionLeftPtr=LCDToggledisplayBIOSNameBoot;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+	itemPtr->functionRightPtr=LCDToggledisplayBIOSNameBoot;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 	sprintf(itemPtr->szCaption,"Display custom text at boot : ");
 	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.customTextBoot? "Yes" : "No");
-	itemPtr->functionPtr= NULL;
-	itemPtr->functionDataPtr= NULL;
+	itemPtr->functionPtr= LCDToggledisplayCustomTextBoot;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
+	itemPtr->functionLeftPtr=LCDToggledisplayCustomTextBoot;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+	itemPtr->functionRightPtr=LCDToggledisplayCustomTextBoot;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
 	TextMenuAddItem(menuPtr, itemPtr);
 
 	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

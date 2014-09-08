@@ -1,4 +1,6 @@
+#CC	= gcc-3.3.gcc-opt
 CC	= gcc-3.3
+
 # prepare check for gcc 3.3, $(GCC_3.3) will either be 0 or 1
 GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)
 
@@ -146,6 +148,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootParser.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
+OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
 #USB
 OBJECTS-CROM += $(TOPDIR)/obj/config.o 
 OBJECTS-CROM += $(TOPDIR)/obj/hcd-pci.o

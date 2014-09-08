@@ -76,7 +76,7 @@ void writeBiosIdentifier(unsigned char *cromimage, int biosSize) {
 	memcpy(BiosHeader->Magic,"AUTO",4);
 	BiosHeader->HeaderVersion=1;
 	BiosHeader->BiosSize= biosSize;
-	sprintf(BiosHeader->Name,"LPCMod OS %s",VERSION);
+	sprintf(BiosHeader->Name,"XBlast OS %s",VERSION);
 						               
 	BiosHeader->XboxVersion =       BiosID_Version10 |
 	                                BiosID_Version11 |

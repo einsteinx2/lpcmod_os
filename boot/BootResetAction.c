@@ -45,8 +45,7 @@ void ClearScreen (void) {
 extern void BootResetAction ( void ) {
 	bool fMbrPresent=false;
 	bool fSeenActive=false;
-	int nFATXPresent=false;
-	bool fHasHardware=false;				//Flag used to determine if a LPCMod is detected.
+	int nFATXPresent=false;				
 	bool fFirstBoot=false;					//Flag to indicate first boot since flash update
 	int nTempCursorX, nTempCursorY;
 	int n, nx;
@@ -66,6 +65,8 @@ extern void BootResetAction ( void ) {
 		"Unknown"
 	};
 
+	fHasHardware = false;	
+	
 	memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
 	memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);
 	memcpy(&cromwell_loadbank,(void*)(0x03A00000+0x28),4);
@@ -99,7 +100,7 @@ extern void BootResetAction ( void ) {
 	if(fHasHardware){		//Don't try to read from flash if none is detected
 		//Make sure we'll be reading from OS Bank
 		switchBank(BNKOS);
-		//Retreive LPCMod OS settings from flash
+		//Retrieve XBlast OS settings from flash
 		BootFlashGetOSSettings(&LPCmodSettings);
 	}
 
@@ -124,8 +125,9 @@ extern void BootResetAction ( void ) {
 	   LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
 	   LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
 			fFirstBoot = true;
-			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.									//Certainly don't write to flash if no proper hardware was detected!
-			BootFlashSaveOSSettings();		//Put some initial values in there.
+			initialLPCModOSBoot(&LPCmodSettings);				//No settings for LPCMod were present in flash.
+			//OS sometimes lock on after a fresh flash. Disabling to see if that's causing it.(probably)
+			//BootFlashSaveOSSettings();		//Put some initial values in there.
 			LEDFirstBoot(NULL);
 			LPCmodSettings.OSsettings.bootTimeout = 0;		//No countdown since it's the first boot since a flash update.
 															//Configure your device first.
@@ -154,6 +156,27 @@ extern void BootResetAction ( void ) {
 	
 	BootEepromReadEntireEEPROM();
         
+        I2CTransmitWord(0x10, 0x1a01); // unknown, done immediately after reading out eeprom data
+	I2CTransmitWord(0x10, 0x1b04); // unknown      
+        
+        /* Here, the interrupts are Switched on now */
+	BootPciInterruptEnable();
+        /* We allow interrupts */
+	nInteruptable = 1;
+
+#ifndef SILENT_MODE
+	printk("           BOOT: start USB init\n");
+#endif	
+	BootStartUSB();
+	
+        //Load up some more custom settings right before booting to OS.
+	if(!fFirstBoot){
+		wait_ms(550);
+		if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1){
+			BootModBios(&(LPCmodSettings.OSsettings.activeBank));
+		}
+		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+	}
 	// Load and Init the Background image
 	// clear the Video Ram
 	memset((void *)FB_START,0x00,0x400000);
@@ -171,14 +194,11 @@ extern void BootResetAction ( void ) {
 #ifndef DEBUG_MODE
 	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 #endif
-
-	I2CTransmitWord(0x10, 0x1a01); // unknown, done immediately after reading out eeprom data
-	I2CTransmitWord(0x10, 0x1b04); // unknown
 	
 	/* Here, the interrupts are Switched on now */
-	BootPciInterruptEnable();
+//	BootPciInterruptEnable();
         /* We allow interrupts */
-	nInteruptable = 1;	
+//	nInteruptable = 1;	
 
 	I2CTransmitWord(0x10, 0x1901); // no reset on eject
          
@@ -210,8 +230,8 @@ extern void BootResetAction ( void ) {
 	}
 
    mbVersion = I2CGetXboxMBRev();
-   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
-   printk("     RAM: %d", xbox_ram);
+   printk("          Xbox revision: %s ", xbox_mb_rev[mbVersion]);
+   printk("RAM: %d", xbox_ram);
    printk("MiB\n");
    
 	VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
@@ -272,10 +292,8 @@ extern void BootResetAction ( void ) {
 
 
 
-#ifndef SILENT_MODE
-	printk("           BOOT: start USB init\n");
-#endif
-	BootStartUSB();
+
+//	BootStartUSB();
 
 	// init the IDE devices
 #ifndef SILENT_MODE
@@ -299,10 +317,7 @@ extern void BootResetAction ( void ) {
 
 
 
-	//Load up some more custom settings right before booting to OS.
-	if(!fFirstBoot){
-		initialSetLED(LPCmodSettings.OSsettings.LEDColor);
-	}
+
 
 
 	BootIdeInit();
@@ -313,7 +328,7 @@ extern void BootResetAction ( void ) {
 	nTempCursorMbrY=VIDEO_CURSOR_POSY;
 
 //	printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
-	IconMenuInit(fHasHardware);
+	IconMenuInit();
 	//inputLED();
 	IconMenu();
 

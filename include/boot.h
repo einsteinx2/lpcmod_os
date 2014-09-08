@@ -349,19 +349,19 @@ char * strstr(const char * s1,const char * s2);
 
 //Configuration parameters saved in flash
 typedef struct _OSsettings {
-	u8	migrateSetttings;		//Flag to indicate if settings in this struct should be carried over a OS update.
+	u8	migrateSetttings;	//Flag to indicate if settings in this struct should be carried over a OS update.
 	u8	reserved[15];
-	u8	activeBank;				//Default Flash bank to load BIOS from.
-	u8	Quickboot;				//Bypass OS and load selected bank in "activeBank"
-	u8	selectedMenuItem;		//Default selected item in OS menu when booting into it.
-	u8	fanSpeed;				//Why not
+	u8	activeBank;		//Default Flash bank to load BIOS from.
+	u8	Quickboot;		//Bypass OS and load selected bank in "activeBank"
+	u8	selectedMenuItem;	//Default selected item in OS menu when booting into it.
+	u8	fanSpeed;		//Why not
 	u8	bootTimeout;
 	u8	LEDColor;
-	u8	TSOPcontrol;			//variable contains the following settings: bit0=active?
-								//											bit1=Split4ways?
-								//											bit2=A19 value
-								//											bit3=A18 value
-								//Make sur to mask properly when using this variable.
+	u8	TSOPcontrol;		//variable contains the following settings: bit0=active?
+					//											bit1=Split4ways?
+					//											bit2=A19 value
+					//											bit3=A18 value
+					//Make sur to mask properly when using this variable.
 	u8	reserved1[13];
 	char	biosName0[20];		//512KB bank name. 20 characters max to properly display on LCD.
 	char	biosName1[20];		//256KB bank name
@@ -372,24 +372,24 @@ typedef struct _OSsettings {
 	char	biosName6[20];		//Reserved for future use.
 	char	biosName7[20];		//Reserved for future use.
 	u8	reserved2[42];
-	u8	enableNetwork;			//Future use. For now, network is enabled only by NetFlash or WebUpdate
-	u8	useDHCP;				//Self Explanatory
-	u8	staticIP[4];			//Only useful when useDHCP is set to false.
-	u8	staticGateway[4];		//Only useful when useDHCP is set to false.
-	u8	staticDNS1[4];			//Only useful when useDHCP is set to false.
-	u8	staticDNS2[4];			//Only useful when useDHCP is set to false.
-}_OSsettings;					//For a total of 256 bytes
+	u8	enableNetwork;		//Future use. For now, network is enabled only by NetFlash or WebUpdate
+	u8	useDHCP;		//Self Explanatory
+	u8	staticIP[4];		//Only useful when useDHCP is set to false.
+	u8	staticGateway[4];	//Only useful when useDHCP is set to false.
+	u8	staticDNS1[4];		//Only useful when useDHCP is set to false.
+	u8	staticDNS2[4];		//Only useful when useDHCP is set to false.
+}_OSsettings;				//For a total of 256 bytes
 
 typedef struct _LCDsettings {
-	u8 migrateLCD;				//Flag to indicate if settings in this struct should be carried over a OS update.
-	u8 enable5V;				//Flag to indicate if +5V rail should be enabled(for LCD power)
-	u8 lcdType;					//HD44780 only for now
-	u8 nbLines;					//User puts 4, meens 2 lines from HD44780 POV
-	u8 lineLength;				//Should be 16 or 20 most of the time.
-	u8 backlight;				//7-bit value
-	u8 contrast;				//7-bit value
-	u8 displayMsgBoot;			//Display text on LCD while booting
-	u8 customTextBoot;			//Display custom text instead of default text on while booting
+	u8 migrateLCD;			//Flag to indicate if settings in this struct should be carried over a OS update.
+	u8 enable5V;			//Flag to indicate if +5V rail should be enabled(for LCD power)
+	u8 lcdType;			//HD44780 only for now
+	u8 nbLines;			//User puts 4, meens 2 lines from HD44780 POV
+	u8 lineLength;			//Should be 16 or 20 most of the time.
+	u8 backlight;			//7-bit value
+	u8 contrast;			//7-bit value
+	u8 displayMsgBoot;		//Display text on LCD while booting
+	u8 customTextBoot;		//Display custom text instead of default text.
 	u8 displayBIOSNameBoot;		//Display BIOS name of active bank when booting
 	u8 reserved0[5];
 	char customString0[20];		//1 of 4 strings to be displayed either when in OS or while booting.
@@ -397,7 +397,7 @@ typedef struct _LCDsettings {
 	char customString2[20];
 	char customString3[20];
 	u8 reserved1[161];
-}_LCDsettings;					//For a total of 256 bytes
+}_LCDsettings;				//For a total of 256 bytes
 
 typedef struct _LPCmodSettings {
 	_OSsettings OSsettings;
@@ -410,7 +410,7 @@ _LPCmodSettings LPCmodSettings;
 
 
 
-typedef struct Disp_controller {
+typedef struct _xLCD {
 	int DisplayType;
 	int enable;
 	int	LineSize;
@@ -422,22 +422,21 @@ typedef struct Disp_controller {
 	u8	Line3Start;
 	u8	Line4Start;
 
-	void	(*Init)(struct Disp_controller *xLCD);
-	void	(*Command)(struct Disp_controller *xLCD, u8 value);
-	void	(*Data)(struct Disp_controller *xLCD, u8 value);
+	void	(*Init)(void);
+	void	(*Command)(u8 value);
+	void	(*Data)(u8 value);
 
-	void	(*WriteIO)(struct Disp_controller *xLCD, u8 data, bool RS, u16 wait);
-	void	(*Poll)(struct Disp_controller *xLCD);
+	void	(*WriteIO)(u8 data, bool RS, u16 wait);
 
-	void	(*PrintLine1)(struct Disp_controller *xLCD, bool centered, char *text);
-	void	(*PrintLine2)(struct Disp_controller *xLCD, bool centered, char *text);
-	void	(*PrintLine3)(struct Disp_controller *xLCD, bool centered, char *text);
-	void	(*PrintLine4)(struct Disp_controller *xLCD, bool centered, char *text);
+	void	(*PrintLine1)(bool centered, char *text);
+	void	(*PrintLine2)(bool centered, char *text);
+	void	(*PrintLine3)(bool centered, char *text);
+	void	(*PrintLine4)(bool centered, char *text);
 
-	void    (*ClearLine)(struct Disp_controller *xLCD, u8 line);
+	void    (*ClearLine)(u8 line);
 } _xLCD;	//Will be know as xLCD from now on.
 
-_xLCD *xLCD;
+_xLCD xLCD;
 
 //Xbox motherboard revision enum.
 typedef enum {
@@ -454,4 +453,9 @@ typedef enum {
 
 //Put here to make it global (yeah yeah... I don't care. There are far worst things done in the VHDL code of the modchip trust me!)
 u8 mbVersion;
+
+//Global to hide code when runnning in XBE without modchip detected.
+bool fHasHardware;
+
+u8 currentFlashBank;
 #endif // _Boot_H_

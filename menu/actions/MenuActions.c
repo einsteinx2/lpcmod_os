@@ -44,7 +44,7 @@ void BootOriginalBios(void *data) {
 	while(1);
 }	
 
-// Booting 256k Modbios
+// Booting bank Modbios
 void BootModBios(void *data) {
 	BootFlashSaveOSSettings();
 	assertWriteEEPROM();
