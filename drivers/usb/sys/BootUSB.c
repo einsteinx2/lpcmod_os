@@ -41,29 +41,29 @@ struct pci_dev xx_ohci_dev={
 /*------------------------------------------------------------------------*/ 
 void BootStartUSB(void)
 {
-	int n;
+    int n;
 
-	nousb=0;
+    nousb=0;
 
         init_wrapper();
         subsys_usb_init();
         hub_thread_handler=thread_handler;
-	usb_hcd_pci_probe(&xx_ohci_dev, module_table_pci_ids);	
-	XPADInit();
-	
-	XRemoteInit();
-	
-	UsbKeyBoardInit();
+    usb_hcd_pci_probe(&xx_ohci_dev, module_table_pci_ids);    
+    XPADInit();
+    
+    XRemoteInit();
+    
+    UsbKeyBoardInit();
 
-	for(n=0;n<30;n++) {
-		USBGetEvents();
-		wait_ms(1);
-	}
+    for(n=0;n<30;n++) {
+        USBGetEvents();
+        wait_ms(1);
+    }
 }
 /*------------------------------------------------------------------------*/ 
 void USBGetEvents(void)
-{	
-	inc_jiffies(1);
+{    
+    inc_jiffies(1);
         do_all_timers();
         hub_thread_handler(NULL);
         handle_irqs(-1);       
@@ -71,20 +71,20 @@ void USBGetEvents(void)
 /*------------------------------------------------------------------------*/ 
 void BootStopUSB(void)
 {
-	int n;
+    int n;
         
         XPADRemove();
-	XRemoteRemove();
-	UsbKeyBoardRemove();
-	
-	for(n=0;n<100;n++)
-	{
-		USBGetEvents();
-		wait_ms(1);
-	}	
+    XRemoteRemove();
+    UsbKeyBoardRemove();
+    
+    for(n=0;n<100;n++)
+    {
+        USBGetEvents();
+        wait_ms(1);
+    }    
 
-	module_exit_usb_exit();
-	usb_hcd_pci_remove(&xx_ohci_dev);
-	
-}	
-/*------------------------------------------------------------------------*/ 	
+    module_exit_usb_exit();
+    usb_hcd_pci_remove(&xx_ohci_dev);
+    
+}    
+/*------------------------------------------------------------------------*/     

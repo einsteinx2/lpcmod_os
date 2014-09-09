@@ -30,20 +30,20 @@ unsigned int cromwell_Biostype;
 
 unsigned int xbox_ram;
 
-#define XROMWELL	0
-#define CROMWELL	1
+#define XROMWELL    0
+#define CROMWELL    1
 
 #define ICON_WIDTH 64
 #define ICON_HEIGHT 64
 
 static inline double min (double a, double b)
 {
-	if (a < b) return a; else return b;
+    if (a < b) return a; else return b;
 }
 
 static inline double max (double a, double b)
 {
-	if (a > b) return a; else return b;
+    if (a > b) return a; else return b;
 }
 
 #include "iso_fs.h"
@@ -67,10 +67,10 @@ volatile u32 DVD_TRAY_STATE;
 
 u8 VIDEO_AV_MODE ;
 
-#define DVD_CLOSED 		0
-#define DVD_CLOSING 		1
-#define DVD_OPEN   		2
-#define DVD_OPENING   		3
+#define DVD_CLOSED         0
+#define DVD_CLOSING         1
+#define DVD_OPEN           2
+#define DVD_OPENING           3
 
 /////////////////////////////////
 // Superfunky i386 internal structures
@@ -82,15 +82,15 @@ typedef struct gdt_t {
 } ts_descriptor_pointer;
 
 typedef struct {  // inside an 8-byte protected mode interrupt vector
-	u16 m_wHandlerHighAddressLow16;
-	u16 m_wSelector;
-	u16 m_wType;
-	u16 m_wHandlerLinearAddressHigh16;
+    u16 m_wHandlerHighAddressLow16;
+    u16 m_wSelector;
+    u16 m_wType;
+    u16 m_wHandlerLinearAddressHigh16;
 } ts_pm_interrupt;
 
 typedef enum {
-	EDT_UNKNOWN= 0,
-	EDT_XBOXFS
+    EDT_UNKNOWN= 0,
+    EDT_XBOXFS
 } enumDriveType;
 
 typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE device after init
@@ -99,7 +99,7 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
     unsigned short m_wCountCylinders;
     unsigned short m_wCountSectorsPerTrack;
     unsigned long m_dwCountSectorsTotal; /* total */
-    unsigned char m_bLbaMode;	/* am i lba (0x40) or chs (0x00) */
+    unsigned char m_bLbaMode;    /* am i lba (0x40) or chs (0x00) */
     unsigned char m_szIdentityModelNumber[40];
     unsigned char term_space_1[2];
     unsigned char m_szSerial[20];
@@ -122,26 +122,26 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
 // or these together as argument to I2cSetFrontpanelLed
 
 enum {
-	I2C_LED_RED0 = 0x80,
-	I2C_LED_RED1 = 0x40,
-	I2C_LED_RED2 = 0x20,
-	I2C_LED_RED3 = 0x10,
-	I2C_LED_GREEN0 = 0x08,
-	I2C_LED_GREEN1 = 0x04,
-	I2C_LED_GREEN2 = 0x02,
-	I2C_LED_GREEN3 = 0x01
+    I2C_LED_RED0 = 0x80,
+    I2C_LED_RED1 = 0x40,
+    I2C_LED_RED2 = 0x20,
+    I2C_LED_RED3 = 0x10,
+    I2C_LED_GREEN0 = 0x08,
+    I2C_LED_GREEN1 = 0x04,
+    I2C_LED_GREEN2 = 0x02,
+    I2C_LED_GREEN3 = 0x01
 };
 
 ///////////////////////////////
-/* BIOS-wide error codes		all have b31 set  */
+/* BIOS-wide error codes        all have b31 set  */
 
 enum {
-	ERR_SUCCESS = 0,  // completed without error
+    ERR_SUCCESS = 0,  // completed without error
 
-	ERR_I2C_ERROR_TIMEOUT = 0x80000001,  // I2C action failed because it did not complete in a reasonable time
-	ERR_I2C_ERROR_BUS = 0x80000002, // I2C action failed due to non retryable bus error
+    ERR_I2C_ERROR_TIMEOUT = 0x80000001,  // I2C action failed because it did not complete in a reasonable time
+    ERR_I2C_ERROR_BUS = 0x80000002, // I2C action failed due to non retryable bus error
 
-	ERR_BOOT_PIC_ALG_BROKEN = 0x80000101 // PIC algorithm did not pass its self-test
+    ERR_BOOT_PIC_ALG_BROKEN = 0x80000101 // PIC algorithm did not pass its self-test
 };
 
 /////////////////////////////////
@@ -153,17 +153,17 @@ enum {
 */
 
 static __inline void IoOutputByte(u16 wAds, u8 bValue) {
-//	__asm__  ("			     out	%%al,%%dx" : : "edx" (dwAds), "al" (bValue)  );
+//    __asm__  ("                 out    %%al,%%dx" : : "edx" (dwAds), "al" (bValue)  );
     __asm__ __volatile__ ("outb %b0,%w1": :"a" (bValue), "Nd" (wAds));
 }
 
 static __inline void IoOutputWord(u16 wAds, u16 wValue) {
-//	__asm__  ("	 out	%%ax,%%dx	" : : "edx" (dwAds), "ax" (wValue)  );
+//    __asm__  ("     out    %%ax,%%dx    " : : "edx" (dwAds), "ax" (wValue)  );
     __asm__ __volatile__ ("outw %0,%w1": :"a" (wValue), "Nd" (wAds));
-	}
+    }
 
 static __inline void IoOutputDword(u16 wAds, u32 dwValue) {
-//	__asm__  ("	 out	%%eax,%%dx	" : : "edx" (dwAds), "ax" (wValue)  );
+//    __asm__  ("     out    %%eax,%%dx    " : : "edx" (dwAds), "ax" (wValue)  );
     __asm__ __volatile__ ("outl %0,%w1": :"a" (dwValue), "Nd" (wAds));
 }
 
@@ -191,20 +191,20 @@ static __inline u32 IoInputDword(u16 wAds) {
 
 #define rdmsr(msr,val1,val2) \
        __asm__ __volatile__("rdmsr" \
-			    : "=a" (val1), "=d" (val2) \
-			    : "c" (msr))
+                : "=a" (val1), "=d" (val2) \
+                : "c" (msr))
 
 #define wrmsr(msr,val1,val2) \
      __asm__ __volatile__("wrmsr" \
-			  : /* no outputs */ \
-			  : "c" (msr), "a" (val1), "d" (val2))
+              : /* no outputs */ \
+              : "c" (msr), "a" (val1), "d" (val2))
 
 
 void BootPciInterruptEnable(void);
 
-	// boot process
+    // boot process
 int BootPerformPicChallengeResponseAction(void);
-	// LED control (see associated enum above)
+    // LED control (see associated enum above)
 int I2cSetFrontpanelLed(u8 b);
 
 #define bprintf(...)
@@ -216,8 +216,8 @@ int I2cSetFrontpanelLed(u8 b);
 #endif
 
 typedef struct _LIST_ENTRY {
-	struct _LIST_ENTRY *m_plistentryNext;
-	struct _LIST_ENTRY *m_plistentryPrevious;
+    struct _LIST_ENTRY *m_plistentryNext;
+    struct _LIST_ENTRY *m_plistentryPrevious;
 } LIST_ENTRY;
 
 void ListEntryInsertAfterCurrent(LIST_ENTRY *plistentryCurrent, LIST_ENTRY *plistentryNew);
@@ -248,15 +248,15 @@ u8 BiosCmosRead(u8 bAds);
 void BootPciPeripheralInitialization(void);
 void BootAGPBUSInitialization(void);
 void BootDetectMemorySize(void);
-extern void	ReadPCIByte(unsigned int bus, unsigned int dev, unsigned intfunc, 	unsigned int reg_off, unsigned char *pbyteval);
-extern void	WritePCIByte(unsigned int bus, unsigned int dev, unsigned int func,	unsigned int reg_off, unsigned char byteval);
-extern void	ReadPCIDword(unsigned int bus, unsigned int dev, unsigned int func,	unsigned int reg_off, unsigned int *pdwordval);
-extern void	WritePCIDword(unsigned int bus, unsigned int dev, unsigned int func,		unsigned int reg_off, unsigned int dwordval);
-extern void	ReadPCIBlock(unsigned int bus, unsigned int dev, unsigned int func,		unsigned int reg_off, unsigned char *buf,	unsigned int nbytes);
-extern void	WritePCIBlock(unsigned int bus, unsigned int dev, unsigned int func, 	unsigned int reg_off, unsigned char *buf, unsigned int nbytes);
+extern void    ReadPCIByte(unsigned int bus, unsigned int dev, unsigned intfunc,     unsigned int reg_off, unsigned char *pbyteval);
+extern void    WritePCIByte(unsigned int bus, unsigned int dev, unsigned int func,    unsigned int reg_off, unsigned char byteval);
+extern void    ReadPCIDword(unsigned int bus, unsigned int dev, unsigned int func,    unsigned int reg_off, unsigned int *pdwordval);
+extern void    WritePCIDword(unsigned int bus, unsigned int dev, unsigned int func,        unsigned int reg_off, unsigned int dwordval);
+extern void    ReadPCIBlock(unsigned int bus, unsigned int dev, unsigned int func,        unsigned int reg_off, unsigned char *buf,    unsigned int nbytes);
+extern void    WritePCIBlock(unsigned int bus, unsigned int dev, unsigned int func,     unsigned int reg_off, unsigned char *buf, unsigned int nbytes);
 
 void PciWriteByte (unsigned int bus, unsigned int dev, unsigned int func,
-		unsigned int reg_off, unsigned char byteval);
+        unsigned int reg_off, unsigned char byteval);
 u8 PciReadByte(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off);
 u32 PciWriteDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, u32 dw);
 u32 PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off);
@@ -317,9 +317,9 @@ void free(void *);
 extern volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
 extern volatile bool fSeenPowerdown;
 typedef enum {
-	ETS_OPEN_OR_OPENING=0,
-	ETS_CLOSING,
-	ETS_CLOSED
+    ETS_OPEN_OR_OPENING=0,
+    ETS_CLOSING,
+    ETS_CLOSED
 } TRAY_STATE;
 extern volatile TRAY_STATE traystate;
 
@@ -349,60 +349,61 @@ char * strstr(const char * s1,const char * s2);
 
 //Configuration parameters saved in flash
 typedef struct _OSsettings {
-	u8	migrateSetttings;	//Flag to indicate if settings in this struct should be carried over a OS update.
-	u8	reserved[15];
-	u8	activeBank;		//Default Flash bank to load BIOS from.
-	u8	Quickboot;		//Bypass OS and load selected bank in "activeBank"
-	u8	selectedMenuItem;	//Default selected item in OS menu when booting into it.
-	u8	fanSpeed;		//Why not
-	u8	bootTimeout;
-	u8	LEDColor;
-	u8	TSOPcontrol;		//variable contains the following settings: bit0=active?
-					//											bit1=Split4ways?
-					//											bit2=A19 value
-					//											bit3=A18 value
-					//Make sur to mask properly when using this variable.
-	u8	reserved1[13];
-	char	biosName0[20];		//512KB bank name. 20 characters max to properly display on LCD.
-	char	biosName1[20];		//256KB bank name
-	char	biosName2[20];		//Reserved for future use.
-	char	biosName3[20];		//Reserved for future use.
-	char	biosName4[20];		//Reserved for future use.
-	char	biosName5[20];		//Reserved for future use.
-	char	biosName6[20];		//Reserved for future use.
-	char	biosName7[20];		//Reserved for future use.
-	u8	reserved2[42];
-	u8	enableNetwork;		//Future use. For now, network is enabled only by NetFlash or WebUpdate
-	u8	useDHCP;		//Self Explanatory
-	u8	staticIP[4];		//Only useful when useDHCP is set to false.
-	u8	staticGateway[4];	//Only useful when useDHCP is set to false.
-	u8	staticDNS1[4];		//Only useful when useDHCP is set to false.
-	u8	staticDNS2[4];		//Only useful when useDHCP is set to false.
-}_OSsettings;				//For a total of 256 bytes
+    u8    migrateSetttings;    //Flag to indicate if settings in this struct should be carried over a OS update.
+    u8    reserved[15];
+    u8    activeBank;        //Default Flash bank to load BIOS from.
+    u8    altBank;          //Alternative BIOS bank to boot holding black button
+    u8    Quickboot;        //Bypass OS and load selected bank in "activeBank"
+    u8    selectedMenuItem;    //Default selected item in OS menu when booting into it.
+    u8    fanSpeed;        //Why not
+    u8    bootTimeout;
+    u8    LEDColor;
+    u8    TSOPcontrol;        //variable contains the following settings: bit0=active?
+                    //                                            bit1=Split4ways?
+                    //                                            bit2=A19 value
+                    //                                            bit3=A18 value
+                    //Make sure to mask properly when using this variable.
+    u8    reserved1[12];
+    char    biosName0[20];        //512KB bank name. 20 characters max to properly display on LCD.
+    char    biosName1[20];        //256KB bank name
+    char    biosName2[20];        //Reserved for future use.
+    char    biosName3[20];        //Reserved for future use.
+    char    biosName4[20];        //Reserved for future use.
+    char    biosName5[20];        //Reserved for future use.
+    char    biosName6[20];        //Reserved for future use.
+    char    biosName7[20];        //Reserved for future use.
+    u8    reserved2[42];
+    u8    enableNetwork;        //Future use. For now, network is enabled only by NetFlash or WebUpdate
+    u8    useDHCP;        //Self Explanatory
+    u8    staticIP[4];        //Only useful when useDHCP is set to false.
+    u8    staticGateway[4];    //Only useful when useDHCP is set to false.
+    u8    staticDNS1[4];        //Only useful when useDHCP is set to false.
+    u8    staticDNS2[4];        //Only useful when useDHCP is set to false.
+}_OSsettings;                //For a total of 256 bytes
 
 typedef struct _LCDsettings {
-	u8 migrateLCD;			//Flag to indicate if settings in this struct should be carried over a OS update.
-	u8 enable5V;			//Flag to indicate if +5V rail should be enabled(for LCD power)
-	u8 lcdType;			//HD44780 only for now
-	u8 nbLines;			//User puts 4, meens 2 lines from HD44780 POV
-	u8 lineLength;			//Should be 16 or 20 most of the time.
-	u8 backlight;			//7-bit value
-	u8 contrast;			//7-bit value
-	u8 displayMsgBoot;		//Display text on LCD while booting
-	u8 customTextBoot;		//Display custom text instead of default text.
-	u8 displayBIOSNameBoot;		//Display BIOS name of active bank when booting
-	u8 reserved0[5];
-	char customString0[20];		//1 of 4 strings to be displayed either when in OS or while booting.
-	char customString1[20];		//20 characters max to properly display on LCD.
-	char customString2[20];
-	char customString3[20];
-	u8 reserved1[161];
-}_LCDsettings;				//For a total of 256 bytes
+    u8 migrateLCD;            //Flag to indicate if settings in this struct should be carried over a OS update.
+    u8 enable5V;            //Flag to indicate if +5V rail should be enabled(for LCD power)
+    u8 lcdType;            //HD44780 only for now
+    u8 nbLines;            //User puts 4, meens 2 lines from HD44780 POV
+    u8 lineLength;            //Should be 16 or 20 most of the time.
+    u8 backlight;            //7-bit value
+    u8 contrast;            //7-bit value
+    u8 displayMsgBoot;        //Display text on LCD while booting
+    u8 customTextBoot;        //Display custom text instead of default text.
+    u8 displayBIOSNameBoot;        //Display BIOS name of active bank when booting
+    u8 reserved0[5];
+    char customString0[20];        //1 of 4 strings to be displayed either when in OS or while booting.
+    char customString1[20];        //20 characters max to properly display on LCD.
+    char customString2[20];
+    char customString3[20];
+    u8 reserved1[161];
+}_LCDsettings;                //For a total of 256 bytes
 
 typedef struct _LPCmodSettings {
-	_OSsettings OSsettings;
-	_LCDsettings LCDsettings;
-	EEPROMDATA bakeeprom;
+    _OSsettings OSsettings;
+    _LCDsettings LCDsettings;
+    EEPROMDATA bakeeprom;
 } _LPCmodSettings;
 
 
@@ -411,51 +412,51 @@ _LPCmodSettings LPCmodSettings;
 
 
 typedef struct _xLCD {
-	int DisplayType;
-	int enable;
-	int	LineSize;
-	int	TimingCMD;
-	int	TimingData;
+    int DisplayType;
+    int enable;
+    int    LineSize;
+    int    TimingCMD;
+    int    TimingData;
 
-	u8	Line1Start;
-	u8	Line2Start;
-	u8	Line3Start;
-	u8	Line4Start;
+    u8    Line1Start;
+    u8    Line2Start;
+    u8    Line3Start;
+    u8    Line4Start;
 
-	void	(*Init)(void);
-	void	(*Command)(u8 value);
-	void	(*Data)(u8 value);
+    void    (*Init)(void);
+    void    (*Command)(u8 value);
+    void    (*Data)(u8 value);
 
-	void	(*WriteIO)(u8 data, bool RS, u16 wait);
+    void    (*WriteIO)(u8 data, bool RS, u16 wait);
 
-	void	(*PrintLine1)(bool centered, char *text);
-	void	(*PrintLine2)(bool centered, char *text);
-	void	(*PrintLine3)(bool centered, char *text);
-	void	(*PrintLine4)(bool centered, char *text);
+    void    (*PrintLine1)(bool centered, char *text);
+    void    (*PrintLine2)(bool centered, char *text);
+    void    (*PrintLine3)(bool centered, char *text);
+    void    (*PrintLine4)(bool centered, char *text);
 
-	void    (*ClearLine)(u8 line);
-} _xLCD;	//Will be know as xLCD from now on.
+    void    (*ClearLine)(u8 line);
+} _xLCD;    //Will be know as xLCD from now on.
 
 _xLCD xLCD;
 
 //Xbox motherboard revision enum.
 typedef enum {
-	DEVKIT = 0x00,	//Includes a bunch of revisions
-	DEBUGKIT = 0x01,		//2 know version ID
-	REV1_0 = 0x02,		//1.0
-	REV1_1 = 0x03,		//1.1
-	REV1_2 = 0x04,		//1.2/1.3
-	REV1_4 = 0x05,		//1.4/1.5
-	REV1_6 = 0x06,		//1.6/1.6b
-	REVUNKNOWN = 0x07	//dafuk?
+    DEVKIT = 0x00,    //Includes a bunch of revisions
+    DEBUGKIT = 0x01,        //2 know version ID
+    REV1_0 = 0x02,        //1.0
+    REV1_1 = 0x03,        //1.1
+    REV1_2 = 0x04,        //1.2/1.3
+    REV1_4 = 0x05,        //1.4/1.5
+    REV1_6 = 0x06,        //1.6/1.6b
+    REVUNKNOWN = 0x07    //dafuk?
 } XBOX_REVISION;
 
 
 //Put here to make it global (yeah yeah... I don't care. There are far worst things done in the VHDL code of the modchip trust me!)
 u8 mbVersion;
 
-//Global to hide code when runnning in XBE without modchip detected.
-bool fHasHardware;
+//Global to hide code when running in XBE without modchip detected.
+u8 fHasHardware;
 
 u8 currentFlashBank;
 #endif // _Boot_H_

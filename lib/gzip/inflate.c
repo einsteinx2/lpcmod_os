@@ -118,7 +118,7 @@ static char rcsid[] = "#Id: inflate.c,v 0.14 1993/06/10 13:27:04 jloup Exp #";
 #include "gzip.h"
 #define STATIC
 #endif /* !STATIC */
-	
+    
 #define slide window
 
 /* Huffman code lookup table entry--this entry is four bytes for machines
@@ -140,7 +140,7 @@ struct huft {
 
 /* Function prototypes */
 STATIC int huft_build OF((unsigned *, unsigned, unsigned, 
-		const ush *, const ush *, struct huft **, int *));
+        const ush *, const ush *, struct huft **, int *));
 STATIC int huft_free OF((struct huft *));
 STATIC int inflate_codes OF((struct huft *, struct huft *, int, int));
 STATIC int inflate_stored OF((void));
@@ -313,7 +313,7 @@ DEBG("huft1 ");
   p = b;  i = n;
   do {
     Tracecv(*p, (stderr, (n-i >= ' ' && n-i <= '~' ? "%c %d\n" : "0x%x %d\n"), 
-	    n-i, *p));
+        n-i, *p));
     c[*p]++;                    /* assume all entries <= BMAX */
     p++;                      /* Can't combine with above line (Solaris bug) */
   } while (--i);
@@ -452,7 +452,7 @@ DEBG("h6c ");
       {
         r.e = (uch)(*p < 256 ? 16 : 15);    /* 256 is end-of-block code */
         r.v.n = (ush)(*p);             /* simple code is just the value */
-	p++;                           /* one compiler does not like *p++ */
+    p++;                           /* one compiler does not like *p++ */
       }
       else
       {
@@ -597,7 +597,7 @@ int bl, bd;             /* number of bits decoded by tl[] and td[] */
 #endif /* !NOMEMCPY */
           do {
             slide[w++] = slide[d++];
-	    Tracevv((stderr, "%c", slide[w-1]));
+        Tracevv((stderr, "%c", slide[w-1]));
           } while (--e);
         if (w == WSIZE)
         {
@@ -976,7 +976,7 @@ STATIC int inflate()
     hufts = 0;
     gzip_mark(&ptr);
     if ((r = inflate_block(&e)) != 0) {
-      gzip_release(&ptr);	    
+      gzip_release(&ptr);        
       return r;
     }
     gzip_release(&ptr);
@@ -1010,7 +1010,7 @@ STATIC int inflate()
  **********************************************************************/
 
 static ulg crc_32_tab[256];
-static ulg crc;		/* initialized in makecrc() so it'll reside in bss */
+static ulg crc;        /* initialized in makecrc() so it'll reside in bss */
 #define CRC_VALUE (crc ^ 0xffffffffUL)
 
 /*
@@ -1021,7 +1021,7 @@ static ulg crc;		/* initialized in makecrc() so it'll reside in bss */
 static void
 makecrc(void)
 {
-/* Not copyrighted 1990 Mark Adler	*/
+/* Not copyrighted 1990 Mark Adler    */
 
   unsigned long c;      /* crc shift register */
   unsigned long e;      /* polynomial exclusive-or pattern */
@@ -1080,31 +1080,31 @@ static int gunzip(void)
     method = (unsigned char)get_byte();
 
     if (magic[0] != 037 ||
-	((magic[1] != 0213) && (magic[1] != 0236))) {
-	    error("bad gzip magic numbers");
-	    return -1;
+    ((magic[1] != 0213) && (magic[1] != 0236))) {
+        error("bad gzip magic numbers");
+        return -1;
     }
 
     /* We only support method #8, DEFLATED */
     if (method != 8)  {
-	    error("internal error, invalid method");
-	    return -1;
+        error("internal error, invalid method");
+        return -1;
     }
 
     flags  = (uch)get_byte();
     if ((flags & ENCRYPTED) != 0) {
-	    error("Input is encrypted\n");
-	    return -1;
+        error("Input is encrypted\n");
+        return -1;
     }
     if ((flags & CONTINUATION) != 0) {
-	    error("Multi part input\n");
-	    return -1;
+        error("Multi part input\n");
+        return -1;
     }
     if ((flags & RESERVED) != 0) {
-	    error("Input has invalid flags\n");
-	    return -1;
+        error("Input has invalid flags\n");
+        return -1;
     }
-    (ulg)get_byte();	/* Get timestamp */
+    (ulg)get_byte();    /* Get timestamp */
     ((ulg)get_byte()) << 8;
     ((ulg)get_byte()) << 16;
     ((ulg)get_byte()) << 24;
@@ -1113,42 +1113,42 @@ static int gunzip(void)
     (void)get_byte();  /* Ignore OS type for the moment */
 
     if ((flags & EXTRA_FIELD) != 0) {
-	    unsigned len = (unsigned)get_byte();
-	    len |= ((unsigned)get_byte())<<8;
-	    while (len--) (void)get_byte();
+        unsigned len = (unsigned)get_byte();
+        len |= ((unsigned)get_byte())<<8;
+        while (len--) (void)get_byte();
     }
 
     /* Get original file name if it was truncated */
     if ((flags & ORIG_NAME) != 0) {
-	    /* Discard the old name */
-	    while (get_byte() != 0) /* null */ ;
+        /* Discard the old name */
+        while (get_byte() != 0) /* null */ ;
     } 
 
     /* Discard file comment if any */
     if ((flags & COMMENT) != 0) {
-	    while (get_byte() != 0) /* null */ ;
+        while (get_byte() != 0) /* null */ ;
     }
 
     /* Decompress */
     if ((res = inflate())) {
-	    switch (res) {
-	    case 0:
-		    break;
-	    case 1:
-		    error("invalid compressed format (err=1)");
-		    break;
-	    case 2:
-		    error("invalid compressed format (err=2)");
-		    break;
-	    case 3:
-		    error("out of memory");
-		    break;
-	    default:
-		    error("invalid compressed format (other)");
-	    }
-	    return -1;
+        switch (res) {
+        case 0:
+            break;
+        case 1:
+            error("invalid compressed format (err=1)");
+            break;
+        case 2:
+            error("invalid compressed format (err=2)");
+            break;
+        case 3:
+            error("out of memory");
+            break;
+        default:
+            error("invalid compressed format (other)");
+        }
+        return -1;
     }
-	    
+        
     /* Get the crc and original length */
     /* crc32  (see algorithm.doc)
      * uncompressed input size modulo 2^32
@@ -1165,12 +1165,12 @@ static int gunzip(void)
     
     /* Validate decompression */
     if (orig_crc != CRC_VALUE) {
-	    error("crc error");
-	    return -1;
+        error("crc error");
+        return -1;
     }
     if (orig_len != bytes_out) {
-	    error("length error");
-	    return -1;
+        error("length error");
+        return -1;
     }
     return 0;
 }

@@ -7,23 +7,23 @@
 // (c) 2001 Andrew de Quincey
 
 
-#define STORE_SIZE	(0x131F00000LL)
-#define SYSTEM_SIZE	(0x1f400000)
-#define CACHE1_SIZE	(0x2ee80000)
-#define CACHE2_SIZE	(0x2ee80000)
-#define CACHE3_SIZE	(0x2ee80000)
+#define STORE_SIZE    (0x131F00000LL)
+#define SYSTEM_SIZE    (0x1f400000)
+#define CACHE1_SIZE    (0x2ee80000)
+#define CACHE2_SIZE    (0x2ee80000)
+#define CACHE3_SIZE    (0x2ee80000)
 
-#define SECTOR_STORE	(0x0055F400L)
-#define SECTOR_SYSTEM	(0x00465400L)
-#define SECTOR_CACHE1	(0x00000400L)
-#define SECTOR_CACHE2	(0x00177400L)
-#define SECTOR_CACHE3	(0x002EE400L)
+#define SECTOR_STORE    (0x0055F400L)
+#define SECTOR_SYSTEM    (0x00465400L)
+#define SECTOR_CACHE1    (0x00000400L)
+#define SECTOR_CACHE2    (0x00177400L)
+#define SECTOR_CACHE3    (0x002EE400L)
 
-#define SECTORS_STORE	(SECTOR_EXTEND - SECTOR_STORE)
-#define SECTORS_SYSTEM	(SECTOR_STORE  - SECTOR_SYSTEM)
-#define SECTORS_CACHE1	(SECTOR_CACHE2 - SECTOR_CACHE1)
-#define SECTORS_CACHE2	(SECTOR_CACHE3 - SECTOR_CACHE2)
-#define SECTORS_CACHE3	(SECTOR_SYSTEM - SECTOR_CACHE3)
+#define SECTORS_STORE    (SECTOR_EXTEND - SECTOR_STORE)
+#define SECTORS_SYSTEM    (SECTOR_STORE  - SECTOR_SYSTEM)
+#define SECTORS_CACHE1    (SECTOR_CACHE2 - SECTOR_CACHE1)
+#define SECTORS_CACHE2    (SECTOR_CACHE3 - SECTOR_CACHE2)
+#define SECTORS_CACHE3    (SECTOR_SYSTEM - SECTOR_CACHE3)
 
 
 // Size of FATX partition header
@@ -91,11 +91,11 @@ typedef struct {
 } FATXPartition;
 
 typedef struct {
-	char filename[FATX_FILENAME_MAX];
-	int clusterId;
-	u_int32_t fileSize;
-	u_int32_t fileRead;
-	u8 *buffer;
+    char filename[FATX_FILENAME_MAX];
+    int clusterId;
+    u_int32_t fileSize;
+    u_int32_t fileRead;
+    u8 *buffer;
 } FATXFILEINFO;
 
 int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
@@ -103,7 +103,7 @@ int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo
 void PrintFAXPartitionTable(int nDriveIndex);
 int FATXSignature(int nDriveIndex,unsigned int block,u8 *ba);
 FATXPartition *OpenFATXPartition(int nDriveIndex,unsigned int partitionOffset,
-		                u_int64_t partitionSize);
+                        u_int64_t partitionSize);
 int FATXRawRead (int drive, int sector, unsigned long long byte_offset, int byte_len, char *buf);
 void DumpFATXTree(FATXPartition *partition);
 void _DumpFATXTree(FATXPartition* partition, int clusterId, int nesting);
@@ -114,4 +114,4 @@ int FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILE
 int _FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo);
 
-#endif //	_BootFATX_H_
+#endif //    _BootFATX_H_

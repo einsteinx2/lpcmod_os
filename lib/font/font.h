@@ -1,10 +1,10 @@
 /* GIMP RGBA C-Source image dump (font) */
 
 static const struct {
-  unsigned short  	 width;
-  unsigned short  	 height;
-  unsigned char  	 bytes_per_pixel; /* 3:RGB, 4:RGBA */
-  unsigned char 	 pixel_data[789 * 16 * 4 + 1];
+  unsigned short       width;
+  unsigned short       height;
+  unsigned char       bytes_per_pixel; /* 3:RGB, 4:RGBA */
+  unsigned char      pixel_data[789 * 16 * 4 + 1];
 } gimp_image = {
   789, 16, 4,
   "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377"

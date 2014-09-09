@@ -23,147 +23,147 @@ extern void cromwellError(void);
 extern void dots(void);
 /*
 void FlashBiosFromHDD512(void *fname) {
-	switchBank(BNK512);
-	currentFlashBank = BNK512;
-	FlashBiosFromHDD(fname);
+    switchBank(BNK512);
+    currentFlashBank = BNK512;
+    FlashBiosFromHDD(fname);
 }
 
 void FlashBiosFromHDD256(void *fname) {
-	switchBank(BNK256);
-	currentFlashBank = BNK256;
-	FlashBiosFromHDD(fname);
+    switchBank(BNK256);
+    currentFlashBank = BNK256;
+    FlashBiosFromHDD(fname);
 }
 
 void FlashBiosFromHDDOS(void *fname) {
-	switchBank(BNKOS);
-	currentFlashBank = BNKOS;
-	FlashBiosFromHDD(fname);
+    switchBank(BNKOS);
+    currentFlashBank = BNKOS;
+    FlashBiosFromHDD(fname);
 }*/
 
 void FlashBiosFromHDD(void *fname) {
 #ifdef FLASH
-	int res;
-	int offset;
-	char * stringTemp;
+    int res;
+    int offset;
+    char * stringTemp;
 
-	FATXPartition *partition;
+    FATXPartition *partition;
 
-	partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
 
-	FATXFILEINFO fileinfo;
-	res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
-	if (!res) {
-		printk("\n\n\n\n\n           Loading BIOS failed");
-		dots();
-		cromwellError();
-		while(1);
-	}
+    FATXFILEINFO fileinfo;
+    res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
+    if (!res) {
+        printk("\n\n\n\n\n           Loading BIOS failed");
+        dots();
+        cromwellError();
+        while(1);
+    }
 
-	offset = 0;
-	
-	if(currentFlashBank == BNKOS){
-		if(!ConfirmDialog("           Confirm update XBlast OS?", 1))
-			res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
-		else
-			res = -1;
-	}
-	else{
-		if(currentFlashBank == BNK512)
-			stringTemp = "          Confirm flash bank0(512KB)?";
-		else
-			stringTemp = "          Confirm flash bank1(256KB)?";
-		if(!ConfirmDialog(stringTemp, 1))
-			res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
-		else
-			res = -1;
-	}
-	CloseFATXPartition(partition);
-	if(res > 0) {
-		cromwellError();
-		printk("\n\n\n\n\n           Flash failed...");
-		switch(res){
-			case 1:
-				printk("\n           ");
-				cromwellError();
-				printk("\n           Unknown flash device.");
-				break;
-			case 2:
-				printk("\n           ");
-				cromwellError();
-				printk("\n           Cannot write to device");
-				break;
-			case 3:
-				printk("\n           ");
-				cromwellError();
-				printk("\n           File size error : %u", fileinfo.fileSize);
-				break;
-			case 4:
-				printk("\n           ");
-				cromwellError();
-				printk("\n           Invalid XBlast OS update file");
-				break;
-			default:
-				printk("\n           ");
-				cromwellError();
-				printk("\n           Unknown error! Congrats, you're not supposed to be here.");
-				break;
-		}
-	}
-	else if(res == -1){
-		printk("\n\n\n\n\n\n\n\n\n\n\n           ");
-		cromwellWarning();
-		printk("\n           Flashing aborted.");
-	}
-	else {
-		printk("\n           ");
-		cromwellSuccess();
-		printk("\n           Flashing successful!!!");
-	}
-	FlashFooter();
-	return;
+    offset = 0;
+    
+    if(currentFlashBank == BNKOS){
+        if(!ConfirmDialog("           Confirm update XBlast OS?", 1))
+            res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+        else
+            res = -1;
+    }
+    else{
+        if(currentFlashBank == BNK512)
+            stringTemp = "          Confirm flash bank0(512KB)?";
+        else
+            stringTemp = "          Confirm flash bank1(256KB)?";
+        if(!ConfirmDialog(stringTemp, 1))
+            res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
+        else
+            res = -1;
+    }
+    CloseFATXPartition(partition);
+    if(res > 0) {
+        cromwellError();
+        printk("\n\n\n\n\n           Flash failed...");
+        switch(res){
+            case 1:
+                printk("\n           ");
+                cromwellError();
+                printk("\n           Unknown flash device.");
+                break;
+            case 2:
+                printk("\n           ");
+                cromwellError();
+                printk("\n           Cannot write to device");
+                break;
+            case 3:
+                printk("\n           ");
+                cromwellError();
+                printk("\n           File size error : %u", fileinfo.fileSize);
+                break;
+            case 4:
+                printk("\n           ");
+                cromwellError();
+                printk("\n           Invalid XBlast OS update file");
+                break;
+            default:
+                printk("\n           ");
+                cromwellError();
+                printk("\n           Unknown error! Congrats, you're not supposed to be here.");
+                break;
+        }
+    }
+    else if(res == -1){
+        printk("\n\n\n\n\n\n\n\n\n\n\n           ");
+        cromwellWarning();
+        printk("\n           Flashing aborted.");
+    }
+    else {
+        printk("\n           ");
+        cromwellSuccess();
+        printk("\n           Flashing successful!!!");
+    }
+    FlashFooter();
+    return;
 #endif
 }
 
 void FlashBiosFromCD(void *cdromId) {
 #ifdef FLASH
-	extern unsigned char *videosavepage;
-	memcpy((void*)FB_START,videosavepage,FB_SIZE);
-	BootLoadFlashCD(*(int *)cdromId);
+    extern unsigned char *videosavepage;
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+    BootLoadFlashCD(*(int *)cdromId);
 #endif
 }
 
 void enableNetflash(void *whatever) {
 #ifdef FLASH
-	extern unsigned char *videosavepage;
-	memcpy((void*)FB_START,videosavepage,FB_SIZE);
-	VIDEO_ATTR=0xffef37;
-	printk("\n\n\n\n\n\n\n");
-	VIDEO_ATTR=0xffc8c8c8;
-	initialiseNetwork();
-	netFlash();
+    extern unsigned char *videosavepage;
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+    VIDEO_ATTR=0xffef37;
+    printk("\n\n\n\n\n\n\n");
+    VIDEO_ATTR=0xffc8c8c8;
+    initialiseNetwork();
+    netFlash();
 #endif
 }
 
 void enableWebupdate(void *whatever) {
 #ifdef FLASH
-	extern unsigned char *videosavepage;
-	memcpy((void*)FB_START,videosavepage,FB_SIZE);
-	VIDEO_ATTR=0xffef37;
-	printk("\n\n\n\n\n\n");
-	VIDEO_ATTR=0xffc8c8c8;
-	initialiseNetwork();
-	webUpdate();
+    extern unsigned char *videosavepage;
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+    VIDEO_ATTR=0xffef37;
+    printk("\n\n\n\n\n\n");
+    VIDEO_ATTR=0xffc8c8c8;
+    initialiseNetwork();
+    webUpdate();
 #endif
 }
 
 void switchBank(char bank)
 {
-	currentFlashBank = bank;
-	WriteToIO(BNK_CONTROL, bank);	// switch to proper bank
-}	
+    currentFlashBank = bank;
+    WriteToIO(BNK_CONTROL, bank);    // switch to proper bank
+}    
 
 void FlashFooter(void) {
-	VIDEO_ATTR=0xffc8c8c8;
-	printk("\n\n           Press Button 'A' to continue.");
-	while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-}		
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("\n\n           Press Button 'A' to continue.");
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+}        

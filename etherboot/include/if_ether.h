@@ -1,5 +1,5 @@
-#ifndef	_IF_ETHER_H
-#define	_IF_ETHER_H
+#ifndef    _IF_ETHER_H
+#define    _IF_ETHER_H
 
 /*
    I'm moving towards the defined names in linux/if_ether.h for clarity.
@@ -9,13 +9,13 @@
    if not all of the other NIC controllers.
 */
 
-#define ETH_ALEN		6	/* Size of Ethernet address */
-#define ETH_HLEN		14	/* Size of ethernet header */
-#define	ETH_ZLEN		60	/* Minimum packet */
-#define	ETH_FRAME_LEN		1514	/* Maximum packet */
-#define ETH_DATA_ALIGN		2	/* Amount needed to align the data after an ethernet header */
-#ifndef	ETH_MAX_MTU
-#define	ETH_MAX_MTU		(ETH_FRAME_LEN-ETH_HLEN)
+#define ETH_ALEN        6    /* Size of Ethernet address */
+#define ETH_HLEN        14    /* Size of ethernet header */
+#define    ETH_ZLEN        60    /* Minimum packet */
+#define    ETH_FRAME_LEN        1514    /* Maximum packet */
+#define ETH_DATA_ALIGN        2    /* Amount needed to align the data after an ethernet header */
+#ifndef    ETH_MAX_MTU
+#define    ETH_MAX_MTU        (ETH_FRAME_LEN-ETH_HLEN)
 #endif
 
-#endif	/* _IF_ETHER_H */
+#endif    /* _IF_ETHER_H */

@@ -31,9 +31,9 @@
 /* i386 constants */
 
 /* CR0 bit to enable paging */
-#define CR0_ENABLE_PAGING		0x80000000
+#define CR0_ENABLE_PAGING        0x80000000
 /* Size of a page on x86 */
-#define PAGE_SIZE			4096
+#define PAGE_SIZE            4096
 
 /* Size of the read chunks to use when reading the kernel; bigger = a lot faster */
 #define READ_CHUNK_SIZE 128*1024

@@ -27,34 +27,34 @@ struct TEXTMENU;
 extern int breakOutOfMenu;
 
 typedef struct TEXTMENUITEM {
-	//Menu item text
-	char szCaption[MENUCAPTIONSIZE+1];
-	//Parameter value text
-	char szParameter[MENUCAPTIONSIZE+1];
-	//Pointer to function to run when menu item selected.
-	//If NULL, menuitem will not do anything when selected
-	void (*functionPtr) (void *);
-	//Pointer to data used by the function above.
-	void *functionDataPtr;
+    //Menu item text
+    char szCaption[MENUCAPTIONSIZE+1];
+    //Parameter value text
+    char szParameter[MENUCAPTIONSIZE+1];
+    //Pointer to function to run when menu item selected.
+    //If NULL, menuitem will not do anything when selected
+    void (*functionPtr) (void *);
+    //Pointer to data used by the function above.
+    void *functionDataPtr;
 
-	void (*functionLeftPtr) (void *);
-	void (*functionRightPtr) (void *);
-	void *functionLeftDataPtr;
-	void *functionRightDataPtr;
-	//Next / previous menu items within this menu
-	struct TEXTMENUITEM *previousMenuItem;
-	struct TEXTMENUITEM *nextMenuItem;
+    void (*functionLeftPtr) (void *);
+    void (*functionRightPtr) (void *);
+    void *functionLeftDataPtr;
+    void *functionRightDataPtr;
+    //Next / previous menu items within this menu
+    struct TEXTMENUITEM *previousMenuItem;
+    struct TEXTMENUITEM *nextMenuItem;
 } TEXTMENUITEM;
 
 typedef struct TEXTMENU {
-	//Menu title e.g. "Main Menu"
-	char szCaption[MENUCAPTIONSIZE+1];
-	//A pointer to the first item of the linked list of menuitems that
-	//make up this menu.
-	TEXTMENUITEM* firstMenuItem;
-	u32 timeout;
-	int longTitle;
-	int visibleCount;
+    //Menu title e.g. "Main Menu"
+    char szCaption[MENUCAPTIONSIZE+1];
+    //A pointer to the first item of the linked list of menuitems that
+    //make up this menu.
+    TEXTMENUITEM* firstMenuItem;
+    u32 timeout;
+    int longTitle;
+    int visibleCount;
 } TEXTMENU;
 
 extern char bypassConfirmDialog[100];

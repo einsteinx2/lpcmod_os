@@ -7,9 +7,9 @@
 #include <linux/init.h>
 
 #ifdef CONFIG_USB_DEBUG
-	#define DEBUG
+    #define DEBUG
 #else
-	#undef DEBUG
+    #undef DEBUG
 #endif
 #include <linux/usb.h>
 #include "hcd.h"
@@ -34,18 +34,18 @@
  */
 void usb_init_urb(struct urb *urb)
 {
-	if (urb) {
-		memset(urb, 0, sizeof(*urb));
-		urb->count = (atomic_t)ATOMIC_INIT(1);
-		spin_lock_init(&urb->lock);
-	}
+    if (urb) {
+        memset(urb, 0, sizeof(*urb));
+        urb->count = (atomic_t)ATOMIC_INIT(1);
+        spin_lock_init(&urb->lock);
+    }
 }
 
 /**
  * usb_alloc_urb - creates a new urb for a USB driver to use
  * @iso_packets: number of iso packets for this urb
  * @mem_flags: the type of memory to allocate, see kmalloc() for a list of
- *	valid options for this.
+ *    valid options for this.
  *
  * Creates an urb for the USB driver to use, initializes a few internal
  * structures, incrementes the usage counter, and returns a pointer to it.
@@ -59,17 +59,17 @@ void usb_init_urb(struct urb *urb)
  */
 struct urb *usb_alloc_urb(int iso_packets, int mem_flags)
 {
-	struct urb *urb;
+    struct urb *urb;
 
-	urb = (struct urb *)kmalloc(sizeof(struct urb) + 
-		iso_packets * sizeof(struct usb_iso_packet_descriptor),
-		mem_flags);
-	if (!urb) {
-		err("alloc_urb: kmalloc failed");
-		return NULL;
-	}
-	usb_init_urb(urb);
-	return urb;
+    urb = (struct urb *)kmalloc(sizeof(struct urb) + 
+        iso_packets * sizeof(struct usb_iso_packet_descriptor),
+        mem_flags);
+    if (!urb) {
+        err("alloc_urb: kmalloc failed");
+        return NULL;
+    }
+    usb_init_urb(urb);
+    return urb;
 }
 
 /**
@@ -84,11 +84,11 @@ struct urb *usb_alloc_urb(int iso_packets, int mem_flags)
  */
 void usb_free_urb(struct urb *urb)
 {
-	if (urb)
-		if (atomic_dec_and_test(&urb->count))
-		{
-			kfree(urb);
-		}
+    if (urb)
+        if (atomic_dec_and_test(&urb->count))
+        {
+            kfree(urb);
+        }
 }
 
 /**
@@ -103,21 +103,21 @@ void usb_free_urb(struct urb *urb)
  */
 struct urb * usb_get_urb(struct urb *urb)
 {
-	if (urb) {
-		atomic_inc(&urb->count);
-		return urb;
-	} else
-		return NULL;
+    if (urb) {
+        atomic_inc(&urb->count);
+        return urb;
+    } else
+        return NULL;
 }
-		
-		
+        
+        
 /*-------------------------------------------------------------------*/
 
 /**
  * usb_submit_urb - issue an asynchronous transfer request for an endpoint
  * @urb: pointer to the urb describing the request
  * @mem_flags: the type of memory to allocate, see kmalloc() for a list
- *	of valid options for this.
+ *    of valid options for this.
  *
  * This submits a transfer request, and transfers control of the URB
  * describing that request to the USB subsystem.  Request completion will
@@ -214,171 +214,171 @@ struct urb * usb_get_urb(struct urb *urb)
  */
 int usb_submit_urb(struct urb *urb, int mem_flags)
 {
-	int			pipe, temp, max;
-	struct usb_device	*dev;
-	struct usb_operations	*op;
-	int			is_out;
-//	printk("sub dev %p bus %p num %i op %p sub %p\n",
-//	       urb->dev, urb->dev->bus,urb->dev->devnum,urb->dev->bus->op, urb->dev->bus->op->submit_urb);
-	if (!urb || urb->hcpriv || !urb->complete)
-		return -EINVAL;
-	if (!(dev = urb->dev) ||
-	    (dev->state < USB_STATE_DEFAULT) ||
-	    (!dev->bus) || (dev->devnum <= 0))
-		return -ENODEV;
-	if (!(op = dev->bus->op) || !op->submit_urb)
-		return -ENODEV;
+    int            pipe, temp, max;
+    struct usb_device    *dev;
+    struct usb_operations    *op;
+    int            is_out;
+//    printk("sub dev %p bus %p num %i op %p sub %p\n",
+//           urb->dev, urb->dev->bus,urb->dev->devnum,urb->dev->bus->op, urb->dev->bus->op->submit_urb);
+    if (!urb || urb->hcpriv || !urb->complete)
+        return -EINVAL;
+    if (!(dev = urb->dev) ||
+        (dev->state < USB_STATE_DEFAULT) ||
+        (!dev->bus) || (dev->devnum <= 0))
+        return -ENODEV;
+    if (!(op = dev->bus->op) || !op->submit_urb)
+        return -ENODEV;
 
-	urb->status = -EINPROGRESS;
-	urb->actual_length = 0;
-	urb->bandwidth = 0;
+    urb->status = -EINPROGRESS;
+    urb->actual_length = 0;
+    urb->bandwidth = 0;
 
-	/* Lots of sanity checks, so HCDs can rely on clean data
-	 * and don't need to duplicate tests
-	 */
-	pipe = urb->pipe;
-	temp = usb_pipetype (pipe);
-	is_out = usb_pipeout (pipe);
+    /* Lots of sanity checks, so HCDs can rely on clean data
+     * and don't need to duplicate tests
+     */
+    pipe = urb->pipe;
+    temp = usb_pipetype (pipe);
+    is_out = usb_pipeout (pipe);
 
-	if (!usb_pipecontrol (pipe) && dev->state < USB_STATE_CONFIGURED)
-		return -ENODEV;
+    if (!usb_pipecontrol (pipe) && dev->state < USB_STATE_CONFIGURED)
+        return -ENODEV;
 
-	/* (actually HCDs may need to duplicate this, endpoint might yet
-	 * stall due to queued bulk/intr transactions that complete after
-	 * we check)
-	 */
-	if (usb_endpoint_halted (dev, usb_pipeendpoint (pipe), is_out))
-		return -EPIPE;
+    /* (actually HCDs may need to duplicate this, endpoint might yet
+     * stall due to queued bulk/intr transactions that complete after
+     * we check)
+     */
+    if (usb_endpoint_halted (dev, usb_pipeendpoint (pipe), is_out))
+        return -EPIPE;
 
-	/* FIXME there should be a sharable lock protecting us against
-	 * config/altsetting changes and disconnects, kicking in here.
-	 * (here == before maxpacket, and eventually endpoint type,
-	 * checks get made.)
-	 */
+    /* FIXME there should be a sharable lock protecting us against
+     * config/altsetting changes and disconnects, kicking in here.
+     * (here == before maxpacket, and eventually endpoint type,
+     * checks get made.)
+     */
 
-	max = usb_maxpacket (dev, pipe, is_out);
-	if (max <= 0) {
-		dbg ("%s: bogus endpoint %d-%s on usb-%s-%s (bad maxpacket %d)",
-			__FUNCTION__,
-			usb_pipeendpoint (pipe), is_out ? "OUT" : "IN",
-			dev->bus->bus_name, dev->devpath,
-			max);
-		return -EMSGSIZE;
-	}
+    max = usb_maxpacket (dev, pipe, is_out);
+    if (max <= 0) {
+        dbg ("%s: bogus endpoint %d-%s on usb-%s-%s (bad maxpacket %d)",
+            __FUNCTION__,
+            usb_pipeendpoint (pipe), is_out ? "OUT" : "IN",
+            dev->bus->bus_name, dev->devpath,
+            max);
+        return -EMSGSIZE;
+    }
 
-	/* periodic transfers limit size per frame/uframe,
-	 * but drivers only control those sizes for ISO.
-	 * while we're checking, initialize return status.
-	 */
-	if (temp == PIPE_ISOCHRONOUS) {
-		int	n, len;
+    /* periodic transfers limit size per frame/uframe,
+     * but drivers only control those sizes for ISO.
+     * while we're checking, initialize return status.
+     */
+    if (temp == PIPE_ISOCHRONOUS) {
+        int    n, len;
 
-		/* "high bandwidth" mode, 1-3 packets/uframe? */
-		if (dev->speed == USB_SPEED_HIGH) {
-			int	mult = 1 + ((max >> 11) & 0x03);
-			max &= 0x03ff;
-			max *= mult;
-		}
+        /* "high bandwidth" mode, 1-3 packets/uframe? */
+        if (dev->speed == USB_SPEED_HIGH) {
+            int    mult = 1 + ((max >> 11) & 0x03);
+            max &= 0x03ff;
+            max *= mult;
+        }
 
-		if (urb->number_of_packets <= 0)		    
-			return -EINVAL;
-		for (n = 0; n < urb->number_of_packets; n++) {
-			len = urb->iso_frame_desc [n].length;
-			if (len < 0 || len > max) 
-				return -EMSGSIZE;
-			urb->iso_frame_desc [n].status = -EXDEV;
-			urb->iso_frame_desc [n].actual_length = 0;
-		}
-	}
+        if (urb->number_of_packets <= 0)            
+            return -EINVAL;
+        for (n = 0; n < urb->number_of_packets; n++) {
+            len = urb->iso_frame_desc [n].length;
+            if (len < 0 || len > max) 
+                return -EMSGSIZE;
+            urb->iso_frame_desc [n].status = -EXDEV;
+            urb->iso_frame_desc [n].actual_length = 0;
+        }
+    }
 
-	/* the I/O buffer must be mapped/unmapped, except when length=0 */
-	if (urb->transfer_buffer_length < 0)
-		return -EMSGSIZE;
+    /* the I/O buffer must be mapped/unmapped, except when length=0 */
+    if (urb->transfer_buffer_length < 0)
+        return -EMSGSIZE;
 
 #ifdef DEBUG
-	/* stuff that drivers shouldn't do, but which shouldn't
-	 * cause problems in HCDs if they get it wrong.
-	 */
-	{
-	unsigned int	orig_flags = urb->transfer_flags;
-	unsigned int	allowed;
+    /* stuff that drivers shouldn't do, but which shouldn't
+     * cause problems in HCDs if they get it wrong.
+     */
+    {
+    unsigned int    orig_flags = urb->transfer_flags;
+    unsigned int    allowed;
 
-	/* enforce simple/standard policy */
-	allowed = URB_ASYNC_UNLINK;	// affects later unlinks
-	allowed |= URB_NO_DMA_MAP;
-	allowed |= URB_NO_INTERRUPT;
-	switch (temp) {
-	case PIPE_BULK:
-		if (is_out)
-			allowed |= URB_ZERO_PACKET;
-		/* FALLTHROUGH */
-	case PIPE_CONTROL:
-		allowed |= URB_NO_FSBR;	/* only affects UHCI */
-		/* FALLTHROUGH */
-	default:			/* all non-iso endpoints */
-		if (!is_out)
-			allowed |= URB_SHORT_NOT_OK;
-		break;
-	case PIPE_ISOCHRONOUS:
-		allowed |= URB_ISO_ASAP;
-		break;
-	}
-	urb->transfer_flags &= allowed;
+    /* enforce simple/standard policy */
+    allowed = URB_ASYNC_UNLINK;    // affects later unlinks
+    allowed |= URB_NO_DMA_MAP;
+    allowed |= URB_NO_INTERRUPT;
+    switch (temp) {
+    case PIPE_BULK:
+        if (is_out)
+            allowed |= URB_ZERO_PACKET;
+        /* FALLTHROUGH */
+    case PIPE_CONTROL:
+        allowed |= URB_NO_FSBR;    /* only affects UHCI */
+        /* FALLTHROUGH */
+    default:            /* all non-iso endpoints */
+        if (!is_out)
+            allowed |= URB_SHORT_NOT_OK;
+        break;
+    case PIPE_ISOCHRONOUS:
+        allowed |= URB_ISO_ASAP;
+        break;
+    }
+    urb->transfer_flags &= allowed;
 
-	/* fail if submitter gave bogus flags */
-	if (urb->transfer_flags != orig_flags) {
-		err ("BOGUS urb flags, %x --> %x",
-			orig_flags, urb->transfer_flags);
-		return -EINVAL;
-	}
-	}
+    /* fail if submitter gave bogus flags */
+    if (urb->transfer_flags != orig_flags) {
+        err ("BOGUS urb flags, %x --> %x",
+            orig_flags, urb->transfer_flags);
+        return -EINVAL;
+    }
+    }
 #endif
-	/*
-	 * Force periodic transfer intervals to be legal values that are
-	 * a power of two (so HCDs don't need to).
-	 *
-	 * FIXME want bus->{intr,iso}_sched_horizon values here.  Each HC
-	 * supports different values... this uses EHCI/UHCI defaults (and
-	 * EHCI can use smaller non-default values).
-	 */
-	switch (temp) {
-	case PIPE_ISOCHRONOUS:
-	case PIPE_INTERRUPT:
-		/* too small? */
-		if (urb->interval <= 0)
-			return -EINVAL;
-		/* too big? */
-		switch (dev->speed) {
-		case USB_SPEED_HIGH:	/* units are microframes */
-			// NOTE usb handles 2^15
-			if (urb->interval > (1024 * 8))
-				urb->interval = 1024 * 8;
-			temp = 1024 * 8;
-			break;
-		case USB_SPEED_FULL:	/* units are frames/msec */
-		case USB_SPEED_LOW:
-			if (temp == PIPE_INTERRUPT) {
-				if (urb->interval > 255)
-					return -EINVAL;
-				// NOTE ohci only handles up to 32
-				temp = 128;
-			} else {
-				if (urb->interval > 1024)
-					urb->interval = 1024;
-				// NOTE usb and ohci handle up to 2^15
-				temp = 1024;
-			}
-			break;
-		default:
-			return -EINVAL;
-		}
-		/* power of two? */
-		while (temp > urb->interval)
-			temp >>= 1;
-		urb->interval = temp;
-	}
+    /*
+     * Force periodic transfer intervals to be legal values that are
+     * a power of two (so HCDs don't need to).
+     *
+     * FIXME want bus->{intr,iso}_sched_horizon values here.  Each HC
+     * supports different values... this uses EHCI/UHCI defaults (and
+     * EHCI can use smaller non-default values).
+     */
+    switch (temp) {
+    case PIPE_ISOCHRONOUS:
+    case PIPE_INTERRUPT:
+        /* too small? */
+        if (urb->interval <= 0)
+            return -EINVAL;
+        /* too big? */
+        switch (dev->speed) {
+        case USB_SPEED_HIGH:    /* units are microframes */
+            // NOTE usb handles 2^15
+            if (urb->interval > (1024 * 8))
+                urb->interval = 1024 * 8;
+            temp = 1024 * 8;
+            break;
+        case USB_SPEED_FULL:    /* units are frames/msec */
+        case USB_SPEED_LOW:
+            if (temp == PIPE_INTERRUPT) {
+                if (urb->interval > 255)
+                    return -EINVAL;
+                // NOTE ohci only handles up to 32
+                temp = 128;
+            } else {
+                if (urb->interval > 1024)
+                    urb->interval = 1024;
+                // NOTE usb and ohci handle up to 2^15
+                temp = 1024;
+            }
+            break;
+        default:
+            return -EINVAL;
+        }
+        /* power of two? */
+        while (temp > urb->interval)
+            temp >>= 1;
+        urb->interval = temp;
+    }
 
-	return op->submit_urb (urb, mem_flags);
+    return op->submit_urb (urb, mem_flags);
 }
 
 /*-------------------------------------------------------------------*/
@@ -408,10 +408,10 @@ int usb_submit_urb(struct urb *urb, int mem_flags)
  */
 int usb_unlink_urb(struct urb *urb)
 {
-	if (urb && urb->dev && urb->dev->bus && urb->dev->bus->op)
-		return urb->dev->bus->op->unlink_urb(urb);
-	else
-		return -ENODEV;
+    if (urb && urb->dev && urb->dev->bus && urb->dev->bus->op)
+        return urb->dev->bus->op->unlink_urb(urb);
+    else
+        return -ENODEV;
 }
 
 EXPORT_SYMBOL(usb_init_urb);

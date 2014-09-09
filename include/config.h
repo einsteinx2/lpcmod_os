@@ -48,13 +48,13 @@
 // IP configuration for WebBoot
 #define WB_BLOCK_A 192
 #define WB_BLOCK_B 168
-#define WB_BLOCK_C 1
-#define WB_BLOCK_D 200
+#define WB_BLOCK_C 0
+#define WB_BLOCK_D 254
 #define WB_PORT 80
 
 // IP configuration for WebUpdate
-#define WF_BLOCK_A 193
-#define WF_BLOCK_B 1
-#define WF_BLOCK_C 193
-#define WF_BLOCK_D 66
+#define WF_BLOCK_A 192
+#define WF_BLOCK_B 168
+#define WF_BLOCK_C 0
+#define WF_BLOCK_D 254
 #define WF_PORT 80

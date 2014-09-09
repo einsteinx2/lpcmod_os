@@ -22,61 +22,60 @@
 #include "TextMenu.h"
 #include "lpcmod_v1.h"
 CONFIGENTRY *LoadConfigCD(int);
-TEXTMENU *TextMenuInit(void);
+//TEXTMENU *TextMenuInit(void);
 
 void AdvancedMenu(void *textmenu) {
-	TextMenu((TEXTMENU*)textmenu, NULL);
+    TextMenu((TEXTMENU*)textmenu, NULL);
 }
 
 // Booting Original Bios
 void BootOriginalBios(void *data) {
-	BootFlashSaveOSSettings();
-	assertWriteEEPROM();
-	WriteToIO(DISABLE_MOD, *(u8*)data);	// switch to original bios
-//	#ifndef NOANI_MENU
-	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-/*	#endif
-	#ifdef NOANI_MENU
-	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
-	#endif
-*/
-	I2CRebootQuick();
-	while(1);
-}	
+    BootFlashSaveOSSettings();
+    assertWriteEEPROM();
+    if(fHasHardware){
+        WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
+        I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
+    }
+    else {
+        I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
+    }
+    I2CRebootQuick();
+    while(1);
+}    
 
 // Booting bank Modbios
 void BootModBios(void *data) {
-	BootFlashSaveOSSettings();
-	assertWriteEEPROM();
-	switchBank(*(u8*)data);	// switch to 256k user bank
-//	#ifndef NOANI_MENU
-	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-/*	#endif
-	#ifdef NOANI_MENU
-	  I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
-	#endif
+    BootFlashSaveOSSettings();
+    assertWriteEEPROM();
+    switchBank(*(u8*)data);    // switch to 256k user bank
+//    #ifndef NOANI_MENU
+      I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
+/*    #endif
+    #ifdef NOANI_MENU
+      I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
+    #endif
 */
-	I2CRebootQuick();
-	while(1);
+    I2CRebootQuick();
+    while(1);
 }
 
 void BootFromCD(void *data) {
-	BootFlashSaveOSSettings();
-	assertWriteEEPROM();
-	//We have to go an extra step when the CD icon is selected, as unlike
-	//the other boot modes, we have not parsed the linuxboot.cfg file yet.
-	int nTempCursorY = VIDEO_CURSOR_POSY; 
-	CONFIGENTRY *config = LoadConfigCD(*(int*)data);
-	if (config==NULL) {
-		errorLED();
-		printk("\n\n           Could not boot from disc!\n           Try different media and a lower burning speed.\n");
-		wait_ms(5000);
-		inputLED();
-		//Clear the screen and return to the menu
-		BootVideoClearScreen(&jpegBackdrop, nTempCursorY, VIDEO_CURSOR_POSY+1);	
-		return;
-	}
-	DrawBootMenu(config);
+    BootFlashSaveOSSettings();
+    assertWriteEEPROM();
+    //We have to go an extra step when the CD icon is selected, as unlike
+    //the other boot modes, we have not parsed the linuxboot.cfg file yet.
+    int nTempCursorY = VIDEO_CURSOR_POSY; 
+    CONFIGENTRY *config = LoadConfigCD(*(int*)data);
+    if (config==NULL) {
+        errorLED();
+        printk("\n\n           Could not boot from disc!\n           Try different media and a lower burning speed.\n");
+        wait_ms(5000);
+        inputLED();
+        //Clear the screen and return to the menu
+        BootVideoClearScreen(&jpegBackdrop, nTempCursorY, VIDEO_CURSOR_POSY+1);    
+        return;
+    }
+    DrawBootMenu(config);
 }
 /*
 void BootFromNet(void *whatever) {
@@ -90,98 +89,98 @@ void BootFromNet(void *whatever) {
 */
 
 void DrawBootMenu(void *rootEntry) {
-	//entry is the pointer to the root config entry
-	TEXTMENU *menu;
-	TEXTMENUITEM *menuPtr, *defaultMenuItem;
-	CONFIGENTRY *configEntry, *currentConfigEntry;
-	extern int timedOut;
+    //entry is the pointer to the root config entry
+    TEXTMENU *menu;
+    TEXTMENUITEM *menuPtr, *defaultMenuItem;
+    CONFIGENTRY *configEntry, *currentConfigEntry;
+    extern int timedOut;
 
-	defaultMenuItem=NULL;
-	configEntry = rootEntry;
+    defaultMenuItem=NULL;
+    configEntry = rootEntry;
 
-	if (configEntry->nextConfigEntry==NULL) {
-		//If there is only one option, just boot it.
-		BootMenuEntry(configEntry);
-		return;
-	}
+    if (configEntry->nextConfigEntry==NULL) {
+        //If there is only one option, just boot it.
+        BootMenuEntry(configEntry);
+        return;
+    }
 
-	if (timedOut) {
-		//We should be non-interactive, then.
-		//If there is a default entry, boot that.
-		for (currentConfigEntry = configEntry; currentConfigEntry != NULL; 
-			currentConfigEntry = currentConfigEntry->nextConfigEntry) {
-			if (currentConfigEntry->isDefault) {
-				BootMenuEntry(currentConfigEntry);
-				return;
-			}
-		}
-		//There wasn't a default entry, so just boot the first in the list
-		BootMenuEntry(configEntry);
-		return;
-	}
-	
-	menu = malloc(sizeof(TEXTMENU));
-	memset(menu,0x00,sizeof(TEXTMENU));
-	strcpy(menu->szCaption, "Boot menu");
+    if (timedOut) {
+        //We should be non-interactive, then.
+        //If there is a default entry, boot that.
+        for (currentConfigEntry = configEntry; currentConfigEntry != NULL; 
+            currentConfigEntry = currentConfigEntry->nextConfigEntry) {
+            if (currentConfigEntry->isDefault) {
+                BootMenuEntry(currentConfigEntry);
+                return;
+            }
+        }
+        //There wasn't a default entry, so just boot the first in the list
+        BootMenuEntry(configEntry);
+        return;
+    }
+    
+    menu = malloc(sizeof(TEXTMENU));
+    memset(menu,0x00,sizeof(TEXTMENU));
+    strcpy(menu->szCaption, "Boot menu");
   
-	for (currentConfigEntry = configEntry; currentConfigEntry != NULL; 
-		currentConfigEntry = currentConfigEntry->nextConfigEntry) {
-	
-		menuPtr = (TEXTMENUITEM *)malloc(sizeof(TEXTMENUITEM*));
-		memset(menuPtr, 0x00, sizeof(menuPtr));
-		if (currentConfigEntry->title == NULL) {
-			strcpy(menuPtr->szCaption,"Untitled");
-		} else { 
-			strncpy(menuPtr->szCaption,currentConfigEntry->title,50);
-		}
-		menuPtr->functionPtr = BootMenuEntry;
-		menuPtr->functionDataPtr = (void *)currentConfigEntry;
-		//If this config entry is default, mark the menu item as default.
-		if (currentConfigEntry->isDefault) defaultMenuItem = menuPtr;
-		TextMenuAddItem(menu,menuPtr);
-	}
-	TextMenu(menu, defaultMenuItem);
+    for (currentConfigEntry = configEntry; currentConfigEntry != NULL; 
+        currentConfigEntry = currentConfigEntry->nextConfigEntry) {
+    
+        menuPtr = (TEXTMENUITEM *)malloc(sizeof(TEXTMENUITEM*));
+        memset(menuPtr, 0x00, sizeof(menuPtr));
+        if (currentConfigEntry->title == NULL) {
+            strcpy(menuPtr->szCaption,"Untitled");
+        } else { 
+            strncpy(menuPtr->szCaption,currentConfigEntry->title,50);
+        }
+        menuPtr->functionPtr = BootMenuEntry;
+        menuPtr->functionDataPtr = (void *)currentConfigEntry;
+        //If this config entry is default, mark the menu item as default.
+        if (currentConfigEntry->isDefault) defaultMenuItem = menuPtr;
+        TextMenuAddItem(menu,menuPtr);
+    }
+    TextMenu(menu, defaultMenuItem);
 }
 
 void BootMenuEntry(void *entry) {
-	CONFIGENTRY *config = (CONFIGENTRY*)entry;
-	if (!(config->nextConfigEntry==NULL) || !(config->previousConfigEntry==NULL)) {
-		extern unsigned char *videosavepage;
-		memcpy((void*)FB_START,videosavepage,FB_SIZE);
-	}
+    CONFIGENTRY *config = (CONFIGENTRY*)entry;
+    if (!(config->nextConfigEntry==NULL) || !(config->previousConfigEntry==NULL)) {
+        extern unsigned char *videosavepage;
+        memcpy((void*)FB_START,videosavepage,FB_SIZE);
+    }
 
-	switch (config->bootType) {
-		case BOOT_CDROM:
-			LoadKernelCdrom(config);
-			break;
-		case BOOT_FATX:
-			LoadKernelFatX(config);
-			break;
-		case BOOT_NATIVE:
-			LoadKernelNative(config);
-			break;
-	}
-	ExittoLinux(config);
+    switch (config->bootType) {
+        case BOOT_CDROM:
+            LoadKernelCdrom(config);
+            break;
+        case BOOT_FATX:
+            LoadKernelFatX(config);
+            break;
+        case BOOT_NATIVE:
+            LoadKernelNative(config);
+            break;
+    }
+    ExittoLinux(config);
 }
 
 void DrawChildTextMenu(void *menu) {
-	TextMenu((TEXTMENU*)menu);
+    TextMenu((TEXTMENU*)menu);
 }
 
 #ifdef ETHERBOOT 
 extern int etherboot(void);
 void BootFromEtherboot(void *data) {
-	busyLED();
-	initialiseNetwork();
-	etherboot();
+    busyLED();
+    initialiseNetwork();
+    etherboot();
 }
 #endif
 
 #ifdef FLASH
 void FlashBios(void *data) {
-	BootFlashSaveOSSettings();
-	assertWriteEEPROM();
-	BootLoadFlashCD();
+    BootFlashSaveOSSettings();
+    assertWriteEEPROM();
+    BootLoadFlashCD();
 }
 #endif
 

@@ -24,9 +24,9 @@
 #define ERR_DEPTH_MISMATCH 15
 
 struct jpeg_decdata {
-	int dcts[6 * 64 + 16];
-	int out[64 * 6];
-	int dquant[3][64];
+    int dcts[6 * 64 + 16];
+    int out[64 * 6];
+    int dquant[3][64];
 };
 
 extern int jpeg_decode(unsigned char *, unsigned char *, int, int, int, struct jpeg_decdata *);

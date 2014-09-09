@@ -23,24 +23,24 @@ typedef enum enumAvTypes {
 } xbox_av_type;
 
 typedef enum enumHdtvModes {
-	HDTV_480p,
-	HDTV_720p,
-	HDTV_1080i
+    HDTV_480p,
+    HDTV_720p,
+    HDTV_1080i
 } xbox_hdtv_mode;
 
 /* Used to configure the GPU */
 typedef struct {
-	long xres;
-	long crtchdispend;
-	long nvhstart;
-	long nvhtotal;
-	long yres;
-	long nvvstart;
-	long crtcvstart;
-	long crtcvtotal;
-    	long nvvtotal;
-	long pixelDepth;
-	xbox_av_type av_type;
+    long xres;
+    long crtchdispend;
+    long nvhstart;
+    long nvhtotal;
+    long yres;
+    long nvvstart;
+    long crtcvstart;
+    long crtcvtotal;
+        long nvvtotal;
+    long pixelDepth;
+    xbox_av_type av_type;
 } GPU_PARAMETER;
 
 ///////// VideoInitialization.c

@@ -108,28 +108,28 @@
 
 typedef struct _riva_hw_inst
 {
-	/*
-	* Non-FIFO registers.
-	*/
-	volatile u8 *PCRTC;
-	volatile u8 *PRAMDAC;
-	volatile u8 *PFB;
-	volatile u8 *PFIFO;
-	volatile u8 *PGRAPH;
-	volatile u8 *PEXTDEV;
-	volatile u8 *PTIMER;
-	volatile u8 *PMC;
-	volatile u8 *PRAMIN;
-	volatile u8 *FIFO;
-	volatile u8 *CURSOR;
-	volatile u8 *CURSORPOS;
-	volatile u8 *VBLANKENABLE;
-	volatile u8 *VBLANK;
+    /*
+    * Non-FIFO registers.
+    */
+    volatile u8 *PCRTC;
+    volatile u8 *PRAMDAC;
+    volatile u8 *PFB;
+    volatile u8 *PFIFO;
+    volatile u8 *PGRAPH;
+    volatile u8 *PEXTDEV;
+    volatile u8 *PTIMER;
+    volatile u8 *PMC;
+    volatile u8 *PRAMIN;
+    volatile u8 *FIFO;
+    volatile u8 *CURSOR;
+    volatile u8 *CURSORPOS;
+    volatile u8 *VBLANKENABLE;
+    volatile u8 *VBLANK;
 
-	volatile u8 *PCIO;
-	volatile u8 *PVIO;
-	volatile u8 *PDIO;
-	volatile u8 *PVIDEO;
+    volatile u8 *PCIO;
+    volatile u8 *PVIO;
+    volatile u8 *PDIO;
+    volatile u8 *PVIDEO;
 } RIVA_HW_INST;
 
 // function prototypes, not to be called from outside BootVgaInitialization

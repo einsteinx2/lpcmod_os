@@ -14,44 +14,44 @@
 #include "LEDMenuActions.h"
 
 void LEDGreen(void *whatever) {
-	setLED("gggg");
-	LPCmodSettings.OSsettings.LEDColor = LED_GREEN;
+    setLED("gggg");
+    LPCmodSettings.OSsettings.LEDColor = LED_GREEN;
 }
 
 void LEDRed(void *whatever) {
-	setLED("rrrr");
-	LPCmodSettings.OSsettings.LEDColor = LED_RED;
+    setLED("rrrr");
+    LPCmodSettings.OSsettings.LEDColor = LED_RED;
 }
 
 void LEDOrange(void *whatever) {
-	setLED("oooo");
-	LPCmodSettings.OSsettings.LEDColor = LED_ORANGE;
+    setLED("oooo");
+    LPCmodSettings.OSsettings.LEDColor = LED_ORANGE;
 }
 
 void LEDCycle(void *whatever) {
-	setLED("rgog");
-	LPCmodSettings.OSsettings.LEDColor = LED_CYCLE;
+    setLED("rgog");
+    LPCmodSettings.OSsettings.LEDColor = LED_CYCLE;
 }
 
 void LEDOff(void *whatever) {
-	setLED("xxxx");
-	LPCmodSettings.OSsettings.LEDColor = LED_OFF;
+    setLED("xxxx");
+    LPCmodSettings.OSsettings.LEDColor = LED_OFF;
 }
 
 void LEDFirstBoot(void *whatever) {
-	setLED("roro");
-	LPCmodSettings.OSsettings.LEDColor = LED_GREEN;		//Just in case
+    setLED("roro");
+    LPCmodSettings.OSsettings.LEDColor = LED_GREEN;        //Just in case
 }
 
 void initialSetLED(u8 ledChoice) {
-	if(ledChoice == LED_RED)
-			LEDRed(NULL);
-	else if(ledChoice == LED_ORANGE)
-			LEDOrange(NULL);
-	else if(ledChoice == LED_CYCLE)
-			LEDCycle(NULL);
-	else if(ledChoice == LED_OFF)
-			LEDOff(NULL);
-	else
-			LEDGreen(NULL);
+    if(ledChoice == LED_RED)
+            LEDRed(NULL);
+    else if(ledChoice == LED_ORANGE)
+            LEDOrange(NULL);
+    else if(ledChoice == LED_CYCLE)
+            LEDCycle(NULL);
+    else if(ledChoice == LED_OFF)
+            LEDOff(NULL);
+    else
+            LEDGreen(NULL);
 }

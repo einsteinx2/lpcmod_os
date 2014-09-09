@@ -17,156 +17,172 @@
 
  // callback to show progress
 bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, u32 dwPos, u32 dwExtent) {
-	if(ee==EE_ERASE_UPDATE){
-		DisplayProgressBar(dwPos,dwExtent,0xffffff00);
-	}
-	else if(ee==EE_PROGRAM_UPDATE){
-		DisplayProgressBar(dwPos,dwExtent,0xff00ff00);
-	}
-	return true;
+    if(ee==EE_ERASE_UPDATE){
+        DisplayProgressBar(dwPos,dwExtent,0xffffff00);
+    }
+    else if(ee==EE_PROGRAM_UPDATE){
+        DisplayProgressBar(dwPos,dwExtent,0xff00ff00);
+    }
+    return true;
 }
 
 int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 {
-	OBJECT_FLASH of;
-	bool fMore=true;
+    OBJECT_FLASH of;
+    bool fMore=true;
 
-	// A bit hacky, but easier to maintain.
-	const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
-		#include "flashtypes.h"
-	};
+    // A bit hacky, but easier to maintain.
+    const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+        #include "flashtypes.h"
+    };
 
-	// prep our flash object with start address and params
-	of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-	of.m_dwStartOffset=dwStartOffset;
-	of.m_dwLengthUsedArea=dwLength;
-	of.m_pcallbackFlash=BootFlashUserInterface;
+    // prep our flash object with start address and params
+    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_dwStartOffset=dwStartOffset;
+    of.m_dwLengthUsedArea=dwLength;
+    of.m_pcallbackFlash=BootFlashUserInterface;
 
-	// check device type and parameters are sane
-	if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) return 1; // unable to ID device - fail
-	if(!of.m_fIsBelievedCapableOfWriteAndErase) return 2; // seems to be write-protected - fail
-	if(of.m_dwLengthInBytes<(dwStartOffset+dwLength)) return 3; // requested layout won't fit device - sanity check fail
-	if(assertOSUpdateValidInput(pbNewData)) return 4;  //Not valid XBlast OS image.
-	
-	// committed to reflash now
-	while(fMore) {
-		VIDEO_ATTR=0xffef37;
-		printk("\n\n\n\n\n\n\n\n\n\n\n\n\n           \2Updating XBlast OS...\n\2\n");
-		VIDEO_ATTR=0xffffff;
-		printk("           WARNING!\n"
-				 "           Do not turn off your console during this process!\n"
-				 "           Your console should automatically reboot when this\n"
-				 "           is done.  However, if it does not, please manually\n"
-				 "           do so by pressing the power button once the LED has\n"
-				 "           turned flashing amber (oxox)\n");
+    // check device type and parameters are sane
+    if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
+        return 1; // unable to ID device - fail
+    if(!of.m_fIsBelievedCapableOfWriteAndErase)
+        return 2; // seems to be write-protected - fail
+    if(of.m_dwLengthInBytes<(dwStartOffset+dwLength))
+        return 3; // requested layout won't fit device - sanity check fail
+    if(assertOSUpdateValidInput(pbNewData))
+        return 4;  //Not valid XBlast OS image.
+    
+    // committed to reflash now
+    while(fMore) {
+        VIDEO_ATTR=0xffef37;
+        printk("\n\n\n\n\n\n\n\n\n\n\n\n\n           \2Updating XBlast OS...\n\2\n");
+        VIDEO_ATTR=0xffffff;
+        printk("           WARNING!\n"
+                 "           Do not turn off your console during this process!\n"
+                 "           Your console should automatically reboot when this\n"
+                 "           is done.  However, if it does not, please manually\n"
+                 "           do so by pressing the power button once the LED has\n"
+                 "           turned flashing amber (oxox)\n");
 
-		if(BootFlashEraseMinimalRegion(&of, SHOWGUI)) {
-			if(BootFlashProgram(&of, pbNewData, SHOWGUI)) {
-				fMore=false;  // good situation
+        if(BootFlashEraseMinimalRegion(&of, SHOWGUI)) {
+            if(BootFlashProgram(&of, pbNewData, SHOWGUI)) {
+                fMore=false;  // good situation
 
-				// Set LED to oxox.
-				inputLED();
+                // Set LED to oxox.
+                inputLED();
 
-				I2CRebootSlow();
-				while(1);
+                I2CRebootSlow();
+                while(1);
 
-			} else { // failed program
-				printk("Programming failed...\n");
-				while(1);
-			}
-		} else { // failed erase
-			printk("Erasing failed...\n");
-			while(1);
-		}
-	}
-	return 0; // keep compiler happy
+            }
+            else { // failed program
+                printk("Programming failed...\n");
+                while(1);
+            }
+        }
+        else { // failed erase
+            printk("Erasing failed...\n");
+            while(1);
+        }
+    }
+    return 0; // keep compiler happy
 }
 
 int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 {
-	OBJECT_FLASH of;
-	bool fMore=true;
+    OBJECT_FLASH of;
+    bool fMore=true;
 
-	// A bit hacky, but easier to maintain.
-	const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
-		#include "flashtypes.h"
-	};
+    // A bit hacky, but easier to maintain.
+    const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+        #include "flashtypes.h"
+    };
 
-	// prep our flash object with start address and params
-	of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-	of.m_dwStartOffset=dwStartOffset;
-	of.m_dwLengthUsedArea=dwLength;
-	of.m_pcallbackFlash=BootFlashUserInterface;
+    // prep our flash object with start address and params
+    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_dwStartOffset=dwStartOffset;
+    of.m_dwLengthUsedArea=dwLength;
+    of.m_pcallbackFlash=BootFlashUserInterface;
 
-	// check device type and parameters are sane
-	if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) return 1; // unable to ID device - fail
-	if(!of.m_fIsBelievedCapableOfWriteAndErase) return 2; // seems to be write-protected - fail
-	if(of.m_dwLengthInBytes<(dwStartOffset+dwLength)) return 3; // requested layout won't fit device - sanity check fail
+    // check device type and parameters are sane
+    if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
+        return 1; // unable to ID device - fail
+    if(!of.m_fIsBelievedCapableOfWriteAndErase)
+        return 2; // seems to be write-protected - fail
+    if(of.m_dwLengthInBytes<(dwStartOffset+dwLength))
+        return 3; // requested layout won't fit device - sanity check fail
 
-	// committed to reflash now
-	while(fMore) {
-		VIDEO_ATTR=0xffef37;
-		printk("\n\n\n\n\n\n\n\n\n\n\n\n\n           \2Updating BIOS bank...\n\2\n");
-		VIDEO_ATTR=0xffffff;
-		printk("           WARNING!\n"
-				 "           Do not turn off your console during this process!\n");
-		if(BootFlashEraseMinimalRegion(&of, SHOWGUI)) {
-			if(BootFlashProgram(&of, pbNewData, SHOWGUI)) {
-				fMore=false;  // good situation
+    // committed to reflash now
+    while(fMore) {
+        VIDEO_ATTR=0xffef37;
+        printk("\n\n\n\n\n\n\n\n\n\n\n\n\n           \2Updating BIOS bank...\n\2\n");
+        VIDEO_ATTR=0xffffff;
+        printk("           WARNING!\n"
+                 "           Do not turn off your console during this process!\n");
+        if(BootFlashEraseMinimalRegion(&of, SHOWGUI)) {
+            if(BootFlashProgram(&of, pbNewData, SHOWGUI)) {
+                fMore=false;  // good situation
 
-				// Set LED to oxox.
-				//inputLED();
+                // Set LED to oxox.
+                //inputLED();
 
-			} else { // failed program
-				printk("Programming flash bank failed...\n");
-				while(1);
-			}
-		} else { // failed erase
-			printk("Erasing flash bank failed...\n");
-			while(1);
-		}
-	}
-	return 0;
+            }
+            else { // failed program
+                printk("Programming flash bank failed...\n");
+                while(1);
+            }
+        }
+        else { // failed erase
+            printk("Erasing flash bank failed...\n");
+            while(1);
+        }
+    }
+    return 0;
 }
 
 int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 {
-	OBJECT_FLASH of;
-	bool fMore=true;
+    OBJECT_FLASH of;
+    bool fMore=true;
 
-	// A bit hacky, but easier to maintain.
-	const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
-		#include "flashtypes.h"
-	};
+    // A bit hacky, but easier to maintain.
+    const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+        #include "flashtypes.h"
+    };
 
-	// prep our flash object with start address and params
-	of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-	of.m_dwStartOffset=dwStartOffset;
-	of.m_dwLengthUsedArea=dwLength;
-	//of.m_pcallbackFlash=BootFlashUserInterface;
+    // prep our flash object with start address and params
+    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_dwStartOffset=dwStartOffset;
+    of.m_dwLengthUsedArea=dwLength;
+    //of.m_pcallbackFlash=BootFlashUserInterface;
 
-	// check device type and parameters are sane
-	if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) return 1; // unable to ID device - fail
-	if(!of.m_fIsBelievedCapableOfWriteAndErase) return 2; // seems to be write-protected - fail
-	if(of.m_dwLengthInBytes<(dwStartOffset+dwLength)) return 3; // requested layout won't fit device - sanity check fail
+    // check device type and parameters are sane
+    if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
+        return 1; // unable to ID device - fail
+    if(!of.m_fIsBelievedCapableOfWriteAndErase)
+        return 2; // seems to be write-protected - fail
+    if(of.m_dwLengthInBytes<(dwStartOffset+dwLength))
+        return 3; // requested layout won't fit device - sanity check fail
 
-	// committed to reflash now
-	while(fMore) {
-		if(BootFlashEraseMinimalRegion(&of, NOGUI)) {
-			if(BootFlashProgram(&of, pbNewData, NOGUI)) {
-				fMore=false;  // good situation
+    // committed to reflash now
+    while(fMore) {
+        if(BootFlashEraseMinimalRegion(&of, NOGUI)) {
+            if(BootFlashProgram(&of, pbNewData, NOGUI)) {
+                fMore=false;  // good situation
 
-				// Set LED to oxox.
-				//inputLED();
+                // Set LED to oxox.
+                //inputLED();
 
-			} else { // failed program
-				printk("Programming persistent settings failed...\n");
-				while(1);
-			}
-		} else { // failed erase
-			printk("Erasing persistent settings failed...\n");
-			while(1);
-		}
-	}
-	return 0;
+            }
+            else { // failed program
+                printk("Programming persistent settings failed...\n");
+                while(1);
+            }
+        }
+        else { // failed erase
+            printk("Erasing persistent settings failed...\n");
+            while(1);
+        }
+    }
+    return 0;
 }

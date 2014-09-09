@@ -268,10 +268,10 @@ typedef struct deflate_workspace {
 void zlib_tr_init         OF((deflate_state *s));
 int  zlib_tr_tally        OF((deflate_state *s, unsigned dist, unsigned lc));
 ulg  zlib_tr_flush_block  OF((deflate_state *s, charf *buf, ulg stored_len,
-			      int eof));
+                  int eof));
 void zlib_tr_align        OF((deflate_state *s));
 void zlib_tr_stored_block OF((deflate_state *s, charf *buf, ulg stored_len,
-			      int eof));
+                  int eof));
 void zlib_tr_stored_type_only OF((deflate_state *));
 
 
@@ -290,7 +290,7 @@ void zlib_tr_stored_type_only OF((deflate_state *));
  * IN assertion: 1 <= len <= 15
  */
 static inline unsigned bi_reverse(unsigned code, /* the value to invert */
-				  int len)       /* its bit length */
+                  int len)       /* its bit length */
 {
     register unsigned res = 0;
     do {

@@ -9,7 +9,7 @@ typedef unsigned int u32;
 typedef unsigned short u16;
 typedef unsigned char u8;
 #ifndef bool_already_defined_
-	typedef int bool;
+    typedef int bool;
 #endif
 typedef unsigned long RGBA; // LSB=R -> MSB = A
 typedef long long __int64;

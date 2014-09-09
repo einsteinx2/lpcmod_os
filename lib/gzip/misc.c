@@ -32,10 +32,10 @@ typedef unsigned char  uch;
 typedef unsigned short ush;
 typedef unsigned long  ulg;
 
-#define WSIZE 0x8000		/* Window size must be at least 32k, */
-				/* and a power of two */
+#define WSIZE 0x8000        /* Window size must be at least 32k, */
+                /* and a power of two */
 
-static uch *inbuf;	     /* input buffer */
+static uch *inbuf;         /* input buffer */
 static uch window[WSIZE];    /* Sliding window buffer */
 
 static unsigned insize = 0;  /* valid bytes in inbuf */
@@ -52,7 +52,7 @@ static unsigned outcnt = 0;  /* bytes in output buffer */
 #define RESERVED     0xC0 /* bit 6,7:   reserved */
 
 #define get_byte()  (inptr < insize ? inbuf[inptr++] : fill_inbuf())
-		
+        
 /* Diagnostic functions */
 #ifdef DEBUG
 #  define Assert(cond,msg) {if(!(cond)) error(msg);}
@@ -103,34 +103,34 @@ static long free_mem_end_ptr;
 
 static void *gzip_malloc(int size)
 {
-	void *p;
+    void *p;
 
-	if (size <0) error("Malloc error\n");
-	if (free_mem_ptr <= 0) error("Memory error\n");
+    if (size <0) error("Malloc error\n");
+    if (free_mem_ptr <= 0) error("Memory error\n");
 
-	free_mem_ptr = (free_mem_ptr + 3) & ~3;	/* Align */
+    free_mem_ptr = (free_mem_ptr + 3) & ~3;    /* Align */
 
-	p = (void *)free_mem_ptr;
-	free_mem_ptr += size;
+    p = (void *)free_mem_ptr;
+    free_mem_ptr += size;
 
-	if (free_mem_ptr >= free_mem_end_ptr)
-		error("\nOut of memory\n");
+    if (free_mem_ptr >= free_mem_end_ptr)
+        error("\nOut of memory\n");
 
-	return p;
+    return p;
 }
 
 static void gzip_free(void *where)
-{	/* Don't care */
+{    /* Don't care */
 }
 
 static void gzip_mark(void **ptr)
 {
-	*ptr = (void *) free_mem_ptr;
+    *ptr = (void *) free_mem_ptr;
 }
 
 static void gzip_release(void **ptr)
 {
-	free_mem_ptr = (long) *ptr;
+    free_mem_ptr = (long) *ptr;
 }
 
 /* ===========================================================================
@@ -139,14 +139,14 @@ static void gzip_release(void **ptr)
  */
 static int fill_inbuf(void)
 {
-	if (insize != 0) {
-		error("ran out of input data\n");
-	}
+    if (insize != 0) {
+        error("ran out of input data\n");
+    }
 
-	inbuf = input_data;
-	insize = input_len;
-	inptr = 1;
-	return inbuf[0];
+    inbuf = input_data;
+    insize = input_len;
+    inptr = 1;
+    return inbuf[0];
 }
 
 /* ===========================================================================
@@ -162,8 +162,8 @@ static void flush_window(void)
     in = window;
     out = &output_data[output_ptr]; 
     for (n = 0; n < outcnt; n++) {
-	    ch = *out++ = *in++;
-	    c = crc_32_tab[((int)c ^ ch) & 0xff] ^ (c >> 8);
+        ch = *out++ = *in++;
+        c = crc_32_tab[((int)c ^ ch) & 0xff] ^ (c >> 8);
     }
     crc = c;
     bytes_out += (ulg)outcnt;
@@ -173,7 +173,7 @@ static void flush_window(void)
 
 static void error(char *x)
 {
-	while(1);	/* Halt */
+    while(1);    /* Halt */
 }
 
 #define STACK_SIZE (4096)
@@ -181,21 +181,21 @@ static void error(char *x)
 long user_stack [STACK_SIZE];
 
 struct {
-	long * a;
-	short b;
-	} stack_start = { & user_stack [STACK_SIZE] , __KERNEL_DS };
+    long * a;
+    short b;
+    } stack_start = { & user_stack [STACK_SIZE] , __KERNEL_DS };
 
 int decompress_kernel(char *out, char *data, int len)
 {
-	input_data = data;
-	input_len = len;
-	
-	output_data = out;
+    input_data = data;
+    input_len = len;
+    
+    output_data = out;
 
-	free_mem_ptr = 0x01000000;
-	free_mem_end_ptr = 0x02000000;
+    free_mem_ptr = 0x01000000;
+    free_mem_end_ptr = 0x02000000;
 
-	makecrc();
-	gunzip();
-	return 1;
+    makecrc();
+    gunzip();
+    return 1;
 }

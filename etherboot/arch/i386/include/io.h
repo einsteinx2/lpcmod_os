@@ -1,4 +1,4 @@
-#ifndef	ETHERBOOT_IO_H
+#ifndef    ETHERBOOT_IO_H
 #define ETHERBOOT_IO_H
 
 
@@ -10,12 +10,12 @@ extern unsigned long virt_offset;
  */
 static inline unsigned long virt_to_phys(volatile const void *virt_addr)
 {
-	return ((unsigned long)virt_addr) + virt_offset;
+    return ((unsigned long)virt_addr) + virt_offset;
 }
 
 static inline void *phys_to_virt(unsigned long phys_addr)
 {
-	return (void *)(phys_addr - virt_offset);
+    return (void *)(phys_addr - virt_offset);
 }
 
 /* virt_to_bus converts an addresss inside of etherboot [_start, _end]
@@ -35,13 +35,13 @@ static inline void *phys_to_virt(unsigned long phys_addr)
  */
 static inline void *ioremap(unsigned long bus_addr, unsigned long length __unused)
 {
-	return bus_to_virt(bus_addr);
+    return bus_to_virt(bus_addr);
 }
 
 /* iounmap cleans up anything ioremap had to setup */
 static inline void iounmap(void *virt_addr __unused)
 {
-	return;
+    return;
 }
 
 /*
@@ -65,16 +65,16 @@ static inline void iounmap(void *virt_addr __unused)
  * On the other hand, I'd like to be sure of a non-existent port:
  * I feel a bit unsafe about using 0x80 (should be safe, though)
  *
- *		Linus
+ *        Linus
  */
 
-#ifdef	SLOW_IO_BY_JUMPING
+#ifdef    SLOW_IO_BY_JUMPING
 #define __SLOW_DOWN_IO __asm__ __volatile__("jmp 1f\n1:\tjmp 1f\n1:")
 #else
 #define __SLOW_DOWN_IO __asm__ __volatile__("outb %al,$0x80")
 #endif
 
-#ifdef	REALLY_SLOW_IO
+#ifdef    REALLY_SLOW_IO
 #define SLOW_DOWN_IO { __SLOW_DOWN_IO; __SLOW_DOWN_IO; __SLOW_DOWN_IO; __SLOW_DOWN_IO; }
 #else
 #define SLOW_DOWN_IO __SLOW_DOWN_IO
@@ -94,8 +94,8 @@ static inline void iounmap(void *virt_addr __unused)
 #define writew(b,addr) ((*(volatile unsigned short *) (addr)) = (b))
 #define writel(b,addr) ((*(volatile unsigned int *) (addr)) = (b))
 
-#define memcpy_fromio(a,b,c)	memcpy((a),(void *)(b),(c))
-#define memcpy_toio(a,b,c)	memcpy((void *)(a),(b),(c))
+#define memcpy_fromio(a,b,c)    memcpy((a),(void *)(b),(c))
+#define memcpy_toio(a,b,c)    memcpy((void *)(a),(b),(c))
 
 /*
  * Force strict CPU ordering.
@@ -115,9 +115,9 @@ static inline void iounmap(void *virt_addr __unused)
  * nop for these.
  */
  
-#define mb() 	__asm__ __volatile__ ("lock; addl $0,0(%%esp)": : :"memory")
-#define rmb()	mb()
-#define wmb()	mb();
+#define mb()     __asm__ __volatile__ ("lock; addl $0,0(%%esp)": : :"memory")
+#define rmb()    mb()
+#define wmb()    mb();
 
 
 /*
@@ -185,62 +185,62 @@ __OUTS(l)
  */
 #define outb(val,port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__outbc((val),(port)) : \
-	__outb((val),(port)))
+    __outbc((val),(port)) : \
+    __outb((val),(port)))
 
 #define inb(port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__inbc(port) : \
-	__inb(port))
+    __inbc(port) : \
+    __inb(port))
 
 #define outb_p(val,port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__outbc_p((val),(port)) : \
-	__outb_p((val),(port)))
+    __outbc_p((val),(port)) : \
+    __outb_p((val),(port)))
 
 #define inb_p(port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__inbc_p(port) : \
-	__inb_p(port))
+    __inbc_p(port) : \
+    __inb_p(port))
 
 #define outw(val,port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__outwc((val),(port)) : \
-	__outw((val),(port)))
+    __outwc((val),(port)) : \
+    __outw((val),(port)))
 
 #define inw(port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__inwc(port) : \
-	__inw(port))
+    __inwc(port) : \
+    __inw(port))
 
 #define outw_p(val,port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__outwc_p((val),(port)) : \
-	__outw_p((val),(port)))
+    __outwc_p((val),(port)) : \
+    __outw_p((val),(port)))
 
 #define inw_p(port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__inwc_p(port) : \
-	__inw_p(port))
+    __inwc_p(port) : \
+    __inw_p(port))
 
 #define outl(val,port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__outlc((val),(port)) : \
-	__outl((val),(port)))
+    __outlc((val),(port)) : \
+    __outl((val),(port)))
 
 #define inl(port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__inlc(port) : \
-	__inl(port))
+    __inlc(port) : \
+    __inl(port))
 
 #define outl_p(val,port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__outlc_p((val),(port)) : \
-	__outl_p((val),(port)))
+    __outlc_p((val),(port)) : \
+    __outl_p((val),(port)))
 
 #define inl_p(port) \
 ((__builtin_constant_p((port)) && (port) < 256) ? \
-	__inlc_p(port) : \
-	__inl_p(port))
+    __inlc_p(port) : \
+    __inl_p(port))
 
 #endif /* ETHERBOOT_IO_H */

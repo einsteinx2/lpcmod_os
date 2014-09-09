@@ -4,34 +4,36 @@
 #define BNK512  0x00
 #define BNK256  0x02
 #define BNKOS  0x03
-#define BNKTSOP 0x04			//Also for bank0 in case TSOP is split
+#define BNKTSOP 0x04            //Also for bank0 in case TSOP is split
 #define BNKTSOP1 0x05
 #define BNKTSOP2 0x06
 #define BNKTSOP3 0x07
 #define NOBNKID  0xFF
 #define LPCMOD_TRUE 0x01
-#define LPCMOD_FALSE	0x00
+#define LPCMOD_FALSE    0x00
 
 //Bit to send on DISABLE_MOD "register" to control OnBoard TSOP.
-//Will only be used if Xboxr rev is 1.0 or 1.1.
-#define TSOP_BOOT		0x01
-#define TSOP_CONTROL	0x02
-#define TSOP_4_BANKS	0x04
-#define TSOP_512_SWITCH	0x10
-#define TSOP_256_SWITCH	0x20
+//Will only be used if Xbox rev. is 1.0 or 1.1.
+#define TSOP_BOOT        0x01
+#define TSOP_CONTROL    0x02
+#define TSOP_4_BANKS    0x04
+#define TSOP_512_SWITCH    0x10
+#define TSOP_256_SWITCH    0x20
 
 
-#define BNK_CONTROL	0xF710
-#define DISABLE_MOD	0xF711
-#define ENABLE_5V	0xF713
-#define LCD_DATA	0xF700
-#define LCD_BL		0xF701
-#define LCD_CT		0xF703
+#define BNK_CONTROL    0xF710
+#define DISABLE_MOD    0xF711
+#define ENABLE_5V    0xF713
+#define LCD_DATA    0xF700
+#define LCD_BL        0xF701
+#define LCD_CT        0xF703
 
-#define SYSCON_REG	0xF701
-#define SYSCON_ID	0x15	//Spoof SmartXX OPX using lower nibble. Highest nibble is what's different from SmartXX.
+#define SYSCON_REG    0xF701
+//For XBlast Lite
+#define SYSCON_ID_V1    0x15    //Spoof SmartXX OPX using lower nibble. Highest nibble is what's different from SmartXX.
+//Other revision will have to be identified here.
 
-#define HD44780		0x0
+#define HD44780        0x0
 
 /*
 #define ADR_ACTIVEBANK 0xFF010

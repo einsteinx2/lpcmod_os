@@ -5,11 +5,11 @@
 
 // video helpers
 typedef struct {
-	u8 * pData;
-	u8 * pBackdrop;
-	int width;
-	int height;
-	int bpp;
+    u8 * pData;
+    u8 * pBackdrop;
+    int width;
+    int height;
+    int bpp;
 } JPEG;
 
 int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLineDestination, RGBA rgbaOpaqueness, const char * szString);
@@ -19,19 +19,19 @@ unsigned int BootVideoGetStringTotalWidth(const char * szc);
 void BootVideoClearScreen(JPEG * pJpeg, int nStartLine, int nEndLine);
 
 void BootVideoJpegBlitBlend(
-	u8 *pDst,
-	u32 dst_width,
-	JPEG * pJpeg,
-	u8 *pFront,
-	RGBA m_rgbaTransparent,
-	u8 *pBack,
-	int x,
-	int y
+    u8 *pDst,
+    u32 dst_width,
+    JPEG * pJpeg,
+    u8 *pFront,
+    RGBA m_rgbaTransparent,
+    u8 *pBack,
+    int x,
+    int y
 );
 
 bool BootVideoJpegUnpackAsRgb(
-	u8 *pbaJpegFileImage,
-	JPEG * pJpeg
+    u8 *pbaJpegFileImage,
+    JPEG * pJpeg
 );
 
 void BootVideoEnableOutput(u8 bAvPack);

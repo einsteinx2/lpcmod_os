@@ -212,11 +212,11 @@ find_arp_entry(void)
   j = ARP_TABLE_SIZE;
   /* search ARP table for an unused or old entry */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
-  	/* empty entry? */
+      /* empty entry? */
     if (arp_table[i].state == ETHARP_STATE_EMPTY) {
       LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: returning empty entry %u\n", i));
       return i;
-  	/* stable entry? */
+      /* stable entry? */
     } else if (arp_table[i].state == ETHARP_STATE_STABLE) {
       /* remember entry with oldest stable entry in j */
       if (arp_table[i].ctime >= maxtime) maxtime = arp_table[j = i].ctime;
@@ -224,9 +224,9 @@ find_arp_entry(void)
   }
   /* no empty entry found? */
   if (i == ARP_TABLE_SIZE) {
-  	LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
+      LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
     /* fall-back to oldest stable */
-  	i = j;
+      i = j;
   }
   /* no available entry found? */
   if (i == ARP_TABLE_SIZE) {
@@ -301,8 +301,8 @@ etharp_dequeue(s8_t i)
 {
   /* queued packets on a stable entry (work in progress) */
   if (arp_table[i].p != NULL) {
-  	/* queue no longer references pbuf */
-  	pbuf_free(arp_table[i].p);
+      /* queue no longer references pbuf */
+      pbuf_free(arp_table[i].p);
     arp_table[i].p = NULL;
     return 1;
   } else {
@@ -575,7 +575,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       hdr->ethhdr.type = htons(ETHTYPE_ARP);
       /* return ARP reply */
       //netif->linkoutput(netif, p);
-	return p;
+    return p;
     /* request was not directed to us */
     } else {
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP request was not for us.\n"));

@@ -14,139 +14,139 @@ char kernelPath[200];
 char *finalKernelPath = kernelPath;
 
 static void fixPosition(int len) {
-	if(position < 0) {
-		position = len-1;
-	}
+    if(position < 0) {
+        position = len-1;
+    }
 }
 
 void incrementAlphabetKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
 
-	fixPosition(strlen(kernelPath));
+    fixPosition(strlen(kernelPath));
 
-	if(kernelPath[position] < 126) {
-		kernelPath[position]++;
-	}
+    if(kernelPath[position] < 126) {
+        kernelPath[position]++;
+    }
 
    sprintf(chr, "%s", kernelPath);
 }
 
 void decrementAlphabetKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
+    memset(kernelPath, 0, 200);
 
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	if(kernelPath[position] > 33) {
-		kernelPath[position]--;
-	}
+    if(kernelPath[position] > 33) {
+        kernelPath[position]--;
+    }
 
    sprintf(chr, "%s", kernelPath);
 }
 
 void nextLetterKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
 
-	fixPosition(strlen(kernelPath));
+    fixPosition(strlen(kernelPath));
 
-	if(position < 119) {
-		position++;
-	
-		if((kernelPath[position] < 32) || (kernelPath[position] > 126)) {
-			kernelPath[position] = kernelPath[position-1];
-		}
-	
-	   sprintf(chr, "%s", kernelPath);
-	}
+    if(position < 119) {
+        position++;
+    
+        if((kernelPath[position] < 32) || (kernelPath[position] > 126)) {
+            kernelPath[position] = kernelPath[position-1];
+        }
+    
+       sprintf(chr, "%s", kernelPath);
+    }
 }
 
 void deleteLetterKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	// Position > 1 so that we can never delete the leading slash!
-	if(position > 1) {
-		kernelPath[position] = 0;
-		position--;
-	   sprintf(chr, "%s", kernelPath);
-	}
+    // Position > 1 so that we can never delete the leading slash!
+    if(position > 1) {
+        kernelPath[position] = 0;
+        position--;
+       sprintf(chr, "%s", kernelPath);
+    }
 }
 
 void setNumKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	kernelPath[position] = '0';
+    kernelPath[position] = '0';
    sprintf(chr, "%s", kernelPath);
 }
 
 void setLCKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	if(kernelPath[position] >= 65 && kernelPath[position] <= 90) {
-		kernelPath[position] += 32;
-	} else if(kernelPath[position] >= 97 && kernelPath[position] <= 122) {
-		// Do nothing.
-	} else {	
-		kernelPath[position] = 'a';
-	}
+    if(kernelPath[position] >= 65 && kernelPath[position] <= 90) {
+        kernelPath[position] += 32;
+    } else if(kernelPath[position] >= 97 && kernelPath[position] <= 122) {
+        // Do nothing.
+    } else {    
+        kernelPath[position] = 'a';
+    }
    sprintf(chr, "%s", kernelPath);
 }
 
 void setUCKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	if(kernelPath[position] >= 97 && kernelPath[position] <= 122) {
-		kernelPath[position] -= 32;
-	} else if(kernelPath[position] >= 65 && kernelPath[position] <= 90) {
-		// Do nothing.
-	} else {	
-		kernelPath[position] = 'A';
-	}
+    if(kernelPath[position] >= 97 && kernelPath[position] <= 122) {
+        kernelPath[position] -= 32;
+    } else if(kernelPath[position] >= 65 && kernelPath[position] <= 90) {
+        // Do nothing.
+    } else {    
+        kernelPath[position] = 'A';
+    }
    sprintf(chr, "%s", kernelPath);
 }
 
 void setFullStopKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	kernelPath[position] = '.';
+    kernelPath[position] = '.';
    sprintf(chr, "%s", kernelPath);
 }
 
 void setFSlashKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	kernelPath[position] = '/';
+    kernelPath[position] = '/';
    sprintf(chr, "%s", kernelPath);
 }
 
 void setDashKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	kernelPath[position] = '-';
+    kernelPath[position] = '-';
    sprintf(chr, "%s", kernelPath);
 }
 
 void setUScoreKernelPath(void *chr) {
-	memset(kernelPath, 0, 200);
-	strcpy(kernelPath, chr);
-	fixPosition(strlen(kernelPath));
+    memset(kernelPath, 0, 200);
+    strcpy(kernelPath, chr);
+    fixPosition(strlen(kernelPath));
 
-	kernelPath[position] = '_';
+    kernelPath[position] = '_';
    sprintf(chr, "%s", kernelPath);
 }
 

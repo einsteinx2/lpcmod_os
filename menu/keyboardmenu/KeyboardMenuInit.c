@@ -13,11 +13,11 @@
 #include "include/config.h"
 #include "BootIde.h"
 #include "KeyboardMenu.h"
-//#include "KeyboardActions.h"		//your time will come
+//#include "KeyboardActions.h"        //your time will come
 #include "lpcmod_v1.h"
 
 
 void KeyboardMenuInit(void *itemStr) {
-	KeyboardMenuDraw((char *)itemStr);			//Function that lets you navigate the keyboard.
-												//Prints the edited string and place cursor at the end of it
+    KeyboardMenuDraw((char *)itemStr);            //Function that lets you navigate the keyboard.
+                                                //Prints the edited string and place cursor at the end of it
 }

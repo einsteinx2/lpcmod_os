@@ -13,7 +13,7 @@
 /*------------------------------------------------------------------------*/ 
 int hcd_buffer_create (struct usb_hcd *hcd)
 {
-	return 0;
+    return 0;
 }
 /*------------------------------------------------------------------------*/ 
 void hcd_buffer_destroy (struct usb_hcd *hcd)
@@ -27,7 +27,7 @@ void *hcd_buffer_alloc (
         dma_addr_t              *dma
 )
 {
-	return kmalloc(size,0);
+    return kmalloc(size,0);
 }
 /*------------------------------------------------------------------------*/ 
 void hcd_buffer_free (
@@ -37,6 +37,6 @@ void hcd_buffer_free (
         dma_addr_t              dma
 )
 {
-	kfree(addr);
+    kfree(addr);
 }
 

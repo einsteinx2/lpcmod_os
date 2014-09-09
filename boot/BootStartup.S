@@ -22,7 +22,7 @@
          jmp	start_linux
          
 .global	Cromwellconfig
-Cromwellconfig:      	
+Cromwellconfig:
 	.org 0x0c
 		// Space for the SHA1 checksum
         .org 0x20   
@@ -31,12 +31,12 @@ Cromwellconfig:
         .long 0x0	// 0x20 if XBE, then this bit is 0, if Cromwell mode, the bit is set to 1 by the Startuploader
         .long 0x0	// 0x24 ImageRetryLoads
         .long 0x0	// 0x28 Bank, from where Loaded
-        .long 0x0	// 0x2C 0 .. Bios = 256 k, 1 .. Bios = 1MB 
+        .long 0x0	// 0x2C 0 .. Bios = 256 k, 1 .. Bios = 1MB
         .long 0x0	// 0x30 free
         .long _end_complete_rom       // 0x34 free
         .long 0x0       // 0x38 free
         .long 0x0	// free
-	
+
 .align 16
 tableGdt:
 	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // 0x00 dummy
@@ -65,11 +65,11 @@ tableIdtDescriptor:
 .align 16        
 	.globl start_linux
 start_linux:
-       	
+
        	//Make SURE the IRQs are turned off
 	cli
-  	
-	// kill the cache  = Disable bit 30 + 29 = CD + NW 
+
+	// kill the cache  = Disable bit 30 + 29 = CD + NW
 	// CD = Cache Disable (disable = 1)
 	// NW Not write through (disable = 1)
        //	mov 	%cr0, %eax
@@ -81,11 +81,11 @@ start_linux:
 	// Flush the TLB
 	xor %eax, %eax
 	mov %eax, %cr3
-	
-	// We kill the Local Descriptor Table        
+
+	// We kill the Local Descriptor Table
         xor	%eax, %eax
-	lldt	%ax	
-	
+	lldt	%ax
+
 	// DR6/DR7: Clear the debug registers
 	xor %eax, %eax
 	mov %eax, %dr6
@@ -95,7 +95,7 @@ start_linux:
 	mov %eax, %dr2
 	mov %eax, %dr3
 
-	
+
 	// IMPORTANT!  Linux expects the GDT located at a specific position,
 	// 0xA0000, so we have to move it there.
 
@@ -107,7 +107,7 @@ start_linux:
 
 	// Load the new GDT
 	lgdt GDT_LOC+(tableGdtDescriptor-tableGdt)
-	
+
 	// Kill the LDT, if any
 	xor	%eax, %eax
 	lldt %ax
@@ -142,7 +142,7 @@ reload_cs:
 	movl $IDT_LOC, %edi
 	rep stosl
 	wbinvd
-	
+
 	// We load the Interrupt Descriptor Table
 	lidt tableIdtDescriptor
 
@@ -150,14 +150,14 @@ reload_cs:
 	xor	%eax, %eax
 	xor	%edx, %edx
 	xor	%ecx, %ecx
-	
+
 	clts
 	fninit
-	
+
 	xor	%eax, %eax
 	xor	%edx, %edx
 	xor	%ecx, %ecx
-	
+
   	// We flush the TLB
 	mov	%cr3, %eax
 	mov	%eax, %cr3
@@ -238,7 +238,7 @@ reload_cs:
 
 	// Ok, we tell now the processor, we finished Memory Type definitions
 	// We set the Default Memory Type in the Box now to Type == 0 .. Means UC .. Uncacheable
-	
+
 	movl	$0x2ff, %ecx
 	xor	%edx, %edx
 	movl	$0x800, %eax 		//Enable MTRRs
@@ -251,13 +251,13 @@ reload_cs:
 
 	mov	%eax, %eax       // Flush the TLB    and resets it
 	mov	%eax, %cr3
- 	wbinvd 
+ 	wbinvd
  
    	/* turn on normal cache */
-	//  bit 30 + 29 = CD + NW 
+	//  bit 30 + 29 = CD + NW
 	// CD = Cache Disable (disable = 1)
 	// NW Not write through (disable = 1)
-	
+
 //	movl	%cr0, %eax
 //	mov 	%eax, %ebx
 //	andl	$0x9fFFffFF,%eax
@@ -382,7 +382,7 @@ IntHandler7:
 	outb	%al, $0x20
 	popf
 	popa
-	sti	
+	sti
 	iret
 
 
@@ -506,7 +506,7 @@ IntHandlerIde:
 	cli
 	pusha
 	pushf
-	
+
 	call	IntHandlerCIde
 
 		// EOI on master and slave needed
@@ -525,7 +525,7 @@ IntHandler15:
 	cli
 	pusha
 	pushf
-	
+
 	call	IntHandler15C
 		// EOI on master and slave needed
 	mov	$0x67, %al
@@ -544,7 +544,7 @@ IntHandlerUnused:
 	cli
 	pusha
 	pushf
-	
+
 	call	IntHandlerUnusedC
 	mov	$0x20, %al
 	out	%al, $0x20
@@ -559,7 +559,7 @@ IntHandlerUnusedPic2:
 	cli
 	pusha
 	pushf
-	
+
 	call	IntHandlerUnusedC2
 	mov $0xffff, %ax
 	mov	$0x8028, %dx

@@ -53,7 +53,7 @@ struct AddrRangeDesc
 } __attribute__ ((packed));
 
 /* usable memory "Type", all others are reserved.  */
-#define MB_ARD_MEMORY		1
+#define MB_ARD_MEMORY        1
 
 
 /* Drive Info structure.  */
@@ -78,8 +78,8 @@ struct drive_info
 };
 
 /* Drive Mode.  */
-#define MB_DI_CHS_MODE		0
-#define MB_DI_LBA_MODE		1
+#define MB_DI_CHS_MODE        0
+#define MB_DI_LBA_MODE        1
 
 
 /* APM BIOS info.  */
@@ -177,41 +177,41 @@ struct multiboot_info
  */
 
 /* is there basic lower/upper memory information? */
-#define MB_INFO_MEMORY			0x00000001
+#define MB_INFO_MEMORY            0x00000001
 /* is there a boot device set? */
-#define MB_INFO_BOOTDEV			0x00000002
+#define MB_INFO_BOOTDEV            0x00000002
 /* is the command-line defined? */
-#define MB_INFO_CMDLINE			0x00000004
+#define MB_INFO_CMDLINE            0x00000004
 /* are there modules to do something with? */
-#define MB_INFO_MODS			0x00000008
+#define MB_INFO_MODS            0x00000008
 
 /* These next two are mutually exclusive */
 
 /* is there a symbol table loaded? */
-#define MB_INFO_AOUT_SYMS		0x00000010
+#define MB_INFO_AOUT_SYMS        0x00000010
 /* is there an ELF section header table? */
-#define MB_INFO_ELF_SHDR		0x00000020
+#define MB_INFO_ELF_SHDR        0x00000020
 
 /* is there a full memory map? */
-#define MB_INFO_MEM_MAP			0x00000040
+#define MB_INFO_MEM_MAP            0x00000040
 
 /* Is there drive info?  */
-#define MB_INFO_DRIVE_INFO		0x00000080
+#define MB_INFO_DRIVE_INFO        0x00000080
 
 /* Is there a config table?  */
-#define MB_INFO_CONFIG_TABLE		0x00000100
+#define MB_INFO_CONFIG_TABLE        0x00000100
 
 /* Is there a boot loader name?  */
-#define MB_INFO_BOOT_LOADER_NAME	0x00000200
+#define MB_INFO_BOOT_LOADER_NAME    0x00000200
 
 /* Is there a APM table?  */
-#define MB_INFO_APM_TABLE		0x00000400
+#define MB_INFO_APM_TABLE        0x00000400
 
 /* Is there video information?  */
-#define MB_INFO_VIDEO_INFO		0x00000800
+#define MB_INFO_VIDEO_INFO        0x00000800
 
 /*
  *  The following value must be present in the EAX register.
  */
 
-#define MULTIBOOT_VALID			0x2BADB002
+#define MULTIBOOT_VALID            0x2BADB002

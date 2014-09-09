@@ -13,8 +13,8 @@
 //bit4 = D5
 //bit5 = D6
 //bit6 = D7
-#define DISPLAY_E 		0x04		//Mapped for LPCMod output format.
-#define DISPLAY_RS		0x02		//Mapped for LPCMod output format.
+#define DISPLAY_E         0x04        //Mapped for LPCMod output format.
+#define DISPLAY_RS        0x02        //Mapped for LPCMod output format.
 #define DISP_CLEAR          0x01 // cmd: clear display command
 #define DISP_HOME           0x02 // cmd: return cursor to home
 #define DISP_ENTRY_MODE_SET 0x04 // cmd: enable cursor moving direction and enable the shift of entire display
@@ -40,8 +40,8 @@
 #define DISP_SEGRAM_SET     0x40  //RE_FLAG = 1
 #define DISP_DDRAM_SET      0x80  // cmd: set DDRAM address in address counter
 
-#define CENTERSTRING		1
-#define JUSTIFYLEFT			0
+#define CENTERSTRING        1
+#define JUSTIFYLEFT            0
 
 
 void BootLCDInit(void);

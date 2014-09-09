@@ -20,43 +20,43 @@
 #include "boot.h"
 
 void errorLED(void) {
-	setLED("rxxx");
+    setLED("rxxx");
 }
 
 void busyLED(void) {
-	setLED("rgog");
+    setLED("rgog");
 }
 
 void inputLED(void) {
-	setLED("oxox");
+    setLED("oxox");
 }
 
 void goodLED(void) {
-	setLED("gxgx");
+    setLED("gxgx");
 }
 
 void importantLED(void) {
-	setLED("roro");
+    setLED("roro");
 }
 
 void downloadingLED(void) {
-	setLED("ogrr");
+    setLED("ogrr");
 }
 
 void uberLED(void) {
-	setLED("rxrx");
+    setLED("rxrx");
 }
 
 void highLED(void) {
-	setLED("rrrr");
+    setLED("rrrr");
 }
 
 void midLED(void) {
-	setLED("ooox");
+    setLED("ooox");
 }
 
 void lowLED(void) {
-	setLED("gggg");
+    setLED("gggg");
 }
 
 void dots(void) {
@@ -76,7 +76,7 @@ void cromwellError(void) {
    printk("!!");
    VIDEO_ATTR=0xffd8d8d8;
    printk(" ]");
-	errorLED();
+    errorLED();
 }
 
 void cromwellWarning(void) {
@@ -86,7 +86,7 @@ void cromwellWarning(void) {
    printk("!!");
    VIDEO_ATTR=0xffd8d8d8;
    printk(" ]\n");
-	errorLED();
+    errorLED();
 }
 
 void cromwellSuccess(void) {

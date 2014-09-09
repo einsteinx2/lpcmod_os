@@ -1,13 +1,13 @@
 
 #define rdmsr(msr,val1,val2) \
        __asm__ __volatile__("rdmsr" \
-			    : "=a" (val1), "=d" (val2) \
-			    : "c" (msr))
+                : "=a" (val1), "=d" (val2) \
+                : "c" (msr))
 
 #define wrmsr(msr,val1,val2) \
      __asm__ __volatile__("wrmsr" \
-			  : /* no outputs */ \
-			  : "c" (msr), "a" (val1), "d" (val2))
+              : /* no outputs */ \
+              : "c" (msr), "a" (val1), "d" (val2))
 
 #define rdtsc(low,high) \
      __asm__ __volatile__("rdtsc" : "=a" (low), "=d" (high))
@@ -20,8 +20,8 @@
 
 #define rdpmc(counter,low,high) \
      __asm__ __volatile__("rdpmc" \
-			  : "=a" (low), "=d" (high) \
-			  : "c" (counter))
+              : "=a" (low), "=d" (high) \
+              : "c" (counter))
 
 extern void intel_interrupts_on(void);
 extern void cache_disable(void);

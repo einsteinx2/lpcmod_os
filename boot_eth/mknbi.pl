@@ -7,7 +7,7 @@
 #  Tweaks to work with new first-dos.S for large disk images
 
 BEGIN {
-	push(@INC, '@@LIBDIR@@');
+    push(@INC, '@@LIBDIR@@');
 }
 
 use strict;
@@ -19,53 +19,53 @@ use Elf;
 
 use constant;
 use constant DEBUG => 0;
-use constant LUA_VERSION => 0x04000100;	# 4.0.1.0
+use constant LUA_VERSION => 0x04000100;    # 4.0.1.0
 
 use bytes;
 
 use vars qw($libdir $version $format $target $output $module $relocseg $relocsegstr
-	$progreturns $param $append $rootdir $rootmode $ip $ramdisk $rdbase
-	$simhd $dishd $squashfd $first32 $showversion);
+    $progreturns $param $append $rootdir $rootmode $ip $ramdisk $rdbase
+    $simhd $dishd $squashfd $first32 $showversion);
 
 sub check_file
 {
-	my ($f, $status);
+    my ($f, $status);
 
-	$status = 1;
-	foreach $f (@_) {
-		if (!-e $f) {
-			print STDERR "$f: file not found\n";
-			$status = 0;
-		} elsif (!-f $f) {
-			print STDERR "$f: not a plain file\n";
-			$status = 0;
-		} elsif (!-r $f) {
-			print STDERR "$f: file not readable\n";
-			$status = 0;
-		}
-	}
-	return ($status);
+    $status = 1;
+    foreach $f (@_) {
+        if (!-e $f) {
+            print STDERR "$f: file not found\n";
+            $status = 0;
+        } elsif (!-f $f) {
+            print STDERR "$f: not a plain file\n";
+            $status = 0;
+        } elsif (!-r $f) {
+            print STDERR "$f: file not readable\n";
+            $status = 0;
+        }
+    }
+    return ($status);
 }
 
 sub mkelf_img ($)
 {
-	my ($module) = @_;
-	my ($romdesc);
+    my ($module) = @_;
+    my ($romdesc);
 
-	$#ARGV >= 0 or die "Usage: $0 .img-file\n";
-	return unless check_file($ARGV[0]);
-	$module->add_pm_header("mkelf-img-$version", $relocseg + 0x3E0, 0x100000, 0);
-	$romdesc = { file => $ARGV[0],
-		segment => 0x10000,
-		maxlen => 0x10000,
-		id => 20,
-		end => 1 };
-	$module->add_segment($romdesc);
-	$module->dump_segments();
-	$module->copy_file($romdesc);
+    $#ARGV >= 0 or die "Usage: $0 .img-file\n";
+    return unless check_file($ARGV[0]);
+    $module->add_pm_header("mkelf-img-$version", $relocseg + 0x3E0, 0x100000, 0);
+    $romdesc = { file => $ARGV[0],
+        segment => 0x10000,
+        maxlen => 0x10000,
+        id => 20,
+        end => 1 };
+    $module->add_segment($romdesc);
+    $module->dump_segments();
+    $module->copy_file($romdesc);
 }
 
-$libdir = '@@LIBDIR@@';		# where config and auxiliary files are stored
+$libdir = '@@LIBDIR@@';        # where config and auxiliary files are stored
 
 $version = '@@VERSION@@';
 $showversion = '';
@@ -75,29 +75,29 @@ $squashfd = 1;
 $relocsegstr = '0x9000';
 $progreturns = 0;
 GetOptions('format=s' => \$format,
-	'target=s' => \$target,
-	'output=s' => \$output,
-	'param=s' => \$param,
-	'append=s' => \$append,
-	'rootdir=s' => \$rootdir,
-	'rootmode=s' => \$rootmode,
-	'ip=s' => \$ip,
-	'rdbase=s' => \$rdbase,
-	'harddisk!' => \$simhd,
-	'disableharddisk!' => \$dishd,
-	'squash!' => \$squashfd,
-	'first32:s' => \$first32,
-	'progreturns!' => \$progreturns,
-	'relocseg=s' => \$relocsegstr,
-	'version' => \$showversion);
+    'target=s' => \$target,
+    'output=s' => \$output,
+    'param=s' => \$param,
+    'append=s' => \$append,
+    'rootdir=s' => \$rootdir,
+    'rootmode=s' => \$rootmode,
+    'ip=s' => \$ip,
+    'rdbase=s' => \$rdbase,
+    'harddisk!' => \$simhd,
+    'disableharddisk!' => \$dishd,
+    'squash!' => \$squashfd,
+    'first32:s' => \$first32,
+    'progreturns!' => \$progreturns,
+    'relocseg=s' => \$relocsegstr,
+    'version' => \$showversion);
 
 if ($showversion) {
-	print STDERR "$version\n";
-	exit 0;
+    print STDERR "$version\n";
+    exit 0;
 }
 
 if (defined($ENV{LANG}) and $ENV{LANG} =~ /\.UTF-8$/i) {
-	print STDERR <<'EOF';
+    print STDERR <<'EOF';
 Warning: Perl 5.8 may have a bug that affects handing of strings in Unicode
 locales that may cause misbehaviour with binary files.  To work around this
 problem, set $LANG to not have a suffix of .UTF-8 before running this program.
@@ -108,36 +108,36 @@ $format = "elf";
 $target = "img";
 
 if (!defined($format)) {
-	print STDERR "No format specified with program name or --format=\n";
-	exit 1;
+    print STDERR "No format specified with program name or --format=\n";
+    exit 1;
 }
 if (!defined($target)) {
-	print STDERR "No target specified with program name or --target=\n";
-	exit 1;
+    print STDERR "No target specified with program name or --target=\n";
+    exit 1;
 }
 if (defined($output)) {
-	die "$output: $!\n" unless open(STDOUT, ">$output");
+    die "$output: $!\n" unless open(STDOUT, ">$output");
 }
 binmode(STDOUT);
 
 if ($format eq 'elf') {
-	$first32 = '' if !defined($first32);
-	$module = Elf->new($libdir);
-	die "Output must be file\n" unless (seek(STDOUT, 0, SEEK_SET));
+    $first32 = '' if !defined($first32);
+    $module = Elf->new($libdir);
+    die "Output must be file\n" unless (seek(STDOUT, 0, SEEK_SET));
 } else {
-	die "Format $format not supported\n";
+    die "Format $format not supported\n";
 }
 if ($relocsegstr eq '0x9000' or $relocsegstr eq '0x8000') {
-	$relocseg = hex($relocsegstr);
+    $relocseg = hex($relocsegstr);
 } else {
-	print STDERR "relocseg must be 0x9000 or 0x8000 only, setting to 0x9000\n";
-	$relocseg = 0x9000;
+    print STDERR "relocseg must be 0x9000 or 0x8000 only, setting to 0x9000\n";
+    $relocseg = 0x9000;
 }
 if ($target eq 'img') {
-	&mkelf_img($module);
+    &mkelf_img($module);
 } else {
-	print STDERR "Target $target not supported\n";
-	exit;
+    print STDERR "Target $target not supported\n";
+    exit;
 }
 $module->finalise_image();
 close(STDOUT);
@@ -351,9 +351,9 @@ option kernel-parameters code 129 = text;
 
 ...
 
-		option etherboot-signature E4:45:74:68:00:00;
+        option etherboot-signature E4:45:74:68:00:00;
 
-		option kernel-parameters "INITRD_DBG=6 NIC=3c509";
+        option kernel-parameters "INITRD_DBG=6 NIC=3c509";
 
 Option 128 is required to be the six byte signature above. See the
 vendortags appendix of the Etherboot user manual for details.

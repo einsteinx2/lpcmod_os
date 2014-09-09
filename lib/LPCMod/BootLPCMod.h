@@ -8,9 +8,9 @@
 
 #include "VideoInitialization.h"
 
-#define HDD4780_DEFAULT_NBLINES	4
-#define HDD4780_DEFAULT_LINELGTH	20
-#define DEFAULT_FANSPEED	20
+#define HDD4780_DEFAULT_NBLINES    4
+#define HDD4780_DEFAULT_LINELGTH    20
+#define DEFAULT_FANSPEED    20
 
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 

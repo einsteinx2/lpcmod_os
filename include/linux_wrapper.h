@@ -92,35 +92,35 @@ extern int memcmp(const void *,const void *,unsigned int);
 /*------------------------------------------------------------------------*/ 
 
 struct timer_list { 
-	void (*function)(unsigned long);
-	unsigned long data;
-	int expires;
-	struct list_head timer_list;
+    void (*function)(unsigned long);
+    unsigned long data;
+    int expires;
+    struct list_head timer_list;
 };
 
 struct work_struct {
-	void (*func)(void *);
+    void (*func)(void *);
 };
 struct device {
-	char name[128];
-	struct bus_type *bus;
-	int dma_mask;
-	char    bus_id[16];
-	struct device_driver* driver;
-	void            *driver_data;
-	struct device *parent;
-	struct list_head driver_list;
-	void    (*release)(struct device * dev);
+    char name[128];
+    struct bus_type *bus;
+    int dma_mask;
+    char    bus_id[16];
+    struct device_driver* driver;
+    void            *driver_data;
+    struct device *parent;
+    struct list_head driver_list;
+    void    (*release)(struct device * dev);
 };
 struct class_device{int a;};
 struct semaphore{int a;};
 
 struct device_driver{
-	char *name;
-	struct bus_type *bus;
-	int     (*probe)        (struct device * dev);
+    char *name;
+    struct bus_type *bus;
+    int     (*probe)        (struct device * dev);
         int     (*remove)       (struct device * dev);
-	struct list_head        devices;
+    struct list_head        devices;
 };
 
 struct bus_type {
@@ -133,12 +133,12 @@ struct bus_type {
 
 struct dummy_process
 {
-	int flags;
+    int flags;
 };
 
 struct pt_regs
 {
-	int a;
+    int a;
 };
 struct completion {
         unsigned int done;
@@ -196,19 +196,19 @@ int zxsnprintf(char *buffer, size_t s, char* fmt, ...);
 /*------------------------------------------------------------------------*/ 
 
 struct pci_dev {
-	int vendor;
-	int device;
-	struct pci_bus  *bus;
-	int irq;
-	char *slot_name;
-	struct device dev;
-	int base[4];
-	int flags[4];
-	void * data;
+    int vendor;
+    int device;
+    struct pci_bus  *bus;
+    int irq;
+    char *slot_name;
+    struct device dev;
+    int base[4];
+    int flags[4];
+    void * data;
 };
 
 struct pci_bus {
-	unsigned char   number;
+    unsigned char   number;
 };
 
 struct pci_device_id {
@@ -232,15 +232,15 @@ struct pci_driver {
 
 struct scatterlist
 {
-	int page;
-	int offset;
-	int length;
+    int page;
+    int offset;
+    int length;
 };
 
 struct usbdevfs_hub_portinfo
 {
-	int nports;
-	int port[8];
+    int nports;
+    int port[8];
 };
 
 /*------------------------------------------------------------------------*/ 
@@ -385,16 +385,16 @@ struct usbdevfs_hub_portinfo
 #define pci_pool_alloc(a,b,c)  my_pci_pool_alloc(a,b,c) 
 
 static void  __inline__ *my_pci_pool_alloc(void* pool, size_t size,
-						dma_addr_t *dma_handle)
+                        dma_addr_t *dma_handle)
 {
-	void* a;
-	a=kmalloc(size,0); //FIXME
+    void* a;
+    a=kmalloc(size,0); //FIXME
 #ifdef MODULE
-	*dma_handle=((u32)a)&0xfffffff;
+    *dma_handle=((u32)a)&0xfffffff;
 #else
-	*dma_handle=(u32)a;
+    *dma_handle=(u32)a;
 #endif
-	return a;
+    return a;
 }
 
 
@@ -402,15 +402,15 @@ static void  __inline__ *my_pci_pool_alloc(void* pool, size_t size,
 #define pci_alloc_consistent(a,b,c) my_pci_alloc_consistent(a,b,c)
 
 static void  __inline__ *my_pci_alloc_consistent(struct pci_dev *hwdev, size_t size,
-						dma_addr_t *dma_handle)
+                        dma_addr_t *dma_handle)
 {
-	void* a;
+    void* a;
 
-	a=kmalloc(size+256,0); //FIXME
-	a=(void*)(((int)a+255)&~255); // 256 alignment
-	*dma_handle=((u32)a)&0xfffffff;
+    a=kmalloc(size+256,0); //FIXME
+    a=(void*)(((int)a+255)&~255); // 256 alignment
+    *dma_handle=((u32)a)&0xfffffff;
 
-	return a;
+    return a;
 }
 
 #define pci_free_consistent(a,b,c,d)  kfree(c)
@@ -593,48 +593,48 @@ extern struct timer_list *main_timer_list[MAX_TIMERS];
 
 static void __inline__ init_timer(struct timer_list* t)
 {
-	INIT_LIST_HEAD(&t->timer_list);
-	t->function=NULL;
-	t->expires=0;
+    INIT_LIST_HEAD(&t->timer_list);
+    t->function=NULL;
+    t->expires=0;
 }
 
 static void __inline__ add_timer(struct timer_list* t)
 {
-	int n;
-	for(n=0;n<MAX_TIMERS;n++)
-		if (main_timer_list[n]==0)
-		{
-			main_timer_list[n]=t;
-			break;
-		}
+    int n;
+    for(n=0;n<MAX_TIMERS;n++)
+        if (main_timer_list[n]==0)
+        {
+            main_timer_list[n]=t;
+            break;
+        }
 }
 
 static void __inline__ del_timer(struct timer_list* t)
 {
-	int n;
-	for(n=0;n<MAX_TIMERS;n++)
-		if (main_timer_list[n]==t)
-		{
-			main_timer_list[n]=0;
-			break;
-		}
+    int n;
+    for(n=0;n<MAX_TIMERS;n++)
+        if (main_timer_list[n]==t)
+        {
+            main_timer_list[n]=0;
+            break;
+        }
 }
 static void __inline__ del_timer_sync(struct timer_list* t)
 {
-	int n;
-	for(n=0;n<MAX_TIMERS;n++)
-		if (main_timer_list[n]==t)
-		{
-			main_timer_list[n]=0;
-			break;
-		}
+    int n;
+    for(n=0;n<MAX_TIMERS;n++)
+        if (main_timer_list[n]==t)
+        {
+            main_timer_list[n]=0;
+            break;
+        }
 
 }
 static void __inline__ mod_timer(struct timer_list* t, int ex)
 {
-	del_timer(t);
-	t->expires=ex;
-	add_timer(t);
+    del_timer(t);
+    t->expires=ex;
+    add_timer(t);
 }
 
 /*------------------------------------------------------------------------*/ 
@@ -673,9 +673,9 @@ void my_wake_up(void*);
 // cannot be mapped via macro due to collision with urb->complete
 static void __inline__ complete(struct completion *p)
 {
-	/* Wake up x->wait */
-	p->done++;
-	wake_up(&p->wait);
+    /* Wake up x->wait */
+    p->done++;
+    wake_up(&p->wait);
 }
 
 #define kernel_thread(a,b,c) my_kernel_thread(a,b,c)
@@ -688,7 +688,7 @@ static int __inline__ pci_enable_device(struct pci_dev *dev) {return 0;}
 
 static unsigned long __inline__ pci_resource_start (struct pci_dev *dev, int x)
 {
-	return dev->base[x];
+    return dev->base[x];
 }
 
 static unsigned long __inline__ pci_resource_len (struct pci_dev *dev, int x){return 0;}
@@ -697,14 +697,14 @@ static int __inline__ request_mem_region(unsigned long addr, unsigned long len, 
 
 static void __inline__ *ioremap_nocache(unsigned long addr, unsigned long len)
 {
-	return (void*)addr;
+    return (void*)addr;
 }
 
 static int __inline__ release_mem_region(unsigned long addr, unsigned long len){return 0;}
 
 static int __inline__ pci_resource_flags(struct pci_dev *dev, int x)
 {
-	return dev->flags[x];
+    return dev->flags[x];
 }
 
 static int __inline__ request_region(unsigned long addr, unsigned long len, const char * d){return 0;}
@@ -717,13 +717,13 @@ static int __inline__ release_region(unsigned long addr, unsigned long len){retu
 
 static int __inline__ pci_set_drvdata(struct pci_dev *dev, void* d)
 {
-	dev->data=(void*)d;
-	return 0;
+    dev->data=(void*)d;
+    return 0;
 }
 
 static void __inline__ *pci_get_drvdata(struct pci_dev *dev)
 {
-	return dev->data;
+    return dev->data;
 }
 
 /*------------------------------------------------------------------------*/ 
@@ -733,7 +733,7 @@ static void __inline__ *pci_get_drvdata(struct pci_dev *dev)
 #define request_irq(a,b,c,d,e) my_request_irq(a,b,c,d,e)
 int my_request_irq(unsigned int irq,
                        int  (*handler)(int, void *, struct pt_regs *),
-		unsigned long mode, const char *desc, void *data);
+        unsigned long mode, const char *desc, void *data);
 
 #define free_irq(a,b) my_free_irq(a,b)
 int free_irq(int irq, void* p);
@@ -741,9 +741,9 @@ int free_irq(int irq, void* p);
 
 
 struct my_irqs {
-	int  (*handler)(int, void *, struct pt_regs *);
-	int irq;
-	void* data;
+    int  (*handler)(int, void *, struct pt_regs *);
+    int irq;
+    void* data;
 };
 
 #define MAX_IRQS 8

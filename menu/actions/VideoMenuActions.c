@@ -14,37 +14,37 @@
 #include "BootEEPROM.h"
 
 //void SetWidescreen(void *menuItemText) {
-//	char *text = (char *)menuItemText;
-//	if (!strcmp(text, "Display Size: Widescreen")) {
-//		strcpy(text, "Display Size: Normal");
-//		EepromSetWidescreen(0);	
-//	}
-//	else if (!strcmp(text, "Display Size: Normal")) {
-//		strcpy(text, "Display Size: Widescreen");
-//		EepromSetWidescreen(1);	
-//	}
+//    char *text = (char *)menuItemText;
+//    if (!strcmp(text, "Display Size: Widescreen")) {
+//        strcpy(text, "Display Size: Normal");
+//        EepromSetWidescreen(0);    
+//    }
+//    else if (!strcmp(text, "Display Size: Normal")) {
+//        strcpy(text, "Display Size: Widescreen");
+//        EepromSetWidescreen(1);    
+//    }
 //}
 
 void SetVideoStandard(void *menuItemText) {
-	char *text = (char *)menuItemText;
+    char *text = (char *)menuItemText;
 
-	if (!strcmp(text, "TV Standard: PAL")) {
-		strcpy(text, "TV Standard: NTSC-USA");
-		EepromSetVideoStandard(NTSC_M);
-	}
-	else if (!strcmp(text, "TV Standard: NTSC-USA")) {
-		strcpy(text, "TV Standard: NTSC-Japan");
-		EepromSetVideoStandard(NTSC_J);
-	}
-	else if (!strcmp(text, "TV Standard: NTSC-Japan")) {
-		strcpy(text, "TV Standard: PAL");
-		EepromSetVideoStandard(PAL_I);
-	}
-	// By default, make Unknown cycle back to PAL_I.
-	else if (!strcmp(text, "TV Standard: Unknown")) {
-		strcpy(text, "TV Standard: PAL");
-		EepromSetVideoStandard(PAL_I);
-	}
+    if (!strcmp(text, "TV Standard: PAL")) {
+        strcpy(text, "TV Standard: NTSC-USA");
+        EepromSetVideoStandard(NTSC_M);
+    }
+    else if (!strcmp(text, "TV Standard: NTSC-USA")) {
+        strcpy(text, "TV Standard: NTSC-Japan");
+        EepromSetVideoStandard(NTSC_J);
+    }
+    else if (!strcmp(text, "TV Standard: NTSC-Japan")) {
+        strcpy(text, "TV Standard: PAL");
+        EepromSetVideoStandard(PAL_I);
+    }
+    // By default, make Unknown cycle back to PAL_I.
+    else if (!strcmp(text, "TV Standard: Unknown")) {
+        strcpy(text, "TV Standard: PAL");
+        EepromSetVideoStandard(PAL_I);
+    }
 
 }
 

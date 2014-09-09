@@ -61,8 +61,8 @@
 #define FUNC_0 0
 /*
 #define boot_post_macro(value)                     \
-		movb    $(value), %al                           ;\
-		outb    %al, $0x80 
+        movb    $(value), %al                           ;\
+        outb    %al, $0x80 
 */
 
 #endif // _Consts_H_

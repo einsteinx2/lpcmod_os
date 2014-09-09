@@ -14,9 +14,9 @@
 #include "CDMenuActions.h"
 
 void CDEject(void *whatever) {
-	I2CTransmitWord(0x10, 0x0c00);
+    I2CTransmitWord(0x10, 0x0c00);
 }
 
 void CDInject(void *whatever) {
-	I2CTransmitWord(0x10, 0x0c01);
+    I2CTransmitWord(0x10, 0x0c01);
 }

@@ -1,4 +1,4 @@
-#ifndef	ETHERBOOT_OSDEP_H
+#ifndef    ETHERBOOT_OSDEP_H
 #define ETHERBOOT_OSDEP_H
 
 #define __unused __attribute__((unused))
@@ -33,13 +33,13 @@
  */
 #define MAX_ADDR (0xfff00000UL)
 
-typedef	unsigned long Address;
+typedef    unsigned long Address;
 
 /* ANSI prototyping macro */
-#ifdef	__STDC__
-#define	P(x)	x
+#ifdef    __STDC__
+#define    P(x)    x
 #else
-#define	P(x)	()
+#define    P(x)    ()
 #endif
 
 #endif

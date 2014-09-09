@@ -624,7 +624,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
             if (p_sock && (p_sock->lastdata || p_sock->rcvevent))
             {
                 FD_SET(i, &lreadset);
-		LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
                 nready++;
             }
         }
@@ -635,7 +635,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
             if (p_sock && p_sock->sendevent)
             {
                 FD_SET(i, &lwriteset);
-		LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for writing\n", i));
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for writing\n", i));
                 nready++;
             }
         }
@@ -703,8 +703,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             if (exceptset)
                 FD_ZERO(exceptset);
 
-	    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: no timeout, returning 0\n"));
-	    set_errno(0);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: no timeout, returning 0\n"));
+        set_errno(0);
 
             return 0;
         }
@@ -756,8 +756,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             if (exceptset)
                 FD_ZERO(exceptset);
 
-	    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: timeout expired\n"));
-	    set_errno(0);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: timeout expired\n"));
+        set_errno(0);
 
             return 0;
         }
@@ -966,7 +966,7 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
   struct lwip_socket *sock = get_socket(s);
 
   if(!sock) {
-   	set_errno(EBADF);
+       set_errno(EBADF);
     return -1;
   }
 
@@ -1156,7 +1156,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
   int err = 0;
 
   if(!sock) {
-   	set_errno(EBADF);
+       set_errno(EBADF);
     return -1;
   }
 
@@ -1321,7 +1321,7 @@ int lwip_ioctl(int s, long cmd, void *argp)
   struct lwip_socket *sock = get_socket(s);
 
   if(!sock) {
-   	set_errno(EBADF);
+       set_errno(EBADF);
     return -1;
   }
 

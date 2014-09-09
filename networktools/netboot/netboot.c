@@ -38,21 +38,21 @@
 #include <shared.h>
 
 struct http_state {
-	unsigned char retries;
-	char *file;
-	int left;
-	
-	int ispost;
-	char *postdata;
-	int postlen;
-	int postpos;
+    unsigned char retries;
+    char *file;
+    int left;
+    
+    int ispost;
+    char *postdata;
+    int postlen;
+    int postpos;
 
-	char lineBuf[256];
-	char lineBufpos;
-	char gotfirst;
+    char lineBuf[256];
+    char lineBufpos;
+    char gotfirst;
 
-	void *data_start;
-	int data_len;
+    void *data_start;
+    int data_len;
 
 };
 
@@ -87,19 +87,19 @@ static char http_file404[] = "HTTP/1.1 404 NOT FOUND\r\nContent-Type: text/html\
 static char http_file500[] = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/html\r\nContent-Length: 11\r\n\r\nError 500!\n";
 
 struct http_file {
-	int len;
-	char *data;
+    int len;
+    char *data;
 };
 
 static struct http_file http_files[8]={
-	{sizeof (http_file0) - 1, http_file0},       /* 0 */
-	{sizeof (http_file1) - 1, http_file1},       /* 1 */
-	{sizeof (http_file2) - 1, http_file2},       /* 2 */
-	{sizeof (http_file3) - 1, http_file3},       /* 3 */
-	{sizeof (http_file4) - 1, http_file4},       /* 4 */
-	{sizeof (http_file5) - 1, http_file5},       /* 4 */
-	{sizeof (http_file404) - 1, http_file404},   /* 5 */
-	{sizeof (http_file500) - 1, http_file500},   /* 6 */
+    {sizeof (http_file0) - 1, http_file0},       /* 0 */
+    {sizeof (http_file1) - 1, http_file1},       /* 1 */
+    {sizeof (http_file2) - 1, http_file2},       /* 2 */
+    {sizeof (http_file3) - 1, http_file3},       /* 3 */
+    {sizeof (http_file4) - 1, http_file4},       /* 4 */
+    {sizeof (http_file5) - 1, http_file5},       /* 4 */
+    {sizeof (http_file404) - 1, http_file404},   /* 5 */
+    {sizeof (http_file500) - 1, http_file500},   /* 6 */
 };
 
 static void conn_err(void *arg, err_t err) {
@@ -114,35 +114,35 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
   tcp_sent(pcb, NULL);
   tcp_recv(pcb, NULL);
   if(hs->data_start) {
-		if(postNum == 1) {
-			inputLED();
-			cromwellSuccess();
-//			printk("           Got Kernel: %i\n", hs->data_len);
-			memPlaceKernel(hs->data_start, hs->data_len);
-		} else if(postNum == 2) {
-			if(hs->data_len > 0) {
-				cromwellSuccess();
-			} else {
-				printk("\t[ skipped ]\n");
-			}
-			inputLED();
-//			printk("           Got Initrd: %i\n", hs->data_len);
-			initrdSize = hs->data_len;
-			memcpy((u8*)INITRD_START, hs->data_start, hs->data_len);
-		} else if(postNum == 3) {
-			cromwellSuccess();
-			goodLED();
-//			printk("           Got Append: %i\n", hs->data_len);
-			char *append = (char*)malloc(hs->data_len+1);
-			memset(append, 0, hs->data_len+1);
-			memcpy(append, hs->data_start, hs->data_len);
-//			printk("%s", append);
-			eth_disable();
-			ExittoLinuxFromNet(initrdSize, append);
-			while(1);
-		}
-		hs->data_start = NULL;
-		hs->data_len = 0;
+        if(postNum == 1) {
+            inputLED();
+            cromwellSuccess();
+//            printk("           Got Kernel: %i\n", hs->data_len);
+            memPlaceKernel(hs->data_start, hs->data_len);
+        } else if(postNum == 2) {
+            if(hs->data_len > 0) {
+                cromwellSuccess();
+            } else {
+                printk("\t[ skipped ]\n");
+            }
+            inputLED();
+//            printk("           Got Initrd: %i\n", hs->data_len);
+            initrdSize = hs->data_len;
+            memcpy((u8*)INITRD_START, hs->data_start, hs->data_len);
+        } else if(postNum == 3) {
+            cromwellSuccess();
+            goodLED();
+//            printk("           Got Append: %i\n", hs->data_len);
+            char *append = (char*)malloc(hs->data_len+1);
+            memset(append, 0, hs->data_len+1);
+            memcpy(append, hs->data_start, hs->data_len);
+//            printk("%s", append);
+            eth_disable();
+            ExittoLinuxFromNet(initrdSize, append);
+            while(1);
+        }
+        hs->data_start = NULL;
+        hs->data_len = 0;
   }
 
 
@@ -176,7 +176,7 @@ static void send_data(struct tcp_pcb *pcb, struct http_state *hs) {
     hs->file += len;
     hs->left -= len;
     /*  } else {
-	printf("send_data: error %s len %d %d\n", lwip_strerr(err), len, tcp_sndbuf(pcb));*/
+    printf("send_data: error %s len %d %d\n", lwip_strerr(err), len, tcp_sndbuf(pcb));*/
   }
 }
 
@@ -187,11 +187,11 @@ static err_t http_poll(void *arg, struct tcp_pcb *pcb) {
   
   /*  printf("Polll\n");*/
   if (hs == NULL) {
-	  //printk("p");
-	  /*tcp_abort(pcb);*/
+      //printk("p");
+      /*tcp_abort(pcb);*/
     return ERR_OK;
   } else {
-	  //printk("P");
+      //printk("P");
     ++hs->retries;
     if (hs->retries == 4) {
       tcp_abort(pcb);
@@ -220,108 +220,108 @@ static err_t http_sent(void *arg, struct tcp_pcb *pcb, u16_t len) {
 }
 
 static int handle_line(struct tcp_pcb *pcb, struct http_state *hs) {
-	if (!hs->gotfirst) {
-		if (strncmp (hs->lineBuf, "GET /", 4) == 0) {
-			unsigned long fno = simple_strtoul (&hs->lineBuf[5], NULL, NULL);
-			if(fno == 0) {
-				fno = 100;
-			}
-			if(fno > 105 || fno < 100) {
-				fno = 106; /* 404 */
-			}
+    if (!hs->gotfirst) {
+        if (strncmp (hs->lineBuf, "GET /", 4) == 0) {
+            unsigned long fno = simple_strtoul (&hs->lineBuf[5], NULL, NULL);
+            if(fno == 0) {
+                fno = 100;
+            }
+            if(fno > 105 || fno < 100) {
+                fno = 106; /* 404 */
+            }
 
-			hs->file = http_files[fno-100].data;
-			hs->left = http_files[fno-100].len;
-		} else if (strncmp (hs->lineBuf, "POST /", 5) == 0) {
-			hs->ispost = 1;
-			// Send the client back the next step (which happens to be
-			// postNum+2)
-			hs->file = http_files[postNum+2].data;
-			hs->left = http_files[postNum+2].len;
-		} else {
-			return 0;
-		}
-		hs->gotfirst = 1;
-	} else {
+            hs->file = http_files[fno-100].data;
+            hs->left = http_files[fno-100].len;
+        } else if (strncmp (hs->lineBuf, "POST /", 5) == 0) {
+            hs->ispost = 1;
+            // Send the client back the next step (which happens to be
+            // postNum+2)
+            hs->file = http_files[postNum+2].data;
+            hs->left = http_files[postNum+2].len;
+        } else {
+            return 0;
+        }
+        hs->gotfirst = 1;
+    } else {
 
-		/* end of header empty line? */
-		if (hs->lineBuf[0] == '\0') {
-			if (hs->ispost && hs->postlen) {
-				hs->postdata = (u8*)(INITRD_START + (15*1024*1024)); //(char *)malloc (hs->postlen);
-				hs->postpos = 0;
-			} else {
-				send_data(pcb, hs);
-				tcp_poll(pcb, http_poll, 4);
-				tcp_sent(pcb, http_sent);
-				hs->gotfirst = 0;
-			}
-		}
+        /* end of header empty line? */
+        if (hs->lineBuf[0] == '\0') {
+            if (hs->ispost && hs->postlen) {
+                hs->postdata = (u8*)(INITRD_START + (15*1024*1024)); //(char *)malloc (hs->postlen);
+                hs->postpos = 0;
+            } else {
+                send_data(pcb, hs);
+                tcp_poll(pcb, http_poll, 4);
+                tcp_sent(pcb, http_sent);
+                hs->gotfirst = 0;
+            }
+        }
 
-		if (strncmp (hs->lineBuf, "Content-Length:", 15) == 0) {
-			unsigned long len = simple_strtoul (&hs->lineBuf[16], NULL, NULL);
+        if (strncmp (hs->lineBuf, "Content-Length:", 15) == 0) {
+            unsigned long len = simple_strtoul (&hs->lineBuf[16], NULL, NULL);
 
-			hs->postlen = len;
-		}
-	}
-	return 1;
+            hs->postlen = len;
+        }
+    }
+    return 1;
 }
 
 static int handle_post(struct http_state *hs) {
-	int i, ncnt = 0, blen, len;
-	char *start, *end;
-	char *boundary = NULL;
+    int i, ncnt = 0, blen, len;
+    char *start, *end;
+    char *boundary = NULL;
 
-	for (i = 0; i < hs->postlen; i++) {
-		if (hs->postdata[i] == '\n' || hs->postdata[i] == '\r') {
-			hs->postdata[i] = 0;
-			boundary = hs->postdata;
-			blen = i;
-			break;
-		}
-	}
-	if (!boundary)
-		return 0;
+    for (i = 0; i < hs->postlen; i++) {
+        if (hs->postdata[i] == '\n' || hs->postdata[i] == '\r') {
+            hs->postdata[i] = 0;
+            boundary = hs->postdata;
+            blen = i;
+            break;
+        }
+    }
+    if (!boundary)
+        return 0;
 
-	for (; i < hs->postlen; i++) {
-		if (hs->postdata[i] == '\r')
-			continue;
+    for (; i < hs->postlen; i++) {
+        if (hs->postdata[i] == '\r')
+            continue;
 
-		if (hs->postdata[i] == '\n') {
-			ncnt++;
-			if (ncnt == 2) {
-				start = &hs->postdata[i+1];
-				break;
-			}
-		} else {
-			ncnt = 0;
-		}
-	}
-	if (!start) {
-		//printk ("Could not find start...\n");
-		return 0;
-	}
+        if (hs->postdata[i] == '\n') {
+            ncnt++;
+            if (ncnt == 2) {
+                start = &hs->postdata[i+1];
+                break;
+            }
+        } else {
+            ncnt = 0;
+        }
+    }
+    if (!start) {
+        //printk ("Could not find start...\n");
+        return 0;
+    }
 
-	for (; i < hs->postlen; i++) {
-		if ( memcmp(boundary,&hs->postdata[i],blen) == 0) {
-			end = &hs->postdata[i];
-			break;
-		}
-	}
+    for (; i < hs->postlen; i++) {
+        if ( memcmp(boundary,&hs->postdata[i],blen) == 0) {
+            end = &hs->postdata[i];
+            break;
+        }
+    }
 
-	if (!end) {
-		//printk ("Could not find end...\n");
-		return 0;
-	}
+    if (!end) {
+        //printk ("Could not find end...\n");
+        return 0;
+    }
 
-	end -= 2;
+    end -= 2;
 
-	len = end - start;
+    len = end - start;
 
-	postNum += 1;
-	hs->data_start = start;
-	hs->data_len = len;
+    postNum += 1;
+    hs->data_start = start;
+    hs->data_len = len;
 
-	return 1;
+    return 1;
 }
 
 static err_t http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err) {
@@ -333,58 +333,58 @@ static err_t http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err
   hs = arg;
 
   if (err == ERR_OK && p != NULL) {
-	  struct pbuf *q;
+      struct pbuf *q;
     /* Inform TCP that we have taken the data. */
     tcp_recved(pcb, p->tot_len);
 
-	  for (q = p; q; q = q->next) {
-		  for (i = 0; i < q->len; i++) {
-			  char c = ((char *)q->payload)[i];
+      for (q = p; q; q = q->next) {
+          for (i = 0; i < q->len; i++) {
+              char c = ((char *)q->payload)[i];
 
-			  if (!hs->postdata) {
-				  if (c == '\r') /* ignore \r */
-					  continue;
-				  
-				  if (c == '\n') {
-					  hs->lineBuf[hs->lineBufpos] = 0;
-					  if (!handle_line (pcb, hs)) {
-						  pbuf_free(p);
-						  close_conn(pcb, hs);
-						  return ERR_OK;
-					  }
-					  hs->lineBufpos = 0;
-				  } else {
-					  if (hs->lineBufpos < sizeof (hs->lineBuf) - 2)
-						  hs->lineBuf[hs->lineBufpos++] = c;
-				  }
-			  } else {
-				  hs->postdata[hs->postpos++] = c;
-				  if(postNum == 0 && beginPost) {
-					   downloadingLED();
-						printk("           Receiving kernel...");
-				  } else if(postNum == 1 && beginPost) {
-					   downloadingLED();
-						printk("           Receiving initrd...");
-				  } else if(postNum == 2 && beginPost) {
-					   downloadingLED();
-						printk("           Receiving append...");
-				  }
+              if (!hs->postdata) {
+                  if (c == '\r') /* ignore \r */
+                      continue;
+                  
+                  if (c == '\n') {
+                      hs->lineBuf[hs->lineBufpos] = 0;
+                      if (!handle_line (pcb, hs)) {
+                          pbuf_free(p);
+                          close_conn(pcb, hs);
+                          return ERR_OK;
+                      }
+                      hs->lineBufpos = 0;
+                  } else {
+                      if (hs->lineBufpos < sizeof (hs->lineBuf) - 2)
+                          hs->lineBuf[hs->lineBufpos++] = c;
+                  }
+              } else {
+                  hs->postdata[hs->postpos++] = c;
+                  if(postNum == 0 && beginPost) {
+                       downloadingLED();
+                        printk("           Receiving kernel...");
+                  } else if(postNum == 1 && beginPost) {
+                       downloadingLED();
+                        printk("           Receiving initrd...");
+                  } else if(postNum == 2 && beginPost) {
+                       downloadingLED();
+                        printk("           Receiving append...");
+                  }
 
-				  beginPost = 0;
+                  beginPost = 0;
 
-				  if (hs->postpos == hs->postlen) {
-					  beginPost = 1;
-					  handle_post (hs);
-					  send_data(pcb, hs);
-					  tcp_poll(pcb, http_poll, 4);
-					  tcp_sent(pcb, http_sent);
-					  hs->gotfirst = 0;
-				  }
-			  }
-		  }
-	  }
+                  if (hs->postpos == hs->postlen) {
+                      beginPost = 1;
+                      handle_post (hs);
+                      send_data(pcb, hs);
+                      tcp_poll(pcb, http_poll, 4);
+                      tcp_sent(pcb, http_sent);
+                      hs->gotfirst = 0;
+                  }
+              }
+          }
+      }
 
-	pbuf_free(p);
+    pbuf_free(p);
   }
   if (err == ERR_OK && p == NULL) {
     close_conn(pcb, hs);

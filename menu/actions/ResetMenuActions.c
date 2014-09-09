@@ -10,19 +10,19 @@
 //#include "boot.h"
 
 void SlowReboot(void *ignored){
-	assertWriteEEPROM();
-	BootFlashSaveOSSettings();
-	I2CRebootSlow();
+    assertWriteEEPROM();
+    BootFlashSaveOSSettings();
+    I2CRebootSlow();
 }
 
 void QuickReboot(void *ignored){
-	assertWriteEEPROM();
-	BootFlashSaveOSSettings();
-	I2CRebootQuick();
+    assertWriteEEPROM();
+    BootFlashSaveOSSettings();
+    I2CRebootQuick();
 }
 
 void PowerOff(void *ignored) {
-	assertWriteEEPROM();
-	BootFlashSaveOSSettings();
-	I2CPowerOff();
+    assertWriteEEPROM();
+    BootFlashSaveOSSettings();
+    I2CPowerOff();
 }

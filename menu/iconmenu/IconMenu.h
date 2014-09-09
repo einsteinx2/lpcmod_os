@@ -23,13 +23,13 @@
 struct ICON;
 
 typedef struct ICON {
-	int iconSlot;
-	u8	bankID;
-	char *szCaption;
-	void (*functionPtr) (void *);
-	void *functionDataPtr;
-	struct ICON *previousIcon;
-	struct ICON *nextIcon;
+    int iconSlot;
+    u8    bankID;
+    char *szCaption;
+    void (*functionPtr) (void *);
+    void *functionDataPtr;
+    struct ICON *previousIcon;
+    struct ICON *nextIcon;
 } ICON;
 
 

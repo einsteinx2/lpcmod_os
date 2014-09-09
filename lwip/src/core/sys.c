@@ -78,7 +78,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
       if (h != NULL) {
         LWIP_DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", (void *)h, (void *)arg));
-      	h(arg);
+          h(arg);
       }
 
       /* We try again to fetch a message from the mbox. */

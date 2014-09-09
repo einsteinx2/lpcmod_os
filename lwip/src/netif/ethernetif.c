@@ -195,9 +195,9 @@ ethernetif_output(struct netif *netif, struct pbuf *p,
   {
     /* we cannot tell if the packet was sent: the packet could */
     /* have been queued on an ARP entry that was already pending. */
-  	return ERR_OK;
+      return ERR_OK;
   }
-  	
+      
   /* send out the packet */
   return low_level_output(ethernetif, p);
 
@@ -281,8 +281,8 @@ ethernetif_init(struct netif *netif)
   
   if (ethernetif == NULL)
   {
-  	LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
-  	return ERR_MEM;
+      LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
+      return ERR_MEM;
   }
   
   netif->state = ethernetif;
