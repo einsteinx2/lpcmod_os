@@ -102,7 +102,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode) {
        memset((void *)pvmode,0,sizeof(CURRENT_VIDEO_MODE_DETAILS));
 
     //Focus driver (presumably XLB also) doesnt do widescreen yet - only blackscreens otherwise.
-    if(((u8 *)&eeprom)[0x96]&0x01 && video_encoder == ENCODER_CONEXANT) { // 16:9 widescreen TV
+    if((((u8 *)&eeprom)[0x96]&0x01) && video_encoder == ENCODER_CONEXANT) { // 16:9 widescreen TV
         pvmode->m_nVideoModeIndex=VIDEO_MODE_1024x576;
     } else { // 4:3 TV
         pvmode->m_nVideoModeIndex=VIDEO_PREFERRED_MODE;
@@ -459,10 +459,12 @@ static inline void unlockCrtNv (RIVA_HW_INST *riva, int head)
     writeCrtNv (riva, head, 0x1f, 0x57); /* unlock extended registers */
 }
 
-static inline void lockCrtNv (RIVA_HW_INST *riva, int head)
-{
-    writeCrtNv (riva, head, 0x1f, 0x99); /* lock extended registers */
-}
+
+//static inline void lockCrtNv (RIVA_HW_INST *riva, int head)
+//{
+//    writeCrtNv (riva, head, 0x1f, 0x99); /* lock extended registers */
+//}
+
 
 
 static void writeCrtNv (RIVA_HW_INST *riva, int head, int reg, u8 val)

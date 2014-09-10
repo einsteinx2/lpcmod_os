@@ -99,7 +99,7 @@ int FATXFindDir(FATXPartition *partition, int clusterId, char *dir){
 
             // first of all, check that it isn't an end of directory marker
             if (checkForLastDirectoryEntry(curEntry)) {
-                return;
+                return -1;
             }
 
             // get the filename size
@@ -140,7 +140,7 @@ int FATXFindDir(FATXPartition *partition, int clusterId, char *dir){
         // Find next cluster
         clusterId = getNextClusterInChain(partition, clusterId);
     }
-
+    return 0;           //Keep compiler happy.
 }
 
 int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position) {

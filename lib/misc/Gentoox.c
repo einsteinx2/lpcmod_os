@@ -76,7 +76,7 @@ void cromwellError(void) {
    printk("!!");
    VIDEO_ATTR=0xffd8d8d8;
    printk(" ]");
-    errorLED();
+   errorLED();
 }
 
 void cromwellWarning(void) {
@@ -86,7 +86,7 @@ void cromwellWarning(void) {
    printk("!!");
    VIDEO_ATTR=0xffd8d8d8;
    printk(" ]\n");
-    errorLED();
+   errorLED();
 }
 
 void cromwellSuccess(void) {

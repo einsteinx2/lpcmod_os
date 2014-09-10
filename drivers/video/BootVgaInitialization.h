@@ -140,7 +140,7 @@ static void NVWriteGr(RIVA_HW_INST *riva, CARD8 index, CARD8 value);
 static void NVInitGrSeq (RIVA_HW_INST *riva);
 static void NVInitAttr (RIVA_HW_INST *riva, int head);
 static inline void unlockCrtNv (RIVA_HW_INST *riva, int head);
-static inline void lockCrtNv (RIVA_HW_INST *riva, int head);
+//static inline void lockCrtNv (RIVA_HW_INST *riva, int head);
 static void writeCrtNv (RIVA_HW_INST *riva, int head, int reg, u8 val);
 static void NVVertIntrEnabled (RIVA_HW_INST *riva, int head);
 static void NVSetFBStart (RIVA_HW_INST *riva, int head, u32 dwFBStart);

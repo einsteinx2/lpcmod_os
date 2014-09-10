@@ -110,7 +110,7 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
             printk("\n\n\n\n\n           Flash failed...");
             switch(res){
                 case 1:
-                    printk("\n           Unknown flash device.");
+                    printk("\n           Unknown flash device.\n           Write-Protect is enabled?");
                     break;
                 case 2:
                     printk("\n           Cannot write to device");
@@ -420,6 +420,6 @@ void netflash_init(void) {
   pcb = tcp_listen(pcb);
   tcp_accept(pcb, http_accept);
   cromwellSuccess();
-  printk("\n\n\            Go to 'http://ip.address.shown.above' to flash your BIOS.\n");
+  printk("\n\n            Go to 'http://ip.address.shown.above' to flash your BIOS.\n");
   //downloadingLED();
 }

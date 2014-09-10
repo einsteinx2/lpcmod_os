@@ -103,6 +103,9 @@ extern void BootResetAction ( void ) {
             //Make sure we'll be reading from OS Bank
             switchBank(BNKOS);
         }
+        else {
+            currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
+        }
         //Retrieve XBlast OS settings from flash
         BootFlashGetOSSettings(&LPCmodSettings);
     }
@@ -138,14 +141,11 @@ extern void BootResetAction ( void ) {
     }
     I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
 
-    if(fHasHardware == SYSCON_ID_V1){
-        BootLCDInit();        //Basic init. Do it even if no LCD is connected on the system.
-    }
-
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){                                        //No need to change fan speed on first boot.
         if(fHasHardware == SYSCON_ID_V1){
-            assertInitLCD();                        //Function in charge of checking if a init of LCD is needed.
+            BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
+            assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
         }
         //further init here.
     }
@@ -167,9 +167,9 @@ extern void BootResetAction ( void ) {
     I2CTransmitWord(0x10, 0x1a01); // unknown, done immediately after reading out eeprom data
     I2CTransmitWord(0x10, 0x1b04); // unknown
         
-        /* Here, the interrupts are Switched on now */
+    /* Here, the interrupts are Switched on now */
     BootPciInterruptEnable();
-        /* We allow interrupts */
+    /* We allow interrupts */
     nInteruptable = 1;
 
 #ifndef SILENT_MODE
@@ -177,11 +177,13 @@ extern void BootResetAction ( void ) {
 #endif
     BootStartUSB();
 
-        //Load up some more custom settings right before booting to OS.
+    //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
-        wait_ms(550);
-        if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1 && fHasHardware == SYSCON_ID_V1){
-            BootModBios(&(LPCmodSettings.OSsettings.activeBank));
+        if(fHasHardware == SYSCON_ID_V1){                       //Quickboot only if on the right hardware.
+            wait_ms(550);
+            if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1){
+                BootModBios(&(LPCmodSettings.OSsettings.activeBank));
+            }
         }
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
     }
@@ -227,7 +229,7 @@ extern void BootResetAction ( void ) {
 
 
     VIDEO_ATTR=0xff00ff00;
-    printk("           Modchip: %s\n",modName);
+    printk("           Modchip: %s    DEBUG_fHasHardware: %u\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD\n ");
 
@@ -241,8 +243,7 @@ extern void BootResetAction ( void ) {
    } else {
         VIDEO_ATTR=0xffffa20f;
    }
-   printk("  RAM: %d", xbox_ram);
-   printk("MiB\n");
+   printk("  RAM: %dMiB\n", xbox_ram);
    
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
 #ifndef SILENT_MODE

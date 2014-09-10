@@ -59,7 +59,7 @@ TEXTMENU* BankSelectInit(void *bank) {
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
-    if(fHasHardware){
+    if(fHasHardware == SYSCON_ID_V1){
         if((*(char *)bank) == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
         else if((*(char *)bank) == BNK256)
@@ -119,7 +119,7 @@ TEXTMENU* BankSelectInit(void *bank) {
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)FlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);*/
-    if(fHasHardware){
+    if(fHasHardware == SYSCON_ID_V1){
     	DrawChildTextMenu(menuPtr);
     }
     return menuPtr;

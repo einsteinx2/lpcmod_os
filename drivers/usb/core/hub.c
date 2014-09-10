@@ -42,8 +42,8 @@
 #endif
 
 /* Wakes up khubd */
-static spinlock_t hub_event_lock = SPIN_LOCK_UNLOCKED;
-static DECLARE_MUTEX(usb_address0_sem);
+//static spinlock_t hub_event_lock = SPIN_LOCK_UNLOCKED;
+//static DECLARE_MUTEX(usb_address0_sem);
 
 static LIST_HEAD(hub_event_list);    /* List of hubs needing servicing */
 static LIST_HEAD(hub_list);        /* List of all hubs (for cleanup) */
@@ -53,6 +53,7 @@ static pid_t khubd_pid = 0;            /* PID of khubd */
 static DECLARE_COMPLETION(khubd_exited);
 
 #ifdef    DEBUG
+/*
 static inline char *portspeed (int portstatus)
 {
     if (portstatus & (1 << USB_PORT_FEAT_HIGHSPEED))
@@ -62,6 +63,7 @@ static inline char *portspeed (int portstatus)
     else
         return "12 Mb/s";
 }
+*/
 #endif
 
 /* for dev_info, dev_dbg, etc */
@@ -149,7 +151,7 @@ static void hub_irq(struct urb *urb, struct pt_regs *regs)
             goto resubmit;
         hub->error = urb->status;
         /* FALL THROUGH */
-    
+        break;
     /* let khubd handle things */
     case 0:            /* we got data:  port status changed */
         break;

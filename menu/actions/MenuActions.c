@@ -32,7 +32,7 @@ void AdvancedMenu(void *textmenu) {
 void BootOriginalBios(void *data) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
-    if(fHasHardware){
+    if(fHasHardware == SYSCON_ID_V1){
         WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
         I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     }

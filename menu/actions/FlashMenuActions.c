@@ -21,24 +21,6 @@
 
 extern void cromwellError(void);
 extern void dots(void);
-/*
-void FlashBiosFromHDD512(void *fname) {
-    switchBank(BNK512);
-    currentFlashBank = BNK512;
-    FlashBiosFromHDD(fname);
-}
-
-void FlashBiosFromHDD256(void *fname) {
-    switchBank(BNK256);
-    currentFlashBank = BNK256;
-    FlashBiosFromHDD(fname);
-}
-
-void FlashBiosFromHDDOS(void *fname) {
-    switchBank(BNKOS);
-    currentFlashBank = BNKOS;
-    FlashBiosFromHDD(fname);
-}*/
 
 void FlashBiosFromHDD(void *fname) {
 #ifdef FLASH
@@ -60,22 +42,29 @@ void FlashBiosFromHDD(void *fname) {
     }
 
     offset = 0;
-    
-    if(currentFlashBank == BNKOS){
-        if(!ConfirmDialog("               Confirm update XBlast OS?", 1))
-            res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
-        else
-            res = -1;
+    if(fHasHardware == SYSCON_ID_V1){
+        if(currentFlashBank == BNKOS){
+            if(!ConfirmDialog("               Confirm update XBlast OS?", 1))
+                res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+            else
+                res = -1;
+        }
+        else{
+            if(currentFlashBank == BNK512)
+                stringTemp = "             Confirm flash bank0(512KB)?";
+            else
+                stringTemp = "             Confirm flash bank1(256KB)?";
+            if(!ConfirmDialog(stringTemp, 1))
+                res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
+            else
+                res = -1;
+        }
     }
-    else{
-        if(currentFlashBank == BNK512)
-            stringTemp = "             Confirm flash bank0(512KB)?";
-        else
-            stringTemp = "             Confirm flash bank1(256KB)?";
-        if(!ConfirmDialog(stringTemp, 1))
-            res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
-        else
-            res = -1;
+    else {
+        if(!ConfirmDialog("               Confirm flash active bank?", 1))
+                res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+            else
+                res = -1;
     }
     CloseFATXPartition(partition);
     if(res > 0) {
@@ -165,5 +154,8 @@ void switchBank(char bank)
 void FlashFooter(void) {
     VIDEO_ATTR=0xffc8c8c8;
     printk("\n\n           Press Button 'A' to continue.");
+    if(fHasHardware == SYSCON_ID_V1)
+        switchBank(BNKOS);
     while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    initialSetLED(LPCmodSettings.OSsettings.LEDColor);
 }        

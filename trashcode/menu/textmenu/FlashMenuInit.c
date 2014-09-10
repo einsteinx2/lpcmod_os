@@ -54,7 +54,7 @@ TEXTMENU* FlashMenuInit(void) {
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-   sprintf(itemPtr->szCaption,"HDD Flash");
+    sprintf(itemPtr->szCaption,"HDD Flash");
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)HDDFlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);

@@ -79,6 +79,7 @@ static int usb_kbd_probe(struct usb_interface *intf, const struct usb_device_id 
     #if keyboarddebug
     printe("USB Keyboard Connected\n");    
     #endif
+    return 0;
 }
 
 

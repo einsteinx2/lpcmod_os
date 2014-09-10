@@ -27,8 +27,8 @@ TEXTMENU *TextMenuInit(void) {
     //Set first character to NULL to indicate no string is to be shown.
     itemPtr->szParameter[0]=0;
     
-    if(fHasHardware) {                            //No need to display this menu if no modchip is present.
-        //LPCMod(modchip) SETTINGS MENU
+    if(fHasHardware == SYSCON_ID_V1) {                            //No need to display this menu if no modchip is present.
+        //XBlast(modchip) SETTINGS MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "XBlast settings");
@@ -45,7 +45,7 @@ TEXTMENU *TextMenuInit(void) {
     itemPtr->functionDataPtr = (void *)SystemMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(fHasHardware) {                            //No need to display this menu if no modchip is present.
+    if(fHasHardware == SYSCON_ID_V1) {                            //No need to display this menu if no modchip is present.
         //LCD SETTINGS MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -65,7 +65,7 @@ TEXTMENU *TextMenuInit(void) {
 
 
 #ifdef FLASH
-    if(fHasHardware){
+    if(fHasHardware == SYSCON_ID_V1){
         //FLASH MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

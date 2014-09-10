@@ -18,14 +18,16 @@ void usb_hcd_pci_remove (struct pci_dev *dev);
 
 void XPADInit(void);
 void XPADRemove(void);
+/*
 void XRemoteInit(void);
 void XRemoteRemove(void);
+*/
 
 extern int (*thread_handler)(void*);
 int (*hub_thread_handler)(void*);
 
 extern int nousb;
-extern int xpad_num;
+//extern int xpad_num;
 
 struct pci_dev xx_ohci_dev={
         .vendor = 0,

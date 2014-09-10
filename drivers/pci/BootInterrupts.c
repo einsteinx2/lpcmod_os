@@ -26,7 +26,7 @@ extern void IntHandlerI2C(void);
 extern void IntHandlerSmc(void);
 extern void IntHandlerIde(void);
 extern void IntHandlerUnused(void);
-extern void IntHandlerUnusedPic2(void);
+//extern void IntHandlerUnusedPic2(void);
 
 extern void IntHandler1(void);
 extern void IntHandler2(void);

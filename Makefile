@@ -164,8 +164,8 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootUSB.o
 OBJECTS-CROM += $(TOPDIR)/obj/usbwrapper.o
 OBJECTS-CROM += $(TOPDIR)/obj/linuxwrapper.o
 OBJECTS-CROM += $(TOPDIR)/obj/xpad.o
-OBJECTS-CROM += $(TOPDIR)/obj/xremote.o
-OBJECTS-CROM += $(TOPDIR)/obj/usbkey.o
+#OBJECTS-CROM += $(TOPDIR)/obj/xremote.o
+#OBJECTS-CROM += $(TOPDIR)/obj/usbkey.o
 OBJECTS-CROM += $(TOPDIR)/obj/risefall.o
 #ETHERBOOT
 ifeq ($(ETHERBOOT), yes)
@@ -249,7 +249,7 @@ endif
 
 xromwell.xbe: ${OBJECTS-XBE}
 	${LD} -o $(TOPDIR)/obj/xbeboot.elf ${OBJECTS-XBE} ${LDFLAGS-XBEBOOT}
-	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/xbeboot.elf $(TOPDIR)/xbe/$@
+	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/xbeboot.elf $(TOPDIR)/xbe/XBlast\ OS.xbe
 
 cromwell.bin:
 	${LD} -o $(TOPDIR)/obj/2lbimage.elf ${OBJECTS-ROMBOOT} ${LDFLAGS-ROMBOOT}
@@ -266,6 +266,6 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	cp obj/image-crom.bin obj/image-crom.bin.tmp
 	gzip -9 obj/image-crom.bin.tmp
 	bin/imagebld -rom obj/2blimage.bin obj/image-crom.bin.tmp.gz image/cromwell.bin image/cromwell_1024.bin
-	bin/imagebld -xbe xbe/xromwell.xbe obj/image-crom.bin
+	bin/imagebld -xbe xbe/XBlast\ OS.xbe obj/image-crom.bin
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin 
 

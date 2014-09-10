@@ -47,7 +47,7 @@ certificate:
 
   // title name (unicode string, 40 chars) *unimportant, but beautiful*
 unicodename:
-  .word 'L','i','n','u','x',0,0,0,0,0,0
+  .word 'X','B','l','a','s','t',' ','O','S',0,0
 normalname:
   .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
   .word 0,0,0,0,0,0,0,0,0,0,0,0,0

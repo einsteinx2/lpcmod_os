@@ -272,7 +272,7 @@ int setGameRegionValue(u8 value){
             break;
         }
     }
-    if (version == 13) return;    //error, let's not do something stupid here. Leave with dignity.
+    if (version == 13) return (-1);    //error, let's not do something stupid here. Leave with dignity.
     //else we know the version
     memcpy(&baEepromDataLocalCopy[28+16],&gameRegion,4);
 

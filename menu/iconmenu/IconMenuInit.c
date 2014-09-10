@@ -60,7 +60,7 @@ void IconMenuInit(void) {
     InitNetBootIcons();
 #endif
 */
-if(fHasHardware) {
+if(fHasHardware == SYSCON_ID_V1) {
     iconPtr = (ICON *)malloc(sizeof(ICON));
     iconPtr->iconSlot = ICON_SOURCE_SLOT4;
     iconPtr->szCaption = "Boot 512KB bank";
@@ -79,7 +79,7 @@ if(fHasHardware) {
         *(u8*)iconPtr->functionDataPtr = BNK256;
     AddIcon(iconPtr);
 }
-if(fHasHardware && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){    //TSOP control active
+if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){    //TSOP control active
     if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02) {    //Split 4-Way
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT2;

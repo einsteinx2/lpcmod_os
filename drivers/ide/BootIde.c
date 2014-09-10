@@ -5,7 +5,7 @@
  */
 
 int sprintf(char * buf, const char *fmt, ...);
-char * strncpy(char * dest,const char *src,int count);
+//char * strncpy(char * dest,const char *src,int count);
 
 #include "boot.h"
 #include "shared.h"

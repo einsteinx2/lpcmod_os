@@ -1,6 +1,6 @@
 #include "boot.h"
 #include "memory_layout.h"
-char * strncpy(char * dest,const char *src,int count);
+//char * strncpy(char * dest,const char *src,int count);
 
 /* parameters to be passed to the kernel */
 /* most parameters are documented in linux/Documentation/i386/zero-page.txt */
@@ -81,7 +81,7 @@ struct kernel_setup_t {
     unsigned long e820_type4;
 };
 
-extern void* framebuffer;
+//extern void* framebuffer;
 
 void setup(void* KernelPos, void* PhysInitrdPos, unsigned long InitrdSize, const char* kernel_cmdline) {
     
