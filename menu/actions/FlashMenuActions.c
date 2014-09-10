@@ -62,16 +62,16 @@ void FlashBiosFromHDD(void *fname) {
     offset = 0;
     
     if(currentFlashBank == BNKOS){
-        if(!ConfirmDialog("           Confirm update XBlast OS?", 1))
+        if(!ConfirmDialog("               Confirm update XBlast OS?", 1))
             res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
         else
             res = -1;
     }
     else{
         if(currentFlashBank == BNK512)
-            stringTemp = "          Confirm flash bank0(512KB)?";
+            stringTemp = "             Confirm flash bank0(512KB)?";
         else
-            stringTemp = "          Confirm flash bank1(256KB)?";
+            stringTemp = "             Confirm flash bank1(256KB)?";
         if(!ConfirmDialog(stringTemp, 1))
             res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
         else
@@ -85,7 +85,7 @@ void FlashBiosFromHDD(void *fname) {
             case 1:
                 printk("\n           ");
                 cromwellError();
-                printk("\n           Unknown flash device.");
+                printk("\n           Unknown flash device.\n           Write-Protect is enabled?");
                 break;
             case 2:
                 printk("\n           ");

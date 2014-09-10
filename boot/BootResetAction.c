@@ -100,9 +100,9 @@ extern void BootResetAction ( void ) {
     if(fHasHardware){        //Don't try to read from flash if none is detected
         if(fHasHardware == SYSCON_ID_V1){
             sprintf(modName,"%s", "XBlast Lite V1");
+            //Make sure we'll be reading from OS Bank
+            switchBank(BNKOS);
         }
-        //Make sure we'll be reading from OS Bank
-        switchBank(BNKOS);
         //Retrieve XBlast OS settings from flash
         BootFlashGetOSSettings(&LPCmodSettings);
     }
@@ -136,15 +136,15 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
+    I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
 
-    if(fHasHardware){
+    if(fHasHardware == SYSCON_ID_V1){
         BootLCDInit();        //Basic init. Do it even if no LCD is connected on the system.
     }
 
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){                                        //No need to change fan speed on first boot.
-        I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
-        if(fHasHardware){
+        if(fHasHardware == SYSCON_ID_V1){
             assertInitLCD();                        //Function in charge of checking if a init of LCD is needed.
         }
         //further init here.
@@ -180,7 +180,7 @@ extern void BootResetAction ( void ) {
         //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         wait_ms(550);
-        if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1 && fHasHardware){
+        if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1 && fHasHardware == SYSCON_ID_V1){
             BootModBios(&(LPCmodSettings.OSsettings.activeBank));
         }
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
@@ -231,15 +231,17 @@ extern void BootResetAction ( void ) {
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD\n ");
 
-    if (xbox_ram > 64) {
-        VIDEO_ATTR=0xff00ff00;
-    } else {
-        VIDEO_ATTR=0xffffa20f;
-    }
+    VIDEO_ATTR=0xff00ff00;
+    
 
    mbVersion = I2CGetXboxMBRev();
-   printk("          Xbox revision: %s ", xbox_mb_rev[mbVersion]);
-   printk("RAM: %d", xbox_ram);
+   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
+   if (xbox_ram > 64) {
+        VIDEO_ATTR=0xff00ff00;
+   } else {
+        VIDEO_ATTR=0xffffa20f;
+   }
+   printk("  RAM: %d", xbox_ram);
    printk("MiB\n");
    
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;

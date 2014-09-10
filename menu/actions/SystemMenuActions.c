@@ -35,7 +35,7 @@ void incrementGameRegion(void * itemStr){
             "n/a",
             "PAL"
         };
-    if(ConfirmDialog("         Confirm change Game region?", 0))
+    if(ConfirmDialog("           Confirm change Game region?", 0))
         return;
         
     int gameRegion = getGameRegionValue();
@@ -63,7 +63,7 @@ void decrementGameRegion(void * itemStr){
             "n/a",
             "PAL"
         };
-    if(ConfirmDialog("         Confirm change Game region?",0))
+    if(ConfirmDialog("           Confirm change Game region?",0))
         return;
         
     int gameRegion = getGameRegionValue();

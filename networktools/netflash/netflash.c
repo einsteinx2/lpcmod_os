@@ -420,6 +420,6 @@ void netflash_init(void) {
   pcb = tcp_listen(pcb);
   tcp_accept(pcb, http_accept);
   cromwellSuccess();
-  printk("\n\n\           Go to 'http://ip.address.shown.above' to flash your BIOS.\n");
+  printk("\n\n\            Go to 'http://ip.address.shown.above' to flash your BIOS.\n");
   //downloadingLED();
 }

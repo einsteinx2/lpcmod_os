@@ -51,9 +51,9 @@ void BootStartUSB(void)
     usb_hcd_pci_probe(&xx_ohci_dev, module_table_pci_ids);    
     XPADInit();
     
-    XRemoteInit();
+    //XRemoteInit();
     
-    UsbKeyBoardInit();
+    //UsbKeyBoardInit();
 
     for(n=0;n<30;n++) {
         USBGetEvents();
@@ -73,9 +73,9 @@ void BootStopUSB(void)
 {
     int n;
         
-        XPADRemove();
-    XRemoteRemove();
-    UsbKeyBoardRemove();
+    XPADRemove();
+    //XRemoteRemove();
+    //UsbKeyBoardRemove();
     
     for(n=0;n<100;n++)
     {

@@ -119,7 +119,9 @@ TEXTMENU* BankSelectInit(void *bank) {
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)FlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);*/
-    DrawChildTextMenu(menuPtr);
+    if(fHasHardware){
+    	DrawChildTextMenu(menuPtr);
+    }
     return menuPtr;
 }
 

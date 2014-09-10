@@ -20,7 +20,7 @@ void saveEEPromToFlash(void *whatever){
             emptyCount++;
     }
         if(emptyCount < 4)            //Make sure checksum2 is not 0xFFFFFFFF.
-            if(ConfirmDialog("    Overwrite back up EEProm content?", 1))
+            if(ConfirmDialog("       Overwrite back up EEProm content?", 1))
                 return;
     memcpy(&(LPCmodSettings.bakeeprom),&eeprom,sizeof(EEPROMDATA));
     ToolHeader("Back up to flash successful");
@@ -36,7 +36,7 @@ void restoreEEPromFromFlash(void *whatever){
     }
     if(emptyCount < 4){            //Make sure checksum2 is not 0xFFFFFFFF.
                         //It is practically impossible to get such value in this checksum field.
-        if(ConfirmDialog("     Restore backed up EEProm content?", 1))
+        if(ConfirmDialog("       Restore backed up EEProm content?", 1))
             return;
         memcpy(&eeprom,&(LPCmodSettings.bakeeprom),sizeof(EEPROMDATA));
         ToolHeader("Restored back up to Xbox");
@@ -48,7 +48,7 @@ void restoreEEPromFromFlash(void *whatever){
 }
 
 void wipeEEPromUserSettings(void *whatever){
-    if(ConfirmDialog("      Reset user EEProm settings(safe)?", 1))
+    if(ConfirmDialog("        Reset user EEProm settings(safe)?", 1))
         return;
     memset(eeprom.Checksum3,0xFF,4);    //Checksum3 need to be 0xFFFFFFFF
     memset(eeprom.TimeZoneBias,0x00,0x5b);    //Start from Checksum3 address in struct and write 0x00 up to UNKNOWN6.
@@ -57,7 +57,7 @@ void wipeEEPromUserSettings(void *whatever){
 }
 
 void showMemTest(void *whatever){
-    ToolHeader("128MB RAM test");
+    ToolHeader("128MB  RAM test");
     memtest();
     ToolFooter();
 }
@@ -83,10 +83,10 @@ void memtest(void){
 
         PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x84, 0x7FFFFFF);  //Force 128 MB
     }
+    DisplayProgressBar(0, 4, 0xffff00ff);                      //Draw ProgressBar frame.
     for(bank = 0; bank < 4; bank++)    {
         sprintf(BankText[bank], "%s", testBank(bank)? "Failed" : "Success");
-        DisplayProgressBar(bank, 4, 0xffff00ff);                   //Purple progress bar.
-        wait_ms(1000);                                          //Give some time to refresh screen.
+        DisplayProgressBar(bank + 1, 4, 0xffff00ff);                   //Purple progress bar.
     }
     VIDEO_ATTR=0xffc8c8c8;
     printk("\n           Bank1 : %s",Bank1Text);
@@ -128,7 +128,7 @@ int testBank(int bank){
             if(membasetop[counter*4+bank]!=lastValue){
                 result = 1;    //1=no no
                 lastValue = 0x80000000;
-                break;        //No need to go further. Bank is broken.
+                return result;        //No need to go further. Bank is broken.
             }
             membasetop[counter*4+bank] = lastValue<<1;                  //Prepare for next read.
         }

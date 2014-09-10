@@ -14,10 +14,10 @@ bool ConfirmDialog(char * string, bool critical) {
 
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     VIDEO_CURSOR_POSX=75;
-    VIDEO_CURSOR_POSY=125;
-    VIDEO_ATTR=0xff1515;                        //Red characters.
-    
-    printk("\2%s\2\n", string);
+    VIDEO_CURSOR_POSY=100;
+    VIDEO_ATTR=0xffff1515;                        //Red characters.
+    printk("\n\2%s\2\n", string);
+    VIDEO_ATTR=0xffffff;                //Back to white
     printk("\n\n\n\1                                  Hold RT, LT, Start and White to confirm\n");
     printk("\1                                               Press Back to cancel");    
     
@@ -37,6 +37,5 @@ bool ConfirmDialog(char * string, bool critical) {
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     VIDEO_CURSOR_POSX=0;
     VIDEO_CURSOR_POSY=0;
-    VIDEO_ATTR=0xffffff;                //Back to white just in case.
     return result;
 }

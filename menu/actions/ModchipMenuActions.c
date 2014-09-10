@@ -129,7 +129,7 @@ void toggleQuickboot(void * itemStr){
 }
 
 void resetSettings(void *whatever){
-    if(ConfirmDialog("       Confirm reset XBlast OS settings?", 1))
+    if(ConfirmDialog("        Confirm reset XBlast OS settings?", 1))
         return;
     initialLPCModOSBoot(&LPCmodSettings);
     QuickReboot();

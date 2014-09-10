@@ -146,7 +146,7 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
         printk("\2Select from Menu \2 (%i)", iconTimeRemain);    
     } else {
         VIDEO_CURSOR_POSX += 52;
-        printk("\2Select from Menu \2", iconTimeRemain);    
+        printk("\2Select from Menu \2");    
     }
 
     VIDEO_CURSOR_POSX = tempX;

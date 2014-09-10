@@ -138,7 +138,7 @@ int run_lwip(int A, int B, int C, int D, int P)
     struct ip_addr ipaddr, netmask, gw;
     struct netif netif;
     busyLED();
-    printk("           Initialising TCP/IP...");
+    printk("\n\n\n\n            Initialising TCP/IP...");
     mem_init();
     memp_init();
     pbuf_init(); 
@@ -148,7 +148,7 @@ int run_lwip(int A, int B, int C, int D, int P)
     tcp_init();
     etharp_init();
     cromwellSuccess();
-    printk("           Waiting for IP...");
+    printk("            Waiting for IP...");
     printk(" ");
     applicationStarted = 0;
     gotIP = 0;
@@ -206,11 +206,11 @@ int run_lwip(int A, int B, int C, int D, int P)
                     wait_ms(2000);
                     if(A == 1336) {
                         applicationStarted = 1;
-                        printk("           Starting Net Flash...");
+                        printk("            Starting Net Flash...");
                         netflash_init();
                     } else if(A == 1337) {
                         applicationStarted = 1;
-                        printk("           Starting Web Update...");
+                        printk("            Starting Web Update...");
                         webupdate_init();
                     }/* else if(A == 1338) {
                         applicationStarted = 1;
