@@ -141,10 +141,11 @@ extern void BootResetAction ( void ) {
     }
     I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
 
+    BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
+    
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){                                        //No need to change fan speed on first boot.
         if(fHasHardware == SYSCON_ID_V1){
-            BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
             assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
         }
         //further init here.
@@ -171,6 +172,7 @@ extern void BootResetAction ( void ) {
     BootPciInterruptEnable();
     /* We allow interrupts */
     nInteruptable = 1;
+    
 
 #ifndef SILENT_MODE
     printk("           BOOT: start USB init\n");
@@ -229,7 +231,7 @@ extern void BootResetAction ( void ) {
 
 
     VIDEO_ATTR=0xff00ff00;
-    printk("           Modchip: %s    DEBUG_fHasHardware: %u\n",modName, fHasHardware);
+    printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD\n ");
 

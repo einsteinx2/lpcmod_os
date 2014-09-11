@@ -124,6 +124,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/CDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LEDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/ToolsMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/Confirm.o
+OBJECTS-CROM += $(TOPDIR)/obj/OnScreenKeyboard.o
 OBJECTS-CROM += $(TOPDIR)/obj/ModchipMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/SystemMenuActions.o

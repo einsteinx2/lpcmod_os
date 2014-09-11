@@ -17,6 +17,7 @@ void LCDDecrementContrast(void * itemStr);
 void LCDToggleDisplayBootMsg(void * itemStr);
 void LCDToggledisplayBIOSNameBoot(void * itemStr);
 void LCDToggledisplayCustomTextBoot(void * itemStr);
+void editCustomString0(void *whatever);
 
 
 #endif

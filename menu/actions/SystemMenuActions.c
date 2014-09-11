@@ -120,6 +120,7 @@ void decrementDVDRegion(void * itemStr){
 }
 
 void incrementVideoformat(void * itemStr){
+    //bit3=480p, bit2=1080i, bit1 = 720p
     char *VideoFormattext[17] = {
         "Full screen",
         "Widescreen",

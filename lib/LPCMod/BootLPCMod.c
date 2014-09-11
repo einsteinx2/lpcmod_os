@@ -37,7 +37,8 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->LCDsettings.displayMsgBoot = 0;
     LPCmodSettings->LCDsettings.customTextBoot = 0;
     LPCmodSettings->LCDsettings.displayBIOSNameBoot = 0;
-    LPCmodSettings->LCDsettings.customString0[0] = 0;
+    //LPCmodSettings->LCDsettings.customString0[0] = 0;
+    sprintf(LPCmodSettings->LCDsettings.customString0, "Keyboard Test");
     LPCmodSettings->LCDsettings.customString1[0] = 0;
     LPCmodSettings->LCDsettings.customString2[0] = 0;
     LPCmodSettings->LCDsettings.customString3[0] = 0;

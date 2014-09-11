@@ -64,3 +64,7 @@ void LCDToggledisplayCustomTextBoot(void * itemStr){
     sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.customTextBoot? "Yes" : "No");
     initialLCDPrint();
 }
+
+void editCustomString0(void *whatever){
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0);
+}

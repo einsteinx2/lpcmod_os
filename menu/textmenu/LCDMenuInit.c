@@ -103,7 +103,7 @@ TEXTMENU *LCDMenuInit(void) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Custom line 1");
-    itemPtr->functionPtr= NULL;
+    itemPtr->functionPtr= editCustomString0;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
