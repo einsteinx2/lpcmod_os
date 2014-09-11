@@ -110,21 +110,21 @@ TEXTMENU *LCDMenuInit(void) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Custom line 2");
-    itemPtr->functionPtr= NULL;
+    itemPtr->functionPtr= editCustomString1;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Custom line 3");
-    itemPtr->functionPtr= NULL;
+    itemPtr->functionPtr= editCustomString2;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Custom line 4");
-    itemPtr->functionPtr= NULL;
+    itemPtr->functionPtr= editCustomString3;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 

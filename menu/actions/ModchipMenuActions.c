@@ -135,19 +135,35 @@ void resetSettings(void *whatever){
     QuickReboot();
 }
 
+void editBIOSName0(void *whatever){
+    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH);
+}
+
+void editBIOSName1(void *whatever){
+    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH);
+}
+
+
+//The two functions below requires that the menu items be in that order:
+//Quickboot bank->Alternative Bank->TSOP Control->TSOP Split
 void toggleTSOPControl(void * itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
     if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){            //If already active
         LPCmodSettings.OSsettings.TSOPcontrol &= 0xFE;    //Make sure to toggle only bit0 and turn OFF.
+        if(LPCmodSettings.OSsettings.altBank > BNKTSOP){    //If altBank setting was set to TSOP bank 1,2 or 3.
+            LPCmodSettings.OSsettings.altBank = BNKTSOP;    //Single TSOP bank so make sure altBank is properly set.
+            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
+        }
         if(LPCmodSettings.OSsettings.activeBank > BNKTSOP){    //If activeBank setting was set to TSOP bank 1,2 or 3.
             LPCmodSettings.OSsettings.activeBank = BNKTSOP;    //Single TSOP bank so make sure activeBank is properly set.
-            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
+            sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP");
         }
     }
     else{
         LPCmodSettings.OSsettings.TSOPcontrol |= 0x01;    //Make sure to toggle only bit0.
     }
     sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01? "Yes" : "No");
+    //Change displayed value of TSOP Split setting if TSOP Control is turned OFF.
     sprintf(tempItemPtr->nextMenuItem->szParameter, "%s",
         (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?    ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
 }
@@ -157,21 +173,30 @@ void toggleTSOPSplit(void * itemPtr){
     if((LPCmodSettings.OSsettings.TSOPcontrol & 0x02)){    //If TSOPControl bit1 is set
         //So if TSOP control split bit is set to 4-way.
         LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;    //Make sure to toggle only bit1, and set to 2-way.
+        if(LPCmodSettings.OSsettings.altBank > BNKTSOP1){    //If activeBank setting was set to TSOP bank 2 or 3.
+            LPCmodSettings.OSsettings.altBank = BNKTSOP1;    //2-way TSOP bank so make sure activeBank is properly set.
+            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP bank1");
+        }
         if(LPCmodSettings.OSsettings.activeBank > BNKTSOP1){    //If activeBank setting was set to TSOP bank 2 or 3.
             LPCmodSettings.OSsettings.activeBank = BNKTSOP1;    //2-way TSOP bank so make sure activeBank is properly set.
-            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP bank1");
+            sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP bank1");
         }
     }
     else if(!(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){//If TSOPControl bit0 is not set
         //So if TSOP control is turned OFF.
         LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;    //Make sure to toggle only bit1.
+        if(LPCmodSettings.OSsettings.altBank > BNKTSOP){    //If activeBank setting was set to TSOP bank 1,2 or 3.
+            LPCmodSettings.OSsettings.altBank = BNKTSOP;    //Single TSOP bank so make sure activeBank is properly set.(failsafe)
+            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
+        }
         if(LPCmodSettings.OSsettings.activeBank > BNKTSOP){    //If activeBank setting was set to TSOP bank 1,2 or 3.
             LPCmodSettings.OSsettings.activeBank = BNKTSOP;    //Single TSOP bank so make sure activeBank is properly set.(failsafe)
-            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
+            sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP");
         }
     }
     else {
         LPCmodSettings.OSsettings.TSOPcontrol |= 0x02;    //Make sure to toggle only bit1.
     }
-    sprintf(tempItemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?    ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
+    sprintf(tempItemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?
+           ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
 }

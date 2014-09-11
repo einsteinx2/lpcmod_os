@@ -66,5 +66,17 @@ void LCDToggledisplayCustomTextBoot(void * itemStr){
 }
 
 void editCustomString0(void *whatever){
-    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0);
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0, LPCmodSettings.LCDsettings.lineLength);
+}
+
+void editCustomString1(void *whatever){
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString1, LPCmodSettings.LCDsettings.lineLength);
+}
+
+void editCustomString2(void *whatever){
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString2, LPCmodSettings.LCDsettings.lineLength);
+}
+
+void editCustomString3(void *whatever){
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength);
 }

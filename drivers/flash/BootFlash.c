@@ -355,14 +355,17 @@ void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
     int i;
     
     memset(&of,0xFF,sizeof(of));
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
     for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
         *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
     }
 }
 
+//Saves persistent settings at 0x3f000 offset on flash.
 void BootFlashSaveOSSettings(void) {
     OBJECT_FLASH of;
+    u8 * lastBlock;
+    u32 blocksize;
 
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -372,20 +375,23 @@ void BootFlashSaveOSSettings(void) {
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
-        //Additional Check to be sure a supported Modchip is detected.
-        u8 * lastBlock = (u8 *)malloc(4*1024);    //4KB allocation
+        if(fHasHardware == SYSCON_ID_V1)                //XBlast Lite V1 has 4KB-sector flash
+            blocksize = 4 * 1024;                       //4KB allocation
+        else                                            //Other devices, we assume 64KB sectors
+            blocksize = 64 * 1024;
+
+        lastBlock = (u8 *)malloc(blocksize);
     
         if(currentFlashBank != BNKOS)
             switchBank(BNKOS);
 
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
-            memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + 0x3f000, 4*1024);    //Copy content of flash into temp memory allocation.
-            if(memcmp(lastBlock,(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
-                memcpy(lastBlock,(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
-                //LEDHigh(NULL);
-                BootFlashSettings(lastBlock,0x3f000,4*1024);
-                //LEDRed(NULL);        //Here only to debug everytime flash is updated.
-                //while(1);        //Will hang with solid Red LED. Just reboot console and don,t change any setting.
+            memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
+            if(memcmp(*(&lastBlock+blocksize-(4*1024)),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
+                memcpy(*(&lastBlock+blocksize-(4*1024)),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
+                BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);                     //Even if bank is bigger than 256KB, we only save on first 256KB part.
+                LEDRed(NULL);        //Here only to debug everytime flash is updated.
+                while(1);        //Will hang with solid Red LED. Just reboot console and don't change any setting.
             }
         }
         free(lastBlock);

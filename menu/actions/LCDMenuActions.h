@@ -18,6 +18,8 @@ void LCDToggleDisplayBootMsg(void * itemStr);
 void LCDToggledisplayBIOSNameBoot(void * itemStr);
 void LCDToggledisplayCustomTextBoot(void * itemStr);
 void editCustomString0(void *whatever);
-
+void editCustomString1(void *whatever);
+void editCustomString2(void *whatever);
+void editCustomString3(void *whatever);
 
 #endif

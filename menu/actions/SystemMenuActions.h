@@ -18,7 +18,4 @@ void decrementGameRegion(void * itemStr);
 void incrementDVDRegion(void * itemStr);
 void decrementDVDRegion(void * itemStr);
 
-void incrementVideoformat(void * itemStr);
-void decrementVideoformat(void * itemStr);
-
 #endif

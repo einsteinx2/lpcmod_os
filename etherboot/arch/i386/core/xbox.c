@@ -46,6 +46,7 @@ int initialiseNetwork(void)
     {
         printk("eth_probe failed\n");
     }
+    return 0;           //Keep compiler happy.
 }
 
 int etherboot(void)
@@ -58,11 +59,13 @@ int etherboot(void)
     {
         eth_load(dev);
     }
+    return 0;           //Keep compiler happy.
 }
 
 int netFlash(void) {
     extern int run_lwip(int A, int B, int C, int D, int P);
     run_lwip(1336, -1, -1, -1, -1);
+    return 0;           //Keep compiler happy.
 }
 /*
 int netBoot(void) {
@@ -74,6 +77,7 @@ int netBoot(void) {
 int webUpdate(void) {
     extern int run_lwip(int A, int B, int C, int D, int P);
     run_lwip(1337, -1, -1, -1, -1);
+    return 0;           //Keep compiler happy.
 }
 /*
 int webBoot(int A, int B, int C, int D, int P) {
@@ -345,4 +349,5 @@ int xstart32(unsigned long entry_point, ...)
         printf("Error parsing ELF boot notes\n");
         restart_etherboot(-1);
     }
+    return 0;           //Keep compiler happy.
 }

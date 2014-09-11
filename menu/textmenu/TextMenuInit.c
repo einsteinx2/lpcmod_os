@@ -20,7 +20,7 @@ TEXTMENU *TextMenuInit(void) {
     //Create the root menu - MANDATORY
     menuPtr = malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
-    strcpy(menuPtr->szCaption, "XBlast v1 settings");
+    strcpy(menuPtr->szCaption, "XBlast Mod settings");
     menuPtr->firstMenuItem=NULL;
 
     //No entry in this menu will have a configurable parameter.
@@ -45,7 +45,11 @@ TEXTMENU *TextMenuInit(void) {
     itemPtr->functionDataPtr = (void *)SystemMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(fHasHardware == SYSCON_ID_V1) {                            //No need to display this menu if no modchip is present.
+    if(fHasHardware == SYSCON_ID_V1 ||                  //No need to display this menu if no modchip is present.
+       fHasHardware == SYSCON_ID_XX1 ||
+       fHasHardware == SYSCON_ID_XX2 ||
+       fHasHardware == SYSCON_ID_XXOPX ||
+       fHasHardware == SYSCON_ID_XX3){                  //LCD is supported on SmartXX chips.
         //LCD SETTINGS MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

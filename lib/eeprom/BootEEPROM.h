@@ -18,7 +18,7 @@
 #define DVDREGION_SIZE        0x001
 #define VIDEOSTANDARD_SIZE    0x004
 
-//EEPROM Data structe value enums
+//EEPROM Data struct value enum
 typedef enum { 
     ZONE_NONE = 0x00,    //Region Clear
     ZONE1 = 0x01,        //USA
@@ -50,6 +50,12 @@ typedef enum {
     WIDESCREEN = 0x01,
     LETTERBOX = 0x10
 } VID_FORMAT;
+
+typedef enum {
+    R720p = 0x02,
+    R1080i = 0x04,
+    R480p = 0x08
+}VID_RESOLUTION;
 
 
 //Structure that holds contents of 256 byte EEPROM image..

@@ -454,7 +454,7 @@ typedef enum {
 u8 mbVersion;
 
 //Global to hide code when running in XBE without modchip detected.
-u8 fHasHardware;
+u16 fHasHardware;
 
 u8 currentFlashBank;
 #endif // _Boot_H_

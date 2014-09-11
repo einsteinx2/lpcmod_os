@@ -9,6 +9,8 @@
  *                                                                         *
  ***************************************************************************/
 
+#define BIOSNAMEMAXLENGTH       20
+
 void decrementActiveBank(void * itemStr);
 void incrementActiveBank(void * itemStr);
 
@@ -18,6 +20,9 @@ void incrementbootTimeout(void * itemStr);
 void toggleQuickboot(void * itemStr);
 
 void resetSettings(void *whatever);
+
+void editBIOSName0(void *whatever);
+void editBIOSName1(void *whatever);
 
 void toggleTSOPControl(void * itemPtr);
 void toggleTSOPSplit(void * itemPtr);

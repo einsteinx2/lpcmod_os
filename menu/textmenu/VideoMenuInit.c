@@ -9,7 +9,7 @@
 
 #include "include/boot.h"
 #include "TextMenu.h"
-
+#include "VideoMenuActions.h"
 #include "VideoInitialization.h"
 
 TEXTMENU *VideoMenuInit(void) {
@@ -35,23 +35,86 @@ TEXTMENU *VideoMenuInit(void) {
     
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    
+    strcpy(itemPtr->szCaption, "TV Standard : ");
     switch(*((VIDEO_STANDARD *)&eeprom.VideoStandard)) {
         case NTSC_M:
-            strcpy(itemPtr->szCaption, "TV Standard: NTSC-USA");
+            sprintf(itemPtr->szParameter, "%s", "NTSC-U");
             break;
         case NTSC_J:
-            strcpy(itemPtr->szCaption, "TV Standard: NTSC-Japan");
+            sprintf(itemPtr->szParameter, "%s", "NTSC-J");
             break;
         case PAL_I:
-            strcpy(itemPtr->szCaption, "TV Standard: PAL");
+            sprintf(itemPtr->szParameter, "%s", "PAL");
             break;
         default:
-            strcpy(itemPtr->szCaption, "TV Standard: Unknown");
+            sprintf(itemPtr->szParameter, "%s", "Unknown");
         break;
     }
-    itemPtr->functionPtr=SetVideoStandard;
-    itemPtr->functionDataPtr = itemPtr->szCaption;
+    itemPtr->functionPtr=incrementVideoStandard;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=decrementVideoStandard;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=incrementVideoStandard;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //VIDEO FORMAT SETTINGS MENU
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Video format : ");
+    if(eeprom.VideoFlags[2] & WIDESCREEN){
+        sprintf(itemPtr->szParameter, "%s", "Widescreen");
+    }
+    else {
+        if(eeprom.VideoFlags[2] & LETTERBOX){
+            sprintf(itemPtr->szParameter, "%s", "Letterbox");
+        }
+        else{
+            sprintf(itemPtr->szParameter, "%s", "Fullscreen");
+        }
+    }
+    itemPtr->functionPtr= incrementVideoformat;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=decrementVideoformat;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=incrementVideoformat;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Enable 480p : ");
+    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & R480p)? "Yes" : "No");
+    itemPtr->functionPtr=toggle480p;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggle480p;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggle480p;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Enable 7200p : ");
+    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & R720p)? "Yes" : "No");
+    itemPtr->functionPtr=toggle720p;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggle720p;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggle720p;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Enable 1080i : ");
+    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & R1080i)? "Yes" : "No");
+    itemPtr->functionPtr=toggle1080i;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggle1080i;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggle1080i;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
     return menuPtr;

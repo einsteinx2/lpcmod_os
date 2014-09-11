@@ -104,6 +104,13 @@ extern void BootResetAction ( void ) {
             switchBank(BNKOS);
         }
         else {
+            if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
+                sprintf(modName,"%s", "SmartXX V1/V2");
+            else if(fHasHardware == SYSCON_ID_XXOPX)
+                sprintf(modName,"%s", "SmartXX LT OPX");
+            else if(fHasHardware == SYSCON_ID_XX3)
+                sprintf(modName,"%s", "SmartXX V3");
+
             currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
         }
         //Retrieve XBlast OS settings from flash
@@ -145,7 +152,11 @@ extern void BootResetAction ( void ) {
     
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){                                        //No need to change fan speed on first boot.
-        if(fHasHardware == SYSCON_ID_V1){
+        if(fHasHardware == SYSCON_ID_V1 ||
+           fHasHardware == SYSCON_ID_XX1 ||
+           fHasHardware == SYSCON_ID_XX2 ||
+           fHasHardware == SYSCON_ID_XXOPX ||
+           fHasHardware == SYSCON_ID_XX3){
             assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
         }
         //further init here.
@@ -183,7 +194,10 @@ extern void BootResetAction ( void ) {
     if(!fFirstBoot){
         if(fHasHardware == SYSCON_ID_V1){                       //Quickboot only if on the right hardware.
             wait_ms(550);
-            if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1){
+            if(XPAD_current[0].keys[4] == 1){                   //Black button pressed.
+                BootModBios(&(LPCmodSettings.OSsettings.altBank));
+            }
+            if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1){       //White button NOT pressed and Quickboot ON.
                 BootModBios(&(LPCmodSettings.OSsettings.activeBank));
             }
         }
@@ -288,25 +302,6 @@ extern void BootResetAction ( void ) {
 #ifndef SILENT_MODE
     BootEepromPrintInfo();
 #endif
-/*
-#ifdef FLASH
-    {
-        OBJECT_FLASH of;
-        memset(&of,0x00,sizeof(of));
-        of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-        BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
-        VIDEO_ATTR=0xffc8c8c8;
-        printk("           Flash type: ");
-        VIDEO_ATTR=0xffc8c800;
-        printk("%s\n", of.m_szFlashDescription);
-    }
-#endif
-*/
-
-
-
-
-//    BootStartUSB();
 
     // init the IDE devices
 #ifndef SILENT_MODE
@@ -314,7 +309,7 @@ extern void BootResetAction ( void ) {
     printk("           Initializing IDE Controller\n");
 #endif
     //BootIdeWaitNotBusy(0x1f0);
-           //wait_ms(200);
+    //wait_ms(200);
 #ifndef SILENT_MODE
     printk("           Ready\n");
 #endif
@@ -327,11 +322,6 @@ extern void BootResetAction ( void ) {
     VIDEO_CURSOR_POSY=nTempCursorY;
     VIDEO_CURSOR_POSX=0;
     VIDEO_CURSOR_POSY=0;
-
-
-
-
-
 
     BootIdeInit();
 

@@ -33,6 +33,18 @@
 #define SYSCON_ID_V1    0x15    //Spoof SmartXX OPX using lower nibble. Highest nibble is what's different from SmartXX.
 //Other revision will have to be identified here.
 
+//SmartXX chip id
+#define SYSCON_ID_XX1   0x01
+#define SYSCON_ID_XX2   0x02
+#define SYSCON_ID_XXOPX 0x05
+#define SYSCON_ID_XX3   0x08
+
+//Other modchips ID by flash type.
+#define FLASH_ID_XECUTER3       0x01AD
+#define FLASH_ID_XECUTER2       0x01D5
+#define FLASH_ID_XENIUM         0x01C4
+
+
 #define HD44780        0x0
 
 /*

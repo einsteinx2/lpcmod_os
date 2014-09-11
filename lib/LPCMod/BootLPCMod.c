@@ -45,6 +45,6 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 }
 
 //Probes CPLD for chip revision and return a single byte ID.
-u8 LPCMod_HW_rev(void){
+u16 LPCMod_HW_rev(void){
     return ReadFromIO(SYSCON_REG);
 }

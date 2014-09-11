@@ -103,6 +103,22 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Bank0(512KB) BIOS name");
+    itemPtr->szParameter[0] = 0;
+    itemPtr->functionPtr= editBIOSName0;
+    itemPtr->functionDataPtr= NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Bank1(256KB) BIOS name");
+    itemPtr->szParameter[0] = 0;
+    itemPtr->functionPtr= editBIOSName1;
+    itemPtr->functionDataPtr= NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Reset all settings");
     itemPtr->szParameter[0] = 0;
     itemPtr->functionPtr= resetSettings;
