@@ -34,10 +34,10 @@
 //Other revision will have to be identified here.
 
 //SmartXX chip id
-#define SYSCON_ID_XX1   0x01
-#define SYSCON_ID_XX2   0x02
-#define SYSCON_ID_XXOPX 0x05
-#define SYSCON_ID_XX3   0x08
+#define SYSCON_ID_XX1   0xF1
+#define SYSCON_ID_XX2   0xF2
+#define SYSCON_ID_XXOPX 0xF5
+#define SYSCON_ID_XX3   0xF8
 
 //Other modchips ID by flash type.
 #define FLASH_ID_XECUTER3       0x01AD

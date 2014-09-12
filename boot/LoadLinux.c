@@ -341,7 +341,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
     I2CTransmitWord(0x10, 0x0c01); // close DVD tray
 
     VIDEO_CURSOR_POSY=vmode.ymargin+96;
-    printk("           Checking disc");
+    printk("\n\n\n\n\n           Checking disc");
     dots();
 
     for (n=0;n<16;++n) {
@@ -481,7 +481,7 @@ int BootLoadFlashCD(int cdromId) {
     I2CTransmitWord(0x10, 0x0c01); // close DVD tray
 
     VIDEO_CURSOR_POSY=vmode.ymargin+96;
-    printk("           Checking disc");
+    printk("\n\n\n\n\n           Checking disc");
     dots();
 
     for (n=0;n<16;++n) {
@@ -546,8 +546,7 @@ int BootLoadFlashCD(int cdromId) {
     if (!imageFound) {
         cromwellError();
         printk("\n\n           Could not find the image.bin file.\n");
-        wait_ms(2000);
-        inputLED();
+        FlashFooter();
         return 0;
     }
 

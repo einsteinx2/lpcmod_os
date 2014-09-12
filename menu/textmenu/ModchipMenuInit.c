@@ -68,6 +68,32 @@ TEXTMENU *ModchipMenuInit(void) {
     itemPtr->functionRightPtr=incrementActiveBank;
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
+    
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption,"Alternative bank : ");
+    if(LPCmodSettings.OSsettings.altBank == BNK512)
+        strcpy(itemPtr->szParameter,"512KB");
+    else if (LPCmodSettings.OSsettings.altBank == BNK256)
+        strcpy(itemPtr->szParameter,"256KB");
+    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP)
+        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)
+            strcpy(itemPtr->szParameter,"TSOP bank0");            //Show this string if TSOP is split.
+        else
+            strcpy(itemPtr->szParameter,"TSOP");                //TSOP is not split.
+    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP1)
+        strcpy(itemPtr->szParameter,"TSOP bank1");
+    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP2)
+        strcpy(itemPtr->szParameter,"TSOP bank2");
+    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP3)
+        strcpy(itemPtr->szParameter,"TSOP bank3");
+    itemPtr->functionPtr=incrementAltBank;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=incrementAltBank;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=incrementAltBank;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
 
 if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xbox motherboard is not 1.0/1.1.
 

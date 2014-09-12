@@ -14,6 +14,7 @@
 #include "BootFlash.h"
 #include "memory_layout.h"
 #include "video.h"
+#include "include/lpcmod_v1.h"
 
  // callback to show progress
 bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, u32 dwPos, u32 dwExtent) {
@@ -49,8 +50,10 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 2; // seems to be write-protected - fail
     if(of.m_dwLengthInBytes<(dwStartOffset+dwLength))
         return 3; // requested layout won't fit device - sanity check fail
-    if(assertOSUpdateValidInput(pbNewData))
-        return 4;  //Not valid XBlast OS image.
+    if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
+        if(assertOSUpdateValidInput(pbNewData))
+            return 4;  //Not valid XBlast OS image.
+    }
     
     // committed to reflash now
     while(fMore) {
@@ -76,12 +79,12 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
             }
             else { // failed program
-                printk("Programming failed...\n");
+                printk("           Programming failed...\n");
                 while(1);
             }
         }
         else { // failed erase
-            printk("Erasing failed...\n");
+            printk("           Erasing failed...\n");
             while(1);
         }
     }
@@ -128,12 +131,12 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
             }
             else { // failed program
-                printk("Programming flash bank failed...\n");
+                printk("           Programming flash bank failed...\n");
                 while(1);
             }
         }
         else { // failed erase
-            printk("Erasing flash bank failed...\n");
+            printk("           Erasing flash bank failed...\n");
             while(1);
         }
     }
@@ -175,12 +178,12 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
             }
             else { // failed program
-                printk("Programming persistent settings failed...\n");
+                printk("           Programming persistent settings failed...\n");
                 while(1);
             }
         }
         else { // failed erase
-            printk("Erasing persistent settings failed...\n");
+            printk("           Erasing persistent settings failed...\n");
             while(1);
         }
     }

@@ -60,7 +60,7 @@ bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft )
             (pkft->m_bDeviceId == pof->m_bDeviceId)) {
             fSeen=true;
             fMore=false;
-            nPos+=sprintf(&pof->m_szFlashDescription[nPos], "%s (%dK)", pkft->m_szFlashDescription, pkft->m_dwLengthInBytes/1024);
+            nPos+=sprintf(&pof->m_szFlashDescription[nPos], "           %s (%dK)", pkft->m_szFlashDescription, pkft->m_dwLengthInBytes/1024);
             pof->m_dwLengthInBytes = pkft->m_dwLengthInBytes;
         }
         pkft++;
@@ -72,10 +72,10 @@ bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft )
         if(
             (baNormalModeFirstTwoBytes[0]==pof->m_bManufacturerId) &&
             (baNormalModeFirstTwoBytes[1]==pof->m_pbMemoryMappedStartAddress[1])) { // we didn't get anything worth reporting
-            sprintf(pof->m_szFlashDescription, "Read Only??? manf=0x%02X, dev=0x%02X", pof->m_bManufacturerId, pof->m_bDeviceId);
+            sprintf(pof->m_szFlashDescription, "           Read Only??? manf=0x%02X, dev=0x%02X", pof->m_bManufacturerId, pof->m_bDeviceId);
         }
         else { // we got what is probably an unknown flash type
-            sprintf(pof->m_szFlashDescription, "manf=0x%02X, dev=0x%02X", pof->m_bManufacturerId, pof->m_bDeviceId);
+            sprintf(pof->m_szFlashDescription, "           manf=0x%02X, dev=0x%02X", pof->m_bManufacturerId, pof->m_bDeviceId);
         }
     }
 
@@ -99,7 +99,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof, bool showGUI)
     if(showGUI){
         if(pof->m_pcallbackFlash!=NULL)
             if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_START, 0, 0)) {
-                strcpy(pof->m_szAdditionalErrorInfo, "Erase Aborted");
+                strcpy(pof->m_szAdditionalErrorInfo, "           Erase Aborted");
                 return false;
             }
     }
@@ -118,7 +118,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof, bool showGUI)
                             (pof->m_pcallbackFlash)(pof, EE_ERASE_END, 0, 0);
                         }
                     }
-                    sprintf(pof->m_szAdditionalErrorInfo, "Erase failed for block at +0x%x, reads as 0x%02X", dw, pof->m_pbMemoryMappedStartAddress[dw]);
+                    sprintf(pof->m_szAdditionalErrorInfo, "           Erase failed for block at +0x%x, reads as 0x%02X", dw, pof->m_pbMemoryMappedStartAddress[dw]);
                     return false; // failure
                 }
             }
@@ -170,7 +170,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof, bool showGUI)
                (pof->m_dwLengthUsedArea == pof->m_dwLengthInBytes)  // and doing the whole length of the chip
                 ) { // <3 means never entered busy mode - block erase code 0x30 not supported
                 #if 1
-                printk("Trying to erase whole chip\n");
+                printk("           Trying to erase whole chip\n");
                 #endif
                 pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
                 pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
@@ -198,7 +198,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof, bool showGUI)
             if(showGUI){
                 if(pof->m_pcallbackFlash!=NULL) {
                     if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_UPDATE, dw-pof->m_dwStartOffset, pof->m_dwLengthUsedArea)) {
-                        strcpy(pof->m_szAdditionalErrorInfo, "Erase Aborted");
+                        strcpy(pof->m_szAdditionalErrorInfo, "           Erase Aborted");
                         return false;
                     }
                 }
@@ -231,7 +231,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba, bool showGUI)
     if(showGUI){
         if(pof->m_pcallbackFlash!=NULL)
             if(!(pof->m_pcallbackFlash)(pof, EE_PROGRAM_START, 0, 0)) {
-                strcpy(pof->m_szAdditionalErrorInfo, "Program Aborted");
+                strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
                 return false;
         }
     }
@@ -251,7 +251,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba, bool showGUI)
                             (pof->m_pcallbackFlash)(pof, EE_PROGRAM_END, 0, 0);
                         }
                     }
-                    sprintf(pof->m_szAdditionalErrorInfo, "Program failed for byte at +0x%x; wrote 0x%02X, read 0x%02X", dw, pba[dwSrc], pof->m_pbMemoryMappedStartAddress[dw]);
+                    sprintf(pof->m_szAdditionalErrorInfo, "           Program failed for byte at +0x%x; wrote 0x%02X, read 0x%02X", dw, pba[dwSrc], pof->m_pbMemoryMappedStartAddress[dw]);
                     return false;
                 }
             }
@@ -277,7 +277,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba, bool showGUI)
             if(showGUI){
                 if(pof->m_pcallbackFlash!=NULL)
                     if(!(pof->m_pcallbackFlash)(pof, EE_PROGRAM_UPDATE, dwSrc, pof->m_dwLengthUsedArea)) {
-                        strcpy(pof->m_szAdditionalErrorInfo, "Program Aborted");
+                        strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
                         return false;
                     }
             }
@@ -387,11 +387,11 @@ void BootFlashSaveOSSettings(void) {
 
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
             memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
-            if(memcmp(*(&lastBlock+blocksize-(4*1024)),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
-                memcpy(*(&lastBlock+blocksize-(4*1024)),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
-                BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);                     //Even if bank is bigger than 256KB, we only save on first 256KB part.
-                LEDRed(NULL);        //Here only to debug everytime flash is updated.
-                while(1);        //Will hang with solid Red LED. Just reboot console and don't change any setting.
+            if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
+                memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
+                BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
+                //LEDRed(NULL);        //Here only to debug everytime flash is updated.
+                //wait_ms(3000);        //Will hang with solid Red LED for 3 seconds.
             }
         }
         free(lastBlock);

@@ -232,18 +232,23 @@ void I2CPowerOff(void) {
 }
 
 u8 I2CGetFanSpeed(void){
-    u8 temp = 0;
-    ReadfromSMBus(0x10, 0x10, 1, (u32 *)&temp);
-    return temp;
+    //ReadfromSMBus(0x10, 0x10, 1, (u32 *)&temp);
+    return (I2CTransmitByteGetReturn(0x10, 0x10) << 1);
 }
 
 void I2CSetFanSpeed(u8 speed){
-    u8 giveUp = 0;
+/*    u8 giveUp = 0;
     do {
         WriteToSMBus(0x10,0x05,1,1);             //Activate manual fan speed control
         wait_us(5);
         WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC
     }while((I2CGetFanSpeed() != (speed >> 1)) && giveUp++ < 10);    //If the Xbox is hard of hearing, repeat max 10 times.
+*/
+	WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC
+	wait_us(5);
+        WriteToSMBus(0x10,0x05,1,1);             //Activate manual fan speed control
+        wait_us(5);
+        WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC
 }
 
 

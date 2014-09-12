@@ -67,12 +67,12 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             exit = true;
         }
 
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y)){   //Shift toggle
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y) == 1){   //Shift toggle
             shift = !shift;
             refresh = true;
         }
 
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X)){   //Space
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X) == 1){   //Space
             if(textpos < maxLength){
                 string[textpos] = ' ';                  //Add space character
                 textpos += 1;                           //Move cursor one position to the right
@@ -80,7 +80,7 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             }
         }
 
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B)){   //Backspace
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){   //Backspace
             if(textpos > 0){
                 textpos -= 1;                               //Move cursor one position to the left
                 string[textpos] = '\0';                     //Erase character
@@ -88,7 +88,7 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             }
         }
 
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A)){   //Select character
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){   //Select character
             if(textpos < maxLength){
                 if(shift){
                     string[textpos] = shiftkeymap[cursorposY][cursorposX];
@@ -101,7 +101,7 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             }
         }
 
-        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP)){
+        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1){
             if(cursorposY == 0)         //Already at the top line
                 cursorposY = 3;         //Roll to last
             else
@@ -109,7 +109,7 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             refresh = true;
         }
 
-        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN)){
+        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1){
             if(cursorposY == 3)         //Already at the last line
                 cursorposY = 0;         //Roll to top
             else
@@ -117,19 +117,19 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             refresh = true;
         }
 
-        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT)){
+        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1){
             if(cursorposX == 0)         //Already at the first column
-                cursorposY = 9;         //Roll to last
+                cursorposX = 9;         //Roll to last
             else
-                cursorposY -= 1;
+                cursorposX -= 1;
             refresh = true;
         }
 
-        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT)){
+        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1){
             if(cursorposX == 9)         //Already at the last column
-                cursorposY = 0;         //Roll to first
+                cursorposX = 0;         //Roll to first
             else
-                cursorposY += 1;
+                cursorposX += 1;
             refresh = true;
         }
     
@@ -139,6 +139,7 @@ void OnScreenKeyboard(char * string, u8 maxLength) {
             VIDEO_CURSOR_POSY=0;
             return;
         }
+        wait_ms(10);
     }
     return;    //Keep compiler happy.
 }

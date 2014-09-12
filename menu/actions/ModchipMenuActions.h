@@ -14,6 +14,9 @@
 void decrementActiveBank(void * itemStr);
 void incrementActiveBank(void * itemStr);
 
+void decrementAltBank(void * itemStr);
+void incrementAltBank(void * itemStr);
+
 void decrementbootTimeout(void * itemStr);
 void incrementbootTimeout(void * itemStr);
 

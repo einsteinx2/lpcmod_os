@@ -146,7 +146,13 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
-    I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+    if(fHasHardware){
+    	//I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+    	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+    }
+    else {
+    	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();
+    }
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
     
@@ -308,8 +314,8 @@ extern void BootResetAction ( void ) {
     VIDEO_ATTR=0xffc8c8c8;
     printk("           Initializing IDE Controller\n");
 #endif
-    //BootIdeWaitNotBusy(0x1f0);
-    //wait_ms(200);
+    BootIdeWaitNotBusy(0x1f0);
+    wait_ms(100);
 #ifndef SILENT_MODE
     printk("           Ready\n");
 #endif
