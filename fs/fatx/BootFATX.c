@@ -787,3 +787,44 @@ void CloseFATXPartition(FATXPartition* partition) {
         partition = NULL;
     }
 }
+
+void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster){
+    u32 offset = entryNumber & 0x40;
+
+    FATXDIRINFO *dirEntry = (FATXDIRINFO *)&buffer[offset];
+    memset(&buffer[offset],0xff,0x40);
+
+    dirEntry->FilenameLength = strlen(entryName);
+    strncpy(dirEntry->Filename,entryName,42);
+    if(dirEntry->FilenameLength < 42)                           //If filename is not of 42 characters
+        dirEntry->Filename[dirEntry->FilenameLength] = 0xFF;    //Terminate it.
+    dirEntry->Attrib = FATX_FILEATTR_DIRECTORY;
+    dirEntry->FirstCluster = cluster;
+    dirEntry->FileSize = 0;
+    dirEntry->UpdateTime = 0x5153;
+    dirEntry->CreationTime = 0x5153;
+    dirEntry->AccessTime = 0x5153;
+    dirEntry->UpdateDate = 0x0442;
+    dirEntry->CreationDate = 0x0442;
+    dirEntry->AccessDate = 0x0442;
+
+    return;                                                     //buffer is updated, ready to be wrote on HDD.
+}
+
+bool FATXCheckAndSetBRFR(u8 drive){
+    u8 buffer[512], check[4];
+    u32 counter;
+    bool notFATX = false;                        //Drive assumed FATX already.
+
+    BootIdeReadSector(drive, check, 3, 0, 4);    //Read 4 bytes at offset 0 from 3rd sector.
+    if((check[0]=='B') && (check[1]=='R') && (check[2]=='F') && (check[3]=='R')){               //Drive is not FATX formatted yet.
+        notFATX = true;
+        memset(buffer, 0, 512);
+        for(counter = 0; counter < 1024; counter++){                                            //Set first 512KB of HDD to 0x00.
+            BootIdeWriteSector(drive, buffer, counter);                                         //512KB = 1024 sectors.
+        }
+        sprintf(buffer,"BRFR");
+        BootIdeWriteSector(drive, buffer, 3);       //Write "BRFR" string and number of boots(0) at absolute offset 0x600 (start of 3rd sector.
+    }
+    return notFATX;
+}

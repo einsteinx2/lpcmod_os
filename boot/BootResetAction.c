@@ -336,6 +336,22 @@ extern void BootResetAction ( void ) {
     nTempCursorMbrX=VIDEO_CURSOR_POSX;
     nTempCursorMbrY=VIDEO_CURSOR_POSY;
 
+    //Check for unformatted drives.
+    int i;
+    for (i=0; i<2; ++i) {
+        if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
+            if(FATXCheckAndSetBRFR(i)){
+                char * ConfirmDialogString;
+                sprintf(ConfirmDialogString, "            Format new drive (%s)?", i ? "slave":"master");
+                if(!ConfirmDialog(ConfirmDialogString, 1)){
+                    FormatDriveC(&i);
+                    FormatDriveE(&i);
+                    FormatCacheDrives(&i);
+                }
+            }
+        }
+    }
+
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     //inputLED();

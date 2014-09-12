@@ -7,7 +7,7 @@ char bypassConfirmDialog[100];        //Arbitrary length
 
 bool ConfirmDialog(char * string, bool critical) {
 
-    bool result = true;
+    bool result = true;         //True = cancel.
         
     if(!strncmp(string, bypassConfirmDialog, strlen(string)) && !critical) 
         return false;

@@ -377,7 +377,7 @@ typedef struct _OSsettings {
     u8    staticGateway[4];    //Only useful when useDHCP is set to false.
     u8    staticDNS1[4];        //Only useful when useDHCP is set to false.
     u8    staticDNS2[4];        //Only useful when useDHCP is set to false.
-}_OSsettings;                //For a total of 256 bytes
+}__attribute__((packed))_OSsettings;                //For a total of 256 bytes
 
 typedef struct _LCDsettings {
     u8 migrateLCD;            //Flag to indicate if settings in this struct should be carried over a OS update.
@@ -396,13 +396,13 @@ typedef struct _LCDsettings {
     char customString2[20];
     char customString3[20];
     u8 reserved1[161];
-}_LCDsettings;                //For a total of 256 bytes
+}__attribute__((packed))_LCDsettings;                //For a total of 256 bytes
 
 typedef struct _LPCmodSettings {
     _OSsettings OSsettings;
     _LCDsettings LCDsettings;
     EEPROMDATA bakeeprom;
-} _LPCmodSettings;
+}__attribute__((packed)) _LPCmodSettings;
 
 
 _LPCmodSettings LPCmodSettings;
@@ -433,7 +433,7 @@ typedef struct _xLCD {
     void    (*PrintLine4)(bool centered, char *text);
 
     void    (*ClearLine)(u8 line);
-} _xLCD;    //Will be know as xLCD from now on.
+}__attribute__((packed)) _xLCD;    //Will be know as xLCD from now on.
 
 _xLCD xLCD;
 

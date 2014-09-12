@@ -105,28 +105,50 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         else{
             res = BootReflash((void*)0x100000,0,hs->bios_len);
         }
-        if(res != 0) {
+        if (res > 0) {
             cromwellError();
             printk("\n\n\n\n\n           Flash failed...");
             switch(res){
                 case 1:
+                    printk("\n           ");
+                    cromwellError();
                     printk("\n           Unknown flash device.\n           Write-Protect is enabled?");
                     break;
                 case 2:
+                    printk("\n           ");
+                    cromwellError();
                     printk("\n           Cannot write to device");
                     break;
                 case 3:
+                    printk("\n           ");
+                    cromwellError();
                     printk("\n           File size error : %u", hs->bios_len);
                     break;
                 case 4:
+                    printk("\n           ");
+                    cromwellError();
                     printk("\n           Invalid XBlast OS update file");
                     break;
                 default:
+                    printk("\n           ");
+                    cromwellError();
                     printk("\n           Unknown error! Congrats, you're not supposed to be here.");
                     break;
             }
         }
+        else if(res == -2){
+            printk("\n\n\n\n\n\n\n\n\n\n\n           ");
+            cromwellWarning();
+            printk("\n           Erasing failed, please reflash.");
+        }
+        else if(res == -3){
+            printk("\n\n\n\n\n\n\n\n\n\n\n           ");
+            cromwellWarning();
+            printk("\n           Programming failed, please reflash.");
+        }
         else {
+            printk("\n           ");
+            cromwellSuccess();
             printk("\n           Flashing successful!!!");
         }
         FlashFooter();

@@ -52,7 +52,7 @@ void wipeEEPromUserSettings(void *whatever){
         return;
     memset(eeprom.Checksum3,0xFF,4);    //Checksum3 need to be 0xFFFFFFFF
     memset(eeprom.TimeZoneBias,0x00,0x5b);    //Start from Checksum3 address in struct and write 0x00 up to UNKNOWN6.
-    ToolHeader("Reset user EEProm settings succesful");
+    ToolHeader("Reset user EEProm settings successful");
     ToolFooter();
 }
 

@@ -24,6 +24,9 @@ bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, u32 dwPos, 
     else if(ee==EE_PROGRAM_UPDATE){
         DisplayProgressBar(dwPos,dwExtent,0xff00ff00);
     }
+    else if(ee==EE_VERIFY_UPDATE){
+         DisplayProgressBar(dwPos,dwExtent,0xffff00ff);
+    }
     return true;
 }
 
@@ -58,17 +61,19 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     // committed to reflash now
     while(fMore) {
         VIDEO_ATTR=0xffef37;
-        printk("\n\n\n\n\n\n\n\n\n\n\n\n\n           \2Updating XBlast OS...\n\2\n");
+        printk("\n\n\n\n\n\n\n\n\n           \2Updating XBlast OS...\n\2\n");
         VIDEO_ATTR=0xffffff;
         printk("           WARNING!\n"
                  "           Do not turn off your console during this process!\n"
                  "           Your console should automatically reboot when this\n"
                  "           is done.  However, if it does not, please manually\n"
                  "           do so by pressing the power button once the LED has\n"
-                 "           turned flashing amber (oxox)\n");
+                 "           turned flashing amber (oxox)\n"
+                 "           Flash chip: %s\n"
+                 "           ManID=0x%02x , DevID=0x%02x", of.m_szFlashDescription, of.m_bManufacturerId, of.m_bDeviceId);
 
         if(BootFlashEraseMinimalRegion(&of, SHOWGUI)) {
-            if(BootFlashProgram(&of, pbNewData, SHOWGUI)) {
+            if(BootFlashProgram(&of, pbNewData, SHOWGUI) > 0) {
                 fMore=false;  // good situation
 
                 // Set LED to oxox.
@@ -79,13 +84,13 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
             }
             else { // failed program
-                printk("           Programming failed...\n");
-                while(1);
+                //printk("           Programming failed...\n");
+                return -3;
             }
         }
         else { // failed erase
-            printk("           Erasing failed...\n");
-            while(1);
+            //printk("           Erasing failed...\n");
+            return -2;
         }
     }
     return 0; // keep compiler happy
@@ -118,10 +123,12 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     // committed to reflash now
     while(fMore) {
         VIDEO_ATTR=0xffef37;
-        printk("\n\n\n\n\n\n\n\n\n\n\n\n\n           \2Updating BIOS bank...\n\2\n");
+        printk("\n\n\n\n\n\n\n\n\n           \2Updating BIOS bank...\n\2\n");
         VIDEO_ATTR=0xffffff;
         printk("           WARNING!\n"
-                 "           Do not turn off your console during this process!\n");
+               "           Do not turn off your console during this process!\n\n\n"
+               "           Flash chip: %s\n"
+               "           ManID=0x%02x , DevID=0x%02x", of.m_szFlashDescription, of.m_bManufacturerId, of.m_bDeviceId);
         if(BootFlashEraseMinimalRegion(&of, SHOWGUI)) {
             if(BootFlashProgram(&of, pbNewData, SHOWGUI)) {
                 fMore=false;  // good situation
@@ -131,13 +138,11 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
             }
             else { // failed program
-                printk("           Programming flash bank failed...\n");
-                while(1);
+                return -3;
             }
         }
         else { // failed erase
-            printk("           Erasing flash bank failed...\n");
-            while(1);
+            return -2;
         }
     }
     return 0;
@@ -178,13 +183,11 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
             }
             else { // failed program
-                printk("           Programming persistent settings failed...\n");
-                while(1);
+                return -3;
             }
         }
         else { // failed erase
-            printk("           Erasing persistent settings failed...\n");
-            while(1);
+            return -2;
         }
     }
     return 0;

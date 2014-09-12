@@ -13,6 +13,7 @@
 #define CACHE2_SIZE    (0x2ee80000)
 #define CACHE3_SIZE    (0x2ee80000)
 
+#define SECTOR_EXTEND   (0x00EE8AB0L)
 #define SECTOR_STORE    (0x0055F400L)
 #define SECTOR_SYSTEM    (0x00465400L)
 #define SECTOR_CACHE1    (0x00000400L)
@@ -30,7 +31,7 @@
 #define FATX_PARTITION_HEADERSIZE 0x1000
 
 // FATX partition magic
-#define FATX_PARTITION_MAGIC 0x58544146
+#define FATX_PARTITION_MAGIC 0x58544146         //"FATX" in ASCII.
 
 // FATX chain table block size
 #define FATX_CHAINTABLE_BLOCKSIZE 4096
@@ -91,12 +92,37 @@ typedef struct {
 } FATXPartition;
 
 typedef struct {
+    u32 magic;
+    u32 volumeID;
+    u32 clusterSize;
+    u16 nbFAT;
+    u32 unknown;
+    u8  unused[0xfee];
+}__attribute__((packed)) PARTITIONHEADER;               //For a total of 4096(0x1000) bytes.
+
+typedef struct {
     char filename[FATX_FILENAME_MAX];
     int clusterId;
     u_int32_t fileSize;
     u_int32_t fileRead;
     u8 *buffer;
 } FATXFILEINFO;
+
+
+//Taken from ReactOS' vfat.h source and Xbox-Linux archives.
+typedef struct {
+    u8 FilenameLength;
+    u8 Attrib;
+    char Filename[42];
+    u32 FirstCluster;
+    u32 FileSize;
+    u16 UpdateTime;
+    u16 UpdateDate;
+    u16 CreationTime;
+    u16 CreationDate;
+    u16 AccessTime;
+    u16 AccessDate;
+}__attribute__((packed)) FATXDIRINFO;                   //For a total of 64 bytes.
 
 int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo);
@@ -113,5 +139,7 @@ void CloseFATXPartition(FATXPartition* partition);
 int FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int _FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo);
+void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster);
+bool FATXCheckAndSetBRFR(u8 drive);
 
 #endif //    _BootFATX_H_

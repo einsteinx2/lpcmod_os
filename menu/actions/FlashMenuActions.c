@@ -103,6 +103,16 @@ void FlashBiosFromHDD(void *fname) {
         cromwellWarning();
         printk("\n           Flashing aborted.");
     }
+    else if(res == -2){
+        printk("\n\n\n\n\n\n\n\n\n\n\n           ");
+        cromwellWarning();
+        printk("\n           Erasing failed, please reflash.");
+    }
+    else if(res == -3){
+        printk("\n\n\n\n\n\n\n\n\n\n\n           ");
+        cromwellWarning();
+        printk("\n           Programming failed, please reflash.");
+    }
     else {
         printk("\n           ");
         cromwellSuccess();

@@ -304,14 +304,28 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba, bool showGUI)
 
         if(pof->m_pbMemoryMappedStartAddress[dw]!=pba[dwSrc]) { // verify error
             if(showGUI){
-                if(pof->m_pcallbackFlash!=NULL)
+                if(pof->m_pcallbackFlash!=NULL){
                     if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_ERROR, dw, (((u32)pba[dwSrc])<<8) |pof->m_pbMemoryMappedStartAddress[dw]))
                         return false;
-                if(pof->m_pcallbackFlash!=NULL)
+
                     if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_END, 0, 0))
                         return false;
+
+                    if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_UPDATE, dwSrc, pof->m_dwLengthUsedArea)) {
+                        strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
+                        return false;
+                    }
+                }
             }
             return false;
+        }
+        else {
+            if(pof->m_pcallbackFlash!=NULL){
+                if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_UPDATE, dwSrc, pof->m_dwLengthUsedArea)) {
+                        strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
+                        return false;
+                }
+            }
         }
 
         dwLen--; dw++; dwSrc++;

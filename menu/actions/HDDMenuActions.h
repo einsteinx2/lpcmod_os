@@ -9,9 +9,17 @@
 #include "boot.h"
 #include "BootIde.h"
 #include "video.h"
+#include "BootFATX.h"
 
-void LockHDD(void *driveId);
-
-void UnlockHDD(void *driveId);
+void AssertLockUnlock(void *driveId);
+void LockHDD(int nIndexDrive);
+void UnlockHDD(int nIndexDrive);
 
 void DisplayHDDPassword(void *driveId);
+
+void FormatCacheDrives(void *driveId);
+void FormatDriveC(void *driveId);
+void FormatDriveE(void *driveId);
+
+void HDDMenuHeader(char *title);
+void HDDMenuFooter(void);

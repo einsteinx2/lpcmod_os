@@ -109,7 +109,7 @@ typedef struct _EEPROMDATA {
    u8        DVDPlaybackKitZone[4];            // 0xBC - 0xBF DVD Playback Kit Zone
 
    u8        UNKNOWN6[64];                // 0xC0 - 0xFF Unknown Codes / Memory timing data ?
-} EEPROMDATA;
+}__attribute__((packed)) EEPROMDATA;
 
 EEPROMDATA eeprom;
 
