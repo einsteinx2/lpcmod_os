@@ -341,13 +341,13 @@ void WriteLCDClearLine(u8 line) {
 
 void initialLCDPrint(void){
     if(LPCmodSettings.LCDsettings.customTextBoot == 1){
-        xLCD.PrintLine1(CENTERSTRING, "Test string 0");    
+        xLCD.PrintLine1(CENTERSTRING, LPCmodSettings.LCDsettings.customString0);
         xLCD.PrintLine2(CENTERSTRING, LPCmodSettings.LCDsettings.customString1);
         xLCD.PrintLine3(CENTERSTRING, LPCmodSettings.LCDsettings.customString2);
         xLCD.PrintLine4(CENTERSTRING, LPCmodSettings.LCDsettings.customString3);        
     }
     else{
         xLCD.Command(DISP_CLEAR);
-        xLCD.PrintLine1(CENTERSTRING, "XBlast mod V1");                //Remove or change after proven working.
+        xLCD.PrintLine1(CENTERSTRING, "XBlast mod V1");
     }
 }

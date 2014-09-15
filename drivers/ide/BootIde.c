@@ -495,7 +495,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         } else {
             if( (ba[0]=='B') && (ba[1]=='R') && (ba[2]=='F') && (ba[3]=='R') ) 
             {
-                tsaHarddiskInfo[nIndexDrive].m_enumDriveType=EDT_UNKNOWN;
+                tsaHarddiskInfo[nIndexDrive].m_enumDriveType=EDT_XBOXFS;
 #ifndef SILENT_MODE
                 printk(" - FATX", nIndexDrive);
 #endif

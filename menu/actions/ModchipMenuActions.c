@@ -232,11 +232,11 @@ void resetSettings(void *whatever){
 }
 
 void editBIOSName0(void *whatever){
-    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH);
+    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH,3);
 }
 
 void editBIOSName1(void *whatever){
-    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH);
+    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH,3);
 }
 
 

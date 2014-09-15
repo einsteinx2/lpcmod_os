@@ -196,7 +196,7 @@ BOOT_ETH_DIR = boot_eth/ethboot
 BOOT_ETH_SUBDIRS = ethsubdirs
 endif
 
-all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe vmlboot $(BOOT_ETH_DIR) cromwell.bin imagecompress 
+all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe vmlboot $(BOOT_ETH_DIR) cromwell.bin imagecompress addcrc
 
 ifeq ($(ETHERBOOT), yes)
 ethsubdirs: $(patsubst %, _dir_%, $(ETH_SUBDIRS))
@@ -269,4 +269,8 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	bin/imagebld -rom obj/2blimage.bin obj/image-crom.bin.tmp.gz image/cromwell.bin image/cromwell_1024.bin
 	bin/imagebld -xbe xbe/XBlast\ OS.xbe obj/image-crom.bin
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin 
-
+	
+addcrc:
+	./srec_cat $(TOPDIR)/image/cromwell.bin -binary -crop 0x0 0x3F000 -fill 0xFF 0x3F000 0x3FDFC -crc32-b-e 0x3FDFC -o $(TOPDIR)/crc.bin -binary
+	./srec_cat crc.bin -binary $(TOPDIR)/image/cromwell.bin -binary -exclude -within $(TOPDIR)/crc.bin -binary -o $(TOPDIR)/image/crcwell.bin -binary
+	rm crc.bin

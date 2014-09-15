@@ -10,6 +10,29 @@
 
 //#define FATX_INFO
 
+
+XboxPartitionTable BackupPartTbl =
+{
+    { '*', '*', '*', '*', 'P', 'A', 'R', 'T', 'I', 'N', 'F', 'O', '*', '*', '*', '*' },
+    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+    {
+        { { 'X', 'B', 'O', 'X', ' ', 'S', 'H', 'E', 'L', 'L', ' ', ' ', ' ', ' ', ' ', ' '}, PE_PARTFLAGS_IN_USE, SECTOR_STORE, SECTORS_STORE, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'D', 'A', 'T', 'A', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, PE_PARTFLAGS_IN_USE, SECTOR_SYSTEM, SECTORS_SYSTEM, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'G', 'A', 'M', 'E', ' ', 'S', 'W', 'A', 'P', ' ', '1'}, PE_PARTFLAGS_IN_USE, SECTOR_CACHE1, SECTORS_CACHE1, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'G', 'A', 'M', 'E', ' ', 'S', 'W', 'A', 'P', ' ', '2'}, PE_PARTFLAGS_IN_USE, SECTOR_CACHE2, SECTORS_CACHE2, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'G', 'A', 'M', 'E', ' ', 'S', 'W', 'A', 'P', ' ', '3'}, PE_PARTFLAGS_IN_USE, SECTOR_CACHE3, SECTORS_CACHE3, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'F', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, SECTOR_EXTEND, 0, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'G', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, SECTOR_EXTEND + 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+        { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
+    }
+};
+
 int checkForLastDirectoryEntry(unsigned char* entry) {
 
     // if the filename length byte is 0 or 0xff,
@@ -810,6 +833,7 @@ void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32
     return;                                                     //buffer is updated, ready to be wrote on HDD.
 }
 
+/*
 bool FATXCheckBRFR(u8 drive){
     u8 ba[512];
     if(BootIdeReadSector(drive, &ba[0], 0x03, 0, 512)) {
@@ -820,7 +844,7 @@ bool FATXCheckBRFR(u8 drive){
 //#endif
         return true;
     } else {
-	if(ba[0] = 'B' && ba[1] == 'R' && ba[2] == 'F' && ba[3] == 'R')
+	if(ba[0] == 'B' && ba[1] == 'R' && ba[2] == 'F' && ba[3] == 'R')
 		return true;
 	else{
 	    printk("\n\n\n           sector = 0x03,  content = %x , %x, %x, %x", ba[0],ba[1],ba[2],ba[3]);
@@ -829,6 +853,7 @@ bool FATXCheckBRFR(u8 drive){
     }
     return false;
 }
+*/
 
 void FATXSetBRFR(u8 drive){
 	u8 buffer[512];
@@ -840,7 +865,33 @@ void FATXSetBRFR(u8 drive){
         }
         sprintf(buffer,"BRFR");
         BootIdeWriteSector(drive, buffer, 3);       //Write "BRFR" string and number of boots(0) at absolute offset 0x600
+        tsaHarddiskInfo[drive].m_enumDriveType = EDT_XBOXFS;
 	
+}
+
+bool FATXCheckMBR(u8 driveId, XboxPartitionTable *p_table){
+    u8 *sourceTable = (u8 *)p_table;
+    u8 i;
+    u8 ba[512];
+    if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
+        printk("\n\n\n           FATXCheckMBR : Unable to read MBR sector\n");
+    }
+    else{
+        for(i = 0; i < 208; i++){               //first 208 bytes should always be identical for every Xbox.
+            if(ba[i] != sourceTable[i])         //Contains generic MBR header + standard Xbox Partitions (C,E,X,Y,Z)
+                return false;
+        }
+    }
+    return true;
+}
+
+void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table){
+    u8 *sourceTable = (u8 *)p_table;
+    BootIdeWriteSector(driveId,sourceTable,0);
+}
+
+void FATXSetInitMBR(u8 driveId){
+    BootIdeWriteSector(driveId,(u8 *)&BackupPartTbl,0);
 }
 
 void FATXFormatCacheDrives(int nIndexDrive){
@@ -849,7 +900,7 @@ void FATXFormatCacheDrives(int nIndexDrive){
     u32 whichpartition;
     PARTITIONHEADER *header;
 
-    if(!FATXCheckBRFR(nIndexDrive))
+    if(tsaHarddiskInfo[nIndexDrive].m_enumDriveType != EDT_XBOXFS)
     	FATXSetBRFR(nIndexDrive);
 
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
@@ -865,10 +916,8 @@ void FATXFormatCacheDrives(int nIndexDrive){
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
-    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
     chainmapBuf[1]=0xff;
-    chainmapBuf[2]=0xff;
-    chainmapBuf[3]=0xff;
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
@@ -903,8 +952,8 @@ void FATXFormatDriveC(int nIndexDrive){
     u32 counter;
     PARTITIONHEADER *header;
 
-    if(!FATXCheckBRFR(nIndexDrive))
-    	FATXSetBRFR(nIndexDrive);
+    if(tsaHarddiskInfo[nIndexDrive].m_enumDriveType != EDT_XBOXFS)
+        FATXSetBRFR(nIndexDrive);
 
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
     header = (PARTITIONHEADER *)headerBuf;
@@ -919,10 +968,8 @@ void FATXFormatDriveC(int nIndexDrive){
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
-    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
     chainmapBuf[1]=0xff;
-    chainmapBuf[2]=0xff;
-    chainmapBuf[3]=0xff;
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
@@ -954,8 +1001,8 @@ void FATXFormatDriveE(int nIndexDrive){
     u32 counter;
     PARTITIONHEADER *header;
 
-    if(!FATXCheckBRFR(nIndexDrive))
-    	FATXSetBRFR(nIndexDrive);
+    if(tsaHarddiskInfo[nIndexDrive].m_enumDriveType != EDT_XBOXFS)
+        FATXSetBRFR(nIndexDrive);
 
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
     header = (PARTITIONHEADER *)headerBuf;

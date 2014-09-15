@@ -28,6 +28,11 @@
 #define SECTORS_CACHE2    (SECTOR_CACHE3 - SECTOR_CACHE2)
 #define SECTORS_CACHE3    (SECTOR_SYSTEM - SECTOR_CACHE3)
 
+/*Taken from XBPartitionner*/
+// This flag (part of PARTITION_ENTRY.pe_flags) tells you whether/not a
+// partition is being used (whether/not drive G is active, for example)
+#define PE_PARTFLAGS_IN_USE 0x80000000
+
 
 // Size of FATX partition header
 #define FATX_PARTITION_HEADERSIZE 0x1000
@@ -93,7 +98,7 @@ typedef struct {
   
 } FATXPartition;
 
-typedef struct {
+typedef struct {                                        //Also known as FATX SuperBlock.
     u32 magic;
     u32 volumeID;
     u32 clusterSize;
@@ -126,6 +131,22 @@ typedef struct {
     u16 AccessDate;
 }__attribute__((packed)) FATXDIRINFO;                   //For a total of 64 bytes.
 
+typedef struct
+{
+        u8 Name[16];
+        u32 Flags;
+        u32 LBAStart;
+        u32 LBASize;
+        u32 Reserved;
+} XboxPartitionTableEntry;
+
+typedef struct
+{
+        u8   Magic[16];
+        char    Res0[32];
+        XboxPartitionTableEntry TableEntries[14];
+} XboxPartitionTable;
+
 int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo);
 void PrintFAXPartitionTable(int nDriveIndex);
@@ -142,8 +163,11 @@ int FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILE
 int _FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo);
 void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster);
-bool FATXCheckBRFR(u8 drive);
+//bool FATXCheckBRFR(u8 drive);
 void FATXSetBRFR(u8 drive);
+bool FATXCheckMBR(u8 driveId, XboxPartitionTable *p_table);
+void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table);
+void FATXSetInitMBR(u8 driveId);
 void FATXFormatCacheDrives(int nIndexDrive);
 void FATXFormatDriveC(int nIndexDrive);
 void FATXFormatDriveE(int nIndexDrive);

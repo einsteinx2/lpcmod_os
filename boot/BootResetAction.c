@@ -339,11 +339,30 @@ extern void BootResetAction ( void ) {
     u8 *videosavepage = malloc(FB_SIZE);
     memcpy(videosavepage,(void*)FB_START,FB_SIZE);
     
+    if(1){
+        if(!ConfirmDialog("                  Print MBR?", 1)){
+            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+            VIDEO_ATTR=0xffffff;
+            VIDEO_CURSOR_POSX=50;
+            VIDEO_CURSOR_POSY=50;
+            u8 tempBuffer[512];
+            BootIdeReadSector(0, tempBuffer, 0, 0, 512);
+            int j;
+            for(j = 0; j < 512; j++){
+                if((j%16) == 0){
+                    printk("\1\n       ");
+                }
+                printk("\1%02x ",tempBuffer[j]);
+            }
+            while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        }
+    }
+
     //Check for unformatted drives.
     int i;
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
-            if(!FATXCheckBRFR(i)){
+            if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
                 char * ConfirmDialogString;
                 sprintf(ConfirmDialogString, "               Format new drive (%s)?", i ? "slave":"master");
                 if(!ConfirmDialog(ConfirmDialogString, 1)){
@@ -351,6 +370,8 @@ extern void BootResetAction ( void ) {
                     FATXFormatDriveE(i);
                     FATXFormatCacheDrives(i);
                     FATXSetBRFR(i);
+                    if(!FATXCheckMBR)
+                        FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.
                 }
             }
         }

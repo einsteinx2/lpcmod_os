@@ -287,6 +287,14 @@ void IconMenu(void) {
                         }
                         xLCD.ClearLine(2); //Clear countdown line on screen since countdown is over and we're about to boot.
                     }
+                    else{
+                        xLCD.ClearLine(1);
+                        if(LPCmodSettings.LCDsettings.displayBIOSNameBoot == 1){
+                            xLCD.PrintLine3(CENTERSTRING, &(selectedIcon->szCaption[5])); //Skip "Boot " character string.
+                        }
+                        else
+                            xLCD.PrintLine3(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString2);
+                    }
                 }
             }
             //Icon selected - invoke function pointer.
