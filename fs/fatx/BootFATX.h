@@ -16,10 +16,12 @@
 #define SECTOR_EXTEND   (0x00EE8AB0L)
 #define SECTOR_STORE    (0x0055F400L)
 #define SECTOR_SYSTEM    (0x00465400L)
+#define SECTOR_CONFIG    (0x00000000L)
 #define SECTOR_CACHE1    (0x00000400L)
 #define SECTOR_CACHE2    (0x00177400L)
 #define SECTOR_CACHE3    (0x002EE400L)
 
+#define SECTORD_CONFIG	 (SECTOR_CACHE1 - SECTOR_CONFIG)
 #define SECTORS_STORE    (SECTOR_EXTEND - SECTOR_STORE)
 #define SECTORS_SYSTEM    (SECTOR_STORE  - SECTOR_SYSTEM)
 #define SECTORS_CACHE1    (SECTOR_CACHE2 - SECTOR_CACHE1)
@@ -127,7 +129,7 @@ typedef struct {
 int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo);
 void PrintFAXPartitionTable(int nDriveIndex);
-int FATXSignature(int nDriveIndex,unsigned int block,u8 *ba);
+int FATXSignature(int nDriveIndex,unsigned int block);
 FATXPartition *OpenFATXPartition(int nDriveIndex,unsigned int partitionOffset,
                         u_int64_t partitionSize);
 int FATXRawRead (int drive, int sector, unsigned long long byte_offset, int byte_len, char *buf);
@@ -140,6 +142,10 @@ int FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILE
 int _FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo);
 void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster);
-bool FATXCheckAndSetBRFR(u8 drive);
+bool FATXCheckBRFR(u8 drive);
+void FATXSetBRFR(u8 drive);
+void FATXFormatCacheDrives(int nIndexDrive);
+void FATXFormatDriveC(int nIndexDrive);
+void FATXFormatDriveE(int nIndexDrive);
 
 #endif //    _BootFATX_H_

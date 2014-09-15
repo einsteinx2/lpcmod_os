@@ -101,6 +101,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
             strcpy(pof->m_szAdditionalErrorInfo, "           Erase Aborted");
             return false;
         }
+
     while(dwLen) {
 
         if(pof->m_pbMemoryMappedStartAddress[dw]!=0xff) { // something needs erasing
@@ -201,10 +202,10 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
 
         dwLen--; dw++;
     }
-
     if(pof->m_pcallbackFlash!=NULL)
         if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_END, 0, 0))
-           return false;
+            return false;
+
     
     return true;
 }
@@ -244,10 +245,11 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
                     return false;
                 }
             }
-            else {
-                nCountProgramRetries=4;
-                dwLastProgramAddress=dw;
-            }
+        }
+        else {
+            nCountProgramRetries=4;
+            dwLastProgramAddress=dw;
+        }
 
 
             u8 b;
@@ -260,7 +262,6 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
                 b^=0x40;
 
             continue;  // does NOT advance yet
-        }
 
         if((dw&0x3ff)==0){
             if(pof->m_pcallbackFlash!=NULL)
@@ -272,7 +273,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
         dwLen--; dw++; dwSrc++;
     }
 
-    if(pof->m_pcallbackFlash!=NULL){
+    if(pof->m_pcallbackFlash!=NULL) {
         if(!(pof->m_pcallbackFlash)(pof, EE_PROGRAM_END, 0, 0))
             return false;
 
@@ -280,6 +281,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
         if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_START, 0, 0))
             return false;
     }
+                
     dw=pof->m_dwStartOffset;
     dwLen=pof->m_dwLengthUsedArea;
     dwSrc=0;
@@ -293,33 +295,26 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
 
                 if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_END, 0, 0))
                     return false;
-
-/*                    if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_UPDATE, dwSrc, pof->m_dwLengthUsedArea)) {
-                        strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
-                        return false;
-                    }
+/*
+                if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_UPDATE, dwSrc, pof->m_dwLengthUsedArea)) {
+                    strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
+                    return false;
+                }
 */
             }
             return false;
         }
-        else {
-            if(pof->m_pcallbackFlash!=NULL){
-            	if((dwLen % 1024) ==0){
-                    if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_UPDATE, dwSrc, pof->m_dwLengthUsedArea)) {
-                           strcpy(pof->m_szAdditionalErrorInfo, "           Program Aborted");
-                            return false;
-                    }
-                }
-            }
+        else if(pof->m_pcallbackFlash!=NULL){
+            	if((dwLen % 1024) == 0)
+                    (pof->m_pcallbackFlash)(pof, EE_VERIFY_UPDATE, dwSrc, pof->m_dwLengthUsedArea);
         }
 
         dwLen--; dw++; dwSrc++;
     }
 
-        if(pof->m_pcallbackFlash!=NULL)
-            if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_END, 0, 0))
-                return false;
-
+    if(pof->m_pcallbackFlash!=NULL)
+        if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_END, 0, 0))
+            return false;
     return true;
 }
 

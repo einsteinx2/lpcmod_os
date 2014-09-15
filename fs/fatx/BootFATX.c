@@ -208,8 +208,6 @@ int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo
 }
 
 void PrintFAXPartitionTable(int nDriveIndex) {
-
-    u8 ba[512];
     FATXPartition *partition = NULL;
     FATXFILEINFO fileinfo;
 
@@ -217,7 +215,7 @@ void PrintFAXPartitionTable(int nDriveIndex) {
     printk("FATX Partition Table:\n");
     memset(&fileinfo,0,sizeof(FATXFILEINFO));
 
-    if(FATXSignature(nDriveIndex,SECTOR_SYSTEM,ba)) {
+    if(FATXSignature(nDriveIndex,SECTOR_SYSTEM)) {
         VIDEO_ATTR=0xffe8e8e8;
         printk("Partition SYSTEM\n");
         partition = OpenFATXPartition(nDriveIndex,SECTOR_SYSTEM,SYSTEM_SIZE);
@@ -232,7 +230,8 @@ void PrintFAXPartitionTable(int nDriveIndex) {
     VIDEO_ATTR=0xffc8c8c8;
 }
 
-int FATXSignature(int nDriveIndex,unsigned int block,u8 *ba) {
+int FATXSignature(int nDriveIndex,unsigned int block) {
+    u8 ba[512];
 
     if(BootIdeReadSector(0, &ba[0], block, 0, 512)) {
         VIDEO_ATTR=0xffe8e8e8;
@@ -789,7 +788,7 @@ void CloseFATXPartition(FATXPartition* partition) {
 }
 
 void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster){
-    u32 offset = entryNumber & 0x40;
+    u32 offset = entryNumber * 0x40;
 
     FATXDIRINFO *dirEntry = (FATXDIRINFO *)&buffer[offset];
     memset(&buffer[offset],0xff,0x40);
@@ -811,20 +810,217 @@ void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32
     return;                                                     //buffer is updated, ready to be wrote on HDD.
 }
 
-bool FATXCheckAndSetBRFR(u8 drive){
-    u8 buffer[512], check[4];
-    u32 counter;
-    bool notFATX = false;                        //Drive assumed FATX already.
+bool FATXCheckBRFR(u8 drive){
+    u8 ba[512];
+    if(BootIdeReadSector(drive, &ba[0], 0x03, 0, 512)) {
+        VIDEO_ATTR=0xffe8e8e8;
+//#ifdef FATX_INFO
+        printk("\n\n\n           FATXCheckBRFR : Unable to read Boot block sector\n");
+        wait_ms(3000);
+//#endif
+        return true;
+    } else {
+	if(ba[0] = 'B' && ba[1] == 'R' && ba[2] == 'F' && ba[3] == 'R')
+		return true;
+	else{
+	    printk("\n\n\n           sector = 0x03,  content = %x , %x, %x, %x", ba[0],ba[1],ba[2],ba[3]);
+	    wait_ms(5000);
+	}
+    }
+    return false;
+}
 
-    BootIdeReadSector(drive, check, 3, 0, 4);    //Read 4 bytes at offset 0 from 3rd sector.
-    if((check[0]=='B') && (check[1]=='R') && (check[2]=='F') && (check[3]=='R')){               //Drive is not FATX formatted yet.
-        notFATX = true;
-        memset(buffer, 0, 512);
-        for(counter = 0; counter < 1024; counter++){                                            //Set first 512KB of HDD to 0x00.
-            BootIdeWriteSector(drive, buffer, counter);                                         //512KB = 1024 sectors.
+void FATXSetBRFR(u8 drive){
+	u8 buffer[512];
+	u32 counter;
+	
+	memset(buffer, 0, 512);
+        for(counter = 0; counter < 1024; counter++){             //Set first 512KB of HDD to 0x00.
+            BootIdeWriteSector(drive, buffer, counter);        //512KB = 1024 sectors.
         }
         sprintf(buffer,"BRFR");
-        BootIdeWriteSector(drive, buffer, 3);       //Write "BRFR" string and number of boots(0) at absolute offset 0x600 (start of 3rd sector.
+        BootIdeWriteSector(drive, buffer, 3);       //Write "BRFR" string and number of boots(0) at absolute offset 0x600
+	
+}
+
+void FATXFormatCacheDrives(int nIndexDrive){
+    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
+    u32 counter;
+    u32 whichpartition;
+    PARTITIONHEADER *header;
+
+    if(!FATXCheckBRFR(nIndexDrive))
+    	FATXSetBRFR(nIndexDrive);
+
+    memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
+    header = (PARTITIONHEADER *)headerBuf;
+    header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
+    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->clusterSize = 0x20;                 //16KB cluster, so 32 clusters per sector.
+    header->nbFAT = 1;                          //Always 1.
+    header->unknown = 0;                        //Always 0.
+    memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
+    //Partition header is ready. It's the same for all 3 cache drives.
+    //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
+    //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
+
+    memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
+    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+    chainmapBuf[1]=0xff;
+    chainmapBuf[2]=0xff;
+    chainmapBuf[3]=0xff;
+
+    memset(buffer,0xff,512);                    //Killer buffer.
+
+    //Cycle through all 3 cache partitions.
+    for(whichpartition = SECTOR_CACHE1; whichpartition <= SECTOR_CACHE3; whichpartition += (SECTOR_CACHE2 - SECTOR_CACHE1)){
+        // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
+        //4KB so 8*512 bytes sectors.
+        for (counter=whichpartition;counter<(whichpartition+8); counter++) {
+            BootIdeWriteSector(nIndexDrive,buffer,counter);
+        }
+        //Write Partition info on first sector. lest seven sectors of the first 0x1000 are already 0xff anyway.
+        BootIdeWriteSector(nIndexDrive,headerBuf,whichpartition);   //Partition header write.
+
+        // Cluster chain map area (from 512*8 = 0x1000 to 512*200 = 0x19000)
+        memset(buffer,0x0,512); //wipe. Unused cluster == 0
+        for (counter=(whichpartition+8);counter<(whichpartition+200); counter++) {
+            BootIdeWriteSector(nIndexDrive,buffer,counter);
+        }
+        //Write initial cluster chain map.
+        BootIdeWriteSector(nIndexDrive,chainmapBuf,whichpartition+8);   //Initial Cluster chain map write.
+
+        // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
+        memset(buffer,0xff,512);
+        for (counter=(whichpartition+200);counter<(whichpartition+200+(32*10)); counter++) {
+            BootIdeWriteSector(nIndexDrive,buffer,counter);
+        }
     }
-    return notFATX;
+}
+
+void FATXFormatDriveC(int nIndexDrive){
+    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
+    u32 counter;
+    PARTITIONHEADER *header;
+
+    if(!FATXCheckBRFR(nIndexDrive))
+    	FATXSetBRFR(nIndexDrive);
+
+    memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
+    header = (PARTITIONHEADER *)headerBuf;
+    header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
+    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->clusterSize = 0x20;                 //16KB cluster, so 32 clusters per sector.
+    header->nbFAT = 1;                          //Always 1.
+    header->unknown = 0;                        //Always 0.
+    memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
+    //Partition header is ready. It's the same for all 3 cache drives.
+    //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
+    //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
+
+    memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
+    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+    chainmapBuf[1]=0xff;
+    chainmapBuf[2]=0xff;
+    chainmapBuf[3]=0xff;
+
+    memset(buffer,0xff,512);                    //Killer buffer.
+
+    // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
+    //4KB so 8*512 bytes sectors.
+    for (counter=SECTOR_SYSTEM;counter<(SECTOR_SYSTEM+8); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+    //Write Partition info on first sector. lest seven sectors of the first 0x1000 are already 0xff anyway.
+    BootIdeWriteSector(nIndexDrive,headerBuf,SECTOR_SYSTEM);   //Partition header write.
+
+    // Cluster chain map area (from 512*8 = 0x1000 to 512*136 = 0x11000)
+    memset(buffer,0x0,512); //wipe. Unused cluster == 0
+    for (counter=(SECTOR_SYSTEM+8);counter<(SECTOR_SYSTEM+136); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+    //Write initial cluster chain map.
+    BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_SYSTEM+8);   //Initial Cluster chain map write.
+
+    // Root Dir (from 512*136 = 0x11000 )
+    memset(buffer,0xff,512);
+    for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+}
+
+void FATXFormatDriveE(int nIndexDrive){
+    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
+    u32 counter;
+    PARTITIONHEADER *header;
+
+    if(!FATXCheckBRFR(nIndexDrive))
+    	FATXSetBRFR(nIndexDrive);
+
+    memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
+    header = (PARTITIONHEADER *)headerBuf;
+    header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
+    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->clusterSize = 0x20;                 //16KB cluster, so 32 clusters per sector.
+    header->nbFAT = 1;                          //Always 1.
+    header->unknown = 0;                        //Always 0.
+    memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
+    //Partition header is ready. It's the same for all 3 cache drives.
+    //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
+    //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
+
+    memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
+    memset(chainmapBuf,0xff,4*7);               //We'll use clusters for base folders.
+    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+
+    memset(buffer,0xff,512);                    //Killer buffer.
+
+    // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
+    //4KB so 8*512 bytes sectors.
+    for (counter=SECTOR_STORE;counter<(SECTOR_STORE+8); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+    //Write Partition info on first sector. lest seven sectors of the first 0x1000 are already 0xff anyway.
+    BootIdeWriteSector(nIndexDrive,headerBuf,SECTOR_STORE);   //Partition header write.
+
+    // Cluster chain map area (from 512*8 = 0x1000 to 512*2456 = 0x133000)
+    memset(buffer,0x0,512); //wipe. Unused cluster == 0
+    for (counter=(SECTOR_STORE+8);counter<(SECTOR_STORE+2440); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+    //Write initial cluster chain map.
+    BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_STORE+8);   //Initial Cluster chain map write.
+
+    // Marked as used from 2440 to 2456.
+    memset(buffer,0xff,512);
+    for (counter=(SECTOR_STORE+2440);counter<(SECTOR_STORE+2456); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+
+    // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
+    // 10 cluster formatted.
+    for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*10)); counter++) {
+        BootIdeWriteSector(nIndexDrive,buffer,counter);
+    }
+
+    memset(buffer,0xff,512);
+    // TDATA Dir points to Cluster 2
+    FATXCreateDirectoryEntry(buffer,"TDATA",0,2);
+    // UDATA Dir points to Cluster 4
+    FATXCreateDirectoryEntry(buffer,"UDATA",1,4);
+    // CACHE Dir points to Cluster 6
+    FATXCreateDirectoryEntry(buffer,"CACHE",2,6);
+    BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456);   // Write Cluster 1(E: Root).
+
+    memset(buffer,0xff,512);
+    //CACHE dir is empty to 0xff everywhere.
+    BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32+32+32);   // Write Cluster 6(CACHE).
+    // FFFE0000 Dir points to Cluster 3
+    FATXCreateDirectoryEntry(buffer,"FFFE0000",0,3);
+    BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32);   // Write Cluster 2(TDATA).
+
+    memset(buffer,0xff,512);
+    // Music Dir points to Cluster 5
+    FATXCreateDirectoryEntry(buffer,"Music",0,5);
+    BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32);   // Write Cluster 4(UDATA).
 }

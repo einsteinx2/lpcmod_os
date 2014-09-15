@@ -335,22 +335,28 @@ extern void BootResetAction ( void ) {
 
     nTempCursorMbrX=VIDEO_CURSOR_POSX;
     nTempCursorMbrY=VIDEO_CURSOR_POSY;
-
+    // We save the complete framebuffer to memory (we restore at exit)
+    u8 *videosavepage = malloc(FB_SIZE);
+    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+    
     //Check for unformatted drives.
     int i;
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
-            if(FATXCheckAndSetBRFR(i)){
+            if(!FATXCheckBRFR(i)){
                 char * ConfirmDialogString;
-                sprintf(ConfirmDialogString, "            Format new drive (%s)?", i ? "slave":"master");
+                sprintf(ConfirmDialogString, "               Format new drive (%s)?", i ? "slave":"master");
                 if(!ConfirmDialog(ConfirmDialogString, 1)){
-                    FormatDriveC(&i);
-                    FormatDriveE(&i);
-                    FormatCacheDrives(&i);
+                    FATXFormatDriveC(i);
+                    FATXFormatDriveE(i);
+                    FATXFormatCacheDrives(i);
+                    FATXSetBRFR(i);
                 }
             }
         }
     }
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+    free(videosavepage);
 
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();

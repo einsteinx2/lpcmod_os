@@ -54,7 +54,7 @@ TEXTMENU *HDDMenuInit(void) {
             //FORMAT C: drive
             itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
             memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Format cache drives (%s)",i ? "slave":"master");
+            sprintf(itemPtr->szCaption,"Format C: drive (%s)",i ? "slave":"master");
             itemPtr->functionPtr= FormatDriveC;
             itemPtr->functionDataPtr = malloc(sizeof(int));
                 *(int*)itemPtr->functionDataPtr = i;
@@ -63,7 +63,7 @@ TEXTMENU *HDDMenuInit(void) {
             //FORMAT E: drive
             itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
             memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Format cache drives (%s)",i ? "slave":"master");
+            sprintf(itemPtr->szCaption,"Format E: drive (%s)",i ? "slave":"master");
             itemPtr->functionPtr= FormatDriveE;
             itemPtr->functionDataPtr = malloc(sizeof(int));
                 *(int*)itemPtr->functionDataPtr = i;
