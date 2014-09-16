@@ -113,7 +113,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         if(LPCmodSettings.LCDsettings.customTextBoot == 0){
             bool colon=false;
             char titleLine[xLCD.LineSize + 1];
-            xLCD.PrintLine2(JUSTIFYLEFT, menu->szCaption);
+            xLCD.PrintLine1(JUSTIFYLEFT, menu->szCaption);
             titleLine[xLCD.LineSize] = 0;                    //End of line character.
             memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
             for(i = 0; i < strlen(selectedItem->szCaption); i++){
@@ -128,14 +128,14 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
                     break;                                                //Leave the for-loop as no other character will be printed on this line.
                 }
             }
-            xLCD.PrintLine3(JUSTIFYLEFT, titleLine);
+            xLCD.PrintLine2(JUSTIFYLEFT, titleLine);
             if(colon) {
                 memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
                 u8 nbChars = strlen(selectedItem->szParameter);        //Number of character in string
                 for (i = 0; i < nbChars; i++){                //Justify text to the right of the screen.
                     titleLine[xLCD.LineSize - nbChars + i] = selectedItem->szParameter[i];
                 }
-                xLCD.PrintLine4(JUSTIFYLEFT, titleLine);
+                xLCD.PrintLine3(JUSTIFYLEFT, titleLine);
                 colon = false;
             }
             else{

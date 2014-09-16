@@ -56,8 +56,14 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
             return 4;  //Not valid XBlast OS image.
-        //printk("\n               CRC32 = 0x%08x", crc32buf((u32 *)pbNewData,0x3f000));
-        //while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        printk("\n              CRC32 = 0x%08X", crc32buf(pbNewData,0x3F000));
+        printk("\n             in BIN = 0x%08X", (u32 *)&pbNewData[0x3FDFC]);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        //FIXME: Enable once proven working.
+        /*
+        if(crc32buf(pbNewData,0x3F000) != (u32 *)&pbNewData[0x3FDFC])
+            return 5;
+         */
     }
     
     // committed to reflash now
@@ -154,6 +160,7 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 {
     OBJECT_FLASH of;
     bool fMore=true;
+    bool carryOn = false;
 
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -176,7 +183,11 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
     // committed to reflash now
     while(fMore) {
-        if(BootFlashEraseMinimalRegion(&of)) {
+        if(dwStartOffset <= 0x30000)                            //Need to erase 64KB
+                carryOn = BootFlashEraseMinimalRegion(&of);
+        else                                                    //Only 4KB then.
+                carryOn = BootFlashErase4KSector(&of);
+        if(carryOn){
             if(BootFlashProgram(&of, pbNewData)) {
                 fMore=false;  // good situation
 

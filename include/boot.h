@@ -427,10 +427,10 @@ typedef struct _xLCD {
 
     void    (*WriteIO)(u8 data, bool RS, u16 wait);
 
+    void    (*PrintLine0)(bool centered, char *text);
     void    (*PrintLine1)(bool centered, char *text);
     void    (*PrintLine2)(bool centered, char *text);
     void    (*PrintLine3)(bool centered, char *text);
-    void    (*PrintLine4)(bool centered, char *text);
 
     void    (*ClearLine)(u8 line);
 }__attribute__((packed)) _xLCD;    //Will be know as xLCD from now on.

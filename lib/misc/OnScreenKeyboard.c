@@ -11,7 +11,7 @@ char keymap[4][10] = {{'1','2','3','4','5','6','7','8','9','0'},
 char shiftkeymap[4][10] = {{'!','@','#','$','%','?','&','*','(',')'},
                            {'a','b','c','d','e','f','g','h','i','j'},
                            {'k','l','m','n','o','p','q','r','s','t'},
-                           {'u','v','w','x','y','z','<','>','\"',':'}};
+                           {'u','v','w','x','y','z','-','+','\"',':'}};
 
 void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
     bool exit = false;
@@ -23,7 +23,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
     bool shift = false;
     bool refresh = true;
     //Array of function pointers to let "line" value decide which function needs to be called.
-    void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3), (xLCD.PrintLine4)};
+    void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
     char * oldString;
     sprintf(oldString, "%s", string);	//Copy input string in case user cancels.
     textpos = strlen(string);           //Place cursor at end of entering string.

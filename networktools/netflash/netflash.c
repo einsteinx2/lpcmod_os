@@ -129,6 +129,11 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                     cromwellError();
                     printk("\n           Invalid XBlast OS update file");
                     break;
+                case 5:
+                    printk("\n           ");
+                    cromwellError();
+                    printk("\n           CRC mismatch.");
+                    break;
                 default:
                     printk("\n           ");
                     cromwellError();

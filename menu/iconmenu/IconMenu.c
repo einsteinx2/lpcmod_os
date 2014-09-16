@@ -158,6 +158,7 @@ void IconMenu(void) {
     u32 COUNT_start;
     int oldIconTimeRemain = 0;
     ICON *iconPtr=NULL;
+    char * bankString;
 
     extern int nTempCursorMbrX, nTempCursorMbrY; 
     int nTempCursorResumeX, nTempCursorResumeY ;
@@ -197,7 +198,7 @@ void IconMenu(void) {
     //Initial LCD string print.
     if(xLCD.enable == 1){
         if(LPCmodSettings.LCDsettings.customTextBoot == 0){
-            xLCD.PrintLine2(CENTERSTRING, selectedIcon->szCaption);
+            xLCD.PrintLine1(CENTERSTRING, selectedIcon->szCaption);
             xLCD.ClearLine(2);
             xLCD.ClearLine(3);
         }
@@ -278,22 +279,15 @@ void IconMenu(void) {
                     if(LPCmodSettings.LCDsettings.displayMsgBoot == 0){    //Other icons boots banks so LCD rules apply here.
                         xLCD.Command(DISP_CLEAR);
                     }
-                    else if(LPCmodSettings.LCDsettings.customTextBoot == 0){
-                        if(LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0){
-                            xLCD.ClearLine(1);
+                    else if(LPCmodSettings.LCDsettings.customTextBoot == 0){            //Do not use custom strings.
+                        if(LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0){        //Do not display bank name
+                            xLCD.ClearLine(1);                                          //Only top line will be left on LCD.
                         }
-                        else{
-                            xLCD.PrintLine2(CENTERSTRING, &(selectedIcon->szCaption[5])); //Skip "Boot " character string.
+                        else{                                                             //Display booting bank,
+                            LPCMod_LCDBankString(bankString, selectedIcon->bankID);
+                            xLCD.PrintLine1(CENTERSTRING, bankString);
                         }
                         xLCD.ClearLine(2); //Clear countdown line on screen since countdown is over and we're about to boot.
-                    }
-                    else{
-                        xLCD.ClearLine(1);
-                        if(LPCmodSettings.LCDsettings.displayBIOSNameBoot == 1){
-                            xLCD.PrintLine3(CENTERSTRING, &(selectedIcon->szCaption[5])); //Skip "Boot " character string.
-                        }
-                        else
-                            xLCD.PrintLine3(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString2);
                     }
                 }
             }
@@ -310,10 +304,11 @@ void IconMenu(void) {
             //LCD string print.
             if(xLCD.enable == 1){
                 if(LPCmodSettings.LCDsettings.customTextBoot == 0){
-                    xLCD.PrintLine2(CENTERSTRING, selectedIcon->szCaption);
+                    LPCMod_LCDBankString(bankString, selectedIcon->bankID);
+                    xLCD.PrintLine1(CENTERSTRING, bankString);
                     if(temp != 0) {
                         sprintf(timeoutString, "Auto boot in %ds", iconTimeRemain);
-                        xLCD.PrintLine3(CENTERSTRING, timeoutString);
+                        xLCD.PrintLine2(CENTERSTRING, timeoutString);
                     }
                     else {
                         xLCD.ClearLine(2);

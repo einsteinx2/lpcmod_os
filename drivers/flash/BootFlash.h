@@ -66,6 +66,7 @@ void BootReflashAndReset_RAM(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 
 bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft );
 bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof);
+bool BootFlashErase4KSector( OBJECT_FLASH *pof);
 bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba);
 
 void WriteToIO(u16 address, u8 data);
@@ -81,3 +82,4 @@ void BootFlashSaveOSSettings(void);
 
 
 int assertOSUpdateValidInput(u8 * inputFile);
+bool assert4KBErase(OBJECT_FLASH *pof);

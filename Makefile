@@ -197,7 +197,7 @@ BOOT_ETH_DIR = boot_eth/ethboot
 BOOT_ETH_SUBDIRS = ethsubdirs
 endif
 
-all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe vmlboot $(BOOT_ETH_DIR) cromwell.bin imagecompress addcrc
+all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe vmlboot $(BOOT_ETH_DIR) cromwell.bin imagecompress
 
 ifeq ($(ETHERBOOT), yes)
 ethsubdirs: $(patsubst %, _dir_%, $(ETH_SUBDIRS))
@@ -227,6 +227,7 @@ clean:
 	rm -f $(TOPDIR)/xbe/*.elf
 	rm -f $(TOPDIR)/image/*.bin
 	rm -f $(TOPDIR)/bin/imagebld*
+	rm -f $(TOPDIR)/bin/crcbin*
 	rm -f $(TOPDIR)/boot_vml/disk/vmlboot
 	rm -f boot_eth/ethboot
 	mkdir -p $(TOPDIR)/xbe 
@@ -263,15 +264,16 @@ bin/imagebld: lib/imagebld/imagebld.c lib/crypt/sha1.c lib/crypt/md5.c
 	gcc -Ilib/crypt -o bin/md5.o -c lib/crypt/md5.c
 	gcc -Ilib/crypt -o bin/imagebld.o -c lib/imagebld/imagebld.c
 	gcc -o bin/imagebld bin/imagebld.o bin/sha1.o bin/md5.o
+
+# Same here.
+bin/crcbin: lib/crcbin/crcbin.c
+	gcc -o bin/crcbin.o -c lib/crcbin/crcbin.c
+	gcc -o bin/crcbin bin/crcbin.o obj/crc32.o
 	
-imagecompress: obj/image-crom.bin bin/imagebld
+imagecompress: obj/image-crom.bin bin/imagebld bin/crcbin
 	cp obj/image-crom.bin obj/image-crom.bin.tmp
 	gzip -9 obj/image-crom.bin.tmp
 	bin/imagebld -rom obj/2blimage.bin obj/image-crom.bin.tmp.gz image/cromwell.bin image/cromwell_1024.bin
 	bin/imagebld -xbe xbe/XBlast\ OS.xbe obj/image-crom.bin
-	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin 
-	
-addcrc:
-	srec_cat $(TOPDIR)/image/cromwell.bin -binary -crop 0x0 0x3F000 -fill 0xFF 0x3F000 0x3FDFC -crc32-l-e 0x3FDFC -o $(TOPDIR)/crc.bin -binary
-	srec_cat crc.bin -binary $(TOPDIR)/image/cromwell.bin -binary -exclude -within $(TOPDIR)/crc.bin -binary -o $(TOPDIR)/image/crcwell.bin -binary
-	rm crc.bin
+	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin f
+	bin/crcbin image/cromwell.bin image/crcwell.bin

@@ -149,7 +149,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
 
                 pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
                 pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
-                pof->m_pbMemoryMappedStartAddress[dw]=0x30; // erase the block containing the non 0xff guy
+                pof->m_pbMemoryMappedStartAddress[dw]=0x30; // erase the sector containing the non 0xff guy
 
                 b=pof->m_pbMemoryMappedStartAddress[dw];
                 dwCountTries=0;
@@ -206,6 +206,67 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
         if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_END, 0, 0))
            return false;
     
+    return true;
+}
+
+bool BootFlashErase4KSector( OBJECT_FLASH *pof)
+{
+    u32 dw=pof->m_dwStartOffset;
+    u32 dwLen=0x1000;                   //4KB length
+    u32 dwLastEraseAddress=0xffffffff;
+
+    pof->m_szAdditionalErrorInfo[0]='\0';
+
+    if(pof->m_pcallbackFlash!=NULL)
+        if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_START, 0, 0)) {
+            strcpy(pof->m_szAdditionalErrorInfo, "           Erase Aborted");
+            return false;
+        }
+    while(dwLen) {
+
+        if(pof->m_pbMemoryMappedStartAddress[dw]!=0xff) { // something needs erasing
+
+            u8 b;
+
+            u32 dwCountTries=0;
+
+            pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
+            pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
+            pof->m_pbMemoryMappedStartAddress[0x5555]=0x80;
+
+            pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
+            pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
+            pof->m_pbMemoryMappedStartAddress[dw]=0x30; // erase the block containing the non 0xff guy
+
+            b=pof->m_pbMemoryMappedStartAddress[dw];  // waits until b6 is no longer toggling on each read
+            while((pof->m_pbMemoryMappedStartAddress[dw]&0x40)!=(b&0x40)) {
+                dwCountTries++; b^=0x40;
+            }
+
+            if(dwCountTries<3) { // <3 means never entered busy mode - block erase code 0x50 not supported.
+                strcpy(pof->m_szAdditionalErrorInfo, "           Sector-Erase not supported.");
+                return false;
+            }
+           continue; // retry reading this address without moving on
+        }
+
+            // update callback every 1K addresses
+        if((dw&0x3ff)==0) {
+            if(pof->m_pcallbackFlash!=NULL) {
+                if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_UPDATE, dw-pof->m_dwStartOffset, pof->m_dwLengthUsedArea)) {
+                    strcpy(pof->m_szAdditionalErrorInfo, "           Erase Aborted");
+                    return false;
+                }
+            }
+        }
+
+        dwLen--; dw++;
+    }
+
+    if(pof->m_pcallbackFlash!=NULL)
+        if(!(pof->m_pcallbackFlash)(pof, EE_ERASE_END, 0, 0))
+           return false;
+
     return true;
 }
 
@@ -373,26 +434,31 @@ void BootFlashSaveOSSettings(void) {
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
-        if(fHasHardware == SYSCON_ID_V1)                //XBlast Lite V1 has 4KB-sector flash
-            blocksize = 4 * 1024;                       //4KB allocation
-        else                                            //Other devices, we assume 64KB sectors
-            blocksize = 64 * 1024;
-
-        lastBlock = (u8 *)malloc(blocksize);
-    
-        if(currentFlashBank != BNKOS)
-            switchBank(BNKOS);
-
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
+            if(assert4KBErase(&of)){                //XBlast Lite V1 has 4KB-sector erase capability
+                blocksize = 4 * 1024;                       //4KB allocation
+                LEDOff(NULL);                          //XXX:Debug, remove.
+            }
+            else {                                           //Other devices, we assume 64KB block erasing only
+                blocksize = 64 * 1024;
+            }
+
+            lastBlock = (u8 *)malloc(blocksize);
+    
+            if(currentFlashBank != BNKOS)              //Just to be sure, can only be true on a XBlast mod.
+                switchBank(BNKOS);
+
+
             memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
+
             if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
                 memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
                 BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
                 //LEDRed(NULL);        //Here only to debug everytime flash is updated.
                 //wait_ms(3000);        //Will hang with solid Red LED for 3 seconds.
             }
+            free(lastBlock);
         }
-        free(lastBlock);
     }
 }
 
@@ -412,4 +478,30 @@ int assertOSUpdateValidInput(u8 * inputFile) {
     //Passed the loop asserts image is valid OS image.
     result = 0;
     return result;
+}
+
+bool assert4KBErase(OBJECT_FLASH *pof){
+    switch(pof->m_bManufacturerId){
+        case 0xbf:                      //SST
+            switch(pof->m_bDeviceId){
+                case 0x4c:              //49LF devices are good.
+                case 0x51:
+                case 0x52:
+                case 0x57:
+                case 0x5a:
+                case 0x5b:
+                case 0x60:
+                case 0x61:
+                    return true;
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+            break;
+        default:
+            return false;
+            break;
+    }
+    return false;
 }

@@ -73,8 +73,11 @@ void editCustomString0(void *whatever){
     }
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0, LPCmodSettings.LCDsettings.lineLength, line);
     if(LPCmodSettings.LCDsettings.customTextBoot){
-        xLCD.PrintLine1(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString0);
+        xLCD.PrintLine0(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString0);
     }
+//    else{
+//        xLCD.ClearLine(line);
+//    }
 }
 
 void editCustomString1(void *whatever){
@@ -84,8 +87,11 @@ void editCustomString1(void *whatever){
     }
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString1, LPCmodSettings.LCDsettings.lineLength, line);
     if(LPCmodSettings.LCDsettings.customTextBoot){
-        xLCD.PrintLine2(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString1);
+        xLCD.PrintLine1(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString1);
     }
+//    else{
+//        xLCD.ClearLine(line);
+//    }
 }
 
 void editCustomString2(void *whatever){
@@ -95,14 +101,20 @@ void editCustomString2(void *whatever){
     }
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString2, LPCmodSettings.LCDsettings.lineLength, line);
     if(LPCmodSettings.LCDsettings.customTextBoot){
-        xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString2);
+        xLCD.PrintLine2(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString2);
     }
+//    else{
+//        xLCD.ClearLine(line);
+//    }
 }
 
 void editCustomString3(void *whatever){
     u8 line = 3;
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength, line);
     if(LPCmodSettings.LCDsettings.customTextBoot){
-        xLCD.PrintLine4(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
+        xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
     }
+//    else{
+//        xLCD.ClearLine(line);
+//    }
 }

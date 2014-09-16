@@ -131,22 +131,61 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Bank0(512KB) BIOS name");
     itemPtr->szParameter[0] = 0;
-    itemPtr->functionPtr= editBIOSName0;
-    itemPtr->functionDataPtr= NULL;
+    itemPtr->functionPtr= editBIOSName;
+    itemPtr->functionDataPtr= malloc(sizeof(char));
+        *(char*)itemPtr->functionDataPtr = BNK512;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Bank1(256KB) BIOS name");
-    itemPtr->szParameter[0] = 0;
-    itemPtr->functionPtr= editBIOSName1;
-    itemPtr->functionDataPtr= NULL;
+    itemPtr->functionDataPtr= malloc(sizeof(char));
+        *(char*)itemPtr->functionDataPtr = BNK256;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){    //TSOP control active
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"TSOP bank0 name");
+        itemPtr->functionDataPtr= malloc(sizeof(char));
+                *(char*)itemPtr->functionDataPtr = BNKTSOP;
+        TextMenuAddItem(menuPtr, itemPtr);
+
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"TSOP bank1 name");
+        itemPtr->functionDataPtr= malloc(sizeof(char));
+                *(char*)itemPtr->functionDataPtr = BNKTSOP1;
+        TextMenuAddItem(menuPtr, itemPtr);
+
+        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02) {    //Split 4-Way
+            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption,"TSOP bank2 name");
+            itemPtr->functionDataPtr= malloc(sizeof(char));
+                *(char*)itemPtr->functionDataPtr = BNKTSOP2;
+            TextMenuAddItem(menuPtr, itemPtr);
+
+            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption,"TSOP bank3 name");
+            itemPtr->functionDataPtr= malloc(sizeof(char));
+                *(char*)itemPtr->functionDataPtr = BNKTSOP3;
+            TextMenuAddItem(menuPtr, itemPtr);
+        }
+    }
+    else{
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"TSOP BIOS name");
+        itemPtr->functionDataPtr= malloc(sizeof(char));
+            *(char*)itemPtr->functionDataPtr = BNKTSOP;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Reset all settings");
-    itemPtr->szParameter[0] = 0;
     itemPtr->functionPtr= resetSettings;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);

@@ -16,4 +16,6 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 
 u16 LPCMod_HW_rev(void);
 
+void LPCMod_LCDBankString(char * string, u8 bankID);
+
 #endif // _BootLPCMod_H_

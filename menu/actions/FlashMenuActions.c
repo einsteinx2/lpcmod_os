@@ -79,7 +79,7 @@ void FlashBiosFromHDD(void *fname) {
             case 2:
                 printk("\n           ");
                 cromwellError();
-                printk("\n           Cannot write to device");
+                printk("\n           Cannot write to device.");
                 break;
             case 3:
                 printk("\n           ");
@@ -89,7 +89,12 @@ void FlashBiosFromHDD(void *fname) {
             case 4:
                 printk("\n           ");
                 cromwellError();
-                printk("\n           Invalid XBlast OS update file");
+                printk("\n           Invalid XBlast OS update file.");
+                break;
+            case 5:
+                printk("\n           ");
+                cromwellError();
+                printk("\n           CRC mismatch.");
                 break;
             default:
                 printk("\n           ");

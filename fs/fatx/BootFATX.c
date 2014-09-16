@@ -945,8 +945,6 @@ void FATXFormatCacheDrives(int nIndexDrive){
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
     }
-    if(!FATXCheckMBR(nIndexDrive))
-        FATXSetInitMBR(nIndexDrive);
 }
 
 void FATXFormatDriveC(int nIndexDrive){
@@ -996,9 +994,6 @@ void FATXFormatDriveC(int nIndexDrive){
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
-    
-    if(!FATXCheckMBR(nIndexDrive))
-        FATXSetInitMBR(nIndexDrive);
 }
 
 void FATXFormatDriveE(int nIndexDrive){
@@ -1075,7 +1070,4 @@ void FATXFormatDriveE(int nIndexDrive){
     // Music Dir points to Cluster 5
     FATXCreateDirectoryEntry(buffer,"Music",0,5);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32);   // Write Cluster 4(UDATA).
-    
-    if(!FATXCheckMBR(nIndexDrive))
-        FATXSetInitMBR(nIndexDrive);
 }

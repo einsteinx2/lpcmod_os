@@ -1,7 +1,5 @@
 /* Crc - 32 BIT ANSI X3.66 CRC checksum files */
 
-//#include "crc32.h"
-
 
 /**********************************************************************\
 |* Demonstration program to compute the 32-bit CRC used as the frame  *|
@@ -62,10 +60,9 @@
 /*     hardware you could probably optimize the shift in assembler by  */
 /*     using byte-swap instructions.                                   */
 
-#define UPDC32(octet, crc) (crc_32_tab[((crc) ^ (octet)) & 0xff] ^ ((crc) >> 8))
+unsigned int UPDC32(unsigned char octet, unsigned int crc);
 
-
-static unsigned int crc_32_tab[256] = { /* CRC polynomial 0xedb88320 */
+static unsigned int table[256] = { /* CRC polynomial 0xedb88320 */
 0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -111,18 +108,23 @@ static unsigned int crc_32_tab[256] = { /* CRC polynomial 0xedb88320 */
 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-int crc32buf(unsigned int *buf, int len)
+unsigned int crc32buf(unsigned char *buf, int len)
 {
-      unsigned int oldcrc32;
+      unsigned int state, nbytes;
 
-      oldcrc32 = 0xFFFFFFFF;
+      state = 0xFFFFFFFF;
 
 
-      for ( ; len; --len, ++buf)
-      {
-            oldcrc32 = UPDC32(*buf, oldcrc32);
+      for(nbytes = 0; nbytes < len; nbytes++){
+              state = UPDC32(buf[nbytes], state);
       }
 
-      return ~oldcrc32;
+      return state;
       
+}
+
+unsigned int UPDC32(unsigned char octet, unsigned int crc)
+{
+    // The original code had this as a #define
+    return table[(crc ^ octet) & 0xFF] ^ (crc >> 8);
 }

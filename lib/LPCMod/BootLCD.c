@@ -20,10 +20,10 @@ void BootLCDInit(void){
     xLCD.Command = WriteLCDCommand;
     xLCD.Data = WriteLCDData;
     xLCD.WriteIO = WriteLCDIO;
+    xLCD.PrintLine0 = WriteLCDLine0;
     xLCD.PrintLine1 = WriteLCDLine1;
     xLCD.PrintLine2 = WriteLCDLine2;
     xLCD.PrintLine3 = WriteLCDLine3;
-    xLCD.PrintLine4 = WriteLCDLine4;
     xLCD.ClearLine = WriteLCDClearLine;
 }
 
@@ -152,7 +152,7 @@ void WriteLCDIO(u8 data, bool RS, u16 wait){
     wait_us(wait);
 }
 
-void WriteLCDLine1(bool centered, char *lineText){
+void WriteLCDLine0(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
 
@@ -177,7 +177,7 @@ void WriteLCDLine1(bool centered, char *lineText){
     }
 }
 
-void WriteLCDLine2(bool centered, char *lineText){
+void WriteLCDLine1(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
 
@@ -201,7 +201,7 @@ void WriteLCDLine2(bool centered, char *lineText){
     }
 }
 
-void WriteLCDLine3(bool centered, char *lineText){
+void WriteLCDLine2(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
 
@@ -224,7 +224,7 @@ void WriteLCDLine3(bool centered, char *lineText){
     }
 }
 
-void WriteLCDLine4(bool centered, char *lineText){
+void WriteLCDLine3(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
 
@@ -326,7 +326,7 @@ void WriteLCDSetPos(u8 pos, u8 line) {
 
 void WriteLCDClearLine(u8 line) {
     //Array of function pointers to let "line" value decide which function needs to be called.
-    void (*WriteLineFctPtr[4])(bool centered, char *lineText) = {(xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3), (xLCD.PrintLine4)};
+    void (*WriteLineFctPtr[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
 
     char empty[xLCD.LineSize];
     
@@ -341,10 +341,10 @@ void WriteLCDClearLine(u8 line) {
 
 void initialLCDPrint(void){
     if(LPCmodSettings.LCDsettings.customTextBoot == 1){
-        xLCD.PrintLine1(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString0);
-        xLCD.PrintLine2(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString1);
-        xLCD.PrintLine3(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString2);
-        xLCD.PrintLine4(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString3);        
+        xLCD.PrintLine0(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString0);
+        xLCD.PrintLine1(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString1);
+        xLCD.PrintLine2(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString2);
+        xLCD.PrintLine3(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString3);
     }
     else{
         xLCD.Command(DISP_CLEAR);

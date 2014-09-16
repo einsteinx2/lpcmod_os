@@ -90,7 +90,7 @@ TEXTMENU *LCDMenuInit(void) {
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Display custom text at boot : ");
+    sprintf(itemPtr->szCaption,"Display custom text : ");
     sprintf(itemPtr->szParameter, "%s", LPCmodSettings.LCDsettings.customTextBoot? "Yes" : "No");
     itemPtr->functionPtr= LCDToggledisplayCustomTextBoot;
     itemPtr->functionDataPtr= itemPtr->szParameter;

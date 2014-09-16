@@ -231,12 +231,27 @@ void resetSettings(void *whatever){
     QuickReboot();
 }
 
-void editBIOSName0(void *whatever){
-    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH, 3);
-}
-
-void editBIOSName1(void *whatever){
-    OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH, 3);
+void editBIOSName(void *bankID){
+    switch(*(u8 *)bankID){
+        case BNK512:
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH, 3);
+            break;
+        case BNK256:
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH, 3);
+            break;
+        case BNKTSOP:
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName2, BIOSNAMEMAXLENGTH, 3);
+            break;
+        case BNKTSOP1:
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName3, BIOSNAMEMAXLENGTH, 3);
+            break;
+        case BNKTSOP2:
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName4, BIOSNAMEMAXLENGTH, 3);
+            break;
+        default:
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName5, BIOSNAMEMAXLENGTH, 3);
+            break;
+        }
 }
 
 

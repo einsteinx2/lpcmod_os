@@ -24,8 +24,7 @@ void toggleQuickboot(void * itemStr);
 
 void resetSettings(void *whatever);
 
-void editBIOSName0(void *whatever);
-void editBIOSName1(void *whatever);
+void editBIOSName(void *bankID);
 
 void toggleTSOPControl(void * itemPtr);
 void toggleTSOPSplit(void * itemPtr);

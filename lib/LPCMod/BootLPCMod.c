@@ -55,3 +55,61 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 u16 LPCMod_HW_rev(void){
     return ReadFromIO(SYSCON_REG);
 }
+
+void LPCMod_LCDBankString(char * string, u8 bankID){
+    switch(bankID){
+        case BNK512:
+            if(LPCmodSettings.OSsettings.biosName0[0] != 0){
+                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName0);
+            }
+            else{
+                sprintf(string, "%s", "512KB bank");
+            }
+            break;
+        case BNK256:
+            if(LPCmodSettings.OSsettings.biosName1[0] != 0){
+                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName1);
+            }
+            else{
+                sprintf(string, "%s", "256KB bank");
+            }
+            break;
+        case BNKTSOP:
+            if(LPCmodSettings.OSsettings.biosName2[0] != 0){
+                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName2);
+            }
+            else{
+                if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)
+                    sprintf(string, "%s", "OnBoard Bank0");
+                else
+                    sprintf(string, "%s", "OnBoard BIOS");
+            }
+            break;
+        case BNKTSOP1:
+            if(LPCmodSettings.OSsettings.biosName3[0] != 0){
+                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName3);
+            }
+            else{
+                sprintf(string, "%s", "OnBoard Bank1");
+            }
+            break;
+        case BNKTSOP2:
+            if(LPCmodSettings.OSsettings.biosName3[0] != 0){
+                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName4);
+            }
+            else{
+                sprintf(string, "%s", "OnBoard Bank2");
+            }
+            break;
+        default:
+            if(LPCmodSettings.OSsettings.biosName4[0] != 0){
+                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName5);
+            }
+            else{
+                sprintf(string, "%s", "OnBoard Bank3");
+            }
+            break;
+    }
+
+
+}
