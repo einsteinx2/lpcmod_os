@@ -869,8 +869,8 @@ void FATXSetBRFR(u8 drive){
 	
 }
 
-bool FATXCheckMBR(u8 driveId, XboxPartitionTable *p_table){
-    u8 *sourceTable = (u8 *)p_table;
+bool FATXCheckMBR(u8 driveId){
+    u8 *sourceTable = (u8 *)&BackupPartTbl;
     u8 i;
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
@@ -945,6 +945,8 @@ void FATXFormatCacheDrives(int nIndexDrive){
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
     }
+    if(!FATXCheckMBR(nIndexDrive))
+        FATXSetInitMBR(nIndexDrive);
 }
 
 void FATXFormatDriveC(int nIndexDrive){
@@ -994,6 +996,9 @@ void FATXFormatDriveC(int nIndexDrive){
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
+    
+    if(!FATXCheckMBR(nIndexDrive))
+        FATXSetInitMBR(nIndexDrive);
 }
 
 void FATXFormatDriveE(int nIndexDrive){
@@ -1070,4 +1075,7 @@ void FATXFormatDriveE(int nIndexDrive){
     // Music Dir points to Cluster 5
     FATXCreateDirectoryEntry(buffer,"Music",0,5);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32);   // Write Cluster 4(UDATA).
+    
+    if(!FATXCheckMBR(nIndexDrive))
+        FATXSetInitMBR(nIndexDrive);
 }

@@ -165,7 +165,7 @@ int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo);
 void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster);
 //bool FATXCheckBRFR(u8 drive);
 void FATXSetBRFR(u8 drive);
-bool FATXCheckMBR(u8 driveId, XboxPartitionTable *p_table);
+bool FATXCheckMBR(u8 driveId);
 void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table);
 void FATXSetInitMBR(u8 driveId);
 void FATXFormatCacheDrives(int nIndexDrive);

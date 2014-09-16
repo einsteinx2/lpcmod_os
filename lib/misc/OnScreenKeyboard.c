@@ -13,9 +13,9 @@ char shiftkeymap[4][10] = {{'!','@','#','$','%','?','&','*','(',')'},
                            {'k','l','m','n','o','p','q','r','s','t'},
                            {'u','v','w','x','y','z','<','>','\"',':'}};
 
-bool OnScreenKeyboard(char * string, u8 maxLength, u8 LCDLine) {
+void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
     bool exit = false;
-    bool result = false;        //Start assuming user will not change string.
+//    bool result = false;        //Start assuming user will not change string.
     u8 cursorposX = 0;
     u8 cursorposY = 0;
     u8 textpos = 0;
@@ -24,7 +24,7 @@ bool OnScreenKeyboard(char * string, u8 maxLength, u8 LCDLine) {
     bool refresh = true;
     //Array of function pointers to let "line" value decide which function needs to be called.
     void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3), (xLCD.PrintLine4)};
-    char * oldString, selectedKeymap;
+    char * oldString;
     sprintf(oldString, "%s", string);	//Copy input string in case user cancels.
     textpos = strlen(string);           //Place cursor at end of entering string.
     
@@ -35,7 +35,7 @@ bool OnScreenKeyboard(char * string, u8 maxLength, u8 LCDLine) {
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
             printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
-            VIDEO_ATTR=0xffffff00;                	  //Orangeish
+            VIDEO_ATTR=0xffff9f00;                	  //Orangeish
             VIDEO_CURSOR_POSX=75;
             VIDEO_CURSOR_POSY=50;
             printk("\n\n\n\n\2                    %s", string);
@@ -49,30 +49,28 @@ bool OnScreenKeyboard(char * string, u8 maxLength, u8 LCDLine) {
                     else
                         VIDEO_ATTR=0xffffffff;                  //the rest in white.
                     if(shift){
-            	        printk("\2%s    ",shiftkeymap[y][x]);
+            	        printk("\2%c    ",shiftkeymap[y][x]);
                     }
                     else {
-                        printk("\2%s    ",keymap[y][x]);
+                        printk("\2%c    ",keymap[y][x]);
                     }
                 }
             }
+            LEDRed(NULL);
             if(xLCD.enable == 1){
-                (*Printline[LCDLine])(JUSTIFYLEFT, string);
+                (*Printline[line])(JUSTIFYLEFT, string);
             }
             refresh = false;
         }
        
         if(risefall_xpad_STATE(XPAD_STATE_BACK)){       //Cancel
     	    sprintf(string, "%s", oldString);
-    	    result = false;
     	    exit = true;
         }
 
         if(risefall_xpad_STATE(XPAD_STATE_START)){      //Accept
             if(textpos < maxLength)
                 string[textpos] = '\0';
-            if((strlen(oldString) != strlen(string)) || strncmp(oldString,string, strlen(oldString)))   //FIXME: Use strcmp...
-                result = true;                          //String changed.
             exit = true;
         }
 
@@ -146,9 +144,9 @@ bool OnScreenKeyboard(char * string, u8 maxLength, u8 LCDLine) {
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_CURSOR_POSX=0;
             VIDEO_CURSOR_POSY=0;
-            return result;
+            return;
         }
         wait_ms(10);
     }
-    return result;    //Keep compiler happy.
+    return;    //Keep compiler happy.
 }

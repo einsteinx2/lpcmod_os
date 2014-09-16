@@ -338,13 +338,15 @@ extern void BootResetAction ( void ) {
     // We save the complete framebuffer to memory (we restore at exit)
     u8 *videosavepage = malloc(FB_SIZE);
     memcpy(videosavepage,(void*)FB_START,FB_SIZE);
-    
-    if(1){
-        if(!ConfirmDialog("                  Print MBR?", 1)){
+  
+//Will leave it there for the time being.
+/*      
+    if(!FATXCheckMBR(0)){
+        if(!ConfirmDialog("                      Print MBR?", 1)){
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_ATTR=0xffffff;
             VIDEO_CURSOR_POSX=50;
-            VIDEO_CURSOR_POSY=50;
+            VIDEO_CURSOR_POSY=25;
             u8 tempBuffer[512];
             BootIdeReadSector(0, tempBuffer, 0, 0, 512);
             int j;
@@ -357,6 +359,7 @@ extern void BootResetAction ( void ) {
             while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
         }
     }
+*/
 
     //Check for unformatted drives.
     int i;

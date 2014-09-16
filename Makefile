@@ -150,6 +150,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootParser.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
+OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 #USB
 OBJECTS-CROM += $(TOPDIR)/obj/config.o 
 OBJECTS-CROM += $(TOPDIR)/obj/hcd-pci.o
@@ -271,6 +272,6 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin 
 	
 addcrc:
-	./srec_cat $(TOPDIR)/image/cromwell.bin -binary -crop 0x0 0x3F000 -fill 0xFF 0x3F000 0x3FDFC -crc32-b-e 0x3FDFC -o $(TOPDIR)/crc.bin -binary
-	./srec_cat crc.bin -binary $(TOPDIR)/image/cromwell.bin -binary -exclude -within $(TOPDIR)/crc.bin -binary -o $(TOPDIR)/image/crcwell.bin -binary
+	srec_cat $(TOPDIR)/image/cromwell.bin -binary -crop 0x0 0x3F000 -fill 0xFF 0x3F000 0x3FDFC -crc32-l-e 0x3FDFC -o $(TOPDIR)/crc.bin -binary
+	srec_cat crc.bin -binary $(TOPDIR)/image/cromwell.bin -binary -exclude -within $(TOPDIR)/crc.bin -binary -o $(TOPDIR)/image/crcwell.bin -binary
 	rm crc.bin
