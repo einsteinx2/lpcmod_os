@@ -40,6 +40,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     TEXTMENUITEM *item=NULL;
     int menucount;
     int i;
+    char titleLine[xLCD.LineSize + 1];
     
     VIDEO_CURSOR_POSX=75;
     VIDEO_CURSOR_POSY=125;
@@ -105,27 +106,24 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         else
             printk("\n");
         item=item->nextMenuItem;
-        //LCD string print.
-        
     }
     VIDEO_ATTR=0xffffff;
     if(xLCD.enable == 1){
         if(LPCmodSettings.LCDsettings.customTextBoot == 0){
             bool colon=false;
-            char titleLine[xLCD.LineSize + 1];
             xLCD.PrintLine1(JUSTIFYLEFT, menu->szCaption);
             titleLine[xLCD.LineSize] = 0;                    //End of line character.
             memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
             for(i = 0; i < strlen(selectedItem->szCaption); i++){
-                if(selectedItem->szCaption[i] != ':'){
+                if(selectedItem->szCaption[i] == ':'){
                     if( i < xLCD.LineSize)
-                        titleLine[i] = selectedItem->szCaption[i];                    //Copy characters as long as we're under 20 characters or no ':' was encountered.
+                        titleLine[i] = selectedItem->szCaption[i];             //Copy characters as long as we're under 20 characters or no ':' was encountered.
+                    colon = true;
+                    break;                                                     //Leave the for-loop as no other character will be printed on this line.
                 }
                 else{
                     if( i < xLCD.LineSize)
-                        titleLine[i] = selectedItem->szCaption[i];                    //Print out the ':' character anyway.
-                    colon = true;
-                    break;                                                //Leave the for-loop as no other character will be printed on this line.
+                        titleLine[i] = selectedItem->szCaption[i];             //Print out the ':' character anyway.
                 }
             }
             xLCD.PrintLine2(JUSTIFYLEFT, titleLine);

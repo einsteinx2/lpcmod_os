@@ -24,7 +24,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
     bool refresh = true;
     //Array of function pointers to let "line" value decide which function needs to be called.
     void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
-    char * oldString;
+    char oldString[20];
     sprintf(oldString, "%s", string);	//Copy input string in case user cancels.
     textpos = strlen(string);           //Place cursor at end of entering string.
     
@@ -38,7 +38,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
             VIDEO_CURSOR_POSX=75;
             VIDEO_CURSOR_POSY=50;
-            printk("\n\n\n\n\2                    %s", string);
+            printk("\n\n\n\n\2                 %s", string);
             VIDEO_ATTR=0xffffffff;
             printk("\2\n\n           ");
             for(y = 0; y < 4; y++){
@@ -56,7 +56,6 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
                     }
                 }
             }
-            LEDRed(NULL);
             if(xLCD.enable == 1){
                 (*Printline[line])(JUSTIFYLEFT, string);
             }
@@ -103,9 +102,11 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line) {
                 else {
                     string[textpos] = keymap[cursorposY][cursorposX];
                 }
-                textpos += 1;                           //Move cursor one position to the right
+                                           //Move cursor one position to the right
                 refresh = true;
             }
+            if(textpos < maxLength - 1)
+            	textpos += 1;
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1){

@@ -437,7 +437,7 @@ void BootFlashSaveOSSettings(void) {
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
             if(assert4KBErase(&of)){                //XBlast Lite V1 has 4KB-sector erase capability
                 blocksize = 4 * 1024;                       //4KB allocation
-                LEDOff(NULL);                          //XXX:Debug, remove.
+                //LEDOff(NULL);                          //XXX:Debug, remove.
             }
             else {                                           //Other devices, we assume 64KB block erasing only
                 blocksize = 64 * 1024;
@@ -454,7 +454,7 @@ void BootFlashSaveOSSettings(void) {
             if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
                 memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
                 BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
-                //LEDRed(NULL);        //Here only to debug everytime flash is updated.
+               // LEDOff(NULL);        //Here only to debug everytime flash is updated.
                 //wait_ms(3000);        //Will hang with solid Red LED for 3 seconds.
             }
             free(lastBlock);

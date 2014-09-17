@@ -11,6 +11,7 @@
 #include "lpcmod_v1.h"
 #include "boot.h"
 #include "LEDMenuActions.h"
+#include "lib/LPCMod/BootLCD.h"
 
 
 void decrementActiveBank(void * itemStr) {
@@ -251,7 +252,9 @@ void editBIOSName(void *bankID){
         default:
             OnScreenKeyboard(LPCmodSettings.OSsettings.biosName5, BIOSNAMEMAXLENGTH, 3);
             break;
-        }
+    }
+    if(LPCmodSettings.LCDsettings.customTextBoot)
+        xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);    
 }
 
 

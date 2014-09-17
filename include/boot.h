@@ -362,15 +362,15 @@ typedef struct _OSsettings {
                     //                                            bit3=A18 value
                     //Make sure to mask properly when using this variable.
     u8    reserved1[12];
-    char    biosName0[20];        //512KB bank name. 20 characters max to properly display on LCD.
-    char    biosName1[20];        //256KB bank name
-    char    biosName2[20];        //Reserved for future use.
-    char    biosName3[20];        //Reserved for future use.
-    char    biosName4[20];        //Reserved for future use.
-    char    biosName5[20];        //Reserved for future use.
-    char    biosName6[20];        //Reserved for future use.
-    char    biosName7[20];        //Reserved for future use.
-    u8    reserved2[42];
+    char    biosName0[21];        //512KB bank name. 20 characters max to properly display on LCD.
+    char    biosName1[21];        //256KB bank name
+    char    biosName2[21];        //Reserved for future use.
+    char    biosName3[21];        //Reserved for future use.
+    char    biosName4[21];        //Reserved for future use.
+    char    biosName5[21];        //Reserved for future use.
+    char    biosName6[21];        //Reserved for future use.
+    char    biosName7[21];        //Reserved for future use.
+    u8    reserved2[34];
     u8    enableNetwork;        //Future use. For now, network is enabled only by NetFlash or WebUpdate
     u8    useDHCP;        //Self Explanatory
     u8    staticIP[4];        //Only useful when useDHCP is set to false.
@@ -391,11 +391,11 @@ typedef struct _LCDsettings {
     u8 customTextBoot;        //Display custom text instead of default text.
     u8 displayBIOSNameBoot;        //Display BIOS name of active bank when booting
     u8 reserved0[5];
-    char customString0[20];        //1 of 4 strings to be displayed either when in OS or while booting.
-    char customString1[20];        //20 characters max to properly display on LCD.
-    char customString2[20];
-    char customString3[20];
-    u8 reserved1[161];
+    char customString0[21];        //1 of 4 strings to be displayed either when in OS or while booting.
+    char customString1[21];        //20 characters max to properly display on LCD.
+    char customString2[21];
+    char customString3[21];
+    u8 reserved1[157];
 }__attribute__((packed))_LCDsettings;                //For a total of 256 bytes
 
 typedef struct _LPCmodSettings {

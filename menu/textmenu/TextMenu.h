@@ -23,7 +23,7 @@
 struct TEXTMENUITEM;
 struct TEXTMENU;
 
-#define MENUCAPTIONSIZE 200
+#define MENUCAPTIONSIZE 50
 extern int breakOutOfMenu;
 
 typedef struct TEXTMENUITEM {
@@ -57,5 +57,5 @@ typedef struct TEXTMENU {
     int visibleCount;
 } TEXTMENU;
 
-extern char bypassConfirmDialog[100];
+extern char bypassConfirmDialog[50];
 #endif

@@ -56,14 +56,11 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
             return 4;  //Not valid XBlast OS image.
-        printk("\n              CRC32 = 0x%08X", crc32buf(pbNewData,0x3F000));
-        printk("\n             in BIN = 0x%08X", (u32 *)&pbNewData[0x3FDFC]);
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-        //FIXME: Enable once proven working.
-        /*
-        if(crc32buf(pbNewData,0x3F000) != (u32 *)&pbNewData[0x3FDFC])
+        //printk("\n              CRC32 = 0x%08X", crc32buf(pbNewData,0x3F000));
+        //printk("\n             in BIN = 0x%08X", *(u32 *)&pbNewData[0x3FDFC]);
+        //while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
             return 5;
-         */
     }
     
     // committed to reflash now

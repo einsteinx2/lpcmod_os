@@ -139,6 +139,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Bank1(256KB) BIOS name");
+    itemPtr->functionPtr= editBIOSName;
     itemPtr->functionDataPtr= malloc(sizeof(char));
         *(char*)itemPtr->functionDataPtr = BNK256;
     TextMenuAddItem(menuPtr, itemPtr);
@@ -178,6 +179,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP BIOS name");
+        itemPtr->functionPtr= editBIOSName;
         itemPtr->functionDataPtr= malloc(sizeof(char));
             *(char*)itemPtr->functionDataPtr = BNKTSOP;
         TextMenuAddItem(menuPtr, itemPtr);

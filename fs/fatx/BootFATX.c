@@ -919,10 +919,11 @@ void FATXFormatCacheDrives(int nIndexDrive){
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
     chainmapBuf[1]=0xff;
 
-    memset(buffer,0xff,512);                    //Killer buffer.
 
     //Cycle through all 3 cache partitions.
     for(whichpartition = SECTOR_CACHE1; whichpartition <= SECTOR_CACHE3; whichpartition += (SECTOR_CACHE2 - SECTOR_CACHE1)){
+        memset(buffer,0xff,512);                    //Killer buffer.
+        
         // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
         //4KB so 8*512 bytes sectors.
         for (counter=whichpartition;counter<(whichpartition+8); counter++) {
@@ -940,7 +941,7 @@ void FATXFormatCacheDrives(int nIndexDrive){
         BootIdeWriteSector(nIndexDrive,chainmapBuf,whichpartition+8);   //Initial Cluster chain map write.
 
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
-        memset(buffer,0xff,512);
+        //memset(buffer,0x00,512);
         for (counter=(whichpartition+200);counter<(whichpartition+200+(32*10)); counter++) {
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
@@ -990,7 +991,7 @@ void FATXFormatDriveC(int nIndexDrive){
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_SYSTEM+8);   //Initial Cluster chain map write.
 
     // Root Dir (from 512*136 = 0x11000 )
-    memset(buffer,0xff,512);
+    //memset(buffer,0x00,512);
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
@@ -1027,7 +1028,7 @@ void FATXFormatDriveE(int nIndexDrive){
     for (counter=SECTOR_STORE;counter<(SECTOR_STORE+8); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
-    //Write Partition info on first sector. lest seven sectors of the first 0x1000 are already 0xff anyway.
+    //Write Partition info on first sector. last seven sectors of the first 0x1000 are already 0xff anyway.
     BootIdeWriteSector(nIndexDrive,headerBuf,SECTOR_STORE);   //Partition header write.
 
     // Cluster chain map area (from 512*8 = 0x1000 to 512*2456 = 0x133000)
@@ -1039,18 +1040,19 @@ void FATXFormatDriveE(int nIndexDrive){
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_STORE+8);   //Initial Cluster chain map write.
 
     // Marked as used from 2440 to 2456.
-    memset(buffer,0xff,512);
+    //memset(buffer,0xff,512);
     for (counter=(SECTOR_STORE+2440);counter<(SECTOR_STORE+2456); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
 
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
     // 10 cluster formatted.
+    memset(buffer,0x00,512);
     for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
 
-    memset(buffer,0xff,512);
+    memset(buffer,0x00,512);
     // TDATA Dir points to Cluster 2
     FATXCreateDirectoryEntry(buffer,"TDATA",0,2);
     // UDATA Dir points to Cluster 4
@@ -1059,14 +1061,14 @@ void FATXFormatDriveE(int nIndexDrive){
     FATXCreateDirectoryEntry(buffer,"CACHE",2,6);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456);   // Write Cluster 1(E: Root).
 
-    memset(buffer,0xff,512);
+    memset(buffer,0x00,512);
     //CACHE dir is empty to 0xff everywhere.
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32+32+32);   // Write Cluster 6(CACHE).
     // FFFE0000 Dir points to Cluster 3
     FATXCreateDirectoryEntry(buffer,"FFFE0000",0,3);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32);   // Write Cluster 2(TDATA).
 
-    memset(buffer,0xff,512);
+    memset(buffer,0x00,512);
     // Music Dir points to Cluster 5
     FATXCreateDirectoryEntry(buffer,"Music",0,5);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32);   // Write Cluster 4(UDATA).

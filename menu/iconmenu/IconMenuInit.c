@@ -151,7 +151,7 @@ else {                                        //No split.
 #ifdef ADVANCED_MENU
     iconPtr = (ICON *)malloc(sizeof(ICON));
     iconPtr->iconSlot = ICON_SOURCE_SLOT0;
-    iconPtr->szCaption = "Advanced";
+    iconPtr->szCaption = "Setttings";
     iconPtr->bankID = NOBNKID;
     iconPtr->functionPtr = AdvancedMenu;
     iconPtr->functionDataPtr = (void *)TextMenuInit();

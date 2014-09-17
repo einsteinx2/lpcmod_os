@@ -158,14 +158,15 @@ void IconMenu(void) {
     u32 COUNT_start;
     int oldIconTimeRemain = 0;
     ICON *iconPtr=NULL;
-    char * bankString;
+    char bankString[20];
 
     extern int nTempCursorMbrX, nTempCursorMbrY; 
     int nTempCursorResumeX, nTempCursorResumeY ;
     int nTempCursorX, nTempCursorY;
     int nModeDependentOffset=(vmode.width-640)/2;  
     u8 varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;        //Just to have a default value.
-    char *timeoutString;                            //To display timeout countdown on xLCD
+    char timeoutString[21];                            //To display timeout countdown on xLCD
+    timeoutString[20] = 0;
     
     nTempCursorResumeX=nTempCursorMbrX;
     nTempCursorResumeY=nTempCursorMbrY;

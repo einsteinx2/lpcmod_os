@@ -69,7 +69,6 @@ TEXTMENU *SystemMenuInit(void) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Video settings");
     itemPtr->szParameter[0]=0;
-    itemPtr->szParameter[0]=0;
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)VideoMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);

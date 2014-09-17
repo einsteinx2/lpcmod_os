@@ -34,7 +34,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->LCDsettings.displayBIOSNameBoot = 0;
     
     
-    for(i = 0; i < HDD4780_DEFAULT_LINELGTH; i++){
+    for(i = 0; i < HDD4780_DEFAULT_LINELGTH + 1; i++){
         LPCmodSettings->OSsettings.biosName0[i] = 0;
         LPCmodSettings->OSsettings.biosName1[i] = 0;
         LPCmodSettings->OSsettings.biosName2[i] = 0;
@@ -101,7 +101,7 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
                 sprintf(string, "%s", "OnBoard Bank2");
             }
             break;
-        default:
+        case BNKTSOP3:
             if(LPCmodSettings.OSsettings.biosName4[0] != 0){
                 sprintf(string, "%s", LPCmodSettings.OSsettings.biosName5);
             }
@@ -109,6 +109,9 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
                 sprintf(string, "%s", "OnBoard Bank3");
             }
             break;
+         default:
+         	sprintf(string, "%s", "Settings");
+         	break;
     }
 
 

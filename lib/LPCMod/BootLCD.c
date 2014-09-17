@@ -348,6 +348,6 @@ void initialLCDPrint(void){
     }
     else{
         xLCD.Command(DISP_CLEAR);
-        xLCD.PrintLine1(CENTERSTRING, "XBlast mod V1");
+        xLCD.PrintLine0(CENTERSTRING, "XBlast mod V1");
     }
 }
