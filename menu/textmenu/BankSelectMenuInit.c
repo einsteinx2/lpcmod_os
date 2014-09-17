@@ -26,27 +26,27 @@ TEXTMENU *BankSelectMenuInit(void) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank0 (512KB)");
-    itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNK512;
+    itemPtr->szParameter[1] = BNK512;
+    itemPtr->functionPtr=DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)BankSelectInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Bank1 (256KB)
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank1 (256KB)");
-    itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNK256;
+    itemPtr->szParameter[1] = BNK256;
+    itemPtr->functionPtr=DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)BankSelectInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Bank2 (OS)
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank2 (OS)");
-    itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKOS;
+    itemPtr->szParameter[1] = BNKOS;
+    itemPtr->functionPtr=DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)BankSelectInit;
     TextMenuAddItem(menuPtr, itemPtr);
     
     return menuPtr;
@@ -60,16 +60,16 @@ TEXTMENU* BankSelectInit(void *bank) {
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     if(fHasHardware == SYSCON_ID_V1){
-        if((*(char *)bank) == BNKOS)
+        if(hiddenParam == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
-        else if((*(char *)bank) == BNK256)
+        else if(hiddenParam == BNK256)
             strcpy(menuPtr->szCaption, "Flash menu : 256KB bank");
-        else if((*(char *)bank) == BNK512)
+        else if(hiddenParam == BNK512)
             strcpy(menuPtr->szCaption, "Flash menu : 512KB bank");
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchBank(*(char *)bank);
+        switchBank(hiddenParam);
     }
     else {
         strcpy(menuPtr->szCaption, "Flash menu : Unknown device");
@@ -119,9 +119,9 @@ TEXTMENU* BankSelectInit(void *bank) {
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)FlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);*/
-    if(fHasHardware == SYSCON_ID_V1){
-    	DrawChildTextMenu(menuPtr);
-    }
+//    if(fHasHardware == SYSCON_ID_V1){
+//    	DrawChildTextMenu(menuPtr);
+//    }
     return menuPtr;
 }
 

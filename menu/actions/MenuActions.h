@@ -28,7 +28,7 @@ void BootFromCD(void *driveId);
 void BootFromNet(void *whatever);
 
 #ifdef FLASH
-void FlashBios(void *);
+//void FlashBios(void *);
 #endif
 
 #ifdef ETHERBOOT

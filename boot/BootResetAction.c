@@ -338,28 +338,6 @@ extern void BootResetAction ( void ) {
     // We save the complete framebuffer to memory (we restore at exit)
     u8 *videosavepage = malloc(FB_SIZE);
     memcpy(videosavepage,(void*)FB_START,FB_SIZE);
-  
-//Will leave it there for the time being.
-/*      
-    if(!FATXCheckMBR(0)){
-        if(!ConfirmDialog("                      Print MBR?", 1)){
-            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-            VIDEO_ATTR=0xffffff;
-            VIDEO_CURSOR_POSX=50;
-            VIDEO_CURSOR_POSY=25;
-            u8 tempBuffer[512];
-            BootIdeReadSector(0, tempBuffer, 0, 0, 512);
-            int j;
-            for(j = 0; j < 512; j++){
-                if((j%16) == 0){
-                    printk("\1\n       ");
-                }
-                printk("\1%02x ",tempBuffer[j]);
-            }
-            while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-        }
-    }
-*/
 
     //Check for unformatted drives.
     int i;
@@ -373,7 +351,7 @@ extern void BootResetAction ( void ) {
                     FATXFormatDriveE(i);
                     FATXFormatCacheDrives(i);
                     FATXSetBRFR(i);
-                    if(!FATXCheckMBR)
+                    if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
                         FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.
                 }
             }

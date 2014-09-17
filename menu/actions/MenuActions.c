@@ -177,10 +177,12 @@ void BootFromEtherboot(void *data) {
 #endif
 
 #ifdef FLASH
+/*
 void FlashBios(void *data) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
     BootLoadFlashCD();
 }
+*/
 #endif
 

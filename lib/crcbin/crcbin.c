@@ -58,5 +58,5 @@ unsigned int crcValue = 0xFFFFFFFF, nbytes;
 
 void showUsage(const char *progname) {
     printf("Usage:   ");
-    printf("%s 'bios.bin' 'output.bin'\n",progname);
+    printf("%s 'input file' 'output file'\n",progname);
 }

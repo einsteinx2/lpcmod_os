@@ -14,7 +14,7 @@ typedef enum {
     
     IDE_CMD_READ_EXT = 0x24, /* 48-bit LBA */
         
-        IDE_CMD_WRITE_MULTI_RETRY = 0x30,
+    IDE_CMD_WRITE_MULTI_RETRY = 0x30,
         
     IDE_CMD_DRIVE_DIAG = 0x90,
     IDE_CMD_SET_PARAMS = 0x91,

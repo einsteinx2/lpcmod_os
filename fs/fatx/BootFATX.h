@@ -28,6 +28,13 @@
 #define SECTORS_CACHE2    (SECTOR_CACHE3 - SECTOR_CACHE2)
 #define SECTORS_CACHE3    (SECTOR_SYSTEM - SECTOR_CACHE3)
 
+#define LBASIZE_512GB   1073741824L                      //Switch to 64K clusters beyond that
+#define LBASIZE_1024GB  2147483645L                      //Max LBA size supported by Xbox
+#define LBASIZE_256GB   536870912L                       //Switch to 32K clusters beyond that
+#define LBASIZE_137GB   (268435456L - SECTOR_EXTEND)     //LBA28 limited F: drive size.
+
+#define FATX16_MAXLBA   2096800                         //Max number of sectors possible of a FATX16 partition. Higher than that is FATX32.
+
 /*Taken from XBPartitionner*/
 // This flag (part of PARTITION_ENTRY.pe_flags) tells you whether/not a
 // partition is being used (whether/not drive G is active, for example)
@@ -171,5 +178,6 @@ void FATXSetInitMBR(u8 driveId);
 void FATXFormatCacheDrives(int nIndexDrive);
 void FATXFormatDriveC(int nIndexDrive);
 void FATXFormatDriveE(int nIndexDrive);
+bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize);
 
 #endif //    _BootFATX_H_

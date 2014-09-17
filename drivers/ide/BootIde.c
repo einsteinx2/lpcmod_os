@@ -508,22 +508,17 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
             // report on the MBR-ness of the drive contents
 
-        if((nError=BootIdeReadSector(nIndexDrive, ba, 0, 0, 512))) 
-        {
-            //printk("     Unable to get first sector, returned %d\n", nError);
-        } else {
-            if( (ba[0x1fe]==0x55) && (ba[0x1ff]==0xaa) ) 
-            {
-                tsaHarddiskInfo[nIndexDrive].m_fHasMbr=1;
+        if(FATXCheckMBR(nIndexDrive)) {
 #ifndef SILENT_MODE
-                printk(" - MBR", nIndexDrive);
+            printk(" - MBR", nIndexDrive);
 #endif
-            } else {
-                tsaHarddiskInfo[nIndexDrive].m_fHasMbr=0;
+            tsaHarddiskInfo[nIndexDrive].m_fHasMbr=1;
+        }
+        else {
+            tsaHarddiskInfo[nIndexDrive].m_fHasMbr=0;
 #ifndef SILENT_MODE
-                printk(" - No MBR", nIndexDrive);
+            printk(" - No MBR", nIndexDrive);
 #endif
-            }
         }
         printk("\n");
     } 
@@ -703,7 +698,7 @@ int BootIdeInit(void)
 //  BootIdeAtapiModeSense
 //
 //  returns the ATAPI extra error info block
-
+/*
 int BootIdeAtapiModeSense(int nDriveIndex, u8 bCodePage, u8 * pba, int nLengthMaxReturn) 
 {
     unsigned uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
@@ -734,7 +729,7 @@ int BootIdeAtapiModeSense(int nDriveIndex, u8 bCodePage, u8 * pba, int nLengthMa
 
     return nReturn;
 }
-
+*
 /* -------------------------------------------------------------------------------- */
 
 /////////////////////////////////////////////////
@@ -792,7 +787,7 @@ bool BootIdeAtapiReportFriendlyError(int nDriveIndex, char * szErrorReturn, int 
 }
 
 /* -------------------------------------------------------------------------------- */
-
+/*
 void BootIdeAtapiPrintkFriendlyError(int nDriveIndex)
 {
     char sz[512];
@@ -800,7 +795,7 @@ void BootIdeAtapiPrintkFriendlyError(int nDriveIndex)
     BootIdeAtapiReportFriendlyError(nDriveIndex, sz, sizeof(sz));
     printk(sz);
 }
-
+*/
 
 /* -------------------------------------------------------------------------------- */
 
@@ -1088,7 +1083,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
 //
 // returns 0 if *pbaResult loaded with (512-byte/Hdd, 2048-byte/Cdrom) boot sector
 //  otherwise nonzero return indicates error type
-
+/*
 int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
 {
     static const u8 baCheck11hFormat[] = {
@@ -1103,7 +1098,7 @@ int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
     if(!tsaHarddiskInfo[nDriveIndex].m_fDriveExists) return 4;
 
     if(tsaHarddiskInfo[nDriveIndex].m_fAtapi) {
-
+*/
 /******   Numbnut's guide to El Torito CD Booting   ********
 
   Sector 11h of a bootable CDROM looks like this (11h is a magic number)
@@ -1115,7 +1110,7 @@ int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
 00000030: 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00    ................
 00000040: 00 00 00 00 00 00 00 13 : 00 00 00 00 00 00 00 00    ................
 */
-
+/*
         if(BootIdeReadSector(nDriveIndex, &pbaResult[0], 0x11, 0, 2048)) {
             bprintf("Unable to get first sector\n");
             return 1;
@@ -1129,7 +1124,7 @@ int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
         }
 
         pdw=(u32 *)&pbaResult[0x47];
-
+*/
 /*
 At sector 13h (in this example only), the boot catalog:
 
@@ -1140,7 +1135,7 @@ At sector 13h (in this example only), the boot catalog:
 (<-- initial/default entry - 88=bootable, 04 00 = 4 x (512-byte virtual sectors),
   = 1 x 2048-byte CDROM sector in boot, 25 01 00 00 = starts at sector 0x125)
 */
-
+/*
         if(BootIdeReadSector(nDriveIndex, &pbaResult[0], *pdw, 0, 2048)) {
             bprintf("Unable to get boot catalog\n");
             return 3;
@@ -1157,6 +1152,7 @@ At sector 13h (in this example only), the boot catalog:
         }
 
         pdw=(u32 *)&pbaResult[0x28];
+*/
 /*
 And so at sector 0x125 (in this example only), we finally see the boot code
 
@@ -1167,7 +1163,7 @@ And so at sector 0x125 (in this example only), we finally see the boot code
 000007E0: 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 00 00    ................
 000007F0: 00 00 00 00 00 00 00 00 : 00 00 00 00 00 00 55 AA    ..............U.
 */
-
+/*
         if(BootIdeReadSector(nDriveIndex, &pbaResult[0], *pdw, 0, 2048)) {
             bprintf("Unable to get boot catalog\n");
             return 3;
@@ -1195,7 +1191,7 @@ And so at sector 0x125 (in this example only), we finally see the boot code
         return 0; // succes
     }
 }
-
+*/
     // these guys are used by grub
 /* -------------------------------------------------------------------------------- */
 

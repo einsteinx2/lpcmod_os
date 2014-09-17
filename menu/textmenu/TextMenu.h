@@ -58,4 +58,5 @@ typedef struct TEXTMENU {
 } TEXTMENU;
 
 extern char bypassConfirmDialog[50];
+u8 hiddenParam;
 #endif
