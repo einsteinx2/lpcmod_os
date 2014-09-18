@@ -67,6 +67,7 @@ extern void BootResetAction ( void ) {
     };
 
     fHasHardware = 0;
+    hiddenTextParam = 0;
 
     memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
     memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);
@@ -360,7 +361,6 @@ extern void BootResetAction ( void ) {
     memcpy((void*)FB_START,videosavepage,FB_SIZE);
     free(videosavepage);
     
-    hiddenTextParam = 0x83;
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     //inputLED();

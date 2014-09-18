@@ -50,6 +50,10 @@ TEXTMENU *LCDMenuInit(void) {
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;
     itemPtr->functionRightPtr=LCDIncrementBacklight;
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    itemPtr->functionLTPtr=LCDDecrementBacklight;
+    itemPtr->functionLTDataPtr = itemPtr->szParameter;
+    itemPtr->functionRTPtr=LCDIncrementBacklight;
+    itemPtr->functionRTDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -62,6 +66,10 @@ TEXTMENU *LCDMenuInit(void) {
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;
     itemPtr->functionRightPtr=LCDIncrementContrast;
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    itemPtr->functionLTPtr=LCDDecrementContrast;
+    itemPtr->functionLTDataPtr = itemPtr->szParameter;
+    itemPtr->functionRTPtr=LCDIncrementContrast;
+    itemPtr->functionRTDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

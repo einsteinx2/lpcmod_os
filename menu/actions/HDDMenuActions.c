@@ -20,11 +20,11 @@ void AssertLockUnlock(void *itemPtr){
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) {       //Drive is already locked
         if(UnlockHDD(nIndexDrive))
-            sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");                     //Next action will be to lock it
+            sprintf(tempItemPtr->szCaption, "%s", tempItemPtr->szParameter);                     //Next action will be to lock it
     }
     else {
         if(LockHDD(nIndexDrive))
-            sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD : ");
+            sprintf(tempItemPtr->szCaption, "%s", tempItemPtr->szParameter);
     }
 }
 

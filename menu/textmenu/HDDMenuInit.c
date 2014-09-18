@@ -23,10 +23,6 @@ TEXTMENU *HDDMenuInit(void) {
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "HDD Menu");
 
-    //No entry in this menu will have a configurable parameter.
-    //Set first character to NULL to indicate no string is to be shown.
-    itemPtr->szParameter[0]=0;
-
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
             //If it's not ATAPI, it must be IDE
@@ -99,8 +95,9 @@ TEXTMENU *HDDMenuInit(void) {
                 //Format Larger drives option menu.
                 itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
                 memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"Large HDD format options : ");
+                sprintf(itemPtr->szCaption,"Large HDD format : ");
                 sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
+                itemPtr->szParameter[50] = i;
                 itemPtr->functionPtr= DrawChildTextMenu;
                 itemPtr->functionDataPtr = (void *)LargeHDDMenuInit();
                 TextMenuAddItem(menuPtr, itemPtr);
@@ -117,11 +114,10 @@ TEXTMENU *LargeHDDMenuInit(void) {
     TEXTMENU *menuPtr;
     int i=0, nDriveIndex = 0;
 
-    if(hiddenTextParam == 'l')
-        nDriveIndex = 1;                                //Slave HDD.
+    nDriveIndex = hiddenTextParam;
 
     //Amount of free sectors after standard partitions
-    u32 nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
+    unsigned long nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));

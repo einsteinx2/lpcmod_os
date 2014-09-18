@@ -7,33 +7,33 @@
 // (c) 2001 Andrew de Quincey
 
 
-#define STORE_SIZE    (0x131F00000LL)
-#define SYSTEM_SIZE    (0x1f400000)
-#define CACHE1_SIZE    (0x2ee80000)
-#define CACHE2_SIZE    (0x2ee80000)
-#define CACHE3_SIZE    (0x2ee80000)
+#define STORE_SIZE    (0x131F00000ULL)
+#define SYSTEM_SIZE    (0x1f400000UL)
+#define CACHE1_SIZE    (0x2ee80000UL)
+#define CACHE2_SIZE    (0x2ee80000UL)
+#define CACHE3_SIZE    (0x2ee80000UL)
 
-#define SECTOR_EXTEND   (0x00EE8AB0L)
-#define SECTOR_STORE    (0x0055F400L)
-#define SECTOR_SYSTEM    (0x00465400L)
-#define SECTOR_CONFIG    (0x00000000L)
-#define SECTOR_CACHE1    (0x00000400L)
-#define SECTOR_CACHE2    (0x00177400L)
-#define SECTOR_CACHE3    (0x002EE400L)
+#define SECTOR_EXTEND   (0x00EE8AB0UL)
+#define SECTOR_STORE    (0x0055F400UL)
+#define SECTOR_SYSTEM    (0x00465400UL)
+#define SECTOR_CONFIG    (0x00000000UL)
+#define SECTOR_CACHE1    (0x00000400UL)
+#define SECTOR_CACHE2    (0x00177400UL)
+#define SECTOR_CACHE3    (0x002EE400UL)
 
 #define SECTORD_CONFIG	 (SECTOR_CACHE1 - SECTOR_CONFIG)
-#define SECTORS_STORE    (SECTOR_EXTEND - SECTOR_STORE)
+#define SECTORS_STORE    (SECTOR_EXTEND - SECTOR_STORE)         //0x9896B0
 #define SECTORS_SYSTEM    (SECTOR_STORE  - SECTOR_SYSTEM)
 #define SECTORS_CACHE1    (SECTOR_CACHE2 - SECTOR_CACHE1)
 #define SECTORS_CACHE2    (SECTOR_CACHE3 - SECTOR_CACHE2)
 #define SECTORS_CACHE3    (SECTOR_SYSTEM - SECTOR_CACHE3)
 
-#define LBASIZE_512GB   1073741824L                      //Switch to 64K clusters beyond that
-#define LBASIZE_1024GB  2147483645L                      //Max LBA size supported by Xbox
-#define LBASIZE_256GB   536870912L                       //Switch to 32K clusters beyond that
-#define LBASIZE_137GB   (268435456L - SECTOR_EXTEND)     //LBA28 limited F: drive size.
+#define LBASIZE_512GB   1073741824UL                      //Switch to 64K clusters beyond that
+#define LBASIZE_1024GB  2147483645UL                      //Max LBA size supported by Xbox
+#define LBASIZE_256GB   536870912UL                       //Switch to 32K clusters beyond that
+#define LBASIZE_137GB   (268435456UL - SECTOR_EXTEND)     //LBA28 limited F: drive size.
 
-#define FATX16_MAXLBA   2096800                         //Max number of sectors possible of a FATX16 partition. Higher than that is FATX32.
+#define FATX16_MAXLBA   2096800UL                         //Max number of sectors possible of a FATX16 partition. Higher than that is FATX32.
 
 /*Taken from XBPartitionner*/
 // This flag (part of PARTITION_ENTRY.pe_flags) tells you whether/not a

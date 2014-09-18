@@ -62,6 +62,10 @@ TEXTMENU *SystemMenuInit(void) {
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;
     itemPtr->functionRightPtr=incrementFanSpeed;
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    itemPtr->functionLTPtr=decrementFanSpeed;
+    itemPtr->functionLTDataPtr = itemPtr->szParameter;
+    itemPtr->functionRTPtr=incrementFanSpeed;
+    itemPtr->functionRTDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //VIDEO SETTINGS MENU

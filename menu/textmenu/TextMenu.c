@@ -211,9 +211,15 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
             //Menu item selected - invoke function pointer.
 
             if (selectedMenuItem->functionPtr!=NULL){
-//                if(selectedMenuItem->szParameter[0] == 0){
-                    hiddenTextParam = selectedMenuItem->szParameter[1];
-//                }
+                hiddenTextParam = selectedMenuItem->szParameter[50];
+                printk("\n\n\n\n\n           ");
+                VIDEO_ATTR=0xffffef37;
+                printk("\2\n\n\n\n        hiddenTextParam=%u", hiddenTextParam);
+                VIDEO_ATTR=0xffc8c8c8;
+                printk("\1\n\n           Press Button 'A' to continue.");
+                while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+                BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+                VIDEO_ATTR=0xffffff;
                 selectedMenuItem->functionPtr(selectedMenuItem->functionDataPtr);
             }
             //Clear the screen again    
@@ -273,7 +279,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
             //We need to redraw ourselves
             TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
         }
-/*        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
             oldTemp = temp;
             temp = 0;
             if(oldTemp != 0) {
@@ -282,8 +288,8 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
 
             VIDEO_ATTR=0xffffff;
             //Menu item selected - invoke function pointer.
-            if (selectedMenuItem->functionRightPtr!=NULL) {
-                selectedMenuItem->functionRightPtr(selectedMenuItem->functionRightDataPtr);
+            if (selectedMenuItem->functionRTPtr!=NULL) {
+                selectedMenuItem->functionRTPtr(selectedMenuItem->functionRTDataPtr);
                 //Clear the screen again    
                 BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
                 VIDEO_ATTR=0xffffff;
@@ -305,8 +311,8 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
 
             VIDEO_ATTR=0xffffff;
             //Menu item selected - invoke function pointer.
-            if (selectedMenuItem->functionLeftPtr!=NULL) {
-                selectedMenuItem->functionLeftPtr(selectedMenuItem->functionLeftDataPtr);
+            if (selectedMenuItem->functionLTPtr!=NULL) {
+                selectedMenuItem->functionLTPtr(selectedMenuItem->functionLTDataPtr);
                 //Clear the screen again    
                 BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
                 VIDEO_ATTR=0xffffff;
@@ -319,7 +325,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
             //We need to redraw ourselves
             TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
         }
-*/
+
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1) {
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_ATTR=0xffffff;

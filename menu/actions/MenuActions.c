@@ -167,6 +167,11 @@ void DrawChildTextMenu(void *menu) {
     TextMenu((TEXTMENU*)menu);
 }
 
+void ResetDrawChildTextMenu(void *menu) {
+    TEXTMENU * resetSelection = (TEXTMENU*)menu;
+    TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
+}
+
 #ifdef ETHERBOOT 
 extern int etherboot(void);
 void BootFromEtherboot(void *data) {

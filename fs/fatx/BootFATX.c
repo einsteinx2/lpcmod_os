@@ -916,7 +916,7 @@ void FATXFormatCacheDrives(int nIndexDrive){
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
-    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
+    chainmapBuf[0]=0xf8;                        //First 2 clusters are 0xFFF8 in word mode (FATX16).
     chainmapBuf[1]=0xff;
     chainmapBuf[2]=0xff;
     chainmapBuf[3]=0xff;
@@ -944,7 +944,8 @@ void FATXFormatCacheDrives(int nIndexDrive){
         BootIdeWriteSector(nIndexDrive,chainmapBuf,whichpartition+8);   //Initial Cluster chain map write.
 
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
-        memset(buffer,0xff,512); 
+        // memset(buffer,0xff,512);
+        //Format 10 first clusters
         for (counter=(whichpartition+200);counter<(whichpartition+200+(32*10)); counter++) {
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
@@ -996,7 +997,8 @@ void FATXFormatDriveC(int nIndexDrive){
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_SYSTEM+8);   //Initial Cluster chain map write.
 
     // Root Dir (from 512*136 = 0x11000 )
-    memset(buffer,0xff,512);
+    // memset(buffer,0x00,512);
+    //Format 10 first clusters
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
@@ -1023,7 +1025,7 @@ void FATXFormatDriveE(int nIndexDrive){
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
-    memset(chainmapBuf,0xff,4*7);               //We'll use clusters for base folders.
+    memset(chainmapBuf,0xff,4*5);               //We'll use 5 clusters for base folders.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
 
     memset(buffer,0xff,512);                    //Killer buffer.
@@ -1038,26 +1040,20 @@ void FATXFormatDriveE(int nIndexDrive){
 
     // Cluster chain map area (from 512*8 = 0x1000 to 512*2456 = 0x133000)
     memset(buffer,0x0,512); //wipe. Unused cluster == 0
-    for (counter=(SECTOR_STORE+8);counter<(SECTOR_STORE+2440); counter++) {
+    for (counter=(SECTOR_STORE+8);counter<(SECTOR_STORE+2456); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
     //Write initial cluster chain map.
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_STORE+8);   //Initial Cluster chain map write.
 
-    // Marked as used from 2440 to 2456.
-    //memset(buffer,0xff,512);
-    for (counter=(SECTOR_STORE+2440);counter<(SECTOR_STORE+2456); counter++) {
-        BootIdeWriteSector(nIndexDrive,buffer,counter);
-    }
-
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
-    // 10 cluster formatted.
-    memset(buffer,0xff,512);
+    //memset(buffer,0xff,512);
+    //Format 10 first clusters
     for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
 
-    memset(buffer,0x00,512);
+    // memset(buffer,0x00,512);
     // TDATA Dir points to Cluster 2
     FATXCreateDirectoryEntry(buffer,"TDATA",0,2);
     // UDATA Dir points to Cluster 4
@@ -1083,7 +1079,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
     u32 counter;
     PARTITIONHEADER *header;
-    u8 clusterSize = 16;                //16KB cluster by default
+    u8 clusterSize = 32;                //16KB cluster by default(32 sectors * 512 bytes)
     u32 chainmapSize = 0;
 
     XboxPartitionTable * mbr = (XboxPartitionTable *)buffer;
@@ -1091,7 +1087,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     if(tsaHarddiskInfo[driveId].m_enumDriveType != EDT_XBOXFS)
        FATXSetBRFR(driveId);
 
-    if(partition == 7 && lbaSize == 0 && lbaStart == SECTOR_EXTEND){              //No G drive
+    if(partition == 6 && lbaSize == 0 && lbaStart == SECTOR_EXTEND){              //No G drive
         if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {       //No need to do anything if no MBR is on disk.
             if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
                 VIDEO_ATTR=0xffff0000;
@@ -1106,19 +1102,21 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
             }
         }
     }
-   else {
+    else {
 
         if(lbaSize >= LBASIZE_512GB)         //Need 64K clusters
-            clusterSize = 64;
+            clusterSize = 128;                //Clustersize in number of 512-byte sectors
         else if(lbaSize >= LBASIZE_256GB)
-            clusterSize = 32;
+            clusterSize = 64;
         else
-            clusterSize = 16;
+            clusterSize = 32;
 
-        //Calculate size of FAT
-        chainmapSize = (lbaSize / (clusterSize << 1));       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
-        chainmapSize = chainmapSize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);                     //Multiply by length(in bytes) of a single entry in FAT.
-                                                                                               //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
+        //Calculate size of FAT, in number of 512-byte sectors.
+        chainmapSize = (lbaSize / clusterSize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
+        chainmapSize = chainmapSize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
+                                                                                //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
+        chainmapSize = (chainmapSize >> 9);                                     //Divide by 512bytes,
+
         while((chainmapSize % 8) != 0)                    //Round it to 4096 byte boundary.
             chainmapSize += 1;
 
@@ -1129,7 +1127,8 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
                 return false;
             }
         }
-        else{                                                   //If no MBR already on disk
+        else
+        {                                                   //If no MBR already on disk
             memcpy(mbr, &BackupPartTbl, sizeof(BackupPartTbl)); //Copy backup in working buffer and work from there.
         }
 
@@ -1143,7 +1142,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         header = (PARTITIONHEADER *)headerBuf;
         header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
         header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
-        header->clusterSize = (clusterSize << 1);   //16KB = 32 sector/cluster. 32KB = 64 sector/cluster. 64KB = 128 sector/cluster.
+        header->clusterSize = clusterSize;   //16KB = 32 sector/cluster. 32KB = 64 sector/cluster. 64KB = 128 sector/cluster.
         header->nbFAT = 1;                          //Always 1.
         header->unknown = 0;                        //Always 0.
         memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
@@ -1184,7 +1183,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         // Root Dir
         // 10 clusters formatted.
         memset(buffer,0xff,512); 
-        for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+((clusterSize<<1)*10)); counter++) {
+        for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+(clusterSize*10)); counter++) {
             BootIdeWriteSector(driveId,buffer,counter);
         }
    }

@@ -24,6 +24,10 @@ TEXTMENU *ModchipMenuInit(void) {
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;
     itemPtr->functionRightPtr=incrementbootTimeout;
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    itemPtr->functionLTPtr=decrementbootTimeout;
+    itemPtr->functionLTDataPtr = itemPtr->szParameter;
+    itemPtr->functionRTPtr=incrementbootTimeout;
+    itemPtr->functionRTDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
