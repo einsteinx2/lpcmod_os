@@ -918,6 +918,9 @@ void FATXFormatCacheDrives(int nIndexDrive){
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
     chainmapBuf[1]=0xff;
+    chainmapBuf[2]=0xff;
+    chainmapBuf[3]=0xff;
+    
 
 
     //Cycle through all 3 cache partitions.
@@ -941,7 +944,7 @@ void FATXFormatCacheDrives(int nIndexDrive){
         BootIdeWriteSector(nIndexDrive,chainmapBuf,whichpartition+8);   //Initial Cluster chain map write.
 
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
-        //memset(buffer,0x00,512);
+        memset(buffer,0xff,512); 
         for (counter=(whichpartition+200);counter<(whichpartition+200+(32*10)); counter++) {
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
@@ -971,6 +974,8 @@ void FATXFormatDriveC(int nIndexDrive){
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
     chainmapBuf[1]=0xff;
+    chainmapBuf[2]=0xff;
+    chainmapBuf[3]=0xff;
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
@@ -991,7 +996,7 @@ void FATXFormatDriveC(int nIndexDrive){
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_SYSTEM+8);   //Initial Cluster chain map write.
 
     // Root Dir (from 512*136 = 0x11000 )
-    //memset(buffer,0x00,512);
+    memset(buffer,0xff,512);
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
@@ -1047,7 +1052,7 @@ void FATXFormatDriveE(int nIndexDrive){
 
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
     // 10 cluster formatted.
-    memset(buffer,0x00,512);
+    memset(buffer,0xff,512);
     for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*10)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
@@ -1149,9 +1154,13 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
         chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
         chainmapBuf[1]=0xff;
+        chainmapBuf[3]=0xff;
+        chainmapBuf[4]=0xff;
         if(lbaSize >= FATX16_MAXLBA){               //FATX16 stops there. Only 2-byte entry in cluster chain.
-            chainmapBuf[2]=0xff;
-            chainmapBuf[3]=0xff;
+            chainmapBuf[5]=0xff;
+            chainmapBuf[6]=0xff;
+            chainmapBuf[7]=0xff;
+            chainmapBuf[8]=0xff;
         }
 
         memset(buffer,0xff,512);                    //Killer buffer.
@@ -1174,6 +1183,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
 
         // Root Dir
         // 10 clusters formatted.
+        memset(buffer,0xff,512); 
         for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+((clusterSize<<1)*10)); counter++) {
             BootIdeWriteSector(driveId,buffer,counter);
         }

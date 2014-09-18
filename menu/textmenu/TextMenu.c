@@ -148,7 +148,6 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
     temp = menu->timeout;
     u32 COUNT_start;
     COUNT_start = IoInputDword(0x8008);
-    hiddenParam = 0;
 
     TEXTMENUITEM *itemPtr, *selectedMenuItem, *firstVisibleMenuItem;
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
@@ -212,9 +211,9 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
             //Menu item selected - invoke function pointer.
 
             if (selectedMenuItem->functionPtr!=NULL){
-                if(selectedMenuItem->szParameter[0]){
-                    hiddenParam = selectedMenuItem->szParameter[1];
-                }
+//                if(selectedMenuItem->szParameter[0] == 0){
+                    hiddenTextParam = selectedMenuItem->szParameter[1];
+//                }
                 selectedMenuItem->functionPtr(selectedMenuItem->functionDataPtr);
             }
             //Clear the screen again    

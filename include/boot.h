@@ -457,4 +457,5 @@ u8 mbVersion;
 u16 fHasHardware;
 
 u8 currentFlashBank;
+u8 hiddenTextParam;
 #endif // _Boot_H_

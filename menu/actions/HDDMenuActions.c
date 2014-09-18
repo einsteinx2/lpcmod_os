@@ -15,7 +15,7 @@ void AssertLockUnlock(void *itemPtr){
     int nIndexDrive = 0;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    if((strcmp(tempItemPtr->szParameter, "master")))    //If string in szParameter is different from "master"
+    if((strncmp(tempItemPtr->szParameter, "slave", 5)))    //If string in szParameter is different from "master"
         nIndexDrive = 1;                                //It means we need to change the slave lock status.
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) {       //Drive is already locked
@@ -171,16 +171,16 @@ void DisplayHDDInfo(void *driveId) {
     u8 i;
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
 
-    printk("\n\n\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
+    printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
 
     printk("\n\n\1           Model : %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
     printk("\n\1           Serial : %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
     printk("\n\1           Firmware : %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
-    printk("\n\1           Capacity : %.2f GB", (tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / 2097152));     //In GB
+    printk("\n\1           Capacity : %u GB", (tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024)));     //In GB
     printk("\n\1           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
     printk("\n\1           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
-    printk("\n\1           Xbox MBR on HDD? : %s ", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
+    printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
     if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr == 1){
         if(BootIdeReadSector(nIndexDrive, &MBRBuffer[0], 0x00, 0, 512)) {
             VIDEO_ATTR=0xffff0000;
@@ -190,8 +190,8 @@ void DisplayHDDInfo(void *driveId) {
             for(i = 0; i < 14; i++){
                 if(mbr->TableEntries[i].Name[0] != ' ' && mbr->TableEntries[i].LBAStart != 0){          //Valid partition entry only
                     printk("\n\1                 %s", mbr->TableEntries[i].Name);
-                    printk("\n\1                    Active : %s", mbr->TableEntries[i].Flags == PE_PARTFLAGS_IN_USE ? "Yes" : "No");
-                    printk("\n\1                    Start at : %u       Size : %u\n", mbr->TableEntries[i].LBAStart, mbr->TableEntries[i].LBASize);
+                    printk("\n\1                     Active: %s", mbr->TableEntries[i].Flags == PE_PARTFLAGS_IN_USE ? "Yes" : "No");
+                    printk("    Start at: %u    Size: %u", mbr->TableEntries[i].LBAStart, mbr->TableEntries[i].LBASize);
                 }
             }
         }
@@ -244,7 +244,7 @@ void FormatDriveFG(void *driveId) {
             break;
     }
     if(!ConfirmDialog("                  Confirm format F: drive?", 1)){
-        if(FATXFormatExtendedDrive(nDriveIndex, 6, SECTOR_EXTEND, fsize))                  //F: drive is partition 6 in table
+        if(FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize))                  //F: drive is partition 6 in table
             HDDMenuHeader("F: drive formatted");
         else
             HDDMenuHeader("F: format ERROR");
@@ -252,7 +252,7 @@ void FormatDriveFG(void *driveId) {
         HDDMenuFooter();
     }
     if(!ConfirmDialog("                  Confirm format G: drive?", 1)){
-        if(FATXFormatExtendedDrive(nDriveIndex, 7, gstart, fsize))                         //G: drive is partition 7 in table
+        if(FATXFormatExtendedDrive(nDriveIndex, 6, gstart, fsize))                         //G: drive is partition 7 in table
             HDDMenuHeader("G: drive formatted");
         else
             HDDMenuHeader("G: format ERROR");

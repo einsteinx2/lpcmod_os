@@ -7,7 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
+#include "boot.h"
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "HDDMenuActions.h"
@@ -117,7 +117,7 @@ TEXTMENU *LargeHDDMenuInit(void) {
     TEXTMENU *menuPtr;
     int i=0, nDriveIndex = 0;
 
-    if(hiddenParam == 'l')
+    if(hiddenTextParam == 'l')
         nDriveIndex = 1;                                //Slave HDD.
 
     //Amount of free sectors after standard partitions
@@ -157,7 +157,7 @@ TEXTMENU *LargeHDDMenuInit(void) {
     if((nExtendSectors > (LBASIZE_137GB + SECTORS_SYSTEM)) && ((nExtendSectors - LBASIZE_137GB) < LBASIZE_1024GB)){
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption,"F: = 130GB, G: takes the rest");
+        sprintf(itemPtr->szCaption,"F: = 120GB, G: takes the rest");
         itemPtr->functionPtr= FormatDriveFG;
         itemPtr->functionDataPtr = malloc(sizeof(u8));
             *(u8 *)itemPtr->functionDataPtr = nDriveIndex | F137_G;

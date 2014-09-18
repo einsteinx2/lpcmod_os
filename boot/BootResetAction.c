@@ -359,7 +359,8 @@ extern void BootResetAction ( void ) {
     }
     memcpy((void*)FB_START,videosavepage,FB_SIZE);
     free(videosavepage);
-
+    
+    hiddenTextParam = 0x83;
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     //inputLED();
