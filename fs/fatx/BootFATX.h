@@ -175,9 +175,9 @@ void FATXSetBRFR(u8 drive);
 bool FATXCheckMBR(u8 driveId);
 void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table);
 void FATXSetInitMBR(u8 driveId);
-void FATXFormatCacheDrives(int nIndexDrive);
-void FATXFormatDriveC(int nIndexDrive);
-void FATXFormatDriveE(int nIndexDrive);
-bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize);
+void FATXFormatCacheDrives(int nIndexDrive, bool verbose);
+void FATXFormatDriveC(int nIndexDrive, bool verbose);
+void FATXFormatDriveE(int nIndexDrive, bool verbose);
+void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize);
 
 #endif //    _BootFATX_H_

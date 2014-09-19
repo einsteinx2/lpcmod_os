@@ -144,7 +144,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     }
 }
 
-void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
+void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem, bool forceQuit) {
     temp = menu->timeout;
     u32 COUNT_start;
     COUNT_start = IoInputDword(0x8008);
@@ -221,6 +221,8 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
                 BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
                 VIDEO_ATTR=0xffffff;
                 selectedMenuItem->functionPtr(selectedMenuItem->functionDataPtr);
+                if(forceQuit)
+                    return;
             }
             //Clear the screen again    
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);

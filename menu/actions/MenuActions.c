@@ -25,7 +25,7 @@ CONFIGENTRY *LoadConfigCD(int);
 //TEXTMENU *TextMenuInit(void);
 
 void AdvancedMenu(void *textmenu) {
-    TextMenu((TEXTMENU*)textmenu, NULL);
+    TextMenu((TEXTMENU*)textmenu, NULL, NOFORCEQUIT);
 }
 
 // Booting Original Bios
@@ -139,7 +139,7 @@ void DrawBootMenu(void *rootEntry) {
         if (currentConfigEntry->isDefault) defaultMenuItem = menuPtr;
         TextMenuAddItem(menu,menuPtr);
     }
-    TextMenu(menu, defaultMenuItem);
+    TextMenu(menu, defaultMenuItem, NOFORCEQUIT);
 }
 
 void BootMenuEntry(void *entry) {
@@ -164,12 +164,38 @@ void BootMenuEntry(void *entry) {
 }
 
 void DrawChildTextMenu(void *menu) {
-    TextMenu((TEXTMENU*)menu);
+    TextMenu((TEXTMENU*)menu, NOFORCEQUIT);
 }
 
 void ResetDrawChildTextMenu(void *menu) {
     TEXTMENU * resetSelection = (TEXTMENU*)menu;
-    TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
+    TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem, NOFORCEQUIT);
+}
+
+void DrawLargeHDDTextMenu(void){
+    TEXTMENU *menuPtr;
+
+    menuPtr = (TEXTMENU *)LargeHDDMenuInit();
+    TextMenu(menuPtr, NULL, FORCEQUIT);
+
+    //Free memory
+    if(menuPtr->firstMenuItem != NULL){
+        if(menuPtr->firstMenuItem->nextMenuItem != NULL){
+            if(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem != NULL){
+                if(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->nextMenuItem != NULL){
+                    free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->nextMenuItem->functionDataPtr);
+                    free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->nextMenuItem);
+                }
+                free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->functionDataPtr);
+                free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem);
+            }
+            free(menuPtr->firstMenuItem->nextMenuItem->functionDataPtr);
+            free(menuPtr->firstMenuItem->nextMenuItem);
+        }
+        free(menuPtr->firstMenuItem->functionDataPtr);
+        free(menuPtr->firstMenuItem);
+    }
+    free(menuPtr);
 }
 
 #ifdef ETHERBOOT 

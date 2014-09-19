@@ -349,10 +349,14 @@ extern void BootResetAction ( void ) {
                 char ConfirmDialogString[50];
                 sprintf(ConfirmDialogString, "               Format new drive (%s)?\0", i ? "slave":"master");
                 if(!ConfirmDialog(ConfirmDialogString, 1)){
-                    FATXFormatDriveC(i);
-                    FATXFormatDriveE(i);
-                    FATXFormatCacheDrives(i);
+                    FATXFormatDriveC(i, 0);                     //'0' is for non verbose
+                    FATXFormatDriveE(i, 0);
+                    FATXFormatCacheDrives(i, 0);
                     FATXSetBRFR(i);
+                    //If there's enough sectors to make F and/or G drive(s).
+                    if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
+                        DrawLargeHDDTextMenu();//Launch LargeHDDMenuInit textmenu.
+                    }
                     if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
                         FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.
                 

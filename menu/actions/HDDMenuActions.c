@@ -121,10 +121,9 @@ void FormatCacheDrives(void *driveId){
 
     if(ConfirmDialog("             Confirm format cache drives?", 1))
         return;                                 //Cancel operation.
-        
-    FATXFormatCacheDrives(nIndexDrive);
 
-    HDDMenuHeader("Cache drives formatted");
+    HDDMenuHeader("Format cache drives");
+    FATXFormatCacheDrives(nIndexDrive, 1);      //'1' for verbose
     HDDMenuFooter();
 }
 
@@ -134,9 +133,8 @@ void FormatDriveC(void *driveId){
     if(ConfirmDialog("                  Confirm format C: drive?", 1))
         return;                                 //Cancel operation.
         
-    FATXFormatDriveC(nIndexDrive);
-    
-    HDDMenuHeader("C: drive formatted");
+    HDDMenuHeader("Format C: drive");      //'1' for verbose
+    FATXFormatDriveC(nIndexDrive, 1);
     HDDMenuFooter();
 }
 
@@ -145,10 +143,9 @@ void FormatDriveE(void *driveId){
 
     if(ConfirmDialog("                  Confirm format E: drive?", 1))
         return;                                 //Cancel operation.
-        
-    FATXFormatDriveE(nIndexDrive);    
 
-    HDDMenuHeader("E: drive formatted");
+    HDDMenuHeader("Format E: drive");      //'1' for verbose
+    FATXFormatDriveE(nIndexDrive, 1);
     HDDMenuFooter();
 }
 
@@ -161,7 +158,7 @@ void HDDMenuFooter(void) {
 void HDDMenuHeader(char *title) {
     printk("\n\n\n\n\n           ");
     VIDEO_ATTR=0xffffef37;
-    printk("\2%s\2\n\n\n\n           ", title);
+    printk("\2%s\2\n           ", title);
     VIDEO_ATTR=0xffc8c8c8;
 }
 
@@ -170,15 +167,18 @@ void DisplayHDDInfo(void *driveId) {
     u8 MBRBuffer[512];
     u8 i;
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
+    u8 clusterSize;
+    float partSize;
 
     printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
 
     printk("\n\n\1           Model : %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
     printk("\n\1           Serial : %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
     printk("\n\1           Firmware : %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
-    printk("\n\1           Capacity : %u GB", (tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024)));     //In GB
+    printk("\n\1           Capacity : %.2f GB", (float)tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
     printk("\n\1           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
     printk("\n\1           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
+    printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) ? "Locked" : "Unlocked");
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
     if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr == 1){
@@ -187,11 +187,21 @@ void DisplayHDDInfo(void *driveId) {
             printk("\n\1                Unable to read MBR sector...\n");
         }
         else{
-            for(i = 0; i < 14; i++){
+            for(i = 0; i < 7; i++){     //Print only info for C, E, F, G, X, Y and Z
                 if(mbr->TableEntries[i].Name[0] != ' ' && mbr->TableEntries[i].LBAStart != 0){          //Valid partition entry only
                     printk("\n\1                 %s", mbr->TableEntries[i].Name);
                     printk("\n\1                     Active: %s", mbr->TableEntries[i].Flags == PE_PARTFLAGS_IN_USE ? "Yes" : "No");
-                    printk("    Start at: %u    Size: %u", mbr->TableEntries[i].LBAStart, mbr->TableEntries[i].LBASize);
+                    if(mbr->TableEntries[i].LBASize >= LBASIZE_512GB)           //Need 64K clusters
+                        clusterSize = 128;                                      //Clustersize in number of 512-byte sectors
+                    else if(mbr->TableEntries[i].LBASize >= LBASIZE_256GB)
+                        clusterSize = 64;
+                    else
+                        clusterSize = 32;
+                    partSize = (float)mbr->TableEntries[i].LBASize / 2048;      //in MB
+                    if(partSize < 1024.00) //Partition is less than 1 GB
+                        printk("    Size: %uMB   Cluster: %uKB", (u32)partSize, clusterSize >> 1);
+                    else
+                        printk("    Size: %.2fGB   Cluster: %uKB", partSize / 1024, clusterSize >> 1);
                 }
             }
         }
@@ -203,6 +213,8 @@ void FormatDriveFG(void *driveId) {
     u8 nDriveIndex = (*(u8 *)driveId) & 0x0f;
     u8 formatOption = (*(u8 *)driveId) & 0xf0;
     u32 fsize,gstart,gsize;
+    u8 buffer[512];                                             //Multi purpose
+    XboxPartitionTable * mbr = (XboxPartitionTable *)buffer;
 
     u32 nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
 
@@ -221,11 +233,13 @@ void FormatDriveFG(void *driveId) {
             if(gsize >= LBASIZE_1024GB)
                 gsize = LBASIZE_1024GB - 1;
             gstart = SECTOR_EXTEND + fsize;
+            sprintf(buffer, "              %s", "Confirm format: F:, G: Split evenly?");
             break;
         case FMAX_G:            //F = LBASIZE_1024GB - 1 and G: takes the rest
             fsize = LBASIZE_1024GB - 1;
             gsize = nExtendSectors - fsize;
             gstart = SECTOR_EXTEND + fsize;
+            sprintf(buffer, "           %s", "Confirm format: Max F:, G: takes the rest?");
             break;
         case F137_G:            //F = LBASIZE_137GB and G takes the rest
             fsize = LBASIZE_137GB;
@@ -233,30 +247,43 @@ void FormatDriveFG(void *driveId) {
             if(gsize >= LBASIZE_1024GB)
                 gsize = LBASIZE_1024GB - 1;
             gstart = SECTOR_EXTEND + fsize;
+            sprintf(buffer, "         %s", "Confirm format: F: = 120GB, G: takes the rest?");
             break;
         case F_NOG:             //F < LBASIZE_1024GB - 1.
             fsize = nExtendSectors;
             gstart = SECTOR_EXTEND;
             gsize = 0;
+            sprintf(buffer, "              %s", "Confirm format: F: take all, no G:?");
             break;
         default:
             return;
             break;
     }
-    if(!ConfirmDialog("                  Confirm format F: drive?", 1)){
-        if(FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize))                  //F: drive is partition 6 in table
-            HDDMenuHeader("F: drive formatted");
-        else
-            HDDMenuHeader("F: format ERROR");
-
+    if(!ConfirmDialog(buffer, 1)){
+        HDDMenuHeader("Format F: drive");
+        FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
         HDDMenuFooter();
-    }
-    if(!ConfirmDialog("                  Confirm format G: drive?", 1)){
-        if(FATXFormatExtendedDrive(nDriveIndex, 6, gstart, fsize))                         //G: drive is partition 7 in table
-            HDDMenuHeader("G: drive formatted");
-        else
-            HDDMenuHeader("G: format ERROR");
 
-        HDDMenuFooter();
+        if(formatOption != F_NOG){
+            HDDMenuHeader("Format G: drive");
+            FATXFormatExtendedDrive(nDriveIndex, 6, gstart, fsize);             //G: drive is partition 6 in table
+            HDDMenuFooter();
+        }
+        else{       //Print G drive entry in partition table being inactive and of null size.
+            if(tsaHarddiskInfo[nDriveIndex].m_fHasMbr == 1) {       //No need to do anything if no MBR is on disk.
+               if(BootIdeReadSector(nDriveIndex, &buffer[0], 0x00, 0, 512)) {
+                    VIDEO_ATTR=0xffff0000;
+                    printk("\n\1                Unable to read MBR sector...\n");
+                    HDDMenuFooter();
+                    return;
+                }
+                else{
+                    mbr->TableEntries[6].Flags = 0;
+                    mbr->TableEntries[6].LBAStart = SECTOR_EXTEND;
+                    mbr->TableEntries[6].LBASize = 0;
+                    FATXSetMBR(nDriveIndex, mbr);
+                }
+            }
+        }
     }
 }

@@ -875,9 +875,10 @@ bool FATXCheckMBR(u8 driveId){
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
         printk("\n\n\n           FATXCheckMBR : Unable to read MBR sector\n");
+        return false;
     }
     else{
-        for(i = 0; i < 208; i++){               //first 208 bytes should always be identical for every Xbox.
+        for(i = 0; i < 208; i++){               //IMO, first 208 bytes should always be identical for every Xbox.
             if(ba[i] != sourceTable[i])         //Contains generic MBR header + standard Xbox Partitions (C,E,X,Y,Z)
                 return false;
         }
@@ -888,14 +889,16 @@ bool FATXCheckMBR(u8 driveId){
 void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table){
     u8 *sourceTable = (u8 *)p_table;
     BootIdeWriteSector(driveId,sourceTable,0);
+    tsaHarddiskInfo[driveId].m_fHasMbr = 1;
 }
 
 void FATXSetInitMBR(u8 driveId){
     BootIdeWriteSector(driveId,(u8 *)&BackupPartTbl,0);
+    tsaHarddiskInfo[driveId].m_fHasMbr = 1;
 }
 
-void FATXFormatCacheDrives(int nIndexDrive){
-    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
+void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
+    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512], driveLetter[3];
     u32 counter;
     u32 whichpartition;
     PARTITIONHEADER *header;
@@ -925,8 +928,17 @@ void FATXFormatCacheDrives(int nIndexDrive){
 
     //Cycle through all 3 cache partitions.
     for(whichpartition = SECTOR_CACHE1; whichpartition <= SECTOR_CACHE3; whichpartition += (SECTOR_CACHE2 - SECTOR_CACHE1)){
+        if(whichpartition == SECTOR_CACHE1)
+            sprintf(driveLetter, "%s", "X:");
+        else if(whichpartition == SECTOR_CACHE2)
+            sprintf(driveLetter, "%s", "Y:");
+        else
+            sprintf(driveLetter, "%s", "Z:");
+
         memset(buffer,0xff,512);                    //Killer buffer.
         
+        if(verbose)
+            printk("\n\n           %s  Writing Boot Block.   ", driveLetter);
         // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
         //4KB so 8*512 bytes sectors.
         for (counter=whichpartition;counter<(whichpartition+8); counter++) {
@@ -934,7 +946,11 @@ void FATXFormatCacheDrives(int nIndexDrive){
         }
         //Write Partition info on first sector. lest seven sectors of the first 0x1000 are already 0xff anyway.
         BootIdeWriteSector(nIndexDrive,headerBuf,whichpartition);   //Partition header write.
+        if(verbose)
+            cromwellSuccess();
 
+        if(verbose)
+            printk("\n           %s  Writing Cluster Chain map.   ", driveLetter);
         // Cluster chain map area (from 512*8 = 0x1000 to 512*200 = 0x19000)
         memset(buffer,0x0,512); //wipe. Unused cluster == 0
         for (counter=(whichpartition+8);counter<(whichpartition+200); counter++) {
@@ -942,17 +958,23 @@ void FATXFormatCacheDrives(int nIndexDrive){
         }
         //Write initial cluster chain map.
         BootIdeWriteSector(nIndexDrive,chainmapBuf,whichpartition+8);   //Initial Cluster chain map write.
+        if(verbose)
+            cromwellSuccess();
 
+        if(verbose)
+            printk("\n           %s  Finalizing.   ", driveLetter);
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
         memset(buffer,0xff,512);
         //Format 2 first clusters
         for (counter=(whichpartition+200);counter<(whichpartition+200+(32*2)); counter++) {
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
+        if(verbose)
+            cromwellSuccess();
     }
 }
 
-void FATXFormatDriveC(int nIndexDrive){
+void FATXFormatDriveC(int nIndexDrive, bool verbose){
     u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
     u32 counter;
     PARTITIONHEADER *header;
@@ -980,6 +1002,8 @@ void FATXFormatDriveC(int nIndexDrive){
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
+    if(verbose)
+        printk("\n\n           Writing Boot Block.   ");
     // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
     //4KB so 8*512 bytes sectors.
     for (counter=SECTOR_SYSTEM;counter<(SECTOR_SYSTEM+8); counter++) {
@@ -987,7 +1011,11 @@ void FATXFormatDriveC(int nIndexDrive){
     }
     //Write Partition info on first sector. lest seven sectors of the first 0x1000 are already 0xff anyway.
     BootIdeWriteSector(nIndexDrive,headerBuf,SECTOR_SYSTEM);   //Partition header write.
+    if(verbose)
+        cromwellSuccess();
 
+    if(verbose)
+        printk("\n\n           Writing Cluster Chain map.   ");
     // Cluster chain map area (from 512*8 = 0x1000 to 512*136 = 0x11000)
     memset(buffer,0x0,512); //wipe. Unused cluster == 0
     for (counter=(SECTOR_SYSTEM+8);counter<(SECTOR_SYSTEM+136); counter++) {
@@ -995,16 +1023,22 @@ void FATXFormatDriveC(int nIndexDrive){
     }
     //Write initial cluster chain map.
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_SYSTEM+8);   //Initial Cluster chain map write.
+    if(verbose)
+        cromwellSuccess();
 
+    if(verbose)
+        printk("\n\n           Finalizing.   ");
     // Root Dir (from 512*136 = 0x11000 )
     memset(buffer,0x00,512);
     //Format 10 first clusters
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*2)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
+    if(verbose)
+        cromwellSuccess();
 }
 
-void FATXFormatDriveE(int nIndexDrive){
+void FATXFormatDriveE(int nIndexDrive, bool verbose){
     u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
     u32 counter;
     PARTITIONHEADER *header;
@@ -1030,6 +1064,8 @@ void FATXFormatDriveE(int nIndexDrive){
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
+    if(verbose)
+        printk("\n\n           Writing Boot Block.   ");
     // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
     //4KB so 8*512 bytes sectors.
     for (counter=SECTOR_STORE;counter<(SECTOR_STORE+8); counter++) {
@@ -1037,7 +1073,11 @@ void FATXFormatDriveE(int nIndexDrive){
     }
     //Write Partition info on first sector. last seven sectors of the first 0x1000 are already 0xff anyway.
     BootIdeWriteSector(nIndexDrive,headerBuf,SECTOR_STORE);   //Partition header write.
+    if(verbose)
+        cromwellSuccess();
 
+    if(verbose)
+        printk("\n\n           Writing Cluster Chain map.   ");
     // Cluster chain map area (from 512*8 = 0x1000 to 512*2456 = 0x133000)
     memset(buffer,0x0,512); //wipe. Unused cluster == 0
     for (counter=(SECTOR_STORE+8);counter<(SECTOR_STORE+2456); counter++) {
@@ -1045,7 +1085,11 @@ void FATXFormatDriveE(int nIndexDrive){
     }
     //Write initial cluster chain map.
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_STORE+8);   //Initial Cluster chain map write.
+    if(verbose)
+        cromwellSuccess();
 
+    if(verbose)
+        printk("\n\n           Finalizing, creating directories.   ");
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
     //memset(buffer,0xff,512);
     //Format 10 first clusters
@@ -1073,9 +1117,11 @@ void FATXFormatDriveE(int nIndexDrive){
     // Music Dir points to Cluster 5
     FATXCreateDirectoryEntry(buffer,"Music",0,5);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32);   // Write Cluster 4(UDATA).
+    if(verbose)
+        cromwellSuccess();
 }
 
-bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize){
+void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize){
     u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
     u32 counter;
     PARTITIONHEADER *header;
@@ -1087,105 +1133,97 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     if(tsaHarddiskInfo[driveId].m_enumDriveType != EDT_XBOXFS)
        FATXSetBRFR(driveId);
 
-    if(partition == 6 && lbaSize == 0 && lbaStart == SECTOR_EXTEND){              //No G drive
-        if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {       //No need to do anything if no MBR is on disk.
-            if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
-                VIDEO_ATTR=0xffff0000;
-                printk("\n\1                Unable to read MBR sector...\n");
-                return false;
-            }
-            else{
-                mbr->TableEntries[partition].Flags = 0;
-                mbr->TableEntries[partition].LBAStart = SECTOR_EXTEND;
-                mbr->TableEntries[partition].LBASize = 0;
-                FATXSetMBR(driveId, mbr);
-            }
+    if(lbaSize >= LBASIZE_512GB)         //Need 64K clusters
+        clusterSize = 128;               //Clustersize in number of 512-byte sectors
+    else if(lbaSize >= LBASIZE_256GB)
+        clusterSize = 64;
+    else
+        clusterSize = 32;
+
+    //Calculate size of FAT, in number of 512-byte sectors.
+    chainmapSize = (lbaSize / clusterSize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
+    chainmapSize = chainmapSize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
+                                                                            //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
+    chainmapSize = (chainmapSize >> 9);                                     //Divide by 512bytes,
+
+    while((chainmapSize % 8) != 0)                    //Round it to 4096 byte boundary.
+        chainmapSize += 1;
+	
+    if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {                           //MBR is present on HDD
+        if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
+            VIDEO_ATTR=0xffff0000;
+            printk("\n\1                Unable to read MBR sector...\n");
+            return;
         }
     }
-    else {
+    else
+    {                                                   //If no MBR already on disk
+        memcpy(mbr, &BackupPartTbl, sizeof(BackupPartTbl)); //Copy backup in working buffer and work from there.
+    }
 
-        if(lbaSize >= LBASIZE_512GB)         //Need 64K clusters
-            clusterSize = 128;                //Clustersize in number of 512-byte sectors
-        else if(lbaSize >= LBASIZE_256GB)
-            clusterSize = 64;
-        else
-            clusterSize = 32;
+    printk("\n\n\n           Writing partition table in MBR.   ");
+    mbr->TableEntries[partition].Flags = PE_PARTFLAGS_IN_USE;
+    mbr->TableEntries[partition].LBAStart = lbaStart;
+    mbr->TableEntries[partition].LBASize = lbaSize;
+    FATXSetMBR(driveId, mbr);
+    cromwellSuccess();
 
-        //Calculate size of FAT, in number of 512-byte sectors.
-        chainmapSize = (lbaSize / clusterSize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
-        chainmapSize = chainmapSize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
-                                                                                //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
-        chainmapSize = (chainmapSize >> 9);                                     //Divide by 512bytes,
+    memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
+    header = (PARTITIONHEADER *)headerBuf;
+    header->magic = FATX_PARTITION_MAGIC;       //Whoop, magic!
+    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->clusterSize = clusterSize;   //16KB = 32 sector/cluster. 32KB = 64 sector/cluster. 64KB = 128 sector/cluster.
+    header->nbFAT = 1;                          //Always 1.
+    header->unknown = 0;                        //Always 0.
+    memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
+    //Partition header is ready.
+    //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
+    //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
-        while((chainmapSize % 8) != 0)                    //Round it to 4096 byte boundary.
-            chainmapSize += 1;
-	
-        if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {                           //MBR is present on HDD
-            if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
-                VIDEO_ATTR=0xffff0000;
-                printk("\n\1                Unable to read MBR sector...\n");
-                return false;
-            }
-        }
-        else
-        {                                                   //If no MBR already on disk
-            memcpy(mbr, &BackupPartTbl, sizeof(BackupPartTbl)); //Copy backup in working buffer and work from there.
-        }
+    memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
+    chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+    chainmapBuf[1]=0xff;
+    chainmapBuf[3]=0xff;
+    chainmapBuf[4]=0xff;
+    if(lbaSize >= FATX16_MAXLBA){               //FATX16 stops there. Only 2-byte entries in cluster chain.
+        chainmapBuf[5]=0xff;
+        chainmapBuf[6]=0xff;
+        chainmapBuf[7]=0xff;
+        chainmapBuf[8]=0xff;
+    }
 
-        mbr->TableEntries[partition].Flags = PE_PARTFLAGS_IN_USE;
-        mbr->TableEntries[partition].LBAStart = lbaStart;
-        mbr->TableEntries[partition].LBASize = lbaSize;
-        FATXSetMBR(driveId, mbr);
+    memset(buffer,0xff,512);                    //Killer buffer.
 
+    printk("\n\n           Writing Boot Block.   ");
 
-        memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
-        header = (PARTITIONHEADER *)headerBuf;
-        header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
-        header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
-        header->clusterSize = clusterSize;   //16KB = 32 sector/cluster. 32KB = 64 sector/cluster. 64KB = 128 sector/cluster.
-        header->nbFAT = 1;                          //Always 1.
-        header->unknown = 0;                        //Always 0.
-        memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
-        //Partition header is ready.
-        //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
-        //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
+    // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
+    //4KB so 8*512 bytes sectors.
+    for (counter=lbaStart;counter<(lbaStart+8); counter++) {
+        BootIdeWriteSector(driveId,buffer,counter);
+    }
+    //Write Partition info on first sector. last seven sectors of the first 0x1000 are already 0xff anyway.
+    BootIdeWriteSector(driveId,headerBuf,lbaStart);   //Partition header write.
+    cromwellSuccess();
 
-        memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
-        chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
-        chainmapBuf[1]=0xff;
-        chainmapBuf[3]=0xff;
-        chainmapBuf[4]=0xff;
-        if(lbaSize >= FATX16_MAXLBA){               //FATX16 stops there. Only 2-byte entry in cluster chain.
-            chainmapBuf[5]=0xff;
-            chainmapBuf[6]=0xff;
-            chainmapBuf[7]=0xff;
-            chainmapBuf[8]=0xff;
-        }
+    printk("\n\n           Writing Cluster Chain map.   ");
 
-        memset(buffer,0xff,512);                    //Killer buffer.
+    // Cluster chain map area (from 512*8 = 0x1000 to 512*8 + chainmapSize)
+    memset(buffer,0x0,512); //wipe. Unused cluster == 0
+    for (counter=(lbaStart+8);counter<(lbaStart+8+chainmapSize); counter++) {
+        BootIdeWriteSector(driveId,buffer,counter);
+    }
+    //Write initial cluster chain map.
+    BootIdeWriteSector(driveId,chainmapBuf,lbaStart+8);   //Initial Cluster chain map write.
+    cromwellSuccess();
 
-        // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
-        //4KB so 8*512 bytes sectors.
-        for (counter=lbaStart;counter<(lbaStart+8); counter++) {
-            BootIdeWriteSector(driveId,buffer,counter);
-        }
-        //Write Partition info on first sector. last seven sectors of the first 0x1000 are already 0xff anyway.
-        BootIdeWriteSector(driveId,headerBuf,lbaStart);   //Partition header write.
-	
-        // Cluster chain map area (from 512*8 = 0x1000 to 512*8 + chainmapSize)
-        memset(buffer,0x0,512); //wipe. Unused cluster == 0
-        for (counter=(lbaStart+8);counter<(lbaStart+8+chainmapSize); counter++) {
-            BootIdeWriteSector(driveId,buffer,counter);
-        }
-        //Write initial cluster chain map.
-        BootIdeWriteSector(driveId,chainmapBuf,lbaStart+8);   //Initial Cluster chain map write.
-	LEDOff(NULL);
-        // Root Dir
-        // 10 clusters formatted.
-        memset(buffer,0xff,512); 
-        for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+(clusterSize*10)); counter++) {
-            BootIdeWriteSector(driveId,buffer,counter);
-        }
-   }
-   return true;
+    // Root Dir
+    // 2 clusters formatted.
+    printk("\n\n           Finalizing.   ");
+    memset(buffer,0xff,512);
+    for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+(clusterSize*2)); counter++) {
+        BootIdeWriteSector(driveId,buffer,counter);
+    }
+    cromwellSuccess();
+
+    return;
 }
