@@ -12,19 +12,19 @@
 
 void AssertLockUnlock(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
-    int nIndexDrive = 0;                                //Toggle master by default.
+    int nIndexDrive = hiddenTextParam;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    if((strncmp(tempItemPtr->szParameter, "slave", 5)))    //If string in szParameter is different from "master"
-        nIndexDrive = 1;                                //It means we need to change the slave lock status.
+//    if((strncmp(tempItemPtr->szParameter, "slave", 5)))    //If string in szParameter is different from "master"
+//        nIndexDrive = 1;                                //It means we need to change the slave lock status.
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) {       //Drive is already locked
         if(UnlockHDD(nIndexDrive))
-            sprintf(tempItemPtr->szCaption, "%s", tempItemPtr->szParameter);                     //Next action will be to lock it
+            sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");                     //Next action will be to lock it
     }
     else {
         if(LockHDD(nIndexDrive))
-            sprintf(tempItemPtr->szCaption, "%s", tempItemPtr->szParameter);
+            sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD : ");
     }
 }
 

@@ -212,12 +212,12 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
 
             if (selectedMenuItem->functionPtr!=NULL){
                 hiddenTextParam = selectedMenuItem->szParameter[50];
-                printk("\n\n\n\n\n           ");
-                VIDEO_ATTR=0xffffef37;
-                printk("\2\n\n\n\n        hiddenTextParam=%u", hiddenTextParam);
-                VIDEO_ATTR=0xffc8c8c8;
-                printk("\1\n\n           Press Button 'A' to continue.");
-                while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+//                printk("\n\n\n\n\n           ");
+//                VIDEO_ATTR=0xffffef37;
+//                printk("\2\n\n\n\n        hiddenTextParam=%u", hiddenTextParam);
+//                VIDEO_ATTR=0xffc8c8c8;
+//                printk("\1\n\n           Press Button 'A' to continue.");
+//                while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
                 BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
                 VIDEO_ATTR=0xffffff;
                 selectedMenuItem->functionPtr(selectedMenuItem->functionDataPtr);

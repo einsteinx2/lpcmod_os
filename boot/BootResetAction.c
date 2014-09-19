@@ -336,17 +336,18 @@ extern void BootResetAction ( void ) {
 
     nTempCursorMbrX=VIDEO_CURSOR_POSX;
     nTempCursorMbrY=VIDEO_CURSOR_POSY;
-    // We save the complete framebuffer to memory (we restore at exit)
-    u8 *videosavepage = malloc(FB_SIZE);
-    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+    
 
     //Check for unformatted drives.
     int i;
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
-                char * ConfirmDialogString;
-                sprintf(ConfirmDialogString, "               Format new drive (%s)?", i ? "slave":"master");
+                // We save the complete framebuffer to memory (we restore at exit)
+                u8 *videosavepage = malloc(FB_SIZE);
+                memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+                char ConfirmDialogString[50];
+                sprintf(ConfirmDialogString, "               Format new drive (%s)?\0", i ? "slave":"master");
                 if(!ConfirmDialog(ConfirmDialogString, 1)){
                     FATXFormatDriveC(i);
                     FATXFormatDriveE(i);
@@ -354,12 +355,15 @@ extern void BootResetAction ( void ) {
                     FATXSetBRFR(i);
                     if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
                         FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.
+                
+                    
                 }
+                memcpy((void*)FB_START,videosavepage,FB_SIZE);
+                free(videosavepage);
             }
         }
     }
-    memcpy((void*)FB_START,videosavepage,FB_SIZE);
-    free(videosavepage);
+    
     
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();

@@ -59,16 +59,16 @@ TEXTMENU* BankSelectInit(void * bank) {
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     if(fHasHardware == SYSCON_ID_V1){
-        if(*(u8 *)bank == BNKOS)
+        if(hiddenTextParam == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
-        else if(*(u8 *)bank == BNK256)
+        else if(hiddenTextParam == BNK256)
             strcpy(menuPtr->szCaption, "Flash menu : 256KB bank");
-        else if(*(u8 *)bank == BNK512)
+        else if(hiddenTextParam == BNK512)
             strcpy(menuPtr->szCaption, "Flash menu : 512KB bank");
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchBank(*(u8 *)bank);
+        switchBank(hiddenTextParam);
     }
     else {
         strcpy(menuPtr->szCaption, "Flash menu : Unknown device");

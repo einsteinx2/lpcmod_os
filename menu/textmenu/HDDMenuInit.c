@@ -35,6 +35,7 @@ TEXTMENU *HDDMenuInit(void) {
             else {
                 sprintf(itemPtr->szCaption,"Lock HDD : ");
             }
+            itemPtr->szParameter[50] = i;
             sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
             itemPtr->functionPtr= AssertLockUnlock;
             itemPtr->functionDataPtr = itemPtr;

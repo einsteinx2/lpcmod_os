@@ -594,6 +594,10 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
         return 1;
     }
 
+    if((tsaHarddiskInfo[driveId].m_securitySettings &0x0004)==0x0004)
+    	tsaHarddiskInfo[driveId].m_securitySettings &= 0xFFFB;	//Remove locked bit
+    else
+    	tsaHarddiskInfo[driveId].m_securitySettings |= 0x0004;	//Add it.
     //Success, hopefully.
     return 0;
 }

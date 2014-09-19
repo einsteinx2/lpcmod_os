@@ -944,9 +944,9 @@ void FATXFormatCacheDrives(int nIndexDrive){
         BootIdeWriteSector(nIndexDrive,chainmapBuf,whichpartition+8);   //Initial Cluster chain map write.
 
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
-        // memset(buffer,0xff,512);
-        //Format 10 first clusters
-        for (counter=(whichpartition+200);counter<(whichpartition+200+(32*10)); counter++) {
+        memset(buffer,0xff,512);
+        //Format 2 first clusters
+        for (counter=(whichpartition+200);counter<(whichpartition+200+(32*2)); counter++) {
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
     }
@@ -997,9 +997,9 @@ void FATXFormatDriveC(int nIndexDrive){
     BootIdeWriteSector(nIndexDrive,chainmapBuf,SECTOR_SYSTEM+8);   //Initial Cluster chain map write.
 
     // Root Dir (from 512*136 = 0x11000 )
-    // memset(buffer,0x00,512);
+    memset(buffer,0x00,512);
     //Format 10 first clusters
-    for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*10)); counter++) {
+    for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*2)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
 }
@@ -1025,7 +1025,7 @@ void FATXFormatDriveE(int nIndexDrive){
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
-    memset(chainmapBuf,0xff,4*5);               //We'll use 5 clusters for base folders.
+    memset(chainmapBuf,0xff,4*7);               //We'll use 5 clusters for base folders.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
 
     memset(buffer,0xff,512);                    //Killer buffer.
@@ -1119,7 +1119,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
 
         while((chainmapSize % 8) != 0)                    //Round it to 4096 byte boundary.
             chainmapSize += 1;
-
+	
         if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {                           //MBR is present on HDD
             if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
                 VIDEO_ATTR=0xffff0000;
@@ -1171,7 +1171,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         }
         //Write Partition info on first sector. last seven sectors of the first 0x1000 are already 0xff anyway.
         BootIdeWriteSector(driveId,headerBuf,lbaStart);   //Partition header write.
-
+	
         // Cluster chain map area (from 512*8 = 0x1000 to 512*8 + chainmapSize)
         memset(buffer,0x0,512); //wipe. Unused cluster == 0
         for (counter=(lbaStart+8);counter<(lbaStart+8+chainmapSize); counter++) {
@@ -1179,7 +1179,7 @@ bool FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         }
         //Write initial cluster chain map.
         BootIdeWriteSector(driveId,chainmapBuf,lbaStart+8);   //Initial Cluster chain map write.
-
+	LEDOff(NULL);
         // Root Dir
         // 10 clusters formatted.
         memset(buffer,0xff,512); 
