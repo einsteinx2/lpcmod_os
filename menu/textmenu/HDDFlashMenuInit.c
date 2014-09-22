@@ -8,10 +8,9 @@
  ***************************************************************************/
 
 #include "FlashMenuActions.h"
-#include "include/boot.h"
+#include "boot.h"
 #include "BootIde.h"
 #include "TextMenu.h"
-#include "boot.h"
 #include "memory_layout.h"
 #include "BootFATX.h"
 

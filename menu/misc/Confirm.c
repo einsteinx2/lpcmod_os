@@ -26,7 +26,7 @@ int Confirm(char *message, char *yesText, char *noText, int defaultItem) {
     TextMenuAddItem(&ConfirmMenu, &NoItem);    
     
     //Draw the menu
-    TextMenu(&ConfirmMenu, defaultItem?&YesItem:&NoItem, NOFORCEQUIT);
+    TextMenu(&ConfirmMenu, defaultItem?&YesItem:&NoItem);
     
     return Confirm_Result;
 }

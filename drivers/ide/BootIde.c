@@ -1044,7 +1044,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
         tsicp.m_wCylinder = (block >> 8) & 0xffff; /* 23:8 */   
         tsicp.m_bSector = block & 0xff; /* 7:0 */   
         tsicp.m_bDrivehead = IDE_DH_DRIVE(nDriveIndex) | IDE_DH_LBA;   
-        ideWriteCommand = IDE_CMD_WRITE_MULTI_RETRY;
+        ideWriteCommand = IDE_CMD_WRITE_EXT;
     } else {
             // Looks Like we do not have LBA 48 need
             if (tsaHarddiskInfo[nDriveIndex].m_bLbaMode == IDE_DH_CHS) 

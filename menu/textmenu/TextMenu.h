@@ -24,8 +24,6 @@ struct TEXTMENUITEM;
 struct TEXTMENU;
 
 #define MENUCAPTIONSIZE 51
-#define FORCEQUIT       1
-#define NOFORCEQUIT     0
 extern int breakOutOfMenu;
 
 typedef struct TEXTMENUITEM {

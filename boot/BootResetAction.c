@@ -67,7 +67,6 @@ extern void BootResetAction ( void ) {
     };
 
     fHasHardware = 0;
-    hiddenTextParam = 0;
 
     memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
     memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);

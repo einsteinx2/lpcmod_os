@@ -9,6 +9,7 @@
 #include "ToolsMenuActions.h"
 #include "lpcmod_v1.h"
 #include "boot.h"
+#include "BootIde.h"
 #include "video.h"
 
 
@@ -29,8 +30,18 @@ void saveEEPromToFlash(void *whatever){
 
 void restoreEEPromFromFlash(void *whatever){
     u8 i;
+    u8 lockPreference = 0;
     u8 emptyCount = 0;
-    for(i = 0; i < 4; i++) {    //Checksum2 is 4 bytes long.
+    char hddString[6];
+    for(i = 0; i < 2; i++){
+        if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
+    	    if((tsaHarddiskInfo[i].m_securitySettings &0x0004)==0x0004){        //Drive locked.
+    	        lockPreference += (i + 1);             //0=no drive locked, 1=master locked, 2= slave locked
+    	    }                                          //3=both drives locked.
+        }
+    }
+    
+    for(i = 0; i < 4; i++) {         //Checksum2 is 4 bytes long.
         if(LPCmodSettings.bakeeprom.Checksum2[i] == 0xFF)
             emptyCount++;
     }
@@ -38,12 +49,31 @@ void restoreEEPromFromFlash(void *whatever){
                         //It is practically impossible to get such value in this checksum field.
         if(ConfirmDialog("       Restore backed up EEProm content?", 1))
             return;
+        if((lockPreference&1) == 1){       //Master is locked.
+    	    if(!UnlockHDD(0,0)){		     //Silently unlock master.
+    	        ToolHeader("ERROR: Could not unlock master HDD");
+    	    	goto failed;
+    	    }
+        }
+        if((lockPreference&2) == 2){       //Slave is locked.
+            if(!UnlockHDD(1,0)){              //Silently unlock slave.
+                ToolHeader("ERROR: Could not unlock slave HDD");
+                goto failed;
+            }
+        }
         memcpy(&eeprom,&(LPCmodSettings.bakeeprom),sizeof(EEPROMDATA));
         ToolHeader("Restored back up to Xbox");
+        if((lockPreference&1) == 1){       //Master was initiallylocked.
+    	    LockHDD(0,0);		     //Silently lock master.
+        }
+        if((lockPreference&2) == 2){       //Slave was initially locked.
+            LockHDD(1,0);              //Silently lock slave.
+        }
     }
     else {
         ToolHeader("ERROR: No back up data on modchip");
     }
+failed:
     ToolFooter();
 }
 

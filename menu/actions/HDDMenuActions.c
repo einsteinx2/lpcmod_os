@@ -12,76 +12,90 @@
 
 void AssertLockUnlock(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
-    int nIndexDrive = hiddenTextParam;                                //Toggle master by default.
+    int nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-//    if((strncmp(tempItemPtr->szParameter, "slave", 5)))    //If string in szParameter is different from "master"
-//        nIndexDrive = 1;                                //It means we need to change the slave lock status.
+    if((strncmp(tempItemPtr->szParameter, "master", 6)))    //If string szParameter contains is "master" 
+        nIndexDrive = 0;                                //It means we need to change the master lock status.
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) {       //Drive is already locked
-        if(UnlockHDD(nIndexDrive))
+        if(UnlockHDD(nIndexDrive, 1))                                             //1 is for verbose
             sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");                     //Next action will be to lock it
     }
     else {
-        if(LockHDD(nIndexDrive))
+        if(LockHDD(nIndexDrive, 1))                                                   //1 is for verbose
             sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD : ");
     }
 }
 
-bool LockHDD(int nIndexDrive) {
+bool LockHDD(int nIndexDrive, bool verbose) {
     u8 password[20];
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     int i;
 
-    if (!Confirm("Confirm locking", "Yes", "No", 0)) return false;
+    if(verbose){
+        if (ConfirmDialog("                      Confirm Lock HDD?", 1)) return false;
+    }
     
     if (CalculateDrivePassword(nIndexDrive,password)) {
         printk("           Unable to calculate drive password - eeprom corrupt?");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
         return false;
     }
-    printk("\n\n\n\n\n           XBlast OS locks drives with a master password of\n\n           \"\2TEAMASSEMBLY\2\"\n\n\n           Please remember this ");
-    printk("as it could save your drive!\n\n");
-    printk("           The normal password (user password) the drive is\n           being locked with is as follows:\n\n");
-    printk("                              ");
-    VIDEO_ATTR=0xffef37;
-    for (i=0; i<20; i++) {
-        printk("\2%02x \2",password[i]);
-        if ((i+1)%5 == 0) {
-            printk("\n\n                              ");
-        }
-    }    
-    VIDEO_ATTR=0xffffff;
-    printk("\n           Locking drive");
-    dots();
-    if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_SET_PASSWORD, password)) {
-        cromwellError();
-        while(1);
+    if(verbose){
+        printk("\n\n\n\n\n           XBlast OS locks drives with a master password of\n\n           \"\2TEAMASSEMBLY\2\"\n\n\n           Please remember this ");
+        printk("as it could save your drive!\n\n");
+        printk("           The normal password (user password) the drive is\n           being locked with is as follows:\n\n");
+        printk("                              ");
+        VIDEO_ATTR=0xffef37;
+        for (i=0; i<20; i++) {
+            printk("\2%02x \2",password[i]);
+            if ((i+1)%5 == 0) {
+                printk("\n\n                              ");
+            }
+        }    
+        VIDEO_ATTR=0xffffff;
+        printk("\n           Locking drive");
+        dots();
     }
-    cromwellSuccess();
-    printk("           Make a note of the password above.\n");
-    printk("           Press Button A to continue");
+    if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_SET_PASSWORD, password)) {
+        printk("\n           Locking drive failed");
+        cromwellError();
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    }
+    if(verbose){
+        cromwellSuccess();
+        printk("           Make a note of the password above.\n");
+        printk("           Press Button A to continue");
 
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    }
     return true;
 }
 
-bool UnlockHDD(int nIndexDrive) {
+bool UnlockHDD(int nIndexDrive, bool verbose) {
     u8 password[20];
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
-    
-    if (!Confirm("Confirm unlocking", "Yes", "No", 0)) return false;
+    if(verbose){
+        if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
+    }
     
     if (CalculateDrivePassword(nIndexDrive,password)) {
         printk("           Unable to calculate drive password - eeprom corrupt?  Aborting\n");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
         return false;
     }
     if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
         printk("           Failed!");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        return false;
     }
-    printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
-    printk("           \2Press Button A to continue");
+    if(verbose){
+        printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+        printk("           \2Press Button A to continue");
 
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    }
     return true;
 }
 
@@ -156,6 +170,7 @@ void HDDMenuFooter(void) {
 }
 
 void HDDMenuHeader(char *title) {
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     printk("\n\n\n\n\n           ");
     VIDEO_ATTR=0xffffef37;
     printk("\2%s\2\n           ", title);
@@ -168,14 +183,14 @@ void DisplayHDDInfo(void *driveId) {
     u8 i;
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
     u8 clusterSize;
-    float partSize;
+    u32 partSize;
 
     printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
 
     printk("\n\n\1           Model : %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
     printk("\n\1           Serial : %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
     printk("\n\1           Firmware : %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
-    printk("\n\1           Capacity : %.2f GB", (float)tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
+    printk("\n\1           Capacity : %uGB", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
     printk("\n\1           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
     printk("\n\1           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
     printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) ? "Locked" : "Unlocked");
@@ -192,16 +207,15 @@ void DisplayHDDInfo(void *driveId) {
                     printk("\n\1                 %s", mbr->TableEntries[i].Name);
                     printk("\n\1                     Active: %s", mbr->TableEntries[i].Flags == PE_PARTFLAGS_IN_USE ? "Yes" : "No");
                     if(mbr->TableEntries[i].LBASize >= LBASIZE_512GB)           //Need 64K clusters
-                        clusterSize = 128;                                      //Clustersize in number of 512-byte sectors
+                        clusterSize = 64;                                      //Clustersize in number of 512-byte sectors
                     else if(mbr->TableEntries[i].LBASize >= LBASIZE_256GB)
-                        clusterSize = 64;
-                    else
                         clusterSize = 32;
-                    partSize = (float)mbr->TableEntries[i].LBASize / 2048;      //in MB
-                    if(partSize < 1024.00) //Partition is less than 1 GB
-                        printk("    Size: %uMB   Cluster: %uKB", (u32)partSize, clusterSize >> 1);
+                    else if(mbr->TableEntries[i].LBASize >= 1)
+                        clusterSize = 16;
                     else
-                        printk("    Size: %.2fGB   Cluster: %uKB", partSize / 1024, clusterSize >> 1);
+                    	clusterSize = 0;
+                    partSize = mbr->TableEntries[i].LBASize / 2048;      //in MB
+                        printk("    Size: %uMB   Cluster: %uKB", partSize, clusterSize);
                 }
             }
         }
@@ -212,7 +226,7 @@ void DisplayHDDInfo(void *driveId) {
 void FormatDriveFG(void *driveId) {
     u8 nDriveIndex = (*(u8 *)driveId) & 0x0f;
     u8 formatOption = (*(u8 *)driveId) & 0xf0;
-    u32 fsize,gstart,gsize;
+    u32 fsize,gstart = SECTOR_EXTEND,gsize = 0;
     u8 buffer[512];                                             //Multi purpose
     XboxPartitionTable * mbr = (XboxPartitionTable *)buffer;
 
@@ -232,33 +246,29 @@ void FormatDriveFG(void *driveId) {
                 fsize = LBASIZE_1024GB - 1;
             if(gsize >= LBASIZE_1024GB)
                 gsize = LBASIZE_1024GB - 1;
-            gstart = SECTOR_EXTEND + fsize;
-            sprintf(buffer, "              %s", "Confirm format: F:, G: Split evenly?");
+            sprintf(buffer, "                         %s", "Confirm format:\n\n\2                     F:, G: Split evenly?");
             break;
         case FMAX_G:            //F = LBASIZE_1024GB - 1 and G: takes the rest
             fsize = LBASIZE_1024GB - 1;
             gsize = nExtendSectors - fsize;
-            gstart = SECTOR_EXTEND + fsize;
-            sprintf(buffer, "           %s", "Confirm format: Max F:, G: takes the rest?");
+            sprintf(buffer, "                         %s", "Confirm format:\n\n\2             Max F:, G: takes the rest?");
             break;
         case F137_G:            //F = LBASIZE_137GB and G takes the rest
             fsize = LBASIZE_137GB;
             gsize = nExtendSectors - fsize;
             if(gsize >= LBASIZE_1024GB)
                 gsize = LBASIZE_1024GB - 1;
-            gstart = SECTOR_EXTEND + fsize;
-            sprintf(buffer, "         %s", "Confirm format: F: = 120GB, G: takes the rest?");
+            sprintf(buffer, "                         %s", "Confirm format:\n\n\2            F: = 120GB, G: takes the rest?");
             break;
         case F_NOG:             //F < LBASIZE_1024GB - 1.
             fsize = nExtendSectors;
-            gstart = SECTOR_EXTEND;
-            gsize = 0;
-            sprintf(buffer, "              %s", "Confirm format: F: take all, no G:?");
+            sprintf(buffer, "                         %s", "Confirm format:\n\n\2                F: take all, no G:?");
             break;
         default:
             return;
             break;
     }
+    gstart = SECTOR_EXTEND + fsize + 1;
     if(!ConfirmDialog(buffer, 1)){
         HDDMenuHeader("Format F: drive");
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
@@ -266,7 +276,7 @@ void FormatDriveFG(void *driveId) {
 
         if(formatOption != F_NOG){
             HDDMenuHeader("Format G: drive");
-            FATXFormatExtendedDrive(nDriveIndex, 6, gstart, fsize);             //G: drive is partition 6 in table
+            FATXFormatExtendedDrive(nDriveIndex, 6, gstart, gsize);             //G: drive is partition 6 in table
             HDDMenuFooter();
         }
         else{       //Print G drive entry in partition table being inactive and of null size.

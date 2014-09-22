@@ -13,14 +13,19 @@ typedef enum {
     IDE_CMD_READ_MULTI_NORETRY = 0x21,
     
     IDE_CMD_READ_EXT = 0x24, /* 48-bit LBA */
+    IDE_CMD_READ_DMA_EXT = 0x25,
         
     IDE_CMD_WRITE_MULTI_RETRY = 0x30,
+    IDE_CMD_WRITE_EXT = 0x34,
+    IDE_CMD_WRITE_DMA_EXT = 0x35,
         
     IDE_CMD_DRIVE_DIAG = 0x90,
     IDE_CMD_SET_PARAMS = 0x91,
     IDE_CMD_STANDBY_IMMEDIATE = 0x94, /* 2 byte command- also send
                                          IDE_CMD_STANDBY_IMMEDIATE2 */
     IDE_CMD_SET_MULTIMODE = 0xC6,
+    IDE_CMD_READ_DMA = 0xC8,
+    IDE_CMD_WRITE_DMA = 0xC8,
     IDE_CMD_STANDBY_IMMEDIATE2 = 0xE0,
     
     //Get info commands

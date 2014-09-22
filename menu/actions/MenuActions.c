@@ -25,7 +25,7 @@ CONFIGENTRY *LoadConfigCD(int);
 //TEXTMENU *TextMenuInit(void);
 
 void AdvancedMenu(void *textmenu) {
-    TextMenu((TEXTMENU*)textmenu, NULL, NOFORCEQUIT);
+    TextMenu((TEXTMENU*)textmenu, NULL);
 }
 
 // Booting Original Bios
@@ -139,7 +139,7 @@ void DrawBootMenu(void *rootEntry) {
         if (currentConfigEntry->isDefault) defaultMenuItem = menuPtr;
         TextMenuAddItem(menu,menuPtr);
     }
-    TextMenu(menu, defaultMenuItem, NOFORCEQUIT);
+    TextMenu(menu, defaultMenuItem);
 }
 
 void BootMenuEntry(void *entry) {
@@ -164,20 +164,19 @@ void BootMenuEntry(void *entry) {
 }
 
 void DrawChildTextMenu(void *menu) {
-    TextMenu((TEXTMENU*)menu, NOFORCEQUIT);
+    TextMenu((TEXTMENU*)menu);
 }
 
 void ResetDrawChildTextMenu(void *menu) {
     TEXTMENU * resetSelection = (TEXTMENU*)menu;
-    TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem, NOFORCEQUIT);
+    TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
 }
 
 void DrawLargeHDDTextMenu(void){
     TEXTMENU *menuPtr;
 
     menuPtr = (TEXTMENU *)LargeHDDMenuInit();
-    TextMenu(menuPtr, NULL, FORCEQUIT);
-
+    
     //Free memory
     if(menuPtr->firstMenuItem != NULL){
         if(menuPtr->firstMenuItem->nextMenuItem != NULL){

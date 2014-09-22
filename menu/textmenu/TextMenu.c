@@ -16,6 +16,7 @@ int oldTimeRemain = 0;
 int visibleCount = 0;
 
 
+
 void TextMenuDraw(TEXTMENU *menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUITEM *selectedItem);
 
 void TextMenuAddItem(TEXTMENU *menu, TEXTMENUITEM *newMenuItem) {
@@ -44,7 +45,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     char titleLine[xLCD.LineSize + 1];
     
     VIDEO_CURSOR_POSX=75;
-    VIDEO_CURSOR_POSY=125;
+    VIDEO_CURSOR_POSY=45;
     
     //Draw the menu title.
     VIDEO_ATTR=0xff00ff;
@@ -75,7 +76,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         printk("  (%i)\2", timeRemain);
     }
 
-    VIDEO_CURSOR_POSY+=30;
+    VIDEO_CURSOR_POSY+=20;
     
     //Draw the menu items
     VIDEO_CURSOR_POSX=150;
@@ -87,13 +88,13 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     visibleCount = menu->visibleCount;
 
     if(visibleCount == 0) {
-        visibleCount = 8;
+        visibleCount = 11;
     }
 
     for (menucount=0; menucount<visibleCount; menucount++) {
         if (item==NULL) {
             //No more menu items to draw
-            return;
+            break;
         }
         //Selected item in yellow
         if (item == selectedItem){ 
@@ -101,11 +102,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         }
         else VIDEO_ATTR=0xffffff;
         //Font size 2=big.
-        printk("\n\2               %s",item->szCaption);
-        if(item->szParameter[0] != 0)
-            printk("\2%s\n", item->szParameter);
-        else
-            printk("\n");
+        printk("\n\2               %s%s\n",item->szCaption, item->szParameter);
         item=item->nextMenuItem;
     }
     VIDEO_ATTR=0xffffff;
@@ -116,8 +113,8 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
             titleLine[xLCD.LineSize] = 0;                    //End of line character.
             memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
             for(i = 0; i < strlen(selectedItem->szCaption); i++){
-                if(selectedItem->szCaption[i] == ':'){
-                    if( i < xLCD.LineSize)
+                if(selectedItem->szCaption[i] == ':' && i >= 7){	       //Quick fix to display F: and G: drive strings in their entirety
+                    if( i < xLCD.LineSize)                                     //as they would be cut off by this logic on the LCD.
                         titleLine[i] = selectedItem->szCaption[i];             //Copy characters as long as we're under 20 characters or no ':' was encountered.
                     colon = true;
                     break;                                                     //Leave the for-loop as no other character will be printed on this line.
@@ -144,7 +141,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     }
 }
 
-void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem, bool forceQuit) {
+void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
     temp = menu->timeout;
     u32 COUNT_start;
     COUNT_start = IoInputDword(0x8008);
@@ -211,18 +208,9 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem, bool forceQuit) {
             //Menu item selected - invoke function pointer.
 
             if (selectedMenuItem->functionPtr!=NULL){
-                hiddenTextParam = selectedMenuItem->szParameter[50];
-//                printk("\n\n\n\n\n           ");
-//                VIDEO_ATTR=0xffffef37;
-//                printk("\2\n\n\n\n        hiddenTextParam=%u", hiddenTextParam);
-//                VIDEO_ATTR=0xffc8c8c8;
-//                printk("\1\n\n           Press Button 'A' to continue.");
-//                while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
                 BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
                 VIDEO_ATTR=0xffffff;
                 selectedMenuItem->functionPtr(selectedMenuItem->functionDataPtr);
-                if(forceQuit)
-                    return;
             }
             //Clear the screen again    
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);

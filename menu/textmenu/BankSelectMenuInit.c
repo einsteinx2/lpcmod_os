@@ -1,5 +1,5 @@
 #include "lpcmod_v1.h"
-#include "include/config.h"
+#include "config.h"
 #include "TextMenu.h"
 #include "FlashMenuActions.h"
 #include "boot.h"
@@ -22,7 +22,6 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank0 (512KB)");
-    itemPtr->szParameter[50] = BNK512;
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNK512;
@@ -32,7 +31,6 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank1 (256KB)");
-    itemPtr->szParameter[50] = BNK256;
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKOS;
@@ -42,7 +40,6 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank2 (OS)");
-    itemPtr->szParameter[50] = BNKOS;
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKOS;
@@ -59,16 +56,16 @@ TEXTMENU* BankSelectInit(void * bank) {
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     if(fHasHardware == SYSCON_ID_V1){
-        if(hiddenTextParam == BNKOS)
+        if(*(u8 *)bank == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
-        else if(hiddenTextParam == BNK256)
+        else if(*(u8 *)bank == BNK256)
             strcpy(menuPtr->szCaption, "Flash menu : 256KB bank");
-        else if(hiddenTextParam == BNK512)
+        else if(*(u8 *)bank == BNK512)
             strcpy(menuPtr->szCaption, "Flash menu : 512KB bank");
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchBank(hiddenTextParam);
+        switchBank(*(u8 *)bank);
     }
     else {
         strcpy(menuPtr->szCaption, "Flash menu : Unknown device");
@@ -109,7 +106,6 @@ TEXTMENU* BankSelectInit(void * bank) {
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)HDDFlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
-
 
 /*
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

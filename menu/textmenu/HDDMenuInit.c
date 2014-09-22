@@ -12,7 +12,7 @@
 #include "TextMenu.h"
 #include "HDDMenuActions.h"
 
-TEXTMENU *LargeHDDMenuInit(void);
+TEXTMENU *LargeHDDMenuInit(void * drive);
 
 TEXTMENU *HDDMenuInit(void) {
     TEXTMENUITEM *itemPtr;
@@ -98,24 +98,23 @@ TEXTMENU *HDDMenuInit(void) {
                 memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
                 sprintf(itemPtr->szCaption,"Large HDD format : ");
                 sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                itemPtr->szParameter[50] = i;
-                itemPtr->functionPtr= DrawChildTextMenu;
-                itemPtr->functionDataPtr = (void *)LargeHDDMenuInit();
+                itemPtr->functionPtr= (void *)LargeHDDMenuInit;
+                itemPtr->functionDataPtr = malloc(sizeof(u8));
+                    *(u8 *)itemPtr->functionDataPtr = i;
                 TextMenuAddItem(menuPtr, itemPtr);
-            }
-        
+            } 
         }
     }
 
     return menuPtr;
 }
 
-TEXTMENU *LargeHDDMenuInit(void) {
+TEXTMENU *LargeHDDMenuInit(void * drive) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    int i=0, nDriveIndex = 0;
-
-    nDriveIndex = hiddenTextParam;
+    int i=0, nDriveIndex = 1;
+    
+    nDriveIndex = *(u8 *) drive;
 
     //Amount of free sectors after standard partitions
     unsigned long nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
@@ -172,6 +171,7 @@ TEXTMENU *LargeHDDMenuInit(void) {
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
+    ResetDrawChildTextMenu(menuPtr);
 
     return menuPtr;
 }

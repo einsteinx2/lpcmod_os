@@ -31,7 +31,7 @@
 #define LBASIZE_512GB   1073741824UL                      //Switch to 64K clusters beyond that
 #define LBASIZE_1024GB  2147483645UL                      //Max LBA size supported by Xbox
 #define LBASIZE_256GB   536870912UL                       //Switch to 32K clusters beyond that
-#define LBASIZE_137GB   (268435456UL - SECTOR_EXTEND)     //LBA28 limited F: drive size.
+#define LBASIZE_137GB   (0x0FFFFFFFUL - SECTOR_EXTEND)     //LBA28 limited F: drive size.
 
 #define FATX16_MAXLBA   2096800UL                         //Max number of sectors possible of a FATX16 partition. Higher than that is FATX32.
 

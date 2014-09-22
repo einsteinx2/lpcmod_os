@@ -950,7 +950,7 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
             cromwellSuccess();
 
         if(verbose)
-            printk("\n           %s  Writing Cluster Chain map.   ", driveLetter);
+            printk("           %s  Writing Cluster Chain map.   ", driveLetter);
         // Cluster chain map area (from 512*8 = 0x1000 to 512*200 = 0x19000)
         memset(buffer,0x0,512); //wipe. Unused cluster == 0
         for (counter=(whichpartition+8);counter<(whichpartition+200); counter++) {
@@ -962,7 +962,7 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
             cromwellSuccess();
 
         if(verbose)
-            printk("\n           %s  Finalizing.   ", driveLetter);
+            printk("           %s  Finalizing.   ", driveLetter);
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
         memset(buffer,0xff,512);
         //Format 2 first clusters
@@ -1123,10 +1123,10 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
 
 void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize){
     u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
-    u32 counter;
+    unsigned long counter, chainmapSize = 0;
     PARTITIONHEADER *header;
     u8 clusterSize = 32;                //16KB cluster by default(32 sectors * 512 bytes)
-    u32 chainmapSize = 0;
+
 
     XboxPartitionTable * mbr = (XboxPartitionTable *)buffer;
 
@@ -1224,6 +1224,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         BootIdeWriteSector(driveId,buffer,counter);
     }
     cromwellSuccess();
+
 
     return;
 }

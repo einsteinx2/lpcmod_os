@@ -440,7 +440,7 @@ _xLCD xLCD;
 //Xbox motherboard revision enum.
 typedef enum {
     DEVKIT = 0x00,    //Includes a bunch of revisions
-    DEBUGKIT = 0x01,        //2 know version ID
+    DEBUGKIT = 0x01,        //2 known version ID
     REV1_0 = 0x02,        //1.0
     REV1_1 = 0x03,        //1.1
     REV1_2 = 0x04,        //1.2/1.3
@@ -457,5 +457,4 @@ u8 mbVersion;
 u16 fHasHardware;
 
 u8 currentFlashBank;
-u8 hiddenTextParam;
 #endif // _Boot_H_
