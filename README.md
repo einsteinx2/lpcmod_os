@@ -33,6 +33,7 @@ This project is available in both "BIOS" and "XBE"(Xbox executable) form. The fe
 Also note that this software can detect if a modchip is inserted onto the LPC port. Certain options specifically related to XBlast Mod will not be available if the proper hardware is not detected. However, HD44780 LCD ouput is supported on the whole range of SmartXX modchips and on Xecuter 3(CE).
 
 Notable feature available on both versions are:
+
 * Change video settings (includes DVD,Game and Video region).
 * 128MB RAM tester
 * Reset user settings in Xbox EEPROM
@@ -40,10 +41,12 @@ Notable feature available on both versions are:
 * Lock/Unlock HDD, Display HDD info, format drives (64KB clusters supported)
 
 Notable features only available in BIOS version
+
 * LCD ouput supported on all SmartXX/Xecuter3 and XBlast mod
 * Save modchip settings and backup eeprom to flash (not supported on SmartXX)
 
 Notable features only available on XBlast mod
+
 * Control multiple flash banks
 * Custom names for flash banks(outputs on LCD too)
 * Quickboot bank(bypass OS)
