@@ -76,10 +76,10 @@ const char * const szaSenseKeys[] = {
 int BootIdeWaitNotBusy(unsigned uIoBase)
 {
     u8 b = 0x80;
-    while (b & 0x80) {
+    while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
         b=IoInputByte(IDE_REG_ALTSTATUS(uIoBase));
     }
-    return b&1;
+    return b&1;         //bit0 == ERR
 }
 
 /* -------------------------------------------------------------------------------- */
@@ -109,7 +109,7 @@ int BootIdeIssueAtaCommand(
 {
     int n;
 
-    IoInputByte(IDE_REG_STATUS(uIoBase));
+    //IoInputByte(IDE_REG_STATUS(uIoBase));     //No need since we'll be checking ALT_STATUS register in BootIdeWaitNotBusy function.
 
     n=BootIdeWaitNotBusy(uIoBase);
 //    if(n)    {// as our command may be being used to clear the error, not a good policy to check too closely!
@@ -1002,7 +1002,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 //
 // !!!!! EXPERIMENTAL
 
-int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block) 
+int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned uIoBase;
@@ -1074,6 +1074,20 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
         return 1;
     }
     status = BootIdeWriteData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
+
+    //Some drives requires a CACHE_FLUSH command being sent after each write command. We do it just to be sure.
+    //So issue command. BSY has been cleared in BootIdeWriteData function
+    if(tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal >= 0x10000000)        //LBA48 drive
+        IoOutputByte(IDE_REG_COMMAND(uIoBase), IDE_CMD_CACHE_FLUSH_EXT);
+    else
+        IoOutputByte(IDE_REG_COMMAND(uIoBase), IDE_CMD_CACHE_FLUSH);
+    //Wait a little
+    wait_smalldelay();
+    //Wait until BSY bit is cleared and DRQ bit is set
+    if(BootIdeWaitNotBusy(uIoBase)){
+        return 1;                       //If ERR bit was set, return with error.
+    }
+
     return status;
 }
 

@@ -113,7 +113,8 @@ const ISR_PREP isrprep[] = {
 
 
 void wait_smalldelay(void) {
-    wait_us(80);
+    wait_us(1);                 //ATA specs specifies a 400ns delay between sending a command and checking BSY.
+                                //1us is more than acceptable here.
 }
 
 void wait_us(u32 ticks) {

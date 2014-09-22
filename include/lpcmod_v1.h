@@ -21,12 +21,22 @@
 #define TSOP_256_SWITCH    0x20
 
 
+//XBlast Mod and SmartXX LPC registers to drive LCD
 #define BNK_CONTROL    0xF710
 #define DISABLE_MOD    0xF711
 #define ENABLE_5V    0xF713
 #define LCD_DATA    0xF700
 #define LCD_BL        0xF701
 #define LCD_CT        0xF703
+
+//Xecuter 3 LPC registers to drive LCD
+#define X3_DISP_O_DAT      0xF504
+#define X3_DISP_O_CMD      0xF505
+#define X3_DISP_O_DIR_DAT  0xF506
+#define X3_DISP_O_DIR_CMD  0xF507
+#define X3_DISP_O_LIGHT    0xF503
+
+
 
 #define SYSCON_REG    0xF701
 //For XBlast Lite
@@ -38,6 +48,8 @@
 #define SYSCON_ID_XX2   0xF2
 #define SYSCON_ID_XXOPX 0xF5
 #define SYSCON_ID_XX3   0xF8
+
+#define SYSCON_ID_X3    0x2A
 
 //Other modchips ID by flash type.
 #define FLASH_ID_XECUTER3       0x01AD

@@ -19,7 +19,10 @@ void BootLCDInit(void){
     xLCD.Init = WriteLCDInit;
     xLCD.Command = WriteLCDCommand;
     xLCD.Data = WriteLCDData;
-    xLCD.WriteIO = WriteLCDIO;
+    if(fHasHardware == SYSCON_ID_X3)    //Xecuter 3 interface differently from other modchips.
+        xLCD.WriteIO = X3WriteLCDIO;
+    else
+        xLCD.WriteIO = WriteLCDIO;
     xLCD.PrintLine0 = WriteLCDLine0;
     xLCD.PrintLine1 = WriteLCDLine1;
     xLCD.PrintLine2 = WriteLCDLine2;
@@ -40,18 +43,24 @@ void setLCDContrast(u8 value){
 }
 
 void setLCDBacklight(u8 value){
-    float fBackLight=((float)value)/100.0f;
-    fBackLight*=127.0f;
-    u8 newValue=(u8)fBackLight;
-    if (newValue==63) newValue=64;
-    WriteToIO(LCD_BL, newValue);
+    if(fHasHardware != SYSCON_ID_X3){                  //Everything but Xecuter 3
+        float fBackLight=((float)value)/100.0f;
+        fBackLight*=127.0f;
+        u8 newValue=(u8)fBackLight;
+        if (newValue==63) newValue=64;
+        WriteToIO(LCD_BL, newValue);
+    }
+    else                                               //Xecuter 3
+        WriteToIO(X3_DISP_O_LIGHT, (u8)(2.55*(double)value) );
 }
 
 void assertInitLCD(void){
     if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1){    //Display should be ON but is not initialized.
-        toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
+        if(fHasHardware == SYSCON_ID_V1)                //XBlast Mod only.
+            toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
         xLCD.enable = 1;
-        setLCDContrast(LPCmodSettings.LCDsettings.contrast);
+        if(fHasHardware != SYSCON_ID_X3)
+            setLCDContrast(LPCmodSettings.LCDsettings.contrast);
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
         wait_ms(5);                    //Wait a precautionary 5ms before initializing the LCD to let power stabilize.
         WriteLCDInit();
@@ -71,6 +80,15 @@ void assertInitLCD(void){
 void WriteLCDInit(void){
     if(xLCD.enable != 1)
         return;
+
+    //Xecuter 3 only
+    if(fHasHardware == SYSCON_ID_X3){
+        //initialize GP/IO
+        WriteToIO(X3_DISP_O_DAT, 0);
+        WriteToIO(X3_DISP_O_CMD, 0);
+        WriteToIO(X3_DISP_O_DIR_DAT, 0xFF);
+        WriteToIO(X3_DISP_O_DIR_CMD, 0x07);
+    }
     //It's been at least 15ms since boot.
     //Start of init, with delay
     xLCD.WriteIO(0x33,0,4100);    //Use a single call to write twice function set 0b0011 with 4.1ms delay
@@ -106,7 +124,7 @@ void WriteLCDCommand(u8 value){
 void WriteLCDData(u8 value){
     if(xLCD.enable != 1)
         return;
-    xLCD.WriteIO(value, DISPLAY_RS, xLCD.TimingData);
+    xLCD.WriteIO(value, (fHasHardware == SYSCON_ID_X3)?X3_DISPLAY_RS:DISPLAY_RS, xLCD.TimingData);
 }
 
 void WriteLCDIO(u8 data, bool RS, u16 wait){
@@ -123,17 +141,17 @@ void WriteLCDIO(u8 data, bool RS, u16 wait){
                                                     //E signal value is added below as it's the "clock"
     //High nibble first
     //Initially place the data
-    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x    
+    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
     wait_us(90);    //needs to be at least 40ns
     
     msbNibble |= DISPLAY_E;
     //Raise E signal line
-    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x    
+    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
     wait_us(90);    //needs to be at least 230ns
     
     msbNibble ^= DISPLAY_E;
     //Drop E signal line
-    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x    
+    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
     wait_us(wait);
     
     //Low nibble in second
@@ -150,6 +168,47 @@ void WriteLCDIO(u8 data, bool RS, u16 wait){
     //Drop E signal line
     WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
     wait_us(wait);
+}
+
+void X3WriteLCDIO(u8 data, bool RS, u16 wait){
+        u8 lsbNibble = 0;
+        u8 msbNibble = 0;
+
+        if(xLCD.enable != 1)
+            return;
+                                //data is b7,b6,b5,b4,b3,b2,b1,b0
+        msbNibble = (data  & 0xF0);   //Maps     b6,b7,b4,b5,0,0,0,0
+        lsbNibble = (data << 4);   //Maps     b2,b3,b0,b1,0,0,0,0          //data must be D7,D6,D5,D4,x,x,x,x
+                                                        //E signal value is added below as it's the "clock"
+        //High nibble first
+        //Initially place the data
+        WriteToIO(X3_DISP_O_DAT, msbNibble); //Place b6,b7,b4,b5,x,x,x,x
+
+
+        WriteToIO(X3_DISP_O_CMD, RS);
+        wait_us(90);    //needs to be at least 40ns
+        //Raise E signal line
+        WriteToIO(X3_DISP_O_CMD, RS | DISPLAY_E);
+        wait_us(90);    //needs to be at least 230ns
+
+        //Drop E signal line
+        WriteToIO(X3_DISP_O_CMD, RS);
+        wait_us(wait);
+
+        //Low nibble in second
+        //Initially place the data
+        WriteToIO(X3_DISP_O_DAT, lsbNibble); //Place b2,b3,b0,b1,x,x,x,x
+        wait_us(90);    //needs to be at least 40ns
+
+        WriteToIO(X3_DISP_O_CMD, RS);
+        wait_us(90);    //needs to be at least 40ns
+        //Raise E signal line
+        WriteToIO(X3_DISP_O_CMD, RS | DISPLAY_E);
+        wait_us(90);    //needs to be at least 230ns
+
+        //Drop E signal line
+        WriteToIO(X3_DISP_O_CMD, RS);
+        wait_us(wait);
 }
 
 void WriteLCDLine0(bool centered, char *lineText){

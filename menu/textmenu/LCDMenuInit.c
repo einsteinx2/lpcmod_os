@@ -56,21 +56,24 @@ TEXTMENU *LCDMenuInit(void) {
     itemPtr->functionRTDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption,"Contrast : ");
-    sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.LCDsettings.contrast);
-    itemPtr->functionPtr= NULL;
-    itemPtr->functionDataPtr= NULL;
-    itemPtr->functionLeftPtr=LCDDecrementContrast;
-    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
-    itemPtr->functionRightPtr=LCDIncrementContrast;
-    itemPtr->functionRightDataPtr = itemPtr->szParameter;
-    itemPtr->functionLTPtr=LCDDecrementContrast;
-    itemPtr->functionLTDataPtr = itemPtr->szParameter;
-    itemPtr->functionRTPtr=LCDIncrementContrast;
-    itemPtr->functionRTDataPtr = itemPtr->szParameter;
-    TextMenuAddItem(menuPtr, itemPtr);
+    //No need to display contrast settings if SmartXX OPX or Xecuter 3 is detected, they do not support it.
+    if(fHasHardware != SYSCON_ID_X3 && fHasHardware != SYSCON_ID_XXOPX){
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption,"Contrast : ");
+        sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.LCDsettings.contrast);
+        itemPtr->functionPtr= NULL;
+        itemPtr->functionDataPtr= NULL;
+        itemPtr->functionLeftPtr=LCDDecrementContrast;
+        itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+        itemPtr->functionRightPtr=LCDIncrementContrast;
+        itemPtr->functionRightDataPtr = itemPtr->szParameter;
+        itemPtr->functionLTPtr=LCDDecrementContrast;
+        itemPtr->functionLTDataPtr = itemPtr->szParameter;
+        itemPtr->functionRTPtr=LCDIncrementContrast;
+        itemPtr->functionRTDataPtr = itemPtr->szParameter;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

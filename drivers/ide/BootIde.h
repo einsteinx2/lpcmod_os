@@ -23,10 +23,15 @@ typedef enum {
     IDE_CMD_SET_PARAMS = 0x91,
     IDE_CMD_STANDBY_IMMEDIATE = 0x94, /* 2 byte command- also send
                                          IDE_CMD_STANDBY_IMMEDIATE2 */
+    IDE_CMD_READ_MULTIPLE = 0xC4,
+    IDE_CMD_WRITE_MULTIPLE = 0xC5,
+    IDE_CMD_SET_MULTIPLE_MODE = 0xC6,
     IDE_CMD_SET_MULTIMODE = 0xC6,
     IDE_CMD_READ_DMA = 0xC8,
-    IDE_CMD_WRITE_DMA = 0xC8,
+    IDE_CMD_WRITE_DMA = 0xCA,
     IDE_CMD_STANDBY_IMMEDIATE2 = 0xE0,
+    IDE_CMD_CACHE_FLUSH = 0xE7,
+    IDE_CMD_CACHE_FLUSH_EXT = 0xEA,
     
     //Get info commands
     IDE_CMD_IDENTIFY = 0xEC,

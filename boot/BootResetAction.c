@@ -48,7 +48,7 @@ extern void BootResetAction ( void ) {
     int nFATXPresent=false;
     bool fFirstBoot=false;                    //Flag to indicate first boot since flash update
     int nTempCursorX, nTempCursorY;
-    int n, nx;
+    int n, nx, i;
     char *modName = "Unsupported modchip!";
     OBJECT_FLASH of;
 
@@ -335,10 +335,24 @@ extern void BootResetAction ( void ) {
 
     nTempCursorMbrX=VIDEO_CURSOR_POSX;
     nTempCursorMbrY=VIDEO_CURSOR_POSY;
+
+
+    //Debug routine to (hopefully) identify the i2c eeprom on a Xecuter 3.
+    u8 *videosavepage = malloc(FB_SIZE);
+    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+    printk("\n\n\n\n");
+    for(i = 0x50; i < 0x58; i++){               //Hopefully they didn't use an obscure eeprom chip
+        if(i != 0x54)                           //and it will respond to top nibble 0b0101. If not we'll bruteforce it.
+            printk("\n                addr:%2x     data:%2x", i, I2CTransmitByteGetReturn(i, 0x0));
+    }
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+    free(videosavepage);
+    //Remove after success
     
 
     //Check for unformatted drives.
-    int i;
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){

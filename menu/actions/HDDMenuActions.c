@@ -235,29 +235,21 @@ void FormatDriveFG(void *driveId) {
     switch(formatOption){
         case F_GEQUAL:                                          //Split amount of sectors evenly on 2 partitions
             if(nExtendSectors % 2){                             //Odd number of sectors
-                fsize = (nExtendSectors + 1) >> 1;              //F: will be 1 sector bigger than G:
-                gsize = (nExtendSectors - 1) >> 1;              //Sorry G:
+                fsize = (nExtendSectors + 1) >> 1;              //F: will be 1 sector bigger than G:            //Sorry G:
             }
             else{
                 fsize = nExtendSectors >> 1;
-                gsize = nExtendSectors >> 1;
             }
             if(fsize >= LBASIZE_1024GB)
                 fsize = LBASIZE_1024GB - 1;
-            if(gsize >= LBASIZE_1024GB)
-                gsize = LBASIZE_1024GB - 1;
             sprintf(buffer, "                         %s", "Confirm format:\n\n\2                     F:, G: Split evenly?");
             break;
         case FMAX_G:            //F = LBASIZE_1024GB - 1 and G: takes the rest
             fsize = LBASIZE_1024GB - 1;
-            gsize = nExtendSectors - fsize;
             sprintf(buffer, "                         %s", "Confirm format:\n\n\2             Max F:, G: takes the rest?");
             break;
         case F137_G:            //F = LBASIZE_137GB and G takes the rest
             fsize = LBASIZE_137GB;
-            gsize = nExtendSectors - fsize;
-            if(gsize >= LBASIZE_1024GB)
-                gsize = LBASIZE_1024GB - 1;
             sprintf(buffer, "                         %s", "Confirm format:\n\n\2            F: = 120GB, G: takes the rest?");
             break;
         case F_NOG:             //F < LBASIZE_1024GB - 1.
@@ -269,6 +261,9 @@ void FormatDriveFG(void *driveId) {
             break;
     }
     gstart = SECTOR_EXTEND + fsize + 1;
+    gsize = nExtendSectors - fsize;
+    if(gsize >= LBASIZE_1024GB)
+        gsize = LBASIZE_1024GB - 1;
     if(!ConfirmDialog(buffer, 1)){
         HDDMenuHeader("Format F: drive");
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table

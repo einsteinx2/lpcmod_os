@@ -40,6 +40,11 @@
 #define DISP_SEGRAM_SET     0x40  //RE_FLAG = 1
 #define DISP_DDRAM_SET      0x80  // cmd: set DDRAM address in address counter
 
+//Xecuter 3 specific
+#define X3_DISPLAY_RS      0x01
+//#define X3_DISPLAY_RW      0x02   //not used, we only write.
+//#define X3_DISPLAY_E       0x04     //Same as others
+
 #define CENTERSTRING        1
 #define JUSTIFYLEFT            0
 
@@ -57,6 +62,7 @@ void WriteLCDInit(void);
 void WriteLCDCommand(u8 value);
 void WriteLCDData(u8 value);
 void WriteLCDIO(u8 data, bool RS, u16 wait);
+void X3WriteLCDIO(u8 data, bool RS, u16 wait);
 void WriteLCDLine0(bool centered, char *lineText);
 void WriteLCDLine1(bool centered, char *lineText);
 void WriteLCDLine2(bool centered, char *lineText);
