@@ -380,8 +380,6 @@ extern void BootResetAction ( void ) {
                     }
                     if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
                         FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.
-                
-                    
                 }
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 free(videosavepage);

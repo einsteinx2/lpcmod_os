@@ -159,7 +159,9 @@ void FormatDriveE(void *driveId){
         return;                                 //Cancel operation.
 
     HDDMenuHeader("Format E: drive");      //'1' for verbose
+    u32 COUNT_start = IoInputDword(0x8008);
     FATXFormatDriveE(nIndexDrive, 1);
+    printk("\n\n           Time taken: %u us ", ((float)(IoInputDword(0x8008) - COUNT_start)/3.579545));    //Should roughly give us.
     HDDMenuFooter();
 }
 
@@ -193,6 +195,7 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           Capacity : %uGB", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
     printk("\n\1           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
     printk("\n\1           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
+    printk("\n\1           Sectors-blocks : %u ", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);
     printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) ? "Locked" : "Unlocked");
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
@@ -266,12 +269,16 @@ void FormatDriveFG(void *driveId) {
         gsize = LBASIZE_1024GB - 1;
     if(!ConfirmDialog(buffer, 1)){
         HDDMenuHeader("Format F: drive");
+        u32 COUNT_start = IoInputDword(0x8008);
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
+        printk("\n\n           Time taken: %u us ", ((float)(IoInputDword(0x8008) - COUNT_start)/3.579545));
         HDDMenuFooter();
 
         if(formatOption != F_NOG){
             HDDMenuHeader("Format G: drive");
+            COUNT_start = IoInputDword(0x8008);
             FATXFormatExtendedDrive(nDriveIndex, 6, gstart, gsize);             //G: drive is partition 6 in table
+            printk("\n\n           Time taken: %u us ", ((float)(IoInputDword(0x8008) - COUNT_start)/3.579545));
             HDDMenuFooter();
         }
         else{       //Print G drive entry in partition table being inactive and of null size.

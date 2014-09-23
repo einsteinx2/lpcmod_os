@@ -969,6 +969,7 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
         for (counter=(whichpartition+200);counter<(whichpartition+200+(32*2)); counter++) {
             BootIdeWriteSector(nIndexDrive,buffer,counter);
         }
+        //For a total of 264 sectors written, each partition.
         if(verbose)
             cromwellSuccess();
     }
@@ -1030,10 +1031,11 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
         printk("\n\n           Finalizing.   ");
     // Root Dir (from 512*136 = 0x11000 )
     memset(buffer,0x00,512);
-    //Format 10 first clusters
+    //Format 2 first clusters
     for (counter=(SECTOR_SYSTEM+136);counter<(SECTOR_SYSTEM+136+(32*2)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
+    //For a total of 200 consecutive sectors written.
     if(verbose)
         cromwellSuccess();
 }
@@ -1092,8 +1094,8 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
         printk("\n\n           Finalizing, creating directories.   ");
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
     //memset(buffer,0xff,512);
-    //Format 10 first clusters
-    for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*10)); counter++) {
+    //Format 8 first clusters
+    for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*6)); counter++) {
         BootIdeWriteSector(nIndexDrive,buffer,counter);
     }
 
@@ -1108,7 +1110,7 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
 
     memset(buffer,0x00,512);
     //CACHE dir is empty to 0xff everywhere.
-    BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32+32+32);   // Write Cluster 6(CACHE).
+    //BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32+32+32+32);   // Write Cluster 6(CACHE).
     // FFFE0000 Dir points to Cluster 3
     FATXCreateDirectoryEntry(buffer,"FFFE0000",0,3);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32);   // Write Cluster 2(TDATA).
@@ -1117,6 +1119,7 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     // Music Dir points to Cluster 5
     FATXCreateDirectoryEntry(buffer,"Music",0,5);
     BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32);   // Write Cluster 4(UDATA).
+    //For a total of 2648 sectors written
     if(verbose)
         cromwellSuccess();
 }
@@ -1223,6 +1226,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+(clusterSize*2)); counter++) {
         BootIdeWriteSector(driveId,buffer,counter);
     }
+    //for a total of 8 + chainmapSize + (clustersize * 2) sectors written.
     cromwellSuccess();
 
 

@@ -177,7 +177,7 @@ void ResetDrawChildTextMenu(void *menu) {
 
 void DrawLargeHDDTextMenu(void){
     TEXTMENU *menuPtr;
-
+    breakOutOfMenu = 1;
     menuPtr = (TEXTMENU *)LargeHDDMenuInit();
     
     //Free memory

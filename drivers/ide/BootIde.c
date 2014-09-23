@@ -22,18 +22,46 @@ int sprintf(char * buf, const char *fmt, ...);
 #define IDE_REG_EXTENDED_OFFSET       (0x200u)
 
 #define IDE_REG_DATA(base)              ((base) + 0u) /* word register */
-#define IDE_REG_ERROR(base)             ((base) + 1u)
-#define IDE_REG_FEATURE(base)           ((base) + 1u)
-#define IDE_REG_SECTOR_COUNT(base)      ((base) + 2u)
-#define IDE_REG_SECTOR_NUMBER(base)     ((base) + 3u)
-#define IDE_REG_CYLINDER_LSB(base)      ((base) + 4u)
-#define IDE_REG_CYLINDER_MSB(base)      ((base) + 5u)
-#define IDE_REG_DRIVEHEAD(base)         ((base) + 6u)
-#define IDE_REG_STATUS(base)            ((base) + 7u)
-#define IDE_REG_COMMAND(base)           ((base) + 7u)
+#define IDE_REG_ERROR(base)             ((base) + 1u)                          //Error register (read-only)
+#define IDE_REG_FEATURE(base)           ((base) + 1u)                          //Features register (write-only)
+#define IDE_REG_SECTOR_COUNT(base)      ((base) + 2u)                          //Sector Count register (read-write)
+#define IDE_REG_SECTOR_NUMBER(base)     ((base) + 3u)                          //LBA Low register (read-write)
+#define IDE_REG_LBA_LOW(base)           ((base) + 3u)                          //Same as above but easier to remember
+#define IDE_REG_CYLINDER_LSB(base)      ((base) + 4u)                          //LBA Mid register (read-write)
+#define IDE_REG_LBA_MID(base)           ((base) + 4u)                          //Same as above but easier to remember
+#define IDE_REG_CYLINDER_MSB(base)      ((base) + 5u)                          //LBA High register (read-write)
+#define IDE_REG_LBA_HIGH(base)          ((base) + 5u)                          //Same as above but easier to remember
+#define IDE_REG_DRIVEHEAD(base)         ((base) + 6u)                          //Device control register (read-write)
+#define IDE_REG_DEVICE(base)            ((base) + 6u)                          //Same as above but easier to remember
+#define IDE_REG_STATUS(base)            ((base) + 7u)                          //Status register (read-only)
+#define IDE_REG_COMMAND(base)           ((base) + 7u)                          //Command Register(write-only)
 #define IDE_REG_ALTSTATUS(base)         ((base) + IDE_REG_EXTENDED_OFFSET + 6u)
 #define IDE_REG_CONTROL(base)           ((base) + IDE_REG_EXTENDED_OFFSET + 6u)
 #define IDE_REG_ADDRESS(base)           ((base) + IDE_REG_EXTENDED_OFFSET + 7u)
+
+/*
+Normal command input(sending to ATA device) must send the following registers:
+      -Features
+      -Sector Count
+      -LBA Low
+      -LBA Mid
+      -LBA High
+      -Device
+      -Command
+
+Command register must be the last one to be sent for the command to execute. It's then a good practice
+to send all the necessary registers in the same order as presented above.
+
+
+Normal command output(receiving from ATA device) will require a read on the following registers
+    -Error
+    -Sector Count
+    -LBA Low
+    -LBA Mid
+    -LBA High
+    -Device
+    -Status
+*/
 
 typedef struct {
     unsigned char m_bPrecomp;
@@ -199,7 +227,7 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, size_t size)
         return 1;
     }
 
-       if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;
+       if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;     //ERR flag raised.
     
     return 0;
 }
@@ -439,7 +467,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     } 
         
         
-    if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
+    if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).
         unsigned long ulDriveCapacity1024=((tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal /1000)*512)/1000;
         
 #ifndef SILENT_MODE
@@ -473,6 +501,16 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
                 }
             }
         }  
+
+        //Useful for READ/WRITE_MLTIPLE commands
+        tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = *((unsigned char*)&(drive_info[47]));
+
+        //ATA specs require that we send SET MULTIPLE MOD command at least once to enable MULTIPLE READ/WRITE
+        //commands. We send the SET MULTIPLE MODE command with the default number of sector per block.
+        if(BootIdeSetMultimodeSectors(nIndexDrive, tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer)){
+            printk("Unable to change Multimode's sectors per block.");
+            return 1;
+        }
     }
 
     if (drive_info[49] & 0x200) 
@@ -1250,4 +1288,36 @@ int BootIdeSetTransferMode(int nIndexDrive, int nMode)
         nReturn=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_FEATURES, &tsicp);
         return nReturn;
     }
+}
+
+int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    unsigned int uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
+    u16 buffer[256];
+    memset(buffer, 0x00, 512);
+    tsicp.m_bCountSector = nbSectors;           //Only relevant register(excluding Command register)
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_MULTIPLE_MODE, &tsicp)) return 1;
+    BootIdeWaitDataReady(uIoBase);
+
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {     //Check back our change
+            //printk(" Drive %d: Not detected\n");
+            return 1;
+    }
+
+    BootIdeWaitDataReady(uIoBase);
+
+    if(BootIdeReadData(uIoBase, buffer, IDE_SECTOR_SIZE))
+    {
+        //printk("  %d: Drive not detected\n", nIndexDrive);
+        return 1;
+    }
+
+    //check if it worked.
+    if(nbSectors == *((unsigned char*)&(buffer[59]))){
+        tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = *((unsigned char*)&(buffer[47]));     //It worked
+    }
+    else{
+        return -1;              //Did not work.
+    }
+    return 0;                   //No error.
 }
