@@ -242,11 +242,11 @@ void FormatDriveFG(void *driveId) {
             }
             if(fsize >= LBASIZE_1024GB)
                 fsize = LBASIZE_1024GB - 1;
-            sprintf(buffer, "                         %s", "Confirm format:\n\n\2                     F:, G: Split evenly?");
+            sprintf(buffer, "                         %s", "Confirm format:\n\n\2                      F:, G: Split evenly?");
             break;
         case FMAX_G:            //F = LBASIZE_1024GB - 1 and G: takes the rest
             fsize = LBASIZE_1024GB - 1;
-            sprintf(buffer, "                         %s", "Confirm format:\n\n\2             Max F:, G: takes the rest?");
+            sprintf(buffer, "                         %s", "Confirm format:\n\n\2                 Max F:, G: takes the rest?");
             break;
         case F137_G:            //F = LBASIZE_137GB and G takes the rest
             fsize = LBASIZE_137GB;

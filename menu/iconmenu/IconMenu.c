@@ -181,7 +181,7 @@ void IconMenu(void) {
     VIDEO_CURSOR_POSX=((252+nModeDependentOffset)<<2);
     VIDEO_CURSOR_POSY=nTempCursorY-100;
 
-    if(LPCmodSettings.OSsettings.bootTimeout == 0)
+    if(LPCmodSettings.OSsettings.bootTimeout == 0 || cromwell_config==XROMWELL)
         temp = 0;                                    //Disable boot timeout
     else
         varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;

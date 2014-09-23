@@ -24,7 +24,7 @@ TEXTMENU *ToolsMenuInit(void) {
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Tools");
 
-    if(fHasHardware) {
+    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1) {
         //Save EEPROM data to flash
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -51,7 +51,7 @@ TEXTMENU *ToolsMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Do not show this entry if 1.6/1.6b
-//    if(mbVersion != REV1_6){
+    if(mbVersion != REV1_6){
         //128MB MEMORY TEST
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -59,7 +59,7 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionPtr=showMemTest;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
-//    }
+    }
 
     return menuPtr;
 }

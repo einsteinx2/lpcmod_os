@@ -430,7 +430,8 @@ void BootFlashSaveOSSettings(void) {
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
     };
-    if(fHasHardware){
+    if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
+    			
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
@@ -452,6 +453,9 @@ void BootFlashSaveOSSettings(void) {
             memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
 
             if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
+                if(fHasHardware == SYSCON_ID_X3)	//Extra warning for X3 user.
+    		    if(ConfirmDialog("           Are you on the same flash bank?", 1))
+    		        return;
                 memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
                 BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
                // LEDOff(NULL);        //Here only to debug everytime flash is updated.

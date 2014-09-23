@@ -94,9 +94,12 @@ extern void BootResetAction ( void ) {
     BootAGPBUSInitialization();
 
     LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
-    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
-        fHasHardware = LPCMod_HW_rev();         //Will output 0 if no supported modchip detected.
-    }
+//    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
+        fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
+//    }
+    u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);
+    if(x3probe != 0xff && x3probe != 0x80000002)
+    	fHasHardware = SYSCON_ID_X3;
     if(fHasHardware){        //Don't try to read from flash if none is detected
         if(fHasHardware == SYSCON_ID_V1){
             sprintf(modName,"%s", "XBlast Lite V1");
@@ -110,6 +113,10 @@ extern void BootResetAction ( void ) {
                 sprintf(modName,"%s", "SmartXX LT OPX");
             else if(fHasHardware == SYSCON_ID_XX3)
                 sprintf(modName,"%s", "SmartXX V3");
+            else if(fHasHardware == SYSCON_ID_X3)
+                sprintf(modName,"%s", "Xecuter 3(CE)");
+            else
+                fHasHardware = 0;               //Unknown device, set to 0 to indicate to known hardware.
 
             currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
         }
@@ -117,27 +124,27 @@ extern void BootResetAction ( void ) {
         BootFlashGetOSSettings(&LPCmodSettings);
     }
 
-    if(LPCmodSettings.OSsettings.migrateSetttings == 0xFF ||
+    if(LPCmodSettings.OSsettings.migrateSetttings > 1 ||
        LPCmodSettings.OSsettings.activeBank == 0xFF ||
        LPCmodSettings.OSsettings.altBank == 0xFF ||
-       LPCmodSettings.OSsettings.Quickboot == 0xFF ||
+       LPCmodSettings.OSsettings.Quickboot > 1 ||
        LPCmodSettings.OSsettings.selectedMenuItem == 0xFF ||
-       LPCmodSettings.OSsettings.fanSpeed == 0xFF ||
+       LPCmodSettings.OSsettings.fanSpeed > 100 ||
        LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
        LPCmodSettings.OSsettings.LEDColor == 0xFF ||
        LPCmodSettings.OSsettings.TSOPcontrol == 0xFF ||
        LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
        LPCmodSettings.OSsettings.useDHCP == 0xFF ||
        LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
-       LPCmodSettings.LCDsettings.enable5V == 0xFF ||
+       LPCmodSettings.LCDsettings.enable5V > 1 ||
        LPCmodSettings.LCDsettings.lcdType == 0xFF ||
        LPCmodSettings.LCDsettings.nbLines == 0xFF ||
        LPCmodSettings.LCDsettings.lineLength == 0xFF ||
-       LPCmodSettings.LCDsettings.backlight == 0xFF ||
-       LPCmodSettings.LCDsettings.contrast == 0xFF ||
-       LPCmodSettings.LCDsettings.displayMsgBoot == 0xFF ||
-       LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
-       LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF){
+       LPCmodSettings.LCDsettings.backlight > 100 ||
+       LPCmodSettings.LCDsettings.contrast > 100 ||
+       LPCmodSettings.LCDsettings.displayMsgBoot > 1 ||
+       LPCmodSettings.LCDsettings.customTextBoot > 1 ||
+       LPCmodSettings.LCDsettings.displayBIOSNameBoot > 1){
             fFirstBoot = true;
             initialLPCModOSBoot(&LPCmodSettings);                //No settings for LPCMod were present in flash.
             //OS sometimes lock on after a fresh flash. Disabling to see if that's causing it.(probably)
@@ -146,13 +153,11 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
-    if(fHasHardware){
-    	//I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
-    	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
-    }
-    else {
-    	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();
-    }
+    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1)	//If coming from XBE and no XBlast Mod is detected
+    	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();		//Get previously set fan speed
+    else
+    	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
+
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
     
@@ -162,7 +167,8 @@ extern void BootResetAction ( void ) {
            fHasHardware == SYSCON_ID_XX1 ||
            fHasHardware == SYSCON_ID_XX2 ||
            fHasHardware == SYSCON_ID_XXOPX ||
-           fHasHardware == SYSCON_ID_XX3){
+           fHasHardware == SYSCON_ID_XX3 ||
+           fHasHardware == SYSCON_ID_X3){
             assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
         }
         //further init here.
@@ -198,7 +204,7 @@ extern void BootResetAction ( void ) {
 
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
-        if(fHasHardware == SYSCON_ID_V1){                       //Quickboot only if on the right hardware.
+        if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
             wait_ms(550);
             if(XPAD_current[0].keys[4] == 1){                   //Black button pressed.
                 BootModBios(&(LPCmodSettings.OSsettings.altBank));
@@ -338,17 +344,19 @@ extern void BootResetAction ( void ) {
 
 
     //Debug routine to (hopefully) identify the i2c eeprom on a Xecuter 3.
-    u8 *videosavepage = malloc(FB_SIZE);
-    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
-    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    printk("\n\n\n\n");
-    for(i = 0x50; i < 0x58; i++){               //Hopefully they didn't use an obscure eeprom chip
-        if(i != 0x54)                           //and it will respond to top nibble 0b0101. If not we'll bruteforce it.
-            printk("\n                addr:%2x     data:%2x", i, I2CTransmitByteGetReturn(i, 0x0));
-    }
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-    memcpy((void*)FB_START,videosavepage,FB_SIZE);
-    free(videosavepage);
+//    u8 *videosavepage = malloc(FB_SIZE);
+//    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+//    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+//    printk("\n\n\n\n");
+//    for(i = 0x50; i < 0x54; i++){               //Hopefully they didn't use an obscure eeprom chip
+//                                                //and it will respond to top nibble 0b0101. If not we'll bruteforce it.
+//            printk("\n                addr:%02x     data:%02x", i, I2CTransmitByteGetReturn(i, 0x0));
+//            printk("\n                addr:%02x     data:%02x", i, I2CTransmitByteGetReturn(i, 0x1));
+//
+//    }
+//    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+//    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+//    free(videosavepage);
     //Remove after success
     
 

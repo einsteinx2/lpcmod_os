@@ -59,7 +59,7 @@ void assertInitLCD(void){
         if(fHasHardware == SYSCON_ID_V1)                //XBlast Mod only.
             toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
         xLCD.enable = 1;
-        if(fHasHardware != SYSCON_ID_X3)
+        if(fHasHardware != SYSCON_ID_X3 && fHasHardware != SYSCON_ID_XXOPX)
             setLCDContrast(LPCmodSettings.LCDsettings.contrast);
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
         wait_ms(5);                    //Wait a precautionary 5ms before initializing the LCD to let power stabilize.
@@ -110,8 +110,10 @@ void WriteLCDInit(void){
     wait_us(1);
     xLCD.Command(DISP_CLEAR);
     wait_us(1);
-    xLCD.Command(DISP_ENTRY_MODE_SET | DISP_ID_FLAG);    
-//    xLCD.Command(DISP_DDRAM_SET);            //Set to position 0x00    
+    xLCD.Command(DISP_ENTRY_MODE_SET | DISP_ID_FLAG);  
+    wait_us(1);
+    xLCD.Command(DISP_HOME);  
+   
     
 }
 

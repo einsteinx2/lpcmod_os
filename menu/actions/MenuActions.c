@@ -32,7 +32,10 @@ void AdvancedMenu(void *textmenu) {
 void BootOriginalBios(void *data) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
-    if(fHasHardware == SYSCON_ID_V1){
+    
+    BootStopUSB();
+    
+    if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){
         WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
         I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     }
@@ -47,14 +50,14 @@ void BootOriginalBios(void *data) {
 void BootModBios(void *data) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
-    switchBank(*(u8*)data);    // switch to 256k user bank
-//    #ifndef NOANI_MENU
+    switchBank(*(u8*)data);
+    
+    BootStopUSB();
+    
+    if(cromwell_config==CROMWELL)
       I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-/*    #endif
-    #ifdef NOANI_MENU
+    else
       I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
-    #endif
-*/
     I2CRebootQuick();
     while(1);
 }

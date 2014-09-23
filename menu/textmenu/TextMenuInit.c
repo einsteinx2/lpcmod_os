@@ -49,7 +49,8 @@ TEXTMENU *TextMenuInit(void) {
        fHasHardware == SYSCON_ID_XX1 ||
        fHasHardware == SYSCON_ID_XX2 ||
        fHasHardware == SYSCON_ID_XXOPX ||
-       fHasHardware == SYSCON_ID_XX3){                  //LCD is supported on SmartXX chips.
+       fHasHardware == SYSCON_ID_XX3 ||
+       fHasHardware == SYSCON_ID_X3){                  //LCD is supported on SmartXX chips.
         //LCD SETTINGS MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

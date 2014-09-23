@@ -1074,7 +1074,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
         return 1;
     }
     status = BootIdeWriteData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
-
+/*
     //Some drives requires a CACHE_FLUSH command being sent after each write command. We do it just to be sure.
     //So issue command. BSY has been cleared in BootIdeWriteData function
     if(tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal >= 0x10000000)        //LBA48 drive
@@ -1087,7 +1087,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
     if(BootIdeWaitNotBusy(uIoBase)){
         return 1;                       //If ERR bit was set, return with error.
     }
-
+*/
     return status;
 }
 

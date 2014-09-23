@@ -12,12 +12,14 @@
 void SlowReboot(void *ignored){
     assertWriteEEPROM();
     BootFlashSaveOSSettings();
+    BootStopUSB();
     I2CRebootSlow();
 }
 
 void QuickReboot(void *ignored){
     assertWriteEEPROM();
     BootFlashSaveOSSettings();
+    BootStopUSB();
     I2CRebootQuick();
 }
 
