@@ -74,6 +74,9 @@
 // max filename size
 #define FATX_FILENAME_MAX 42
 
+//Default number of retry if Write to disc fails.
+#define DEFAULT_WRITE_RETRY     3
+
 // This structure describes a FATX partition
 typedef struct {
 

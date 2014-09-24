@@ -103,11 +103,11 @@ const char * const szaSenseKeys[] = {
 
 int BootIdeWaitNotBusy(unsigned uIoBase)
 {
-    u8 b = 0x80;
-    while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
+    u8 b = 0x80;                                //Start being busy
+    while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit4(DRQ) is set.
         b=IoInputByte(IDE_REG_ALTSTATUS(uIoBase));
     }
-    return b&1;         //bit0 == ERR
+    return b&0x01;         //bit0 == ERR
 }
 
 /* -------------------------------------------------------------------------------- */
@@ -200,7 +200,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 
 // issues a block of data ATA-style
 
-int BootIdeWriteData(unsigned uIoBase, void * buf, size_t size)
+int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
 {
     register unsigned short * ptr = (unsigned short *) buf;
     int n;
@@ -227,7 +227,7 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, size_t size)
         return 1;
     }
 
-       if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;     //ERR flag raised.
+    if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;     //ERR flag raised.
     
     return 0;
 }
@@ -1045,7 +1045,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 //
 // !!!!! EXPERIMENTAL
 
-int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
+int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 retry)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned uIoBase;
@@ -1117,19 +1117,148 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block)
         return 1;
     }
     status = BootIdeWriteData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
+
+    if(retry > 0)
+        retry -= 1;
+    if(status && retry){ //Status set to 1 or 2 means error. retry count must not be 0.
+        printk("\n                 BootIdeWriteSector: write sector failed. %u retry left.", retry);
+        status = BootIdeWriteSector(nDriveIndex, pbBuffer, block, retry);      //Retry one more time.
+    }
 /*
     //Some drives requires a CACHE_FLUSH command being sent after each write command. We do it just to be sure.
     //So issue command. BSY has been cleared in BootIdeWriteData function
+    tsicp = IDE_DEFAULT_COMMAND;
+    //tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
     if(tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal >= 0x10000000)        //LBA48 drive
-        IoOutputByte(IDE_REG_COMMAND(uIoBase), IDE_CMD_CACHE_FLUSH_EXT);
+        BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH_EXT, &tsicp);
     else
-        IoOutputByte(IDE_REG_COMMAND(uIoBase), IDE_CMD_CACHE_FLUSH);
-    //Wait a little
-    wait_smalldelay();
-    //Wait until BSY bit is cleared and DRQ bit is set
-    if(BootIdeWaitNotBusy(uIoBase)){
-        return 1;                       //If ERR bit was set, return with error.
+        BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH, &tsicp);
+*/
+    return status;
+}
+
+/* -------------------------------------------------------------------------------- */
+
+
+
+/////////////////////////////////////////////////
+//  BootIdeWriteMultiple
+//
+//  Write a block of sector in a single command instead of sector by sector.
+//  This command will make the drive generate an IRQ only a the end of the block
+//  Hard drives usually allow 16 sectors per blocks.
+//
+// !!!!! EXPERIMENTAL
+// "pbBuffer" must be of size specified by "len"
+// "len" is the size in sectors. For now support up to 256 sectors per issued command. 0 = 256.
+// "StartLBA is the absolute LBA value of the start of the block
+// "retry" is the number of time to try to write in the event the command would fail the first time.
+//              Value of 3 will write once and retry 2 times if previously failed.
+
+int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, u8 len, u8 retry)
+{
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    u16 remainingLen = (len == 0)? 256 : len % tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;   //Set remainingLen to 256 if len == 0.
+    u16 nbBlocks = remainingLen / tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;    //Calculated number of blocks to transfer.
+    u8 partialBlock = len % tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;     //Size in sector of partial block.
+    unsigned uIoBase;
+    unsigned int track, bufferPtr = 0;
+    int status;
+    unsigned char ideWriteCommand = IDE_CMD_WRITE_MULTIPLE;
+
+    if(!tsaHarddiskInfo[nDriveIndex].m_fDriveExists) return 4;
+
+    uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
+    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
+
+    if ((nDriveIndex < 0) || (nDriveIndex >= 2) ||
+        (tsaHarddiskInfo[nDriveIndex].m_fDriveExists == 0))
+    {
+        //printk("unknown drive\n");
+        return 1;
     }
+
+    if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8)
+    {
+        IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
+    } else {
+        IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02);
+    }
+
+    tsicp.m_bCountSector = len; //0 = 256 sectors.
+
+    if((startLBA + len) >= 0x10000000 )
+    {
+        /* 48-bit LBA access required for this block */
+        tsicp.m_bCountSectorExt = 0;
+
+         /* This routine can have a max LBA of 32 bits (due to unsigned int data type used for block parameter) */
+        tsicp.m_wCylinderExt = 0; /* 47:32 */
+        tsicp.m_bSectorExt = (startLBA >> 24) & 0xff; /* 31:24 */
+        tsicp.m_wCylinder = (startLBA >> 8) & 0xffff; /* 23:8 */
+        tsicp.m_bSector = startLBA & 0xff; /* 7:0 */
+        tsicp.m_bDrivehead = IDE_DH_DRIVE(nDriveIndex) | IDE_DH_LBA;
+        ideWriteCommand = IDE_CMD_WRITE_MULTIPLE_EXT;
+    } else {
+            // Looks Like we do not have LBA 48 need
+            if (tsaHarddiskInfo[nDriveIndex].m_bLbaMode == IDE_DH_CHS)          //CHS mode, unlikely
+            {
+
+            track = startLBA / tsaHarddiskInfo[nDriveIndex].m_wCountSectorsPerTrack;
+
+            tsicp.m_bSector = 1+(startLBA % tsaHarddiskInfo[nDriveIndex].m_wCountSectorsPerTrack);
+            tsicp.m_wCylinder = track / tsaHarddiskInfo[nDriveIndex].m_wCountHeads;
+            tsicp.m_bDrivehead = IDE_DH_DEFAULT |
+                IDE_DH_HEAD(track % tsaHarddiskInfo[nDriveIndex].m_wCountHeads) |
+                IDE_DH_DRIVE(nDriveIndex) |
+                IDE_DH_CHS;
+            } else {                                                            //LBA28 mode
+
+                tsicp.m_bSector = startLBA & 0xff; /* lower byte of block (lba) */
+                tsicp.m_wCylinder = (startLBA >> 8) & 0xffff; /* middle 2 bytes of block (lba) */
+                tsicp.m_bDrivehead = IDE_DH_DEFAULT | /* set bits that must be on */
+                        ((startLBA >> 24) & 0x0f) | /* lower nibble of byte 3 of block */
+                        IDE_DH_DRIVE(nDriveIndex) |
+                        IDE_DH_LBA;
+            }
+        }
+    if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp))
+    {
+        //printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
+        return 1;
+    }
+
+    while(remainingLen > tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer){
+        status = BootIdeWriteData(uIoBase, (u8 *)pbBuffer + bufferPtr, tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);   //Size in bytes here.
+        bufferPtr += (tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);
+        remainingLen -= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;
+    }
+
+    if(partialBlock && !status) //We have a last block to send and everything is good up to now
+        status = BootIdeWriteData(uIoBase, (u8 *)pbBuffer + bufferPtr, partialBlock * IDE_SECTOR_SIZE);   //Size in bytes here.
+
+    if(retry > 0)
+        retry -= 1;
+    if(status && retry){ //Status set to 1 or 2 means error. retry count must not be 0.
+        printk("\n                 BootIdeWriteSector: write sector failed. %u retry left.", retry);
+//DEBUG, remove after.
+        printk("\n                 bufferPtr:%u      remainingLen:%u", bufferPtr, remainingLen);
+        //Retry (partial) block from the sector where it failed.
+        status = BootIdeWriteMultiple(nDriveIndex, pbBuffer, startLBA, len, retry);      //Retry one more time.
+        LEDOff(NULL);
+        while(1);               //Hang if failed. for debug only.
+    }
+/*
+    //Some drives requires a CACHE_FLUSH command being sent after each write command. We do it just to be sure.
+    //So issue command. BSY has been cleared in BootIdeWriteData function
+    tsicp = IDE_DEFAULT_COMMAND;
+    //tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
+    if(tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal >= 0x10000000)        //LBA48 drive
+        BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH_EXT, &tsicp);
+    else
+        BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH, &tsicp);
 */
     return status;
 }
