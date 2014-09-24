@@ -507,9 +507,14 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
         //ATA specs require that we send SET MULTIPLE MOD command at least once to enable MULTIPLE READ/WRITE
         //commands. We send the SET MULTIPLE MODE command with the default number of sector per block.
-        if(BootIdeSetMultimodeSectors(nIndexDrive, tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer)){
-            printk("Unable to change Multimode's sectors per block.");
-            return 1;
+        //But first let's check if we need to. 
+        //If bit8 of word 59 is set along with a valid sector/block value, we don't need to send command.
+        if((tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer + 0x0100) != (drive_info[59]&0x01FF)){
+            if(BootIdeSetMultimodeSectors(nIndexDrive, tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer)){
+                printk("\n\n\n\n\n\n\n\n\n              Unable to change Multimode's sectors per block.");
+                wait_ms(5000);
+                return 1;
+            }
         }
     }
 
@@ -1293,15 +1298,23 @@ int BootIdeSetTransferMode(int nIndexDrive, int nMode)
 int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned int uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
-    u16 buffer[256];
-    memset(buffer, 0x00, 512);
+    u8 buffer[512];
+    u16 *ptr = (u16 *)buffer;
+    
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
+    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
+    BootIdeWaitNotBusy(uIoBase);
+    
     tsicp.m_bCountSector = nbSectors;           //Only relevant register(excluding Command register)
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_MULTIPLE_MODE, &tsicp)) return 1;
-    BootIdeWaitDataReady(uIoBase);
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_MULTIPLE_MODE, &tsicp)){
+        return 1;
+    }
 
+    BootIdeWaitNotBusy(uIoBase);
+    
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {     //Check back our change
-            //printk(" Drive %d: Not detected\n");
-            return 1;
+        //printk(" Drive %d: Not detected\n");
+        return 1;
     }
 
     BootIdeWaitDataReady(uIoBase);
@@ -1313,11 +1326,11 @@ int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
     }
 
     //check if it worked.
-    if(nbSectors == *((unsigned char*)&(buffer[59]))){
-        tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = *((unsigned char*)&(buffer[47]));     //It worked
+    if((nbSectors + 0x0100) == (ptr[59]&0x01FF)){	//bit8 should be 1 if MULTIPLE READ/WRITE commands are enabled.
+        tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = (ptr[59]&0x00FF);     //It worked
     }
     else{
-        return -1;              //Did not work.
+        tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = 0;       //Did not work.
     }
     return 0;                   //No error.
 }
