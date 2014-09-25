@@ -1050,12 +1050,10 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
 */
 
 //DEBUG
-    ptrBuffer[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
+    ptrBuffer[0]=0xf8;                        //First 2 clusters are 0xFFF8  and 0xFFFF in word mode cluster.
     ptrBuffer[1]=0xff;
     ptrBuffer[2]=0xff;
     ptrBuffer[3]=0xff;
-    ptrBuffer[128 * 512 - 1] = 0xff;          //Check at the last byte of the last sector of the chainmap if set to ff.
-                                              //Look at sector 4609160 in hex editor.
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
@@ -1103,7 +1101,7 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
 
 //DEBUG
     if(BootIdeWriteMultiple(nIndexDrive, ptrBuffer, SECTOR_SYSTEM+8, 128, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
-            printk("\n           Write error, cluster chainmap   ");
+            printk("\n           Write error, Cluster Chainmap   ");
             cromwellWarning();
             return;
     }

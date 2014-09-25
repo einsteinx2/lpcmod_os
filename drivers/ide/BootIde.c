@@ -85,7 +85,7 @@ typedef struct {
 
 } tsIdeCommandParams;
 
-#define IDE_DEFAULT_COMMAND { 0xFFu, 0x01, 0x00, 0x0000, IDE_DH_DEFAULT | IDE_DH_SLAVE }
+#define IDE_DEFAULT_COMMAND { 0xFFu, 0x01, 0x00, 0x0000, IDE_DH_DEFAULT | IDE_DH_SLAVE, 0x00, 0x00, 0x0000 }
 #define printk_debug bprintf
 
 
@@ -154,18 +154,18 @@ int BootIdeIssueAtaCommand(
     IoOutputByte(IDE_REG_CYLINDER_MSB(uIoBase), (params->m_wCylinderExt >> 8) ); 
     /* End 48-bit LBA */   
 
-    IoOutputByte(IDE_REG_SECTOR_COUNT(uIoBase), params->m_bCountSector);
-    IoOutputByte(IDE_REG_SECTOR_NUMBER(uIoBase), params->m_bSector);
-    IoOutputByte(IDE_REG_CYLINDER_LSB(uIoBase), params->m_wCylinder & 0xFF);
-    IoOutputByte(IDE_REG_CYLINDER_MSB(uIoBase), (params->m_wCylinder >> 8) /* & 0x03 */);
-    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), params->m_bDrivehead);
+    IoOutputByte(IDE_REG_SECTOR_COUNT(uIoBase), params->m_bCountSector);	//Sector count reg
+    IoOutputByte(IDE_REG_SECTOR_NUMBER(uIoBase), params->m_bSector);		//LBA LOW
+    IoOutputByte(IDE_REG_CYLINDER_LSB(uIoBase), params->m_wCylinder & 0xFF);	//LBA MID
+    IoOutputByte(IDE_REG_CYLINDER_MSB(uIoBase), (params->m_wCylinder >> 8));	//LBA HIGH
+    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), params->m_bDrivehead);		//DEVICE REG
 
-    IoOutputByte(IDE_REG_COMMAND(uIoBase), command);
+    IoOutputByte(IDE_REG_COMMAND(uIoBase), command);				//COMMAND REG
     wait_smalldelay();
 
     n=BootIdeWaitNotBusy(uIoBase);
     if(n)    {
-//        printk("error on BootIdeIssueAtaCommand wait 3: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
+//        printk("\n      error on BootIdeIssueAtaCommand wait 3: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
     }
 
@@ -1060,8 +1060,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
-    if ((nDriveIndex < 0) || (nDriveIndex >= 2) ||
-        (tsaHarddiskInfo[nDriveIndex].m_fDriveExists == 0))
+    if ((nDriveIndex < 0) || (nDriveIndex >= 2))
     {
         //printk("unknown drive\n");
         return 1;
@@ -1113,7 +1112,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 
         }       
     if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp)) 
     {
-        //printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
+        printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
     }
     status = BootIdeWriteData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
@@ -1158,7 +1157,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 
 int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, u8 len, u8 retry)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
-    u16 remainingLen = (len == 0)? 256 : len % tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;   //Set remainingLen to 256 if len == 0.
+    u16 remainingLen = (len == 0)? 256 : len;   //Set remainingLen to 256 if len == 0.
     u16 nbBlocks = remainingLen / tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;    //Calculated number of blocks to transfer.
     u8 partialBlock = len % tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;     //Size in sector of partial block.
     unsigned uIoBase;
@@ -1173,10 +1172,9 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
-    if ((nDriveIndex < 0) || (nDriveIndex >= 2) ||
-        (tsaHarddiskInfo[nDriveIndex].m_fDriveExists == 0))
+    if ((nDriveIndex < 0) || (nDriveIndex >= 2))
     {
-        //printk("unknown drive\n");
+        printk("\n               unknown drive\n");
         return 1;
     }
 
@@ -1226,11 +1224,11 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
         }
     if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp))
     {
-        //printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
+        printk("\n                      ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
     }
 
-    while(remainingLen > tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer){
+    while(remainingLen >= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer){
         status = BootIdeWriteData(uIoBase, (u8 *)pbBuffer + bufferPtr, tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);   //Size in bytes here.
         bufferPtr += (tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);
         remainingLen -= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;
@@ -1242,9 +1240,8 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
     if(retry > 0)
         retry -= 1;
     if(status && retry){ //Status set to 1 or 2 means error. retry count must not be 0.
-        printk("\n                 BootIdeWriteSector: write sector failed. %u retry left.", retry);
-//DEBUG, remove after.
-        printk("\n                 bufferPtr:%u      remainingLen:%u", bufferPtr, remainingLen);
+        printk("\n                 BootIdeWriteMultiple: write sector failed. %u retry left.", retry);
+
         //Retry (partial) block from the sector where it failed.
         status = BootIdeWriteMultiple(nDriveIndex, pbBuffer, startLBA, len, retry);      //Retry one more time.
         LEDOff(NULL);

@@ -193,7 +193,7 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           Capacity : %uGB", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
     printk("\n\1           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
     printk("\n\1           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
-    //printk("\n\1           Sectors-blocks : %u ", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);               //Mostly useful for debug. Will not print.
+    printk("\n\1           Sectors-blocks : %u ", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);               //Mostly useful for debug. Will not print.
     printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) ? "Locked" : "Unlocked");
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
