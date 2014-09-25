@@ -95,34 +95,42 @@ extern void BootResetAction ( void ) {
 
     LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
 //    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
-        fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
+    fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
 //    }
-    u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);
-    if(x3probe != 0xff && x3probe != 0x80000002)
-    	fHasHardware = SYSCON_ID_X3;
-    if(fHasHardware){        //Don't try to read from flash if none is detected
-        if(fHasHardware == SYSCON_ID_V1){
-            sprintf(modName,"%s", "XBlast Lite V1");
-            //Make sure we'll be reading from OS Bank
-            switchBank(BNKOS);
-        }
-        else {
-            if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
-                sprintf(modName,"%s", "SmartXX V1/V2");
-            else if(fHasHardware == SYSCON_ID_XXOPX)
-                sprintf(modName,"%s", "SmartXX LT OPX");
-            else if(fHasHardware == SYSCON_ID_XX3)
-                sprintf(modName,"%s", "SmartXX V3");
-            else if(fHasHardware == SYSCON_ID_X3)
-                sprintf(modName,"%s", "Xecuter 3(CE)");
-            else
-                fHasHardware = 0;               //Unknown device, set to 0 to indicate to known hardware.
+    u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
+    if(x3probe != 0xff && x3probe != 0x80000002)        //Another (hacky) way to detect is to probe SMBus at addresses
+        fHasHardware = SYSCON_ID_X3;                    //normally unused by the Xbox. By my own experimentation, address
+                                                        //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
+                                                        //offset 0 of address 0x51 will return either 0xff or 0x80000002.
+                                                        //Any other value will be assumed coming from the (encrypted?)
+                                                        //X3 eeprom and thus instructing the program that a X3 is detected.
+                                                        //More tests will be needed to verify and confirm this theory.
+                                                        //Tests have been done on NTSC-U 1.0 and 1.6(a) Xboxes so far.
 
-            currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
-        }
-        //Retrieve XBlast OS settings from flash
-        BootFlashGetOSSettings(&LPCmodSettings);
+
+    if(fHasHardware == SYSCON_ID_V1){
+        sprintf(modName,"%s", "XBlast Lite V1");
+        //Make sure we'll be reading from OS Bank
+        switchBank(BNKOS);
     }
+    else {
+        if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
+            sprintf(modName,"%s", "SmartXX V1/V2");
+        else if(fHasHardware == SYSCON_ID_XXOPX)
+            sprintf(modName,"%s", "SmartXX LT OPX");
+        else if(fHasHardware == SYSCON_ID_XX3)
+            sprintf(modName,"%s", "SmartXX V3");
+        else if(fHasHardware == SYSCON_ID_X3)
+            sprintf(modName,"%s", "Xecuter 3(CE)");
+        else
+            fHasHardware = 0;               //Unknown device, set to 0 to indicate no known hardware.
+
+        currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
+    }
+
+    //Retrieve XBlast OS settings from flash. Function checks if valid device can be read from.
+    BootFlashGetOSSettings(&LPCmodSettings);
+
 
     if(LPCmodSettings.OSsettings.migrateSetttings > 1 ||
        LPCmodSettings.OSsettings.activeBank == 0xFF ||
@@ -162,7 +170,7 @@ extern void BootResetAction ( void ) {
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
     
     //Stuff to do right after loading persistent settings from flash.
-    if(!fFirstBoot){                                        //No need to change fan speed on first boot.
+    if(!fFirstBoot){
         if(fHasHardware == SYSCON_ID_V1 ||
            fHasHardware == SYSCON_ID_XX1 ||
            fHasHardware == SYSCON_ID_XX2 ||
@@ -257,6 +265,7 @@ extern void BootResetAction ( void ) {
 
 
     VIDEO_ATTR=0xff00ff00;
+    //TODO: Remove debug string print.
     printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD\n ");

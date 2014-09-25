@@ -830,10 +830,10 @@ void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32
     dirEntry->CreationDate = 0x0442;
     dirEntry->AccessDate = 0x0442;
 
-    return;                                                     //buffer is updated, ready to be wrote on HDD.
+    return;                                                     //buffer is updated, ready to be written on HDD.
 }
 
-/*
+/********** Old way, Done at drive Init now. Leave for legacy. **********
 bool FATXCheckBRFR(u8 drive){
     u8 ba[512];
     if(BootIdeReadSector(drive, &ba[0], 0x03, 0, 512)) {
@@ -914,7 +914,11 @@ void FATXSetInitMBR(u8 driveId){
 }
 
 void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
-    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512], driveLetter[3];
+    u8 buffer[512], headerBuf[0x1000], driveLetter[3];
+/********** Old way, sector by sector. Leave for legacy. **********
+    u8 chainmapBuf[512];
+**********************************************************************/
+    u8 *ptrBuffer;
     u32 counter;
     u32 whichpartition;
     PARTITIONHEADER *header;
@@ -930,17 +934,23 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
     memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
-    //Partition header is ready. It's the same for all 3 cache drives.
+    //Partition header is ready. It's the same for all "stock" partitions.
     //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
+/********** Old way, sector by sector. Leave for legacy. **********
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
     chainmapBuf[0]=0xf8;                        //First 2 clusters are 0xFFF8 in word mode (FATX16).
     chainmapBuf[1]=0xff;
     chainmapBuf[2]=0xff;
     chainmapBuf[3]=0xff;
-    
-
+**********************************************************************/
+    ptrBuffer = (u8 *)malloc(192 * 512);    //chainmap buffer total length.
+    memset(ptrBuffer,0x0,512 * 192);
+    ptrBuffer[0]=0xf8;                        //First 2 clusters are 0xFFF8 in word mode (FATX16).
+    ptrBuffer[1]=0xff;
+    ptrBuffer[2]=0xff;
+    ptrBuffer[3]=0xff;
 
     //Cycle through all 3 cache partitions.
     for(whichpartition = SECTOR_CACHE1; whichpartition <= SECTOR_CACHE3; whichpartition += (SECTOR_CACHE2 - SECTOR_CACHE1)){
@@ -975,6 +985,7 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
 
         if(verbose)
             printk("           %s  Writing Cluster Chain map.   ", driveLetter);
+/********** Old way, sector by sector. Leave for legacy. **********
         // Cluster chain map area (from 512*8 = 0x1000 to 512*200 = 0x19000)
         memset(buffer,0x0,512); //wipe. Unused cluster == 0
         for (counter=(whichpartition+8);counter<(whichpartition+200); counter++) {
@@ -990,13 +1001,19 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
             cromwellWarning();
             return;
         }
+**********************************************************************/
+        if(BootIdeWriteMultiple(nIndexDrive, ptrBuffer, whichpartition+8, 192, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
+            printk("\n           Write error, Cluster Chainmap   ");                                   //Length for cache drive is fixed at 192 sectors
+            cromwellWarning();
+            return;
+        }
         if(verbose)
             cromwellSuccess();
 
         if(verbose)
             printk("           %s  Finalizing.   ", driveLetter);
         // Root Dir (from 512*200 = 0x19000 to 0x1d000 = 512*232)
-        memset(buffer,0xff,512);
+        memset(buffer,0x00,512);
         //Format 2 first clusters
         for (counter=(whichpartition+200);counter<(whichpartition+200+(32*2)); counter++) {
             if(BootIdeWriteSector(nIndexDrive,buffer,counter, DEFAULT_WRITE_RETRY)){
@@ -1009,12 +1026,14 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
         if(verbose)
             cromwellSuccess();
     }
+    free(ptrBuffer);
 }
 
 void FATXFormatDriveC(int nIndexDrive, bool verbose){
-    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
-
-//DEBUG
+    u8 buffer[512], headerBuf[0x1000];
+/********** Old way, sector by sector. Leave for legacy. **********
+    u8 chainmapBuf[512];
+**********************************************************************/
     u8 *ptrBuffer;
 
 
@@ -1032,24 +1051,20 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
     memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
-    //Partition header is ready. It's the same for all 3 cache drives.
+    //Partition header is ready. It's the same for all "stock" partitions.
     //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
-
-
-//DEBUG
     ptrBuffer = (u8 *)malloc(128 * 512);    //chainmap buffer total length.
     memset(ptrBuffer,0x0,512 * 128);
-/*
+/********** Old way, sector by sector. Leave for legacy. **********
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFF8 in word mode cluster.
     chainmapBuf[1]=0xff;
     chainmapBuf[2]=0xff;
     chainmapBuf[3]=0xff;
-*/
+**********************************************************************/
 
-//DEBUG
     ptrBuffer[0]=0xf8;                        //First 2 clusters are 0xFFF8  and 0xFFFF in word mode cluster.
     ptrBuffer[1]=0xff;
     ptrBuffer[2]=0xff;
@@ -1079,7 +1094,9 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
 
     if(verbose)
         printk("\n\n           Writing Cluster Chain map.   ");
-/*
+
+
+/********** Old way, sector by sector. Leave for legacy. **********
     // Cluster chain map area (from 512*8 = 0x1000 to 512*136 = 0x11000)
     memset(buffer,0x0,512); //wipe. Unused cluster == 0
     for (counter=(SECTOR_SYSTEM+8);counter<(SECTOR_SYSTEM+136); counter++) {
@@ -1096,12 +1113,10 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
         cromwellWarning();
         return;
     }
-*/
+**********************************************************************/
 
-
-//DEBUG
     if(BootIdeWriteMultiple(nIndexDrive, ptrBuffer, SECTOR_SYSTEM+8, 128, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
-            printk("\n           Write error, Cluster Chainmap   ");
+            printk("\n           Write error, Cluster Chainmap   ");                               //Length for C: drive is fixed at 128 sectors
             cromwellWarning();
             return;
     }
@@ -1130,7 +1145,11 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
 }
 
 void FATXFormatDriveE(int nIndexDrive, bool verbose){
-    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
+    u8 buffer[512], headerBuf[0x1000], i;
+/********** Old way, sector by sector. Leave for legacy. **********
+    u8 chainmapBuf[512];
+**********************************************************************/
+    u8 *ptrBuffer;
     u32 counter;
     PARTITIONHEADER *header;
 
@@ -1145,13 +1164,17 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
     memset(header->unused,0xff,4078);           //Fill unused area with 0xff.
-    //Partition header is ready. It's the same for all 3 cache drives.
+    //Partition header is ready. It's the same for all "stock" paritions.
     //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
+/********** Old way, sector by sector. Leave for legacy. **********
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
     memset(chainmapBuf,0xff,4*7);               //We'll use 5 clusters for base folders.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+**********************************************************************/
+    ptrBuffer = (u8 *)malloc(256 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
+    memset(ptrBuffer,0x0,512 * 256);
 
     memset(buffer,0xff,512);                    //Killer buffer.
 
@@ -1176,6 +1199,7 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
 
     if(verbose)
         printk("\n\n           Writing Cluster Chain map.   ");
+/********** Old way, sector by sector. Leave for legacy. **********
     // Cluster chain map area (from 512*8 = 0x1000 to 512*2456 = 0x133000)
     memset(buffer,0x0,512); //wipe. Unused cluster == 0
     for (counter=(SECTOR_STORE+8);counter<(SECTOR_STORE+2456); counter++) {
@@ -1191,6 +1215,27 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
         cromwellWarning();
         return;
     }
+**********************************************************************/
+    for(i = 0; i < 9; i++){                                    //Must be done 9 times as WRITE MULTIPLE will only take buffers of 256 sectors long.
+        //Start by writing 0 everywhere, skip the first 144 sectors to write 9*256 sectors up to the end,
+        //Reuse 9 times memory allocated (all set to 0x00) of 256*512 bytes in size
+        if(BootIdeWriteMultiple(nIndexDrive, ptrBuffer, SECTOR_STORE+8+144+(i << 8), 256, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
+            printk("\n           Write error, Cluster Chainmap   ");                               //Length for E: drive is fixed at 2448 sectors
+            cromwellWarning();
+            return;
+        }
+    }
+    memset(ptrBuffer,0xff,4*7);               //We'll use 5 clusters for base folders(+2 first clusters used as specs).
+    ptrBuffer[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+
+    //One last time for the first 144 sectors, with initial cluster entries.
+    if(BootIdeWriteMultiple(nIndexDrive, ptrBuffer, SECTOR_STORE+8, 144, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
+        printk("\n           Write error, Cluster Chainmap   ");                               //Length for E: drive is fixed at 2448 sectors
+        cromwellWarning();
+        return;
+    }
+    free(ptrBuffer);
+
     if(verbose)
         cromwellSuccess();
 
@@ -1198,7 +1243,10 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
         printk("\n\n           Finalizing, creating directories.   ");
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
     //memset(buffer,0xff,512);
-    //Format 8 first clusters
+    //Format 6 first clusters
+    ptrBuffer = (u8 *)malloc(224 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
+    memset(ptrBuffer,0x00,512 * 224);
+/********** Old way, sector by sector. Leave for legacy. **********
     for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*6)); counter++) {
         if(BootIdeWriteSector(nIndexDrive,buffer,counter, DEFAULT_WRITE_RETRY)){
             printk("\n           Write error, sector %u   ", counter);
@@ -1206,14 +1254,21 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
             return;
         }
     }
+**********************************************************************/
+    if(BootIdeWriteMultiple(nIndexDrive, ptrBuffer, SECTOR_STORE+2456, 224, DEFAULT_WRITE_RETRY)){   //Format 7 first clusters.
+        printk("\n           Write error, Clusters 0 to 6   ");                               //Length is fixed at 224 sectors
+        cromwellWarning();
+        return;
+    }
+    free(ptrBuffer);
 
     // memset(buffer,0x00,512);
-    // TDATA Dir points to Cluster 2
-    FATXCreateDirectoryEntry(buffer,"TDATA",0,2);
-    // UDATA Dir points to Cluster 4
-    FATXCreateDirectoryEntry(buffer,"UDATA",1,4);
+    // TDATA Dir points to Cluster 1
+    FATXCreateDirectoryEntry(buffer,"TDATA",0,1);
+    // UDATA Dir points to Cluster 3
+    FATXCreateDirectoryEntry(buffer,"UDATA",1,3);
     // CACHE Dir points to Cluster 6
-    FATXCreateDirectoryEntry(buffer,"CACHE",2,6);
+    FATXCreateDirectoryEntry(buffer,"CACHE",2,5);
     if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456, DEFAULT_WRITE_RETRY)){   // Write Cluster 1(E: Root).
         printk("\n           Write error, sector %u   ", SECTOR_STORE+2456);
         cromwellWarning();
@@ -1221,19 +1276,19 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     }
 
     memset(buffer,0x00,512);
-    //CACHE dir is empty to 0xff everywhere.
+    //CACHE dir is empty to 0x00 everywhere.
     //BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32+32+32+32);   // Write Cluster 6(CACHE).
-    // FFFE0000 Dir points to Cluster 3
-    FATXCreateDirectoryEntry(buffer,"FFFE0000",0,3);
-    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 2(TDATA).
+    // FFFE0000 Dir points to Cluster 2
+    FATXCreateDirectoryEntry(buffer,"FFFE0000",0,2);
+    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 1(TDATA).
         printk("\n           Write error, sector %u   ", SECTOR_STORE+2456+32);
         cromwellWarning();
         return;
     }
     memset(buffer,0x00,512);
-    // Music Dir points to Cluster 5
-    FATXCreateDirectoryEntry(buffer,"Music",0,5);
-    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 4(UDATA).
+    // Music Dir points to Cluster 4
+    FATXCreateDirectoryEntry(buffer,"Music",0,4);
+    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 3(UDATA).
         printk("\n           Write error, sector %u   ", SECTOR_STORE+2456+32+32+32);
         cromwellWarning();
         return;
@@ -1244,7 +1299,11 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
 }
 
 void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize){
-    u8 buffer[512], headerBuf[0x1000], chainmapBuf[512];
+    u8 buffer[512], headerBuf[0x1000], i;
+/********** Old way, sector by sector. Leave for legacy. **********
+    u8 chainmapBuf[512];
+**********************************************************************/
+    u8 *ptrBuffer;
     unsigned long counter, chainmapSize = 0;
     PARTITIONHEADER *header;
     u8 clusterSize = 32;                //16KB cluster by default(32 sectors * 512 bytes)
@@ -1303,6 +1362,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
+/********** Old way, sector by sector. Leave for legacy. **********
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
     chainmapBuf[1]=0xff;
@@ -1313,6 +1373,23 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         chainmapBuf[6]=0xff;
         chainmapBuf[7]=0xff;
         chainmapBuf[8]=0xff;
+    }
+**********************************************************************/
+    ptrBuffer = (u8 *)malloc(256 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
+    memset(ptrBuffer,0x0,512 * 256);
+
+    if((chainmapSize % 256) == 0){          //If we'll only issue WRITE MULTIPLE ATA commands with full 256 sectors writes.
+                                            //We'll put the initial clusters reservation right now.
+        ptrBuffer[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
+        ptrBuffer[1]=0xff;
+        ptrBuffer[3]=0xff;
+        ptrBuffer[4]=0xff;
+        if(lbaSize >= FATX16_MAXLBA){               //FATX16 stops there. Only 2-byte entries in cluster chain.
+            ptrBuffer[5]=0xff;
+            ptrBuffer[6]=0xff;
+            ptrBuffer[7]=0xff;
+            ptrBuffer[8]=0xff;
+        }
     }
 
     memset(buffer,0xff,512);                    //Killer buffer.
@@ -1337,7 +1414,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     cromwellSuccess();
 
     printk("\n\n           Writing Cluster Chain map.   ");
-
+/********** Old way, sector by sector. Leave for legacy. **********
     // Cluster chain map area (from 512*8 = 0x1000 to 512*8 + chainmapSize)
     memset(buffer,0x0,512); //wipe. Unused cluster == 0
     for (counter=(lbaStart+8);counter<(lbaStart+8+chainmapSize); counter++) {
@@ -1353,11 +1430,39 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         cromwellWarning();
         return;
     }
+**********************************************************************/
+    for(i = 0; i < (chainmapSize >> 8); i++){                         //Must be done multiple times as WRITE MULTIPLE will only take buffers of 256 sectors long.
+                                                                      //In fact, the number of time chainmapSize can fit 256.
+        //Start by writing 0 everywhere, skip the first 144 sectors to write 9*256 sectors up to the end,
+        //Reuse n times memory allocated (all set to 0x00) of 256*512 bytes in size in the event (chainmapSize % 256) != 0.
+        //If (chainmapSize % 256) == 0, start of buffer contains initial chainmap initialization.
+        if(BootIdeWriteMultiple(driveId, ptrBuffer, lbaStart+8+(chainmapSize % 256)+(i << 8), 256, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
+            printk("\n           Write error, Cluster Chainmap   ");                               //Length for E: drive is fixed at 2448 sectors
+            cromwellWarning();
+            return;
+        }
+    }
+    if(chainmapSize % 256){                       //If there's a partial WRITE MULTIPLE COMMAND to be issued.
+        if(lbaSize >= FATX16_MAXLBA)
+            memset(ptrBuffer,0xff,4*2);          //FATX32 partition, cluster entry is Dword-sized
+        else
+            memset(ptrBuffer,0xff,2*2);
+        ptrBuffer[0]=0xf8;                        //FATX16 partitions, cluster entry is word-sized
+
+        //One last time for the first 144 sectors, with initial cluster entries.
+        if(BootIdeWriteMultiple(driveId, ptrBuffer, lbaStart+8, (chainmapSize % 256), DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
+            printk("\n           Write error, Cluster Chainmap   ");                               //Length for E: drive is fixed at 2448 sectors
+            cromwellWarning();
+            return;
+        }
+        free(ptrBuffer);
+    }
     cromwellSuccess();
 
     // Root Dir
     // 2 clusters formatted.
     printk("\n\n           Finalizing.   ");
+/********** Old way, sector by sector. Leave for legacy. **********
     memset(buffer,0xff,512);
     for (counter=(lbaStart+8+chainmapSize);counter<(lbaStart+8+chainmapSize+(clusterSize*2)); counter++) {
         if(BootIdeWriteSector(driveId,buffer,counter, DEFAULT_WRITE_RETRY)){
@@ -1366,6 +1471,16 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
             return;
         }
     }
+**********************************************************************/
+    ptrBuffer = (u8 *)malloc(clusterSize*2 * 512);    //2 first clusters.
+    memset(ptrBuffer,0xff,512 * clusterSize*2);
+
+    if(BootIdeWriteMultiple(driveId, ptrBuffer, lbaStart+8+chainmapSize, clusterSize*2, DEFAULT_WRITE_RETRY)){   //Format 6 first clusters.
+        printk("\n           Write error, Clusters 0 to 1   ");                               //Length is fixed at 192 sectors
+        cromwellWarning();
+        return;
+    }
+    free(ptrBuffer);
     //for a total of 8 + chainmapSize + (clustersize * 2) sectors written.
     cromwellSuccess();
 

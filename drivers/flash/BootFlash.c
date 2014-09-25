@@ -412,11 +412,12 @@ u8 ReadFromIO(u16 address)
 void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
     OBJECT_FLASH of;
     int i;
-    
-    memset(&of,0xFF,sizeof(of));
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
-    for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
-        *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
+    if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
+        memset(&of,0xFF,sizeof(of));
+        of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
+        for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
+            *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
+        }
     }
 }
 
@@ -496,6 +497,21 @@ bool assert4KBErase(OBJECT_FLASH *pof){
                 case 0x5b:
                 case 0x60:
                 case 0x61:
+                    return true;
+                    break;
+                default:
+                    return false;
+                    break;
+            }
+            break;
+        case 0x01:                      //AMD
+            switch(pof->m_bDeviceId){
+                case 0x0c:
+                case 0x0f:
+                case 0x23:
+                case 0x34:
+                case 0x4a:
+                case 0xad:              //Xecuter 3
                     return true;
                     break;
                 default:
