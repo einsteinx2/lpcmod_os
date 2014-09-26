@@ -175,10 +175,10 @@ void ResetDrawChildTextMenu(void *menu) {
     TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
 }
 
-void DrawLargeHDDTextMenu(void){
+void DrawLargeHDDTextMenu(u8 drive){
     TEXTMENU *menuPtr;
     breakOutOfMenu = 1;
-    menuPtr = (TEXTMENU *)LargeHDDMenuInit();
+    menuPtr = (TEXTMENU *)LargeHDDMenuInit((void *)&drive);
     
     //Free memory
     if(menuPtr->firstMenuItem != NULL){

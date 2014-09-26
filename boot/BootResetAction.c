@@ -371,7 +371,8 @@ extern void BootResetAction ( void ) {
 
     //Check for unformatted drives.
     for (i=0; i<2; ++i) {
-        if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
+        if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi
+            && tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND - 1)) {
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
                 // We save the complete framebuffer to memory (we restore at exit)
                 u8 *videosavepage = malloc(FB_SIZE);
@@ -385,7 +386,7 @@ extern void BootResetAction ( void ) {
                     FATXSetBRFR(i);
                     //If there's enough sectors to make F and/or G drive(s).
                     if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
-                        DrawLargeHDDTextMenu();//Launch LargeHDDMenuInit textmenu.
+                        DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
                     }
                     if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
                         FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.

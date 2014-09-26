@@ -1263,12 +1263,12 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     free(ptrBuffer);
 
     // memset(buffer,0x00,512);
-    // TDATA Dir points to Cluster 1
-    FATXCreateDirectoryEntry(buffer,"TDATA",0,1);
-    // UDATA Dir points to Cluster 3
-    FATXCreateDirectoryEntry(buffer,"UDATA",1,3);
+    // TDATA Dir points to Cluster 2
+    FATXCreateDirectoryEntry(buffer,"TDATA",0,2);
+    // UDATA Dir points to Cluster 4
+    FATXCreateDirectoryEntry(buffer,"UDATA",1,4);
     // CACHE Dir points to Cluster 6
-    FATXCreateDirectoryEntry(buffer,"CACHE",2,5);
+    FATXCreateDirectoryEntry(buffer,"CACHE",2,6);
     if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456, DEFAULT_WRITE_RETRY)){   // Write Cluster 1(E: Root).
         printk("\n           Write error, sector %u   ", SECTOR_STORE+2456);
         cromwellWarning();
@@ -1278,17 +1278,17 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     memset(buffer,0x00,512);
     //CACHE dir is empty to 0x00 everywhere.
     //BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32+32+32+32);   // Write Cluster 6(CACHE).
-    // FFFE0000 Dir points to Cluster 2
-    FATXCreateDirectoryEntry(buffer,"FFFE0000",0,2);
-    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 1(TDATA).
+    // FFFE0000 Dir points to Cluster 3
+    FATXCreateDirectoryEntry(buffer,"FFFE0000",0,3);
+    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 2(TDATA).
         printk("\n           Write error, sector %u   ", SECTOR_STORE+2456+32);
         cromwellWarning();
         return;
     }
     memset(buffer,0x00,512);
-    // Music Dir points to Cluster 4
-    FATXCreateDirectoryEntry(buffer,"Music",0,4);
-    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 3(UDATA).
+    // Music Dir points to Cluster 5
+    FATXCreateDirectoryEntry(buffer,"Music",0,5);
+    if(BootIdeWriteSector(nIndexDrive,buffer,SECTOR_STORE+2456+32+32+32, DEFAULT_WRITE_RETRY)){   // Write Cluster 4(UDATA).
         printk("\n           Write error, sector %u   ", SECTOR_STORE+2456+32+32+32);
         cromwellWarning();
         return;
@@ -1299,7 +1299,8 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
 }
 
 void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize){
-    u8 buffer[512], headerBuf[0x1000], i;
+    u8 buffer[512], headerBuf[0x1000];
+    u32 i;
 /********** Old way, sector by sector. Leave for legacy. **********
     u8 chainmapBuf[512];
 **********************************************************************/
