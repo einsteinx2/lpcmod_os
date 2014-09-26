@@ -104,7 +104,7 @@ const char * const szaSenseKeys[] = {
 int BootIdeWaitNotBusy(unsigned uIoBase)
 {
     u8 b = 0x80;                                //Start being busy
-    while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit4(DRQ) is set.
+    while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
         b=IoInputByte(IDE_REG_ALTSTATUS(uIoBase));
     }
     return b&0x01;         //bit0 == ERR
@@ -115,17 +115,23 @@ int BootIdeWaitNotBusy(unsigned uIoBase)
 int BootIdeWaitDataReady(unsigned uIoBase)
 {
     int i = 0x800000;
-    wait_smalldelay();
+//    wait_smalldelay();
+
+    //Assuming that the while assertion, i decrementing and if condition assertion all
+    //take only a single cycle per operation(very unlikely), it would take around 34ms
+    //for i to reach 0 with a CPU running at 733MHz. So no need for extra smalldelay here.
+    //Since our program is single-threaded anyway, there's not much harm in polling the
+    //HDD's STATUS register until the necessary state is reached.
     do {
-        if ( ((IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x88) == 0x08)    )    {
-        if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;
-            return 0;
+        if (((IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x88) == 0x08)){       //DRQ bit raised and BSY bit cleared.
+            if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;        //ERR bit raised, return 2.
+            return 0;                                                           //Everything good, move on.
         }
         i--;
     } while (i != 0);
 
-    if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;
-    return 1;
+    if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;                //ERR bit raised.
+    return 1;                                                                   //Timeout error.
 }
 
 /* -------------------------------------------------------------------------------- */
@@ -143,7 +149,7 @@ int BootIdeIssueAtaCommand(
 //    if(n)    {// as our command may be being used to clear the error, not a good policy to check too closely!
 //        printk("error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
 //        return 1;
-//    }  
+//    }
      
      /* 48-bit LBA */   
         /* this won't hurt for non 48-bit LBA commands since we re-write these registers below */   
@@ -161,7 +167,7 @@ int BootIdeIssueAtaCommand(
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), params->m_bDrivehead);		//DEVICE REG
 
     IoOutputByte(IDE_REG_COMMAND(uIoBase), command);				//COMMAND REG
-    wait_smalldelay();
+//    wait_smalldelay();
 
     n=BootIdeWaitNotBusy(uIoBase);
     if(n)    {
@@ -218,7 +224,7 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
         size -= 2;
         ptr++;
     }
-    wait_smalldelay();
+//    wait_smalldelay();
     
     n=BootIdeWaitNotBusy(uIoBase);
     //wait_smalldelay();
@@ -348,6 +354,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned short* drive_info;
     u8 baBuffer[512];
+    u8 n = 0;
      
     tsaHarddiskInfo[nIndexDrive].m_fwPortBase = uIoBase;
     tsaHarddiskInfo[nIndexDrive].m_wCountHeads = 0u;
@@ -361,6 +368,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsaHarddiskInfo[nIndexDrive].m_wAtaRevisionSupported=0;
     tsaHarddiskInfo[nIndexDrive].m_fHasMbr=0;
     tsaHarddiskInfo[nIndexDrive].m_securitySettings = 0;
+
+//Why disable DMA?
 
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nIndexDrive);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
@@ -516,8 +525,42 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
                 return 1;
             }
         }
-    }
 
+        tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = *((unsigned int*)&(drive_info[67]));       //Value in ns
+        //Set fastest PIO mode depending on cycle time supplied by HDD.
+
+        //Depending on PIO cycle time value returned by IDENTIFY command, we select a PIO mode.
+        //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
+        //Bits 2 to 0 select the PIO mode.
+        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120)        //Mode4
+            n = BootIdeSetTransferMode(nIndexDrive, 0x0C);
+        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 180)   //Mode3
+            n = BootIdeSetTransferMode(nIndexDrive, 0x0B);
+        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 240)   //Mode2
+            n = BootIdeSetTransferMode(nIndexDrive, 0x0A);
+        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383)   //Mode1
+            n = BootIdeSetTransferMode(nIndexDrive, 0x09);
+        else                                                         //Mode0
+            n = BootIdeSetTransferMode(nIndexDrive, 0x08);
+        if(n){
+            printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
+        }
+
+//We'll give PIO Mode4 a shot first.
+/*
+        if(BootIdeSetTransferMode(nIndexDrive, 0x40 | 2)){  //Enable UDMA2 for drive. Best mode for 40 conductors cable.
+                                                            //I don't care if you have a 80 conductors for now.
+            printk("\n       Unable to init DMA for drive %u", nIndexDrive);
+        }
+        else
+            tsaHarddiskInfo[nIndexDrive].m_fDMAInit=1;      //1 = Hardware init done.
+
+        //Next steps in DMA would be to send a IDE_CMD_SET_FEATURES command selecting
+        //a DMA transfer mode.
+        //After, we need to set up a PRD table and send it to the hdd's controller.
+        //Then we would be ready to put some data in memory and send DMA R/W commands to HDD.
+*/
+    }
     if (drive_info[49] & 0x200) 
     { 
         /* bit 9 of capability word is lba supported bit */
@@ -684,6 +727,8 @@ int BootIdeInit(void)
     
     tsaHarddiskInfo[0].m_bCableConductors=40;
     tsaHarddiskInfo[1].m_bCableConductors=40;
+    tsaHarddiskInfo[0].m_fDMAInit=0;            //DMA not initialized yet.
+    tsaHarddiskInfo[1].m_fDMAInit=0;
     IoOutputByte(0xff60+0, 0x00); // stop bus mastering
     IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
 
@@ -1409,7 +1454,7 @@ int BootIdeSetTransferMode(int nIndexDrive, int nMode)
     IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x01); // enable DMA
 
     if(BootIdeWaitNotBusy(uIoBase)) {
-            //printk("  Drive %d: Not Ready\n", nIndexDrive);
+            printk("\n       BootIdeSetTransferMode:Drive %d: Not Ready\n", nIndexDrive);
             return 1;
     }
     {
@@ -1460,3 +1505,39 @@ int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
     }
     return 0;                   //No error.
 }
+
+/*
+//Set fastest PIO mode supported by HDD. Will probably be Mode4 since it was officially inserted in
+//ATA-2 specs in 1996.
+int BootIdeSetPIOMode(u8 nIndexDrive, u16 cycleTime){
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    unsigned int uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
+
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
+    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
+    BootIdeWaitNotBusy(uIoBase);
+    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x03);       //Set transfer mode sub-command
+
+    //Depending on PIO cycle time value returned by IDENTIFY command, we select a PIO mode.
+    //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
+    //Bits 2 to 0 select the PIO mode.
+    if(cycleTime <= 120)        //Mode4
+        tsicp.m_bCountSector = 0x0C;
+    else if(cycleTime <= 180)   //Mode3
+        tsicp.m_bCountSector = 0x0B;
+    else if(cycleTime <= 240)   //Mode2
+        tsicp.m_bCountSector = 0x0A;
+    else if(cycleTime <= 383)   //Mode1
+        tsicp.m_bCountSector = 0x09;
+    else                        //Mode0
+        tsicp.m_bCountSector = 0x08;
+
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_FEATURES, &tsicp)){
+        return 1;
+    }
+
+    BootIdeWaitNotBusy(uIoBase);
+
+    return 0;                   //No error.
+}
+*/

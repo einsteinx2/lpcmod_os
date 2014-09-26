@@ -50,6 +50,13 @@ typedef enum {
     IDE_CMD_SECURITY_DISABLE = 0xF6    
 } ide_command_t;
 
+typedef struct{                 //PRD table entry. 8 bytes in length
+    u32 address;
+    u16 byteCount;
+    u16 reserved : 15;
+    u16 endoftable : 1;
+}__attribute__((packed)) PRD1, PRD2, PRD3, PRD4;
+
 //Methods
 int BootIdeInit(void);
 int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int byte_offset, int n_bytes) ;

@@ -15,7 +15,7 @@ unsigned char outBuffer[0x40000];  //Total size of output (262144 bytes)
 unsigned int crcValue = 0xFFFFFFFF, nbytes;
 
 
-    printf("CRC32 calculator. Embed the result in bin file at specified offset.\n");
+    printf("CRC32 calculator. Embed the result in bin file at offset 0x3FDFC.\n");
     
     if( argc != 3 ) {
         showUsage(argv[0]);

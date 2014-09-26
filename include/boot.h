@@ -113,9 +113,11 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
     unsigned short m_wAtaRevisionSupported;
     unsigned char s_length;
     unsigned char m_length;
-    unsigned char m_fHasMbr;
+    unsigned char m_fHasMbr : 4;
+    unsigned char m_fDMAInit : 4;
     unsigned short m_securitySettings; //This contains the contents of the ATA security regs
     unsigned char m_maxBlockTransfer;  //Max number of blocks allowed in a single transfer.
+    unsigned short m_minPIOcycle;
 } tsHarddiskInfo;
 
 /////////////////////////////////
@@ -278,6 +280,7 @@ int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult);
 int BootIdeAtapiAdditionalSenseCode(int nDrive, u8 * pba, int nLengthMaxReturn);
 int BootIdeSetTransferMode(int nIndexDrive, int nMode);
 int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors);
+//int BootIdeSetPIOMode(u8 nIndexDrive, u16 cycleTime);
 int BootIdeWaitNotBusy(unsigned uIoBase);
 bool BootIdeAtapiReportFriendlyError(int nDriveIndex, char * szErrorReturn, int nMaxLengthError);
 void BootIdeAtapiPrintkFriendlyError(int nDriveIndex);
