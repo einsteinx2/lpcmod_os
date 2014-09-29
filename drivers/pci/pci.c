@@ -321,14 +321,38 @@ void BootPciPeripheralInitialization()
 
 
     // Bus 0, Device 9, Function 0 = nForce ATA Controller
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
+    //---Every comment that starts with "---" must not be taken for absolute truth. 
+    //---Since there's no official documentation on MCPX, I write comments on the assumption
+    //---that nVidia designed the ATA host interface module to follow specs and standards
+    //---defined by the T13 committee concerning PCI device and registers configuration.
+    //---For more information, read the T13 document 1510D.
+
+
+    //---BAR register. 32bits
+    //---bit0 hardwired to 1, bits15-4= base addr of IO space.
+    //---Moved further down to replicate sequence in XboxKernel sources.
+    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
+    //---Command register. 16bits. Puts 0x5 in it. As per XboxKernel sources.
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 4, PciReadDword(BUS_0, DEV_9, FUNC_0, 4)|5); // 0x00b00005 );
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffeff); // 0x01018ab1 ); // was fffffaff
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020); // kern1.1
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0x00000000); // kern1.1
+    //---RevisionID. 8bits
+    //---XboxKernel sources AND the content of ProgIf register(offset:0x09 size:byte) with ~0x05 which translate to
+    //---a 0xfffffaff DWORD AND mask starting from offset 0x08. Previously set at 0xfffffeff.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffaff); // 0x01018ab1 ); // was fffffaff
+    //---BAR register. 32bits
+    //---bit0 hardwired to 1, bits15-4= base addr of IO space, same as XboxKernel sources.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
+    //---Unknown, but first of 3 writes in XboxKernel sources
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x50, 0x00000002);  // without this there is no register footprint at IO 1F0
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x2c, 0x00000000); // frankenregister from xbe boot
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x40, 0x00000000); // frankenregister from xbe boot
+    //---Unknown, done in second.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020); // kern1.1
+    //---Unknown but not done in XboxKernel sources
+    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0x00000000); // kern1.1
+    //---Unknown, moved in first.
+    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x50, 0x00000002);  // without this there is no register footprint at IO 1F0
+    //----Subsystem vendor ID. 16bits. Not done in XboxKernel sources
+    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x2c, 0x00000000); // frankenregister from xbe boot
+    //---Primary IDE timings.16bits. Not done in XboxKernel sources
+    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x40, 0x00000000); // frankenregister from xbe boot
     
     // below reinstated by frankenregister compare with xbe boot
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0xC0C0C0C0); // kern1.1 <--- this was in kern1.1 but is FATAL for good HDD access
