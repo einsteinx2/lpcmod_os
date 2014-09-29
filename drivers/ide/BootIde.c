@@ -368,6 +368,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsaHarddiskInfo[nIndexDrive].m_wAtaRevisionSupported=0;
     tsaHarddiskInfo[nIndexDrive].m_fHasMbr=0;
     tsaHarddiskInfo[nIndexDrive].m_securitySettings = 0;
+    tsaHarddiskInfo[nIndexDrive].m_bIORDY = 0;
 
 //Why disable DMA?
 
@@ -375,7 +376,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
     IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a); // kill interrupt,
-    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x00); // kill DMA
+//    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x00); // kill DMA
 
 
     if(BootIdeWaitNotBusy(uIoBase)) 
@@ -525,6 +526,11 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
                 return 1;
             }
         }
+        if (drive_info[49] & 0x400) 
+        { 
+            /* bit 10 of capability word is IORDY supported bit */
+            tsaHarddiskInfo[nIndexDrive].m_bIORDY = 1;
+        }
 
         tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = *((unsigned int*)&(drive_info[67]));       //Value in ns
         //Set fastest PIO mode depending on cycle time supplied by HDD.
@@ -532,11 +538,16 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //Depending on PIO cycle time value returned by IDENTIFY command, we select a PIO mode.
         //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
         //Bits 2 to 0 select the PIO mode.
-        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120)        //Mode4
+        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120
+              && tsaHarddiskInfo[nIndexDrive].m_bIORDY){        //Mode4
             n = BootIdeSetTransferMode(nIndexDrive, 0x0C);
-        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 180)   //Mode3
+            PciWriteWord(BUS_0, DEV_9, FUNC_0, 0x40, 0xE333);	//Attempt to set ATA Timing register on ATA host interface.
+        }                                                       //I don't have a datasheet on MCPX(nforce420) so I can only
+                                                                //hope it's at address 0x40 as per standard...
+        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 180
+                   && tsaHarddiskInfo[nIndexDrive].m_bIORDY)   //Mode3
             n = BootIdeSetTransferMode(nIndexDrive, 0x0B);
-        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 240)   //Mode2
+        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 240)   //Mode2
             n = BootIdeSetTransferMode(nIndexDrive, 0x0A);
         else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383)   //Mode1
             n = BootIdeSetTransferMode(nIndexDrive, 0x09);
@@ -568,6 +579,12 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     } else {
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_CHS;
     }
+    
+    if (drive_info[49] & 0x400) 
+    { 
+        /* bit 10 of capability word is IORDY supported bit */
+        tsaHarddiskInfo[nIndexDrive].m_bIORDY = 1;
+    }
 
     //If drive is a hard disk, see what type of partitioning it has.
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
@@ -584,9 +601,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
                 tsaHarddiskInfo[nIndexDrive].m_enumDriveType=EDT_XBOXFS;
 #ifndef SILENT_MODE
                 printk(" - FATX", nIndexDrive);
-#endif
             } else {
-#ifndef SILENT_MODE
                 printk(" - No FATX", nIndexDrive);
 #endif
             }
@@ -729,7 +744,7 @@ int BootIdeInit(void)
     tsaHarddiskInfo[1].m_bCableConductors=40;
     tsaHarddiskInfo[0].m_fDMAInit=0;            //DMA not initialized yet.
     tsaHarddiskInfo[1].m_fDMAInit=0;
-    IoOutputByte(0xff60+0, 0x00); // stop bus mastering
+//    IoOutputByte(0xff60+0, 0x00); // stop bus mastering
     IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
 
     //Init both master and slave
