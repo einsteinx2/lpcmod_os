@@ -521,8 +521,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //If bit8 of word 59 is set along with a valid sector/block value, we don't need to send command.
         if((tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer + 0x0100) != (drive_info[59]&0x01FF)){
             if(BootIdeSetMultimodeSectors(nIndexDrive, tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer)){
-                printk("\n\n\n\n\n\n\n\n\n              Unable to change Multimode's sectors per block.");
-                wait_ms(5000);
+                printk("\n\n\n\n\n\n\n\n              Unable to change Multimode's sectors per block.");
+                wait_ms(3000);
                 return 1;
             }
         }
@@ -539,11 +539,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
         //Bits 2 to 0 select the PIO mode.
         if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120
-              && tsaHarddiskInfo[nIndexDrive].m_bIORDY){        //Mode4
-            n = BootIdeSetTransferMode(nIndexDrive, 0x0C);
-            PciWriteWord(BUS_0, DEV_9, FUNC_0, 0x40, 0xE333);	//Attempt to set ATA Timing register on ATA host interface.
-        }                                                       //I don't have a datasheet on MCPX(nforce420) so I can only
-                                                                //hope it's at address 0x40 as per standard...
+              && tsaHarddiskInfo[nIndexDrive].m_bIORDY)        //Mode4
+            n = BootIdeSetTransferMode(nIndexDrive, 0x0C);                                                                                                                   
         else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 180
                    && tsaHarddiskInfo[nIndexDrive].m_bIORDY)   //Mode3
             n = BootIdeSetTransferMode(nIndexDrive, 0x0B);
@@ -555,6 +552,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             n = BootIdeSetTransferMode(nIndexDrive, 0x08);
         if(n){
             printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
+            LEDOff(NULL);
         }
 
 //We'll give PIO Mode4 a shot first.
@@ -578,12 +576,6 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_LBA;
     } else {
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_CHS;
-    }
-    
-    if (drive_info[49] & 0x400) 
-    { 
-        /* bit 10 of capability word is IORDY supported bit */
-        tsaHarddiskInfo[nIndexDrive].m_bIORDY = 1;
     }
 
     //If drive is a hard disk, see what type of partitioning it has.
@@ -660,7 +652,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
         //Set master password flag
         ide_cmd_data[0]|=0x01;
     
-        memcpy(&ide_cmd_data[2],master_password,7);
+        memcpy(&ide_cmd_data[2],master_password,12);
         
         if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1)) return 1;
         BootIdeWaitDataReady(uIoBase);
@@ -695,10 +687,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
         return 1;
     }
 
-    if((tsaHarddiskInfo[driveId].m_securitySettings &0x0004)==0x0004)
-    	tsaHarddiskInfo[driveId].m_securitySettings &= 0xFFFB;	//Remove locked bit
-    else
-    	tsaHarddiskInfo[driveId].m_securitySettings |= 0x0004;	//Add it.
+    tsaHarddiskInfo[driveId].m_securitySettings = drive_info[128];
     //Success, hopefully.
     return 0;
 }

@@ -321,15 +321,16 @@ void BootPciPeripheralInitialization()
 
 
     // Bus 0, Device 9, Function 0 = nForce ATA Controller
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
+    //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 4, PciReadDword(BUS_0, DEV_9, FUNC_0, 4)|5); // 0x00b00005 );
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffeff); // 0x01018ab1 ); // was fffffaff
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020); // kern1.1
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0x00000000); // kern1.1
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffaff); // 0x01018ab1 ); // was fffffaff
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
+    //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020); // kern1.1
+    //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0x00000000); // kern1.1
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x50, 0x00000002);  // without this there is no register footprint at IO 1F0
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x2c, 0x00000000); // frankenregister from xbe boot
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x40, 0x00000000); // frankenregister from xbe boot
-    
+    //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x2c, 0x00000000); // frankenregister from xbe boot
+    //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x40, 0x00000000); // frankenregister from xbe boot
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020); // kern1.1
     // below reinstated by frankenregister compare with xbe boot
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0xC0C0C0C0); // kern1.1 <--- this was in kern1.1 but is FATAL for good HDD access
 
