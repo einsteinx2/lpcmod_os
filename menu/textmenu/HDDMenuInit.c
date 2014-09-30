@@ -26,20 +26,22 @@ TEXTMENU *HDDMenuInit(void) {
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
             //If it's not ATAPI, it must be IDE
-            //This drive is locked - produce an unlock menu
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            if((tsaHarddiskInfo[i].m_securitySettings &0x0004)==0x0004) {
-                sprintf(itemPtr->szCaption,"Unlock HDD : ");
+            if((tsaHarddiskInfo[i].m_securitySettings &0x0001)==0x0001) {	//Drive Security feature supported.
+                //This drive is locked - produce an unlock menu
+                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002) {
+                    sprintf(itemPtr->szCaption,"Unlock HDD : ");
+                }
+                else {
+                    sprintf(itemPtr->szCaption,"Lock HDD : ");
+                }
+                itemPtr->szParameter[50] = i;
+                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
+                itemPtr->functionPtr= AssertLockUnlock;
+                itemPtr->functionDataPtr = itemPtr;
+                TextMenuAddItem(menuPtr, itemPtr);
             }
-            else {
-                sprintf(itemPtr->szCaption,"Lock HDD : ");
-            }
-            itemPtr->szParameter[50] = i;
-            sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-            itemPtr->functionPtr= AssertLockUnlock;
-            itemPtr->functionDataPtr = itemPtr;
-            TextMenuAddItem(menuPtr, itemPtr);
     
             //Add a 'display password' menu
             itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

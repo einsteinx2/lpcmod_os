@@ -11,14 +11,14 @@
 #include "TextMenu.h"
 
 void AssertLockUnlock(void *itemPtr){
-    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
+    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     int nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    if((strncmp(tempItemPtr->szParameter, "master", 6)))    //If string szParameter contains is "master" 
+    if(!(strncmp(tempItemPtr->szParameter, "master", 6)))    //If string szParameter contains is "master" 
         nIndexDrive = 0;                                //It means we need to change the master lock status.
 
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) {       //Drive is already locked
+    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
         if(UnlockHDD(nIndexDrive, 1))                                             //1 is for verbose
             sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");                     //Next action will be to lock it
     }
@@ -62,6 +62,7 @@ bool LockHDD(int nIndexDrive, bool verbose) {
         printk("\n           Locking drive failed");
         cromwellError();
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        return false;
     }
     if(verbose){
         cromwellSuccess();
@@ -193,8 +194,9 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           Capacity : %uGB", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
     printk("\n\1           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
     printk("\n\1           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
-//    printk("\n\1           Sectors-blocks : %u ", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);               //Mostly useful for debug. Will not print.
-    printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0004)==0x0004) ? "Locked" : "Unlocked");
+//    printk("\n\1           Sectors-blocks : %u ", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);    
+//    printk("\n\1           PIO cycletime : %u ", tsaHarddiskInfo[nIndexDrive].m_minPIOcycle);           //Mostly useful for debug. Will not print.
+    printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) ? "Locked" : "Unlocked");
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
     if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr == 1){

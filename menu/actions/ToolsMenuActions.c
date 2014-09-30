@@ -35,7 +35,7 @@ void restoreEEPromFromFlash(void *whatever){
     char hddString[6];
     for(i = 0; i < 2; i++){
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
-    	    if((tsaHarddiskInfo[i].m_securitySettings &0x0004)==0x0004){        //Drive locked.
+    	    if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002){        //Drive locked.
     	        lockPreference += (i + 1);             //0=no drive locked, 1=master locked, 2= slave locked
     	    }                                          //3=both drives locked.
         }
