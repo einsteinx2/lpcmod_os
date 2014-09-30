@@ -48,12 +48,13 @@
 #define SMBUS         0x0000c000
 
 
-#define SMB_xcode_Write(val1,val2);     xcode_outb(SMBUS+8, val1); \
-                    xcode_outb(SMBUS+6, val2); \
-                    xcode_outb(SMBUS+2, 0x0000000a); \
-                        xcode_inb(SMBUS); \
-                        xcode_ifgoto(0x00000010,-1); \
-                    xcode_outb(SMBUS, 0x00000010); 
+#define SMB_xcode_Write(val1,val2); \
+            xcode_outb(SMBUS+8, val1); \
+            xcode_outb(SMBUS+6, val2); \
+            xcode_outb(SMBUS+2, 0x0000000a); \
+            xcode_inb(SMBUS); \
+            xcode_ifgoto(0x00000010,-1); \
+            xcode_outb(SMBUS, 0x00000010); 
 
 .code32
 
@@ -87,7 +88,7 @@
     
     .org 0x40
     .long _start_checksum    // This number will be overwritten  
-                // With imagebld, but we need a temp value
+                             // With imagebld, but we need a temp value
     
     .org 0x6c
     .long 0x00000107
@@ -96,13 +97,13 @@
     .long 0x0000000f
     .long 0x40004400
     
-    #ifndef MCPXREVD5
+#ifndef MCPXREVD5
     .long 0x12d10070
     .long 0x00000c90
-    #else
+#else
     .long 0x16ce0090
     .long 0x00000dc0    
-    #endif
+#endif
     
     //The bytecode interpreter begins here
     .org 0x80
@@ -112,14 +113,12 @@
     // This is the Main Entry point ....        
         .org 0x1000
         
-           // Good Morning CPU
+	// Good Morning CPU
 
     // NOTE:
-    /*
-        We come here form the high rom section Jump
-    */
+    // We come here form the high rom section Jump
     
-        // Clear Intel Interrupts in Processor Register
+    // Clear Intel Interrupts in Processor Register
     // Everytime very good, specially when comming out of a running envoronment
         
     movl    $0x1b, %ecx
@@ -136,7 +135,7 @@
     // kill the cache  = Disable bit 30 + 29 = CD + NW 
     // CD = Cache Disable (disable = 1)
     // NW Not write through (disable = 1)
-           mov     %cr0, %eax
+    mov     %cr0, %eax
     orl    $0x60000000, %eax
     mov    %eax, %cr0
     wbinvd
@@ -151,77 +150,75 @@
     xor    %edx, %edx
     wrmsr
 
-/*
-  We are setting the Ram Init's now to set up the Regions in the Ram
+    //We are setting the Ram Init's now to set up the Regions in the Ram
 
-*/ 
 
     // MTRR for RAM
     // from address 0, Writeback Caching, 128MB range
-        movl    $0x200, %ecx
+    movl    $0x200, %ecx
     movl    $0x00000000, %edx
     movl    $0x00000006, %eax     // == WB_CACHE == 6
     //movl    $0x00000004, %eax     // Temporary, as USB development
     wrmsr
 
     // MASK0 set to 0xf8000[000] == 128M
-        movl    $0x201, %ecx
+    movl    $0x201, %ecx
     movl    $0x0000000f, %edx
     movl    $0xf8000800, %eax
     wrmsr
 
     // MTRR for shadow RAM
     // from address 0xf0000000, Write-combining Caching, 128MB range
-        movl    $0x202, %ecx
+    movl    $0x202, %ecx
     movl    $0x00000000, %edx
     movl    $0xf0000001, %eax     // Write-Combining == 1
     wrmsr
 
     // MASK0 set to 0xf8000[000] == 128M
-        movl    $0x203, %ecx
+    movl    $0x203, %ecx
     movl    $0x0000000f, %edx
     movl    $0xf8000800, %eax
     wrmsr
 
-     // MTRR for FLASH
+    // MTRR for FLASH
     movl    $0x204, %ecx
     movl    $0x00000000, %edx
     movl    $0xFff00000, %eax         // We set to Uncacheable
     wrmsr
 
-        movl    $0x205, %ecx
+    movl    $0x205, %ecx
     movl    $0x0000000f, %edx
     movl    $0xfff00800, %eax
     wrmsr
     
 
-        xor    %eax, %eax
+	xor    %eax, %eax
     xor    %edx, %edx
 
     movl    $0x206, %ecx        // IA32_MTRR_PHYS Base 3
-        wrmsr
+	wrmsr
     movl    $0x207, %ecx        // IA32_MTRR_PHYS_MASK 3
-        wrmsr
+	wrmsr
 
     movl    $0x208, %ecx        // IA32_MTRR_PHYS Base 4
-        wrmsr                                                   
+	wrmsr                                                   
     movl    $0x209, %ecx        // IA32_MTRR_PHYS_MASK 4
-        wrmsr                                                   
+	wrmsr                                                   
 
     movl    $0x20a, %ecx        // IA32_MTRR_PHYS Base 5
-        wrmsr                                                   
+	wrmsr                                                   
     movl    $0x20b, %ecx        // IA32_MTRR_PHYS_MASK 5
-        wrmsr                                                   
+	wrmsr                                                   
 
     movl    $0x20c, %ecx        // IA32_MTRR_PHYS Base 6
-        wrmsr                                                   
+	wrmsr                                                   
     movl    $0x20d, %ecx        // IA32_MTRR_PHYS_MASK 6
-        wrmsr
+	wrmsr
 
     movl    $0x20e, %ecx        // IA32_MTRR_PHYS Base 7
-        wrmsr
+	wrmsr
     movl    $0x20f, %ecx        // IA32_MTRR_PHYS_MASK 7
-        wrmsr                                                   
+	wrmsr                                                   
                                               
 
     // Define Memory in IA32_MTRR_DEF_TYPE
@@ -239,7 +236,7 @@
     andl    $0x9FFFFFFF,%eax
     movl    %eax, %cr0
 
-        cld
+	cld
 
     // copy everything into RAM 
 
@@ -249,25 +246,23 @@
     shr    $2,%ecx    // We dividy / 4, as we copy Dword oriented
     rep     movsl
     
-        jmp   initaftermemcpy
+	jmp   initaftermemcpy
 
-
-/*
-  We leave Flash at this point, we never come back to it anymore.
-  the following ASM instructions below, already are linked to memory (look to the ldscript in this case)
-*/
+    // We leave Flash at this point, we never come back to it anymore.
+    // the following ASM instructions below, already are linked to memory 
+    // (look to the ldscript in this case)
 
 .section .text, "ax"
                          
-       // Note: We are in Memory here, not in Flash anylonger, 
-       // we have been copy'd here and linked for memory, as we reside in section .text
-       // Look to LDscript
+    // Note: We are in Memory here, not in Flash anylonger, 
+    // we have been copy'd here and linked for memory, as we reside in section .text
+    // Look to LDscript
        
 .global    MemoryChecksum
-MemoryChecksum:          
+MemoryChecksum:
     // The SHA-1 Hashsum is dumped here after with ImageBLD
-          .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
     .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
     .long _size_sha1hash
     .long 0x00  // Will be dumped in by imagebld ->compressed_image_start;
     .long 0x00  // Will be dumped in by imagebld ->compressed_image_size;
@@ -297,23 +292,20 @@ tableIdtDescriptor:
     .word 0x0    // fill Word, so we get alliged again
         
 initaftermemcpy:
-/*
-  These Init Codes Can be found in the 2'nd Bootloader
+	// These Init Codes Can be found in the 2'nd Bootloader
 
-*/ 
-        // We set up a GDT now, this is not necessary needed, 
-        // but it is preferred, as we have more ability with commands
+	// We set up a GDT now, this is not necessary needed, 
+	// but it is preferred, as we have more ability with commands
         
-        // We clear the IDT in RAM
-        xor %eax,%eax
+	// We clear the IDT in RAM
+	xor %eax,%eax
     mov $0x5000,%ecx
     mov $0x400000,%edi
     rep stosb
 
-        lidt tableIdtDescriptor
+	lidt tableIdtDescriptor
     lgdt tableGdtDescriptor
     // set up selectors for everything
-
 
     xor    %eax, %eax
     lldt %ax
@@ -352,7 +344,6 @@ reload_cs:
     movw     $0xcfc, %dx 
     movl     $0x40000000, %eax 
     outl    %eax, %dx
-    
           
     // CPU Whoami   ? sesless ?
     mov     $0x80000080, %eax 
@@ -361,8 +352,6 @@ reload_cs:
     movw     $0xcfc, %dx 
     movl     $0x100, %eax 
     outl    %eax, %dx 
-
         
     // this can be found in BootResetAction.c
-    jmp     BootStartBiosLoader  
-                         
+    jmp     BootStartBiosLoader

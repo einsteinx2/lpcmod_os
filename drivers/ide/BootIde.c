@@ -552,7 +552,6 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             n = BootIdeSetTransferMode(nIndexDrive, 0x08);
         if(n){
             printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
-            LEDOff(NULL);
         }
 
 //We'll give PIO Mode4 a shot first.
@@ -1293,8 +1292,6 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 
         //Retry (partial) block from the sector where it failed.
         status = BootIdeWriteMultiple(nDriveIndex, pbBuffer, startLBA, len, retry);      //Retry one more time.
-        LEDOff(NULL);
-        while(1);               //Hang if failed. for debug only.
     }
 /*
     //Some drives requires a CACHE_FLUSH command being sent after each write command. We do it just to be sure.

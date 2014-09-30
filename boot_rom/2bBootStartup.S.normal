@@ -88,7 +88,7 @@
     
     .org 0x40
     .long _start_checksum    // This number will be overwritten  
-                                    // With imagebld, but we need a temp value
+                             // With imagebld, but we need a temp value
     
     .org 0x6c
     .long 0x00000107
@@ -458,33 +458,33 @@
     wrmsr
     
 
-    xor    %eax, %eax
+	xor    %eax, %eax
     xor    %edx, %edx
 
     movl    $0x206, %ecx        // IA32_MTRR_PHYS Base 3
-    wrmsr
+	wrmsr
     movl    $0x207, %ecx        // IA32_MTRR_PHYS_MASK 3
-    wrmsr
+	wrmsr
 
     movl    $0x208, %ecx        // IA32_MTRR_PHYS Base 4
-    wrmsr                                                   
+	wrmsr                                                   
     movl    $0x209, %ecx        // IA32_MTRR_PHYS_MASK 4
-    wrmsr                                                   
+	wrmsr                                                   
 
     movl    $0x20a, %ecx        // IA32_MTRR_PHYS Base 5
-    wrmsr                                                   
+	wrmsr                                                   
     movl    $0x20b, %ecx        // IA32_MTRR_PHYS_MASK 5
-    wrmsr                                                   
+	wrmsr                                                   
 
     movl    $0x20c, %ecx        // IA32_MTRR_PHYS Base 6
-    wrmsr                                                   
+	wrmsr                                                   
     movl    $0x20d, %ecx        // IA32_MTRR_PHYS_MASK 6
-    wrmsr
+	wrmsr
 
     movl    $0x20e, %ecx        // IA32_MTRR_PHYS Base 7
-    wrmsr
+	wrmsr
     movl    $0x20f, %ecx        // IA32_MTRR_PHYS_MASK 7
-    wrmsr                                                   
+	wrmsr                                                   
                                               
 
     // Define Memory in IA32_MTRR_DEF_TYPE
@@ -502,7 +502,7 @@
     andl    $0x9FFFFFFF,%eax
     movl    %eax, %cr0
 
-    cld
+	cld
 
     // copy everything into RAM 
 
@@ -512,24 +512,23 @@
     shr    $2,%ecx    // We dividy / 4, as we copy Dword oriented
     rep     movsl
     
-    jmp   initaftermemcpy
-
+	jmp   initaftermemcpy
 
     // We leave Flash at this point, we never come back to it anymore.
     // the following ASM instructions below, already are linked to memory 
     // (look to the ldscript in this case)
 
-    .section .text, "ax"
+.section .text, "ax"
                          
     // Note: We are in Memory here, not in Flash anylonger, 
     // we have been copy'd here and linked for memory, as we reside in section .text
     // Look to LDscript
        
-    .global    MemoryChecksum
-MemoryChecksum:          
+.global    MemoryChecksum
+MemoryChecksum:
     // The SHA-1 Hashsum is dumped here after with ImageBLD
     .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
-    .byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
     .long _size_sha1hash
     .long 0x00  // Will be dumped in by imagebld ->compressed_image_start;
     .long 0x00  // Will be dumped in by imagebld ->compressed_image_size;
@@ -559,18 +558,18 @@ tableIdtDescriptor:
     .word 0x0    // fill Word, so we get alliged again
         
 initaftermemcpy:
-    // These Init Codes Can be found in the 2'nd Bootloader
+	// These Init Codes Can be found in the 2'nd Bootloader
 
-    // We set up a GDT now, this is not necessary needed, 
-    // but it is preferred, as we have more ability with commands
+	// We set up a GDT now, this is not necessary needed, 
+	// but it is preferred, as we have more ability with commands
         
-    // We clear the IDT in RAM
-    xor %eax,%eax
+	// We clear the IDT in RAM
+	xor %eax,%eax
     mov $0x5000,%ecx
     mov $0x400000,%edi
     rep stosb
 
-    lidt tableIdtDescriptor
+	lidt tableIdtDescriptor
     lgdt tableGdtDescriptor
     // set up selectors for everything
 
@@ -581,8 +580,7 @@ initaftermemcpy:
     .byte 0xEA          // jmp far 0010:reload_cs
     .long reload_cs
     .word 0x0010
-    .align 16
-
+.align 16
 reload_cs:
 
     // CS is now a valid entry in the GDT.  Set SS, DS, and ES to valid
