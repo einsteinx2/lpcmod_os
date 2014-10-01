@@ -539,17 +539,77 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
         //Bits 2 to 0 select the PIO mode.
         if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120
-              && tsaHarddiskInfo[nIndexDrive].m_bIORDY)        //Mode4
-            n = BootIdeSetTransferMode(nIndexDrive, 0x0C);                                                                                                                   
+              && tsaHarddiskInfo[nIndexDrive].m_bIORDY){        //Mode4
+            n = BootIdeSetTransferMode(nIndexDrive, 0x0C); 
+            //Mode4 timing specs are as follow:
+            //Register 0x48, set at 0x20202020 for all drives(4)
+            //Minimum recovery time = 30ns
+            //Active pulse width = 90ns
+            //For a total cycletime of 120ns.
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020);
+            //Register 0x4C, set at 0x20200000
+            //Address setup time = 30ns
+            //DIOR/DIOW pulse width = 90ns
+            //DIOR/DIOW recovery time = 30ns 
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x20200000); 
+        }                                                                                                                
         else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 180
-                   && tsaHarddiskInfo[nIndexDrive].m_bIORDY)   //Mode3
+                   && tsaHarddiskInfo[nIndexDrive].m_bIORDY){   //Mode3
             n = BootIdeSetTransferMode(nIndexDrive, 0x0B);
-        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 240)   //Mode2
+            //Mode3 timing specs are as follow:
+            //Register 0x48, set at 0x22222222 for all drives(4)
+            //Minimum recovery time = 90ns
+            //Active pulse width = 90ns
+            //For a total cycletime of 180ns.
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x22222222);
+            //Register 0x4C, set at 0x22220000
+            //Address setup time = 30ns
+            //DIOR/DIOW pulse width = 90ns
+            //DIOR/DIOW recovery time = 90ns 
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x22220000);
+        }
+        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 240){   //Mode2
             n = BootIdeSetTransferMode(nIndexDrive, 0x0A);
-        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383)   //Mode1
+            //Mode2 timing specs are as follow:
+            //Register 0x48, set at 0x42424242 for all drives(4)
+            //Minimum recovery time = 90ns
+            //Active pulse width = 150ns
+            //For a total cycletime of 240ns.
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x42424242);
+            //Register 0x4C, set at 0x3F3F0000
+            //Address setup time = 30ns
+            //DIOR/DIOW pulse width = 120ns
+            //DIOR/DIOW recovery time = - (put max to be safe)(put max to be safe)
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x3F3F0000);
+        }
+        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383){   //Mode1
             n = BootIdeSetTransferMode(nIndexDrive, 0x09);
-        else                                                         //Mode0
+            //Mode1 timing specs are as follow:
+            //Register 0x48, set at 0x65656565 for all drives(4)
+            //Minimum recovery time = 180ns
+            //Active pulse width = 210ns
+            //For a total cycletime of 383ns.
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x65656565);
+            //Register 0x4C, set at 0x4F4F0055
+            //Address setup time = 60ns
+            //DIOR/DIOW pulse width = 150ns
+            //DIOR/DIOW recovery time = - (put max to be safe)
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x4F4F0055);
+        }
+        else{                                                         //Mode0
             n = BootIdeSetTransferMode(nIndexDrive, 0x08);
+            //Mode0 timing specs are as follow:
+            //Register 0x48, set at 0xA8A8A8A8 for all drives(4)
+            //Minimum recovery time = 270ns
+            //Active pulse width = 330ns
+            //For a total cycletime of 600ns.
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0xA8A8A8A8);
+            //Register 0x4C, set at 0x5F5F00AA
+            //Address setup time = 90ns
+            //DIOR/DIOW pulse width = 180ns
+            //DIOR/DIOW recovery time = - (put max to be safe)
+            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x5F5F00AA);
+        }
         if(n){
             printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
         }
