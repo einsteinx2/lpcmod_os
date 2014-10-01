@@ -328,34 +328,28 @@ void BootPciPeripheralInitialization()
     //---For more information, read the T13 document 1510D.
 
 
-    //---BAR register. 32bits
-    //---bit0 hardwired to 1, bits15-4= base addr of IO space.
-    //---Moved further down to replicate sequence in XboxKernel sources.
-    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
-    //---Command register. 16bits. Puts 0x5 in it. As per XboxKernel sources.
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 4, PciReadDword(BUS_0, DEV_9, FUNC_0, 4)|5); // 0x00b00005 );
-    //---RevisionID. 8bits
+    //---Enable access to IO space and Bus Master for Primary controller.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 4, PciReadDword(BUS_0, DEV_9, FUNC_0, 4)|5);
     //---XboxKernel sources AND the content of ProgIf register(offset:0x09 size:byte) with ~0x05 which translate to
     //---a 0xfffffaff DWORD AND mask starting from offset 0x08. Previously set at 0xfffffeff.
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffaff); // 0x01018ab1 ); // was fffffaff
+    //---Set Primary port to compatibility mode. Leave all other settings at default.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffeff);
     //---BAR register. 32bits
     //---bit0 hardwired to 1, bits15-4= base addr of IO space, same as XboxKernel sources.
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
-    //---Unknown, but first of 3 writes in XboxKernel sources
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x50, 0x00000002);  // without this there is no register footprint at IO 1F0
-    //---Unknown, done in second.
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0x20202020); // kern1.1
-    //---Unknown but not done in XboxKernel sources
-    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0x00000000); // kern1.1
-    //---Unknown, moved in first.
-    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x50, 0x00000002);  // without this there is no register footprint at IO 1F0
-    //----Subsystem vendor ID. 16bits. Not done in XboxKernel sources
-    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x2c, 0x00000000); // frankenregister from xbe boot
-    //---Primary IDE timings.16bits. Not done in XboxKernel sources
-    //---PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x40, 0x00000000); // frankenregister from xbe boot
+    //---Enable primary controller, Posted-Write buffer and Read pre-fetch buffer
+    //---Poster-Write buffer requires that all data read-write operations be done in 32bits between CPU and controller.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x50, 0x0000C002);
+    //---PIO mode 0 set for all drives, even secondary controller's...
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x58, 0xA8A8A8A8);
+    //---We'll set faster modes once we know which modes the HDD supports(in BootIde.c)
+
 
     // below reinstated by frankenregister compare with xbe boot
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0xC0C0C0C0); // kern1.1 <--- this was in kern1.1 but is FATAL for good HDD access
+    //---Enable UDMA mode 2, UDMA mode enabled and ignore SET FEATURE command to enable UDMA or not. For drives and controllers
+    //---Don't do that to enable PIO mode switch.
+    //---Leave to default to enable SET FEATURE ATA command that will enable PIO mode 4 at drive level.
+    //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, 0xC0C0C0C0); // kern1.1 <--- this was in kern1.1 but is FATAL for good HDD access
 
     // Bus 0, Device 4, Function 0 = nForce MCP Networking Adapter - all verified with kern1.1
     PciWriteDword(BUS_0, DEV_4, FUNC_0, 4, PciReadDword(BUS_0, DEV_4, FUNC_0, 4) | 7 );

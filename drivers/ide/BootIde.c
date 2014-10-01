@@ -188,10 +188,16 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
         //printk("BootIdeReadData data not ready...\n");
         return 1;
     }
-
+/*
     while (size > 1) {
         *ptr++ = IoInputWord(IDE_REG_DATA(uIoBase));
         size -= 2;
+    }
+*/
+    //32 32bits read from the controller.
+    while (size > 3) {
+        *ptr++ = IoInputDword(IDE_REG_DATA(uIoBase));
+        size -= 4;
     }
 
     IoInputByte(IDE_REG_STATUS(uIoBase));
@@ -217,12 +223,20 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
 //        return 1;
 //    }
     //wait_smalldelay();
-
+/*
     while (size > 1) {
 
         IoOutputWord(IDE_REG_DATA(uIoBase), *ptr);
         size -= 2;
         ptr++;
+    }
+*/
+    //Try 32 bits write.
+    while (size > 1) {
+
+        IoOutputDword(IDE_REG_DATA(uIoBase), *ptr);
+        size -= 4;
+        ptr += 2;
     }
 //    wait_smalldelay();
     
@@ -551,7 +565,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Address setup time = 30ns
             //DIOR/DIOW pulse width = 90ns
             //DIOR/DIOW recovery time = 30ns 
-            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x20200000); 
+            //AMD-766 datasheet notes that C1A4C register should be left to default value when using PIO
+            //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x20200000);
         }                                                                                                                
         else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 180
                    && tsaHarddiskInfo[nIndexDrive].m_bIORDY){   //Mode3
@@ -566,7 +581,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Address setup time = 30ns
             //DIOR/DIOW pulse width = 90ns
             //DIOR/DIOW recovery time = 90ns 
-            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x22220000);
+            //AMD-766 datasheet notes that C1A4C register should be left to default value when using PIO
+            //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x22220000);
         }
         else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 240){   //Mode2
             n = BootIdeSetTransferMode(nIndexDrive, 0x0A);
@@ -580,7 +596,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Address setup time = 30ns
             //DIOR/DIOW pulse width = 120ns
             //DIOR/DIOW recovery time = - (put max to be safe)(put max to be safe)
-            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x3F3F0000);
+            //AMD-766 datasheet notes that C1A4C register should be left to default value when using PIO
+            //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x3F3F0000);
         }
         else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383){   //Mode1
             n = BootIdeSetTransferMode(nIndexDrive, 0x09);
@@ -594,7 +611,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Address setup time = 60ns
             //DIOR/DIOW pulse width = 150ns
             //DIOR/DIOW recovery time = - (put max to be safe)
-            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x4F4F0055);
+            //AMD-766 datasheet notes that C1A4C register should be left to default value when using PIO
+            //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x4F4F0055);
         }
         else{                                                         //Mode0
             n = BootIdeSetTransferMode(nIndexDrive, 0x08);
@@ -608,7 +626,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Address setup time = 90ns
             //DIOR/DIOW pulse width = 180ns
             //DIOR/DIOW recovery time = - (put max to be safe)
-            PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x5F5F00AA);
+            //AMD-766 datasheet notes that C1A4C register should be left to default value when using PIO
+            //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x5F5F00AA);
         }
         if(n){
             printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
