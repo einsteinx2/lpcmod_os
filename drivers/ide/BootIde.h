@@ -50,12 +50,21 @@ typedef enum {
     IDE_CMD_SECURITY_DISABLE = 0xF6    
 } ide_command_t;
 
-typedef struct{                 //PRD table entry. 8 bytes in length
+typedef struct {                 //PRD table entry. 8 bytes in length
     u32 address;
     u16 byteCount;
     u16 reserved : 15;
     u16 endoftable : 1;
-}__attribute__((packed)) PRD1, PRD2, PRD3, PRD4;
+}__attribute__((packed))PRD;    //No filling. SHouldn't matter since its elements makes it already aligned.
+
+typedef struct PRDT{
+    PRD __attribute__((aligned(4)))PRD1;      //All aligned on a Dword boundary
+    PRD __attribute__((aligned(4)))PRD2;
+    PRD __attribute__((aligned(4)))PRD3;
+    PRD __attribute__((aligned(4)))PRD4;
+}__attribute__((packed, aligned(64 * 1024))) PRDTable;  //Aligned on a 64K boundary.
+                                                        //So no crossing unless struct is > 64K in size.
+
 
 //Methods
 int BootIdeInit(void);
