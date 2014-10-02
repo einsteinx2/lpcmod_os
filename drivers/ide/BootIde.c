@@ -188,17 +188,18 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
         //printk("BootIdeReadData data not ready...\n");
         return 1;
     }
-/*
+
     while (size > 1) {
         *ptr++ = IoInputWord(IDE_REG_DATA(uIoBase));
         size -= 2;
     }
-*/
+
     //32 32bits read from the controller.
-    while (size > 3) {
+/*    while (size > 3) {
         *ptr++ = IoInputDword(IDE_REG_DATA(uIoBase));
         size -= 4;
     }
+*/
 
     IoInputByte(IDE_REG_STATUS(uIoBase));
     if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) {
@@ -223,21 +224,22 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
 //        return 1;
 //    }
     //wait_smalldelay();
-/*
+
     while (size > 1) {
 
         IoOutputWord(IDE_REG_DATA(uIoBase), *ptr);
         size -= 2;
         ptr++;
     }
-*/
+
     //Try 32 bits write.
-    while (size > 1) {
+/*    while (size > 3) {
 
         IoOutputDword(IDE_REG_DATA(uIoBase), *ptr);
         size -= 4;
         ptr += 2;
     }
+*/
 //    wait_smalldelay();
     
     n=BootIdeWaitNotBusy(uIoBase);
