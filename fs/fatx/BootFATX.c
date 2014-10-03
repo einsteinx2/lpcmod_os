@@ -877,21 +877,25 @@ void FATXSetBRFR(u8 drive){
 	
 }
 
-bool FATXCheckMBR(u8 driveId){
+int FATXCheckMBR(u8 driveId){
     u8 *sourceTable = (u8 *)&BackupPartTbl;
     u8 i;
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
         printk("\n\n\n           FATXCheckMBR : Unable to read MBR sector\n");
-        return false;
+        return 0;
     }
     else{
-        for(i = 0; i < 208; i++){               //IMO, first 208 bytes should always be identical for every Xbox.
-            if(ba[i] != sourceTable[i])         //Contains generic MBR header + standard Xbox Partitions (C,E,X,Y,Z)
-                return false;
+        for(i = 0; i < 48; i++){
+            if(ba[i] != sourceTable[i])         //Contains generic MBR header
+                return 0;                       //First 48 bytes should always be identical for every Part tables.
+        }
+        for(i = 48; i < 208; i++){
+            if(ba[i] != sourceTable[i])         //Contains standard Xbox Partitions (C,E,X,Y,Z)
+                return -1;                      //If basic partition entries contains unconventional values, return error.
         }
     }
-    return true;
+    return 1;
 }
 
 void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table){

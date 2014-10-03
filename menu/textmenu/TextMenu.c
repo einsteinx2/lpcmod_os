@@ -100,6 +100,10 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         if (item == selectedItem){ 
             VIDEO_ATTR=0xffef37;
         }
+        //If noSelect flag, draw in red.
+        else if(item->noSelect == NOSELECTERROR){
+            VIDEO_ATTR=0xffff1515;
+        }
         else VIDEO_ATTR=0xffffff;
         //Font size 2=big.
         printk("\n\2               %s%s\n",item->szCaption, item->szParameter);
@@ -187,18 +191,20 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
 
             int i=0;
             if (selectedMenuItem->nextMenuItem!=NULL) {
-                TEXTMENUITEM *lastVisibleMenuItem = firstVisibleMenuItem;
-                //8 menu items per page.
-                for (i=0; i<visibleCount-1; i++) {
-                    if (lastVisibleMenuItem->nextMenuItem==NULL) break;
-                    lastVisibleMenuItem = lastVisibleMenuItem->nextMenuItem;
+                if(selectedMenuItem->nextMenuItem->noSelect == 0){      //Do not select items with noSelect flag
+                    TEXTMENUITEM *lastVisibleMenuItem = firstVisibleMenuItem;
+                    //8 menu items per page.
+                    for (i=0; i<visibleCount-1; i++) {
+                        if (lastVisibleMenuItem->nextMenuItem==NULL) break;
+                        lastVisibleMenuItem = lastVisibleMenuItem->nextMenuItem;
+                    }
+                    if (selectedMenuItem == lastVisibleMenuItem) {
+                        firstVisibleMenuItem = firstVisibleMenuItem->nextMenuItem;
+                        BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+                    }
+                    selectedMenuItem = selectedMenuItem->nextMenuItem;
+                    TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
                 }
-                if (selectedMenuItem == lastVisibleMenuItem) {
-                    firstVisibleMenuItem = firstVisibleMenuItem->nextMenuItem;
-                    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-                }
-                selectedMenuItem = selectedMenuItem->nextMenuItem;
-                TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
             }
         }
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1 || (u32)temp>(0x369E99*MENU_TIMEWAIT)) {

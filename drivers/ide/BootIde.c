@@ -551,6 +551,13 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = *((unsigned int*)&(drive_info[67]));       //Value in ns
         //Set fastest PIO mode depending on cycle time supplied by HDD.
 
+        //DEBUG: Read back reserved IO space addresses for native mode and print to screen.
+        printk("\n\n\n\n\n\n\n\n              com = 0x%08X",PciReadDword(BUS_0, DEV_9, FUNC_0, 0x10));
+        printk("\n              cont = 0x%08X",PciReadDword(BUS_0, DEV_9, FUNC_0, 0x14));
+        wait_ms(5000);
+        //Will remove once confirmed.
+
+
         //Depending on PIO cycle time value returned by IDENTIFY command, we select a PIO mode.
         //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
         //Bits 2 to 0 select the PIO mode.
@@ -680,7 +687,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         }
 
             // report on the MBR-ness of the drive contents
-
+        tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+/*
         if(FATXCheckMBR(nIndexDrive)) {
 #ifndef SILENT_MODE
             printk(" - MBR", nIndexDrive);
@@ -694,6 +702,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 #endif
         }
         printk("\n");
+*/
     } 
 
     return 0;

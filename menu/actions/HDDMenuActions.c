@@ -199,7 +199,7 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) ? "Locked" : "Unlocked");
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
-    if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr == 1){
+    if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr){
         if(BootIdeReadSector(nIndexDrive, &MBRBuffer[0], 0x00, 0, 512)) {
             VIDEO_ATTR=0xffff0000;
             printk("\n\1                Unable to read MBR sector...\n");

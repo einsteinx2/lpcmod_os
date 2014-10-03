@@ -24,6 +24,8 @@ struct TEXTMENUITEM;
 struct TEXTMENU;
 
 #define MENUCAPTIONSIZE 51
+#define NOSELECTERROR   1
+
 extern int breakOutOfMenu;
 
 typedef struct TEXTMENUITEM {
@@ -45,6 +47,7 @@ typedef struct TEXTMENUITEM {
     void (*functionRTPtr) (void *);
     void *functionLTDataPtr;
     void *functionRTDataPtr;
+    u8 noSelect;
     //Next / previous menu items within this menu
     struct TEXTMENUITEM *previousMenuItem;
     struct TEXTMENUITEM *nextMenuItem;

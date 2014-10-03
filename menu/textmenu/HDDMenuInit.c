@@ -62,49 +62,69 @@ TEXTMENU *HDDMenuInit(void) {
             itemPtr->functionDataPtr = malloc(sizeof(int));
                 *(int*)itemPtr->functionDataPtr = i;
             TextMenuAddItem(menuPtr, itemPtr);
-
-            //FORMAT C: drive
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Format C drive : ");
-            sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-            itemPtr->functionPtr= FormatDriveC;
-            itemPtr->functionDataPtr = malloc(sizeof(int));
-                *(int*)itemPtr->functionDataPtr = i;
-            TextMenuAddItem(menuPtr, itemPtr);
-
-            //FORMAT E: drive
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Format E drive : ");
-            sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-            itemPtr->functionPtr= FormatDriveE;
-            itemPtr->functionDataPtr = malloc(sizeof(int));
-                *(int*)itemPtr->functionDataPtr = i;
-            TextMenuAddItem(menuPtr, itemPtr);
-
-            //FORMAT X:, Y: and Z: drives.
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Format cache drives : ");
-            sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-            itemPtr->functionPtr= FormatCacheDrives;
-            itemPtr->functionDataPtr = malloc(sizeof(int));
-                *(int*)itemPtr->functionDataPtr = i;
-            TextMenuAddItem(menuPtr, itemPtr);
-
-            //If there's enough sectors to make F and/or G drive(s).
-            if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
-                //Format Larger drives option menu.
+            if(tsaHarddiskInfo[i].m_fHasMbr != -1){     //MBR contains standard basic partition entries.
+                //FORMAT C: drive
                 itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
                 memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"Large HDD format : ");
+                sprintf(itemPtr->szCaption,"Format C drive : ");
                 sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                itemPtr->functionPtr= (void *)LargeHDDMenuInit;
-                itemPtr->functionDataPtr = malloc(sizeof(u8));
-                    *(u8 *)itemPtr->functionDataPtr = i;
+                itemPtr->functionPtr= FormatDriveC;
+                itemPtr->functionDataPtr = malloc(sizeof(int));
+                    *(int*)itemPtr->functionDataPtr = i;
                 TextMenuAddItem(menuPtr, itemPtr);
-            } 
+
+                //FORMAT E: drive
+                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption,"Format E drive : ");
+                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
+                itemPtr->functionPtr= FormatDriveE;
+                itemPtr->functionDataPtr = malloc(sizeof(int));
+                    *(int*)itemPtr->functionDataPtr = i;
+                TextMenuAddItem(menuPtr, itemPtr);
+
+                //FORMAT X:, Y: and Z: drives.
+                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption,"Format cache drives : ");
+                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
+                itemPtr->functionPtr= FormatCacheDrives;
+                itemPtr->functionDataPtr = malloc(sizeof(int));
+                    *(int*)itemPtr->functionDataPtr = i;
+                TextMenuAddItem(menuPtr, itemPtr);
+
+                //If there's enough sectors to make F and/or G drive(s).
+                if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
+                    //Format Larger drives option menu.
+                    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+                    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                    sprintf(itemPtr->szCaption,"Large HDD format : ");
+                    sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
+                    itemPtr->functionPtr= (void *)LargeHDDMenuInit;
+                    itemPtr->functionDataPtr = malloc(sizeof(u8));
+                        *(u8 *)itemPtr->functionDataPtr = i;
+                    TextMenuAddItem(menuPtr, itemPtr);
+                }
+            }
+            else{
+                //Print message.
+                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption,"Unsupported partition scheme...");
+                itemPtr->functionPtr= NULL;
+                itemPtr->functionDataPtr = NULL;
+                itemPtr->noSelect = NOSELECTERROR;
+                TextMenuAddItem(menuPtr, itemPtr);
+
+                //Print message.
+                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption,"XBlast OS will not format this HDD!");
+                itemPtr->functionPtr= NULL;
+                itemPtr->functionDataPtr = NULL;
+                itemPtr->noSelect = NOSELECTERROR;
+                TextMenuAddItem(menuPtr, itemPtr);
+            }
         }
     }
 
