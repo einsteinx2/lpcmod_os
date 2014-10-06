@@ -332,8 +332,8 @@ void BootPciPeripheralInitialization()
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 4, PciReadDword(BUS_0, DEV_9, FUNC_0, 4)|5);
     //---XboxKernel sources AND the content of ProgIf register(offset:0x09 size:byte) with ~0x05 which translate to
     //---a 0xfffffaff DWORD AND mask starting from offset 0x08. Previously set at 0xfffffeff.
-    //---Set both ports to native mode. Leave all other settings at default.
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)| 0x00000500);//&0xfffffaff);
+    //---Set both ports to compatibility mode. Leave all other settings at default.
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffaff); //| 0x00000500);  for native
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x10, 0x000002f0);      //Set ATA command set register to start at 0x2F0(from 1F0)
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x14, 0x000004f6);      //Set ATA control register to start at 0x4F6(from 3F6)
     //---BAR register. 32bits
