@@ -391,7 +391,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nIndexDrive);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
-    IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a); // kill interrupt,
+    IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02); // kill interrupt, only bit1 needs to be set
 //    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x00); // kill DMA
 
 

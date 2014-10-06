@@ -163,7 +163,8 @@ void enableWebupdate(void *whatever) {
 void switchBank(char bank)
 {
     currentFlashBank = bank;
-    WriteToIO(BNK_CONTROL, bank);    // switch to proper bank
+    WriteToIO(BNK_CONTROL, bank | (bank == BNKOS)? 0 : OSBNKCTRLBIT);    // switch to proper bank
+                                                                         //Send OSBNKCTRLBIT when toggling a bank other than BNKOS.
 }    
 
 void FlashFooter(void) {

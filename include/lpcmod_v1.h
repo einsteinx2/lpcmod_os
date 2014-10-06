@@ -1,6 +1,8 @@
 #ifndef lpcmod_v1_h
 #define lpcmod_v1_h
 
+#define OSBNKCTRLBIT    0x08    //Bit that must be sent when selecting a flash bank other than BNKOS
+
 #define BNK512  0x00
 #define BNK256  0x02
 #define BNKOS  0x03
