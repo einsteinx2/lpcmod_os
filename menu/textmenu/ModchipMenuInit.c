@@ -111,7 +111,8 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
     itemPtr->functionLeftDataPtr = itemPtr;
     itemPtr->functionRightPtr=toggleTSOPControl;
     itemPtr->functionRightDataPtr = itemPtr;
-
+    TextMenuAddItem(menuPtr, itemPtr);
+    
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Xbox TSOP split : ");
@@ -123,6 +124,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
     itemPtr->functionLeftDataPtr = itemPtr;
     itemPtr->functionRightPtr=toggleTSOPSplit;
     itemPtr->functionRightDataPtr = itemPtr;
+    TextMenuAddItem(menuPtr, itemPtr);
 }
 
 /*

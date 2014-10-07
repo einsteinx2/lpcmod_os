@@ -1,15 +1,15 @@
 #ifndef lpcmod_v1_h
 #define lpcmod_v1_h
 
-#define OSBNKCTRLBIT    0x08    //Bit that must be sent when selecting a flash bank other than BNKOS
+#define OSBNKCTRLBIT    0x80    //Bit that must be sent when selecting a flash bank other than BNKOS
 
-#define BNK512  0x00
-#define BNK256  0x02
+#define BNK512  0x80
+#define BNK256  0x82
 #define BNKOS  0x03
-#define BNKTSOP 0x04            //Also for bank0 in case TSOP is split
-#define BNKTSOP1 0x05
-#define BNKTSOP2 0x06
-#define BNKTSOP3 0x07
+#define BNKTSOP 0x84            //Also for bank0 in case TSOP is split
+#define BNKTSOP1 0x85
+#define BNKTSOP2 0x86
+#define BNKTSOP3 0x87
 #define NOBNKID  0xFF
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE    0x00
@@ -21,6 +21,7 @@
 #define TSOP_4_BANKS    0x04
 #define TSOP_512_SWITCH    0x10
 #define TSOP_256_SWITCH    0x20
+#define TSOP_DISABLE_MOD   0x80
 
 
 //XBlast Mod and SmartXX LPC registers to drive LCD

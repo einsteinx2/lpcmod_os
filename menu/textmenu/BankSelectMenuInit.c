@@ -33,7 +33,7 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     strcpy(itemPtr->szCaption, "Bank1 (256KB)");
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNKOS;
+        *(u8 *)itemPtr->functionDataPtr = BNK256;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Bank2 (OS)

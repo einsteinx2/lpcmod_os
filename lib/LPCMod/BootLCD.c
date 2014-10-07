@@ -62,7 +62,7 @@ void assertInitLCD(void){
         if(fHasHardware != SYSCON_ID_X3 && fHasHardware != SYSCON_ID_XXOPX)
             setLCDContrast(LPCmodSettings.LCDsettings.contrast);
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
-        wait_ms(5);                    //Wait a precautionary 5ms before initializing the LCD to let power stabilize.
+        wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
         WriteLCDInit();
         xLCD.LineSize = LPCmodSettings.LCDsettings.lineLength;
         initialLCDPrint();
