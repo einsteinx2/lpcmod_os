@@ -261,7 +261,7 @@ void editBIOSName(void *bankID){
 //The two functions below requires that the menu items be in that order:
 //Quickboot bank->Alternative Bank->TSOP Control->TSOP Split
 void toggleTSOPControl(void * itemPtr){
-    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
+    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){            //If already active
         LPCmodSettings.OSsettings.TSOPcontrol &= 0xFE;    //Make sure to toggle only bit0 and turn OFF.
         if(LPCmodSettings.OSsettings.altBank > BNKTSOP){    //If altBank setting was set to TSOP bank 1,2 or 3.
@@ -283,7 +283,7 @@ void toggleTSOPControl(void * itemPtr){
 }
 
 void toggleTSOPSplit(void * itemPtr){
-    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)&itemPtr;
+    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     if((LPCmodSettings.OSsettings.TSOPcontrol & 0x02)){    //If TSOPControl bit1 is set
         //So if TSOP control split bit is set to 4-way.
         LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;    //Make sure to toggle only bit1, and set to 2-way.

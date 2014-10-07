@@ -103,5 +103,18 @@ TEXTMENU *SystemMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
+    //DEBUG switch ROM Bus
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Active ROM Bus : ");
+    //sprintf(itemPtr->szParameter, "%s", ----Read here &0x01? "LPC Bus" : "TSOP");     //TODO: Place troublesome line here.
+    itemPtr->functionPtr= toggleROMBus;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggleROMBus;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggleROMBus;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+        TextMenuAddItem(menuPtr, itemPtr);
+
     return menuPtr;
 }

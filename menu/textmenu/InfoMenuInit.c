@@ -45,6 +45,13 @@ TEXTMENU *InfoMenuInit(void) {
     itemPtr->functionPtr= ShowEeprom;
       itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Flash Device");
+    itemPtr->functionPtr= ShowFlashChip;
+      itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
         
     return menuPtr;
 }

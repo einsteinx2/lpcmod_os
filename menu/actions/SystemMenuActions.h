@@ -18,4 +18,6 @@ void decrementGameRegion(void * itemStr);
 void incrementDVDRegion(void * itemStr);
 void decrementDVDRegion(void * itemStr);
 
+void toggleROMBus(void * itemStr);
+
 #endif

@@ -11,6 +11,7 @@
 #include "video.h"
 #include "xbox.h"
 #include "BootEEPROM.h"
+#include "BootFlash.h"
 #include "InfoMenuActions.h"
 
 
@@ -24,11 +25,11 @@ void ShowTemperature(void *whatever) {
         VIDEO_ATTR=0xffc8c8c8;
         printk("CPU temperature: ");
         VIDEO_ATTR=0xffc8c800;
-        printk("%d°C / %d°F\n           ", c, f);
+        printk("%dï¿½C / %dï¿½F\n           ", c, f);
         VIDEO_ATTR=0xffc8c8c8;
         printk("Board temperature: ");
         VIDEO_ATTR=0xffc8c800;
-        printk("%d°C / %d°F", cx, fx);
+        printk("%dï¿½C / %dï¿½F", cx, fx);
     } else {
         VIDEO_ATTR=0xffff0000;
       printk("Error getting temperatures!  ");
@@ -54,6 +55,12 @@ void ShowVideo(void *whatever) {
 void ShowEeprom(void *whatever) {
     InfoHeader("EEPROM");
     BootEepromPrintInfo();
+    InfoFooter();
+}
+
+void ShowFlashChip(void *whatever) {
+    InfoHeader("Flash device");
+    BootShowFlashDevice();
     InfoFooter();
 }
 

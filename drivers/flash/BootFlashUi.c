@@ -202,3 +202,40 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     }
     return 0;
 }
+
+void BootShowFlashDevice(void){
+    OBJECT_FLASH of;
+    // A bit hacky, but easier to maintain.
+    const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+        #include "flashtypes.h"
+    };
+
+    if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])){
+        VIDEO_ATTR=0xffc8c8c8;
+        printk("No valid Flash device Detected!!!");
+        return;
+    }
+
+
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("Manufacturer ID : ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%02X\n", of.m_bManufacturerId);
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("Device ID : ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%02X\n", of.m_bDeviceId);
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("Name : ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%s\n", of.m_szFlashDescription);
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("Total size : ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%u KB\n", of.m_dwLengthInBytes / 1024);
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("Location : ");
+    VIDEO_ATTR=0xffc8c800;
+    //TODO: Paste troublesome line here
+    return;
+}
