@@ -118,8 +118,3 @@ void decrementDVDRegion(void * itemStr){
     sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
     EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
-
-void toggleROMBus(void * itemStr){
-    //TODO: Paste troublesome code snippet here.
-    return;
-}

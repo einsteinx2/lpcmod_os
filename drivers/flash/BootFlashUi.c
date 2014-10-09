@@ -205,11 +205,16 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
 void BootShowFlashDevice(void){
     OBJECT_FLASH of;
+    u8 class, subclass;
+    u16 vendorid, deviceid;
+    int i, j;
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
     };
-
+    
+    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+/*
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])){
         VIDEO_ATTR=0xffc8c8c8;
         printk("No valid Flash device Detected!!!");
@@ -222,20 +227,27 @@ void BootShowFlashDevice(void){
     VIDEO_ATTR=0xffc8c800;
     printk("%02X\n", of.m_bManufacturerId);
     VIDEO_ATTR=0xffc8c8c8;
-    printk("Device ID : ");
+    printk("           Device ID : ");
     VIDEO_ATTR=0xffc8c800;
     printk("%02X\n", of.m_bDeviceId);
     VIDEO_ATTR=0xffc8c8c8;
-    printk("Name : ");
+    printk("           Name : ");
     VIDEO_ATTR=0xffc8c800;
     printk("%s\n", of.m_szFlashDescription);
     VIDEO_ATTR=0xffc8c8c8;
-    printk("Total size : ");
+    printk("           Total size : ");
     VIDEO_ATTR=0xffc8c800;
     printk("%u KB\n", of.m_dwLengthInBytes / 1024);
-    VIDEO_ATTR=0xffc8c8c8;
-    printk("Location : ");
-    VIDEO_ATTR=0xffc8c800;
-    //TODO: Paste troublesome line here
+*/
+    for(i = 2; i < 0x20; i++){
+	for (j =0; j < 0xff; j++){
+		class = PciReadByte(BUS_0, i, j, 0x0b);
+		subclass = PciReadByte(BUS_0, i, j, 0x0a);
+		vendorid = PciReadWord(BUS_0, i, j, 0x00);
+		if(vendorid = 0x10BE && class == 6 && (subclass == 1 /*|| subclass == 2*/)){
+			printk("\n           i=%u  j=%u   0x45=%u", i, j, PciReadByte(BUS_0, i, j, 0x45));
+		}
+	}
+    }
     return;
 }
