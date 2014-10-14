@@ -51,7 +51,8 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 1; // unable to ID device - fail
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
-    if(of.m_dwLengthInBytes<(dwStartOffset+dwLength))
+    if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
+       (fHasHardware == SYSCON_ID_V1 && of.m_dwLengthUsedArea != 262144))
         return 3; // requested layout won't fit device - sanity check fail
     if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
@@ -122,7 +123,9 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 1; // unable to ID device - fail
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
-    if(of.m_dwLengthInBytes<(dwStartOffset+dwLength))
+    if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
+       (currentFlashBank == BNK512 && of.m_dwLengthUsedArea != 524288) ||
+       (currentFlashBank == BNK256 && of.m_dwLengthUsedArea != 262144))
         return 3; // requested layout won't fit device - sanity check fail
 
     // committed to reflash now
@@ -214,7 +217,7 @@ void BootShowFlashDevice(void){
     };
     
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-/*
+
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])){
         VIDEO_ATTR=0xffc8c8c8;
         printk("No valid Flash device Detected!!!");
@@ -238,16 +241,6 @@ void BootShowFlashDevice(void){
     printk("           Total size : ");
     VIDEO_ATTR=0xffc8c800;
     printk("%u KB\n", of.m_dwLengthInBytes / 1024);
-*/
-    for(i = 2; i < 0x20; i++){
-	for (j =0; j < 0xff; j++){
-		class = PciReadByte(BUS_0, i, j, 0x0b);
-		subclass = PciReadByte(BUS_0, i, j, 0x0a);
-		vendorid = PciReadWord(BUS_0, i, j, 0x00);
-		if(vendorid = 0x10BE && class == 6 && (subclass == 1 /*|| subclass == 2*/)){
-			printk("\n           i=%u  j=%u   0x45=%u", i, j, PciReadByte(BUS_0, i, j, 0x45));
-		}
-	}
-    }
+
     return;
 }

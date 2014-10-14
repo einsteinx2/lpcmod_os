@@ -16,12 +16,12 @@
 
 //Bit to send on DISABLE_MOD "register" to control OnBoard TSOP.
 //Will only be used if Xbox rev. is 1.0 or 1.1.
-#define TSOP_BOOT        0x01
-#define TSOP_CONTROL    0x02
-#define TSOP_4_BANKS    0x04
-#define TSOP_512_SWITCH    0x10
-#define TSOP_256_SWITCH    0x20
-#define TSOP_DISABLE_MOD   0x80
+#define TSOP_BOOT        0x01	//Just release D0
+#define TSOP_CONTROL    0x02	//Allow modchip to control TSOP A19/A18 lines
+#define TSOP_4_BANKS    0x04	//Tell modchip "1" = 4-way split, "0" = 2-way split
+#define TSOP_512_SWITCH    0x10 //Actual A19 desired value
+#define TSOP_256_SWITCH    0x20 //Actual A18 desired value
+#define TSOP_DISABLE_MOD   0x80 //Totally mute modchip. no comm possible until power cycle
 
 
 //XBlast Mod and SmartXX LPC registers to drive LCD
@@ -31,6 +31,7 @@
 #define LCD_DATA    0xF700
 #define LCD_BL        0xF701
 #define LCD_CT        0xF703
+#define XODUS_D0_TOGGLE    0x00FF
 
 //Xecuter 3 LPC registers to drive LCD
 #define X3_DISP_O_DAT      0xF504

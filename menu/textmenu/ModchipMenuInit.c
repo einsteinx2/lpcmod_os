@@ -49,7 +49,7 @@ TEXTMENU *ModchipMenuInit(void) {
  */
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption,"Quickboot bank : ");
+    strcpy(itemPtr->szCaption,"Power button boot : ");
     if(LPCmodSettings.OSsettings.activeBank == BNK512)
         strcpy(itemPtr->szParameter,"512KB");
     else if (LPCmodSettings.OSsettings.activeBank == BNK256)
@@ -75,7 +75,7 @@ TEXTMENU *ModchipMenuInit(void) {
     
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption,"Alternative bank : ");
+    strcpy(itemPtr->szCaption,"Eject button boot : ");
     if(LPCmodSettings.OSsettings.altBank == BNK512)
         strcpy(itemPtr->szParameter,"512KB");
     else if (LPCmodSettings.OSsettings.altBank == BNK256)

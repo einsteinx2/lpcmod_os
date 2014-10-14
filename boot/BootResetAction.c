@@ -51,6 +51,7 @@ extern void BootResetAction ( void ) {
     int n, nx, i;
     char *modName = "Unsupported modchip!";
     OBJECT_FLASH of;
+    u8 EjectButtonPressed=0;
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
@@ -92,6 +93,13 @@ extern void BootResetAction ( void ) {
     BootPciPeripheralInitialization();
     // Reset the AGP bus and start with good condition
     BootAGPBUSInitialization();
+    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+    I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+    I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
+    I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+    
+    
+    I2CTransmitWord(0x10, 0x1901); // no reset on eject
 
     LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
 //    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
@@ -209,16 +217,43 @@ extern void BootResetAction ( void ) {
     printk("           BOOT: start USB init\n");
 #endif
     BootStartUSB();
-
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
-            wait_ms(550);
-            if(XPAD_current[0].keys[4] == 1){                   //Black button pressed.
-                BootModBios(&(LPCmodSettings.OSsettings.altBank));
+            if(EjectButtonPressed){              //Xbox was started from eject button.
+                if(LPCmodSettings.OSsettings.altBank < BNKTSOP){
+                    switchBank(LPCmodSettings.OSsettings.altBank);
+              	}
+                else{
+                    if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
+                        WriteToIO(DISABLE_MOD, LPCModTSOPOutput(LPCmodSettings.OSsettings.altBank));    // switch to original bios
+                    else
+                        WriteToIO(XODUS_D0_TOGGLE, LPCModTSOPOutput(LPCmodSettings.OSsettings.altBank));    // switch to original bios but modchip listen to LPC commands.
+                }
+                I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
+                BootStopUSB();
+                I2CRebootQuick();
+                while(1);	//Hang there.
             }
-            if(XPAD_current[0].keys[5] == 0 && LPCmodSettings.OSsettings.Quickboot == 1){       //White button NOT pressed and Quickboot ON.
-                BootModBios(&(LPCmodSettings.OSsettings.activeBank));
+            wait_ms(100);
+            EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+            I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+            I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
+            I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+            if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //White button NOT pressed and Quickboot ON.
+                if(LPCmodSettings.OSsettings.activeBank < BNKTSOP){
+                    switchBank(LPCmodSettings.OSsettings.activeBank);
+              	}
+                else{
+                    if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
+                        WriteToIO(DISABLE_MOD, LPCModTSOPOutput(LPCmodSettings.OSsettings.activeBank));    // switch to original bios
+                    else
+                        WriteToIO(XODUS_D0_TOGGLE, LPCModTSOPOutput(LPCmodSettings.OSsettings.activeBank));    // switch to original bios but modchip listen to LPC commands.
+                }
+                I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
+                BootStopUSB();
+                I2CRebootQuick();
+                while(1);
             }
         }
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
@@ -246,7 +281,7 @@ extern void BootResetAction ( void ) {
         /* We allow interrupts */
 //    nInteruptable = 1;
 
-    I2CTransmitWord(0x10, 0x1901); // no reset on eject
+    //I2CTransmitWord(0x10, 0x1901); // no reset on eject
          
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
     VIDEO_CURSOR_POSY=vmode.ymargin;

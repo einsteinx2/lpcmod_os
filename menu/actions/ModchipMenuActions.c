@@ -228,8 +228,9 @@ void toggleQuickboot(void * itemStr){
 void resetSettings(void *whatever){
     if(ConfirmDialog("        Confirm reset XBlast OS settings?", 1))
         return;
-    initialLPCModOSBoot(&LPCmodSettings);
-    QuickReboot();
+    //initialLPCModOSBoot(&LPCmodSettings);
+    memset(&LPCmodSettings, 0xFF, sizeof(_LPCmodSettings));
+    SlowReboot();
 }
 
 void editBIOSName(void *bankID){

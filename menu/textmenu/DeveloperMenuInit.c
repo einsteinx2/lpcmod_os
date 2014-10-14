@@ -7,41 +7,32 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
 #include "TextMenu.h"
-#include "ResetMenuActions.h"
+#include "DeveloperMenuActions.h"
+#include "lpcmod_v1.h"
 
-TEXTMENU* ResetMenuInit(void) {
+TEXTMENU *DeveloperMenuInit(void) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    
+
+
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
-    strcpy(menuPtr->szCaption, "Power Menu");
+    strcpy(menuPtr->szCaption, "Developer tools");
 
-    //No entry in this menu will have a configurable parameter.
-    //Set first character to NULL to indicate no string is to be shown.
-    itemPtr->szParameter[0]=0;
-
+    //Wipe EEPROM section that holds non-vital data.
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Reboot");
-    itemPtr->functionPtr=SlowReboot;
+    strcpy(itemPtr->szCaption, "Write LPC I/O");
+    itemPtr->functionPtr= LPCIOWrite;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-/*
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Reboot (fast)");
-    itemPtr->functionPtr=QuickReboot;
-    itemPtr->functionDataPtr = NULL;
-    TextMenuAddItem(menuPtr, itemPtr);
-*/
     
+    //Wipe EEPROM section that holds non-vital data.
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Power off");
-    itemPtr->functionPtr=PowerOff;
+    strcpy(itemPtr->szCaption, "Read LPC I/O");
+    itemPtr->functionPtr= LPCIORead;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 

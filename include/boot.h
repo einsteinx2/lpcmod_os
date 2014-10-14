@@ -408,7 +408,7 @@ typedef struct _LPCmodSettings {
     _OSsettings OSsettings;
     _LCDsettings LCDsettings;
     EEPROMDATA bakeeprom;
-}__attribute__((packed)) _LPCmodSettings;
+}__attribute__((packed)) _LPCmodSettings;	//For a total size of 0x300.
 
 
 _LPCmodSettings LPCmodSettings;

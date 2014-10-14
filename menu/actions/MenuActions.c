@@ -36,7 +36,10 @@ void BootOriginalBios(void *data) {
     BootStopUSB();
     
     if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){
-        WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
+    	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
+            WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
+        else
+            WriteToIO(XODUS_D0_TOGGLE, *(u8*)data);    // switch to original bios but modchip listen to LPC commands.
         I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     }
     else {
