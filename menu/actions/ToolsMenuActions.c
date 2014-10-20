@@ -145,6 +145,7 @@ void ToolHeader(char *title) {
 int testBank(int bank){
     u32 counter, lastValue;
     u32 *membasetop = (u32*)((64*1024*1024));
+    u32 startBad = 0, stopBad = 0;
     u8 result=0;    //Start assuming everything is good.
 
     lastValue = 1;
@@ -157,8 +158,19 @@ int testBank(int bank){
         for (counter= 0; counter< (64*1024*1024/(4*4));counter++) {     //Test every address bit pin
             if(membasetop[counter*4+bank]!=lastValue){
                 result = 1;    //1=no no
-                lastValue = 0x80000000;
-                return result;        //No need to go further. Bank is broken.
+                if(startBad == 0){
+                    startBad = counter*4+bank;
+                    printk("\n           StartBad = 0x%08X , ",startBad);
+                }
+                //lastValue = 0x80000000;
+                //return result;        //No need to go further. Bank is broken.
+            }
+            else{
+                if(startBad){
+                    startBad = 0;
+                    stopBad = counter*4+bank - 1;
+                    printk("StopBad = 0x%08X , ",stopBad);
+                }
             }
             membasetop[counter*4+bank] = lastValue<<1;                  //Prepare for next read.
         }
