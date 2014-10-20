@@ -20,7 +20,7 @@ TEXTMENU *DeveloperMenuInit(void) {
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Developer tools");
 
-    //Wipe EEPROM section that holds non-vital data.
+    //Write to LPC port
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Write LPC I/O");
@@ -28,13 +28,15 @@ TEXTMENU *DeveloperMenuInit(void) {
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
     
-    //Wipe EEPROM section that holds non-vital data.
+    //Read LPC port data.
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Read LPC I/O");
     itemPtr->functionPtr= LPCIORead;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+
+
 
     return menuPtr;
 }

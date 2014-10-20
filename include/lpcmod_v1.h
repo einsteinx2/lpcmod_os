@@ -5,7 +5,7 @@
 
 #define BNK512  0x80
 #define BNK256  0x82
-#define BNKOS  0x03
+#define BNKOS  0x83
 #define BNKTSOP 0x84            //Also for bank0 in case TSOP is split
 #define BNKTSOP1 0x85
 #define BNKTSOP2 0x86
@@ -28,6 +28,7 @@
 #define BNK_CONTROL    0xF710
 #define DISABLE_MOD    0xF711
 #define ENABLE_5V    0xF713
+#define GPO_PINS     0xF71F
 #define LCD_DATA    0xF700
 #define LCD_BL        0xF701
 #define LCD_CT        0xF703

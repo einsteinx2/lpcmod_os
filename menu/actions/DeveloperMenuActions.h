@@ -12,4 +12,6 @@
 void LPCIOWrite(void * ignored);
 void LPCIORead(void * ignored);
 
+void GPOSendByte(void * data);
+
 #endif
