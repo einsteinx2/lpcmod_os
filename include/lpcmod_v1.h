@@ -1,15 +1,14 @@
 #ifndef lpcmod_v1_h
 #define lpcmod_v1_h
 
-#define OSBNKCTRLBIT    0x80    //Bit that must be sent when selecting a flash bank other than BNKOS
+#define OSBNKCTRLBIT    0x40    //Bit that must be sent when selecting a flash bank other than BNKOS
 
-#define BNK512  0x80
-#define BNK256  0x82
-#define BNKOS  0x83
-#define BNKTSOP 0x84            //Also for bank0 in case TSOP is split
-#define BNKTSOP1 0x85
-#define BNKTSOP2 0x86
-#define BNKTSOP3 0x87
+#define BNK512  0x40
+#define BNK256  0x60
+#define BNKOS  0x70
+#define BNKTSOP 0x44            //When TSOP is not split
+#define BNKTSOPSPLIT0 0x46
+#define BNKTSOPSPLIT1 0x47
 #define NOBNKID  0xFF
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE    0x00
@@ -25,14 +24,24 @@
 
 
 //XBlast Mod and SmartXX LPC registers to drive LCD
-#define BNK_CONTROL    0xF710
-#define DISABLE_MOD    0xF711
-#define ENABLE_5V    0xF713
-#define GPO_PINS     0xF71F
+
+/*XBLAST_CONTROL register:
+ * bit7: Not used
+ * bit6: OS banks control (disable SW1 and SW2 physical input pins)
+ * bit5: SW1 logical input (control A19 on flash chip)
+ * bit4: SW2 logical input (control A18 on flash chip)
+ * bit3: Enable 5V rail (LCD power)
+ * bit2: Not Used
+ * bit1: Write to GPO_1 physical output
+ * bit0: Write to GPO_0 physical output
+ */
+#define XBLAST_CONTROL    0xF70F
+#define XODUS_CONTROL    0x00FF
+#define XODUS_ID        0x00FE
 #define LCD_DATA    0xF700
 #define LCD_BL        0xF701
 #define LCD_CT        0xF703
-#define XODUS_D0_TOGGLE    0x00FF
+
 
 //Xecuter 3 LPC registers to drive LCD
 #define X3_DISP_O_DAT      0xF504
@@ -102,8 +111,6 @@
 #define ADR_LCDSTRING0 0xFF138
 #define ADR_LCDSTRING0 0xFF14C
 */
-
-
 
 
 #endif

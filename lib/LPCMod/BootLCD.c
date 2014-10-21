@@ -31,7 +31,13 @@ void BootLCDInit(void){
 }
 
 void toggleEN5V(u8 value){
-    WriteToIO(ENABLE_5V, value);
+    if(value){  //Activate 5V rail
+        xblastControlRegister |= 0x08;  //Set bit at bit3;
+    }
+    else{
+        xblastControlRegister &= 0xF7;  //Remove bit at bit3;
+    }
+    WriteToIO(XBLAST_CONTROL, xblastControlRegister);
 }
 
 void setLCDContrast(u8 value){

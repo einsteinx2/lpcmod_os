@@ -84,7 +84,7 @@ if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT2;
         iconPtr->szCaption = "Boot OnBoard Bank0";
-        iconPtr->bankID = BNKTSOP;
+        iconPtr->bankID = BNKTSOPSPLIT0;
         iconPtr->functionPtr = BootOriginalBios;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
                 *(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS;    //send 0x05
@@ -93,12 +93,12 @@ if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT2;
         iconPtr->szCaption = "Boot OnBoard Bank1";
-        iconPtr->bankID = BNKTSOP1;
+        iconPtr->bankID = BNKTSOPSPLIT1;
         iconPtr->functionPtr = BootOriginalBios;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
                 *(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS | TSOP_256_SWITCH;    //send 0x15
         AddIcon(iconPtr);
-
+/*
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT2;
         iconPtr->szCaption = "Boot OnBoard Bank2";
@@ -116,12 +116,13 @@ if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x
         iconPtr->functionDataPtr = malloc(sizeof(u8));
                 *(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_4_BANKS | TSOP_512_SWITCH | TSOP_256_SWITCH;    //send 0x1F
         AddIcon(iconPtr);
+*/
     }
     else{                                        //Split 2-Way
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT2;
         iconPtr->szCaption = "Boot OnBoard Bank0";
-        iconPtr->bankID = BNKTSOP;
+        iconPtr->bankID = BNKTSOPSPLIT0;
         iconPtr->functionPtr = BootOriginalBios;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
                 *(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL;    //send 0x03
@@ -130,7 +131,7 @@ if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT2;
         iconPtr->szCaption = "Boot OnBoard Bank1";
-        iconPtr->bankID = BNKTSOP1;
+        iconPtr->bankID = BNKTSOPSPLIT1;
         iconPtr->functionPtr = BootOriginalBios;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
                 *(u8*)iconPtr->functionDataPtr = TSOP_BOOT | TSOP_CONTROL | TSOP_512_SWITCH;    //send 0x0B
