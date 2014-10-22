@@ -23,9 +23,6 @@ TEXTMENU *TextMenuInit(void) {
     strcpy(menuPtr->szCaption, "XBlast Mod settings");
     menuPtr->firstMenuItem=NULL;
 
-    //No entry in this menu will have a configurable parameter.
-    //Set first character to NULL to indicate no string is to be shown.
-    itemPtr->szParameter[0]=0;
     
     if(fHasHardware == SYSCON_ID_V1) {                            //No need to display this menu if no modchip is present.
         //XBlast(modchip) SETTINGS MENU
@@ -70,7 +67,16 @@ TEXTMENU *TextMenuInit(void) {
 
 
 #ifdef FLASH
-    if(fHasHardware == SYSCON_ID_V1){
+    if(TSOPRecoveryMode){
+        //FLASH MENU
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "TSOP Flash menu");
+        itemPtr->functionPtr=DrawChildTextMenu;
+        itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit();
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
+    else if(fHasHardware == SYSCON_ID_V1){
         //FLASH MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

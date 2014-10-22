@@ -36,10 +36,12 @@ void BootOriginalBios(void *data) {
     BootStopUSB();
     
     if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){
+        WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
     	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-            WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
+    	    WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
         else
-            WriteToIO(XODUS_D0_TOGGLE, *(u8*)data);    // switch to original bios but modchip listen to LPC commands.
+            WriteToIO(XBLAST_CONTROL, *(u8*)data | OSBNKCTRLBIT);    // switch to original bios but modchip listen to LPC commands.
+    	                                                             // Lock flash bank control with OSBNKCTRLBIT.
         I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     }
     else {
@@ -53,6 +55,7 @@ void BootOriginalBios(void *data) {
 void BootModBios(void *data) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
+    WriteToIO(XODUS_CONTROL, GROUNDD0);    //Make sure we control D0
     switchBank(*(u8*)data);
     
     BootStopUSB();

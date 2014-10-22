@@ -27,6 +27,5 @@ void resetSettings(void *whatever);
 void editBIOSName(void *bankID);
 
 void toggleTSOPControl(void * itemPtr);
-void toggleTSOPSplit(void * itemPtr);
 
 #endif

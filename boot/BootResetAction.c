@@ -51,6 +51,10 @@ extern void BootResetAction ( void ) {
     int n, nx, i;
     char *modName = "Unsupported modchip!";
     OBJECT_FLASH of;
+    // A bit hacky, but easier to maintain.
+    const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+        #include "flashtypes.h"
+    };
     u8 EjectButtonPressed=0;
 
 
@@ -66,6 +70,16 @@ extern void BootResetAction ( void ) {
         "1.6/1.6b",
         "Unknown"
     };
+
+    xF70ELPCRegister = 0x03;       //Assume no control over the banks but we are booting from bank3
+    x00FFLPCRegister = ReadFromIO(XODUS_CONTROL);       //Read A15 and D0 states.
+                                                        //Should return 0x04 on normal boot, 0x08 on TSOP recovery.
+    xF70FLPCRegister = 0x00;       //Assume no output pins activated yet.
+
+    TSOPRecoveryMode = (x00FFLPCRegister & 0x08) >> 3;  //If we booted and A15 was already set.
+                                                        //It means we are in TSOP recovery. Set to 1.
+                                                        //We'll check later if TSOP flash is accessible.
+
 
     fHasHardware = 0;
 
@@ -134,6 +148,7 @@ extern void BootResetAction ( void ) {
             fHasHardware = 0;               //Unknown device, set to 0 to indicate no known hardware.
 
         currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
+        TSOPRecoveryMode = 0;               //Whatever happens, it's not possible to recover TSOP on other modchips.
     }
 
     //Retrieve XBlast OS settings from flash. Function checks if valid device can be read from.
@@ -221,14 +236,17 @@ extern void BootResetAction ( void ) {
     if(!fFirstBoot){
         if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
             if(EjectButtonPressed){              //Xbox was started from eject button.
-                if(LPCmodSettings.OSsettings.altBank < BNKTSOP){
+                if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP){
                     switchBank(LPCmodSettings.OSsettings.altBank);
               	}
                 else{
+                    WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-                        WriteToIO(DISABLE_MOD, LPCModTSOPOutput(LPCmodSettings.OSsettings.altBank));    // switch to original bios
-                    else
-                        WriteToIO(XODUS_D0_TOGGLE, LPCModTSOPOutput(LPCmodSettings.OSsettings.altBank));    // switch to original bios but modchip listen to LPC commands.
+                        WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
+                    else{
+                        WriteToIO(XBLAST_CONTROL, LPCmodSettings.OSsettings.altBank | OSBNKCTRLBIT);    // switch to original bios but modchip listen to LPC commands.
+                                                                                                        // Lock flash bank control with OSBNKCTRLBIT.
+                    }
                 }
                 I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
                 BootStopUSB();
@@ -241,14 +259,17 @@ extern void BootResetAction ( void ) {
             I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
             if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //White button NOT pressed and Quickboot ON.
-                if(LPCmodSettings.OSsettings.activeBank < BNKTSOP){
+                if(LPCmodSettings.OSsettings.activeBank > BOOTFROMTSOP){
                     switchBank(LPCmodSettings.OSsettings.activeBank);
               	}
                 else{
+                    WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-                        WriteToIO(DISABLE_MOD, LPCModTSOPOutput(LPCmodSettings.OSsettings.activeBank));    // switch to original bios
-                    else
-                        WriteToIO(XODUS_D0_TOGGLE, LPCModTSOPOutput(LPCmodSettings.OSsettings.activeBank));    // switch to original bios but modchip listen to LPC commands.
+                        WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
+                    else{
+                        WriteToIO(XBLAST_CONTROL, LPCmodSettings.OSsettings.activeBank | OSBNKCTRLBIT);    // switch to original bios but modchip listen to LPC commands.
+                                                                                                           // Lock flash bank control with OSBNKCTRLBIT.
+                    }
                 }
                 I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
                 BootStopUSB();
@@ -286,6 +307,22 @@ extern void BootResetAction ( void ) {
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
     VIDEO_CURSOR_POSY=vmode.ymargin;
 
+    //Now that we have something to display.
+    if(fHasHardware == SYSCON_ID_V1){
+    //Check which flash chip is detected by system.
+        BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
+        if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
+            if(TSOPRecoveryMode){        //We wanted to reboot in TSOP recovery but it failed...
+                TSOPRecoveryReboot(NULL);       //retry
+                TSOPRecoveryMode = 0;           //We'll come back here if user do not want to retry.
+                WriteToIO(XODUS_CONTROL, 0x00); //Make sure A15 is not grounded
+            }
+        }
+        else {  //SST49LF080A flash chip was NOT detected.
+            WriteToIO(XODUS_CONTROL, 0x00); //Make sure A15 is not grounded.
+        }
+    }
+
     printk("\n\n");
     if (cromwell_config==XROMWELL) {
         printk("           \2XBlast OS (XBE) v" VERSION "\n\n\2");
@@ -301,7 +338,7 @@ extern void BootResetAction ( void ) {
 
     VIDEO_ATTR=0xff00ff00;
     //TODO: Remove debug string print.
-    printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
+    printk("           Modchip: %s    DEBUG_XodusControl: 0x%02x\n",modName, x00FFLPCRegister);
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD\n ");
 

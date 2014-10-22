@@ -1,38 +1,43 @@
 #ifndef lpcmod_v1_h
 #define lpcmod_v1_h
 
-#define OSBNKCTRLBIT    0x80    //Bit that must be sent when selecting a flash bank other than BNKOS
+//0x00FF register bits configuration
+#define KILL_MOD 0x20   //Completely mute modchip until a power cycle
+#define GROUNDA15 0x08 // Enable bit to ground TSOP signal
+#define GROUNDD0  0x44 // Enable bit to ground TSOP signal
+#define RELEASED0 0x40 //Load a full TSOP only requires to release D0.
+#define BNKFULLTSOP 0x03
+#define BOOTFROMTSOP 0x70 //Delimiter in logic to differentiate booting from TSOP and from on board flash.
 
+//0xF70E register bits configuration
+#define OSBNKCTRLBIT    0x80    //Bit that must be sent when selecting a flash bank other than BNKOS
+#define TSOPA19CTRLBIT  0x10    //Bit to enable manual drive of the TSOP's A19 pin.
 #define BNK512  0x80
 #define BNK256  0x82
 #define BNKOS  0x83
-#define BNKTSOP 0x84            //Also for bank0 in case TSOP is split
-#define BNKTSOP1 0x85
-#define BNKTSOP2 0x86
-#define BNKTSOP3 0x87
+#define BNKTSOPSPLIT0 0x10
+#define BNKTSOPSPLIT1 0x18
 #define NOBNKID  0xFF
+
+//0xF70F register bits configuration
+#define GPO1_ON 0x08
+#define GPO0_ON 0x04
+#define ENNABLE_5V 0x01
+
+
+
 #define LPCMOD_TRUE 0x01
 #define LPCMOD_FALSE    0x00
 
-//Bit to send on DISABLE_MOD "register" to control OnBoard TSOP.
-//Will only be used if Xbox rev. is 1.0 or 1.1.
-#define TSOP_BOOT        0x01	//Just release D0
-#define TSOP_CONTROL    0x02	//Allow modchip to control TSOP A19/A18 lines
-#define TSOP_4_BANKS    0x04	//Tell modchip "1" = 4-way split, "0" = 2-way split
-#define TSOP_512_SWITCH    0x10 //Actual A19 desired value
-#define TSOP_256_SWITCH    0x20 //Actual A18 desired value
-#define TSOP_DISABLE_MOD   0x80 //Totally mute modchip. no comm possible until power cycle
-
 
 //XBlast Mod and SmartXX LPC registers to drive LCD
-#define BNK_CONTROL    0xF710
-#define DISABLE_MOD    0xF711
-#define ENABLE_5V    0xF713
-#define GPO_PINS     0xF71F
+#define XBLAST_CONTROL    0xF70E
+#define XODUS_CONTROL    0x00FF
+#define PIN_CONTROL    0xF70F
 #define LCD_DATA    0xF700
 #define LCD_BL        0xF701
 #define LCD_CT        0xF703
-#define XODUS_D0_TOGGLE    0x00FF
+#define XODUS_ID      0x00FE
 
 //Xecuter 3 LPC registers to drive LCD
 #define X3_DISP_O_DAT      0xF504
@@ -55,6 +60,8 @@
 #define SYSCON_ID_XX3   0xF8
 
 #define SYSCON_ID_X3    0x2A
+
+#define SYSCON_ID_CHAM 0xAA     //Xodus Chameleon ID at 0x00FE
 
 //Other modchips ID by flash type.
 #define FLASH_ID_XECUTER3       0x01AD

@@ -18,17 +18,11 @@ void decrementActiveBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.activeBank){
     case BNK512:
         if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x01){        //TSOP is split
-            if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){        //4-way split
-                LPCmodSettings.OSsettings.activeBank = BNKTSOP3;
-                sprintf(itemStr,"TSOP bank3");
-            }
-            else{
-                LPCmodSettings.OSsettings.activeBank = BNKTSOP1;
-                sprintf(itemStr,"TSOP bank1");
-            }
+            LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT1;
+            sprintf(itemStr,"TSOP bank1");
         }
         else {
-            LPCmodSettings.OSsettings.activeBank = BNKTSOP;
+            LPCmodSettings.OSsettings.activeBank = BNKFULLTSOP;
             sprintf(itemStr,"TSOP");
         }
         break;
@@ -36,26 +30,14 @@ void decrementActiveBank(void * itemStr) {
         LPCmodSettings.OSsettings.activeBank = BNK512;
         sprintf(itemStr,"512KB");
         break;
-    case BNKTSOP:
+    case BNKTSOPSPLIT0:
+    case BNKFULLTSOP:
         LPCmodSettings.OSsettings.activeBank = BNK256;
         sprintf(itemStr,"256KB");
         break;
-    case BNKTSOP1:
-        LPCmodSettings.OSsettings.activeBank = BNKTSOP;
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x01){        //TSOP is split
-            sprintf(itemStr,"TSOP bank0");
-        }
-        else {
-            sprintf(itemStr,"TSOP");
-        }
-        break;
-    case BNKTSOP2:
-        LPCmodSettings.OSsettings.activeBank = BNKTSOP1;
-        sprintf(itemStr,"TSOP bank1");
-        break;
-    case BNKTSOP3:
-        LPCmodSettings.OSsettings.activeBank = BNKTSOP2;
-        sprintf(itemStr,"TSOP bank2");
+    case BNKTSOPSPLIT1:
+        sprintf(itemStr,"TSOP bank0");
+        LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT0;
         break;
     }
     return;
@@ -70,41 +52,24 @@ void incrementActiveBank(void * itemStr) {
         sprintf(itemStr,"256KB");
         break;
     case BNK256:
-        LPCmodSettings.OSsettings.activeBank = BNKTSOP;
+
         if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){
             sprintf(itemStr,"TSOP bank0");
+            LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT0;
         }
         else {
             sprintf(itemStr,"TSOP");
+            LPCmodSettings.OSsettings.activeBank = BNKFULLTSOP;
         }
         break;
-    case BNKTSOP:
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){
-            LPCmodSettings.OSsettings.activeBank = BNKTSOP1;
-            sprintf(itemStr,"TSOP bank1");
-        }
-        else {
-            LPCmodSettings.OSsettings.activeBank = BNK512;
-            sprintf(itemStr,"512KB");
-        }
-        break;
-    case BNKTSOP1:
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){        //TSOP is split 4-way
-            LPCmodSettings.OSsettings.activeBank = BNKTSOP2;
-            sprintf(itemStr,"TSOP bank2");
-        }
-        else {
-            LPCmodSettings.OSsettings.activeBank = BNK512;        //TSOP is split 2-way
-            sprintf(itemStr,"512KB");                            //So go back to modchip's bank0.
-        }
-        break;
-    case BNKTSOP2:
-        LPCmodSettings.OSsettings.activeBank = BNKTSOP3;
-        sprintf(itemStr,"TSOP bank3");
-        break;
-    case BNKTSOP3:
+    case BNKTSOPSPLIT1:
+    case BNKFULLTSOP:
         LPCmodSettings.OSsettings.activeBank = BNK512;
         sprintf(itemStr,"512KB");
+        break;
+    case BNKTSOPSPLIT0:
+        LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT1;
+        sprintf(itemStr,"TSOP bank1");
         break;
     }
     return;
@@ -112,99 +77,64 @@ void incrementActiveBank(void * itemStr) {
 
 void decrementAltBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.altBank){
-    case BNK512:
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x01){        //TSOP is split
-            if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){        //4-way split
-                LPCmodSettings.OSsettings.altBank = BNKTSOP3;
-                sprintf(itemStr,"TSOP bank3");
-            }
-            else{
-                LPCmodSettings.OSsettings.altBank = BNKTSOP1;
+        case BNK512:
+            if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x01){        //TSOP is split
+                LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT1;
                 sprintf(itemStr,"TSOP bank1");
             }
-        }
-        else {
-            LPCmodSettings.OSsettings.altBank = BNKTSOP;
-            sprintf(itemStr,"TSOP");
-        }
-        break;
-    case BNK256:
-        LPCmodSettings.OSsettings.altBank = BNK512;
-        sprintf(itemStr,"512KB");
-        break;
-    case BNKTSOP:
-        LPCmodSettings.OSsettings.altBank = BNK256;
-        sprintf(itemStr,"256KB");
-        break;
-    case BNKTSOP1:
-        LPCmodSettings.OSsettings.altBank = BNKTSOP;
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x01){        //TSOP is split
+            else {
+                LPCmodSettings.OSsettings.altBank = BNKFULLTSOP;
+                sprintf(itemStr,"TSOP");
+            }
+            break;
+        case BNK256:
+            LPCmodSettings.OSsettings.altBank = BNK512;
+            sprintf(itemStr,"512KB");
+            break;
+        case BNKTSOPSPLIT0:
+        case BNKFULLTSOP:
+            LPCmodSettings.OSsettings.altBank = BNK256;
+            sprintf(itemStr,"256KB");
+            break;
+        case BNKTSOPSPLIT1:
             sprintf(itemStr,"TSOP bank0");
+            LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT0;
+            break;
         }
-        else {
-            sprintf(itemStr,"TSOP");
-        }
-        break;
-    case BNKTSOP2:
-        LPCmodSettings.OSsettings.altBank = BNKTSOP1;
-        sprintf(itemStr,"TSOP bank1");
-        break;
-    case BNKTSOP3:
-        LPCmodSettings.OSsettings.altBank = BNKTSOP2;
-        sprintf(itemStr,"TSOP bank2");
-        break;
+        return;
     }
-    return;
-}
 
 
 
 void incrementAltBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.altBank){
-    case BNK512:
-        LPCmodSettings.OSsettings.altBank = BNK256;
-        sprintf(itemStr,"256KB");
-        break;
-    case BNK256:
-        LPCmodSettings.OSsettings.altBank = BNKTSOP;
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){
-            sprintf(itemStr,"TSOP bank0");
-        }
-        else {
-            sprintf(itemStr,"TSOP");
-        }
-        break;
-    case BNKTSOP:
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){
-            LPCmodSettings.OSsettings.altBank = BNKTSOP1;
-            sprintf(itemStr,"TSOP bank1");
-        }
-        else {
+        case BNK512:
+            LPCmodSettings.OSsettings.altBank = BNK256;
+            sprintf(itemStr,"256KB");
+            break;
+        case BNK256:
+
+            if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){
+                sprintf(itemStr,"TSOP bank0");
+                LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT0;
+            }
+            else {
+                sprintf(itemStr,"TSOP");
+                LPCmodSettings.OSsettings.altBank = BNKFULLTSOP;
+            }
+            break;
+        case BNKTSOPSPLIT1:
+        case BNKFULLTSOP:
             LPCmodSettings.OSsettings.altBank = BNK512;
             sprintf(itemStr,"512KB");
+            break;
+        case BNKTSOPSPLIT0:
+            LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT1;
+            sprintf(itemStr,"TSOP bank1");
+            break;
         }
-        break;
-    case BNKTSOP1:
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){        //TSOP is split 4-way
-            LPCmodSettings.OSsettings.altBank = BNKTSOP2;
-            sprintf(itemStr,"TSOP bank2");
-        }
-        else {
-            LPCmodSettings.OSsettings.altBank = BNK512;        //TSOP is split 2-way
-            sprintf(itemStr,"512KB");                            //So go back to modchip's bank0.
-        }
-        break;
-    case BNKTSOP2:
-        LPCmodSettings.OSsettings.altBank = BNKTSOP3;
-        sprintf(itemStr,"TSOP bank3");
-        break;
-    case BNKTSOP3:
-        LPCmodSettings.OSsettings.altBank = BNK512;
-        sprintf(itemStr,"512KB");
-        break;
+        return;
     }
-    return;
-}
 
 
 void decrementbootTimeout(void * itemStr){
@@ -241,17 +171,12 @@ void editBIOSName(void *bankID){
         case BNK256:
             OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH, 3);
             break;
-        case BNKTSOP:
+        case BNKTSOPSPLIT0:
+        case BNKFULLTSOP:
             OnScreenKeyboard(LPCmodSettings.OSsettings.biosName2, BIOSNAMEMAXLENGTH, 3);
             break;
-        case BNKTSOP1:
+        default:        //BNKTSOPSPLIT1
             OnScreenKeyboard(LPCmodSettings.OSsettings.biosName3, BIOSNAMEMAXLENGTH, 3);
-            break;
-        case BNKTSOP2:
-            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName4, BIOSNAMEMAXLENGTH, 3);
-            break;
-        default:
-            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName5, BIOSNAMEMAXLENGTH, 3);
             break;
     }
     if(LPCmodSettings.LCDsettings.customTextBoot)
@@ -265,12 +190,14 @@ void toggleTSOPControl(void * itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01){            //If already active
         LPCmodSettings.OSsettings.TSOPcontrol &= 0xFE;    //Make sure to toggle only bit0 and turn OFF.
-        if(LPCmodSettings.OSsettings.altBank > BNKTSOP){    //If altBank setting was set to TSOP bank 1,2 or 3.
-            LPCmodSettings.OSsettings.altBank = BNKTSOP;    //Single TSOP bank so make sure altBank is properly set.
+        if(LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT0 ||
+           LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT1){    //If altBank setting was set to TSOP bank 1,2 or 3.
+            LPCmodSettings.OSsettings.altBank = BNKFULLTSOP;    //Single TSOP bank so make sure altBank is properly set.
             sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
         }
-        if(LPCmodSettings.OSsettings.activeBank > BNKTSOP){    //If activeBank setting was set to TSOP bank 1,2 or 3.
-            LPCmodSettings.OSsettings.activeBank = BNKTSOP;    //Single TSOP bank so make sure activeBank is properly set.
+        if(LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0 ||
+           LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1){    //If activeBank setting was set to TSOP bank 1,2 or 3.
+            LPCmodSettings.OSsettings.activeBank = BNKFULLTSOP;    //Single TSOP bank so make sure activeBank is properly set.
             sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP");
         }
     }
@@ -278,40 +205,4 @@ void toggleTSOPControl(void * itemPtr){
         LPCmodSettings.OSsettings.TSOPcontrol |= 0x01;    //Make sure to toggle only bit0.
     }
     sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01? "Yes" : "No");
-    //Change displayed value of TSOP Split setting if TSOP Control is turned OFF.
-    sprintf(tempItemPtr->nextMenuItem->szParameter, "%s",
-        (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?    ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
-}
-
-void toggleTSOPSplit(void * itemPtr){
-    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    if((LPCmodSettings.OSsettings.TSOPcontrol & 0x02)){    //If TSOPControl bit1 is set
-        //So if TSOP control split bit is set to 4-way.
-        LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;    //Make sure to toggle only bit1, and set to 2-way.
-        if(LPCmodSettings.OSsettings.altBank > BNKTSOP1){    //If activeBank setting was set to TSOP bank 2 or 3.
-            LPCmodSettings.OSsettings.altBank = BNKTSOP1;    //2-way TSOP bank so make sure activeBank is properly set.
-            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP bank1");
-        }
-        if(LPCmodSettings.OSsettings.activeBank > BNKTSOP1){    //If activeBank setting was set to TSOP bank 2 or 3.
-            LPCmodSettings.OSsettings.activeBank = BNKTSOP1;    //2-way TSOP bank so make sure activeBank is properly set.
-            sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP bank1");
-        }
-    }
-    else if(!(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){//If TSOPControl bit0 is not set
-        //So if TSOP control is turned OFF.
-        LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;    //Make sure to toggle only bit1.
-        if(LPCmodSettings.OSsettings.altBank > BNKTSOP){    //If activeBank setting was set to TSOP bank 1,2 or 3.
-            LPCmodSettings.OSsettings.altBank = BNKTSOP;    //Single TSOP bank so make sure activeBank is properly set.(failsafe)
-            sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
-        }
-        if(LPCmodSettings.OSsettings.activeBank > BNKTSOP){    //If activeBank setting was set to TSOP bank 1,2 or 3.
-            LPCmodSettings.OSsettings.activeBank = BNKTSOP;    //Single TSOP bank so make sure activeBank is properly set.(failsafe)
-            sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP");
-        }
-    }
-    else {
-        LPCmodSettings.OSsettings.TSOPcontrol |= 0x02;    //Make sure to toggle only bit1.
-    }
-    sprintf(tempItemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?
-           ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
 }

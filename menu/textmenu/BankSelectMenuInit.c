@@ -48,6 +48,48 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     return menuPtr;
 }
 
+TEXTMENU *TSOPBankSelectMenuInit(void * bank) {
+
+    TEXTMENUITEM *itemPtr;
+    TEXTMENU *menuPtr;
+
+
+    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
+    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    strcpy(menuPtr->szCaption, "Select TSOP flash bank");
+
+
+    //Bank0 (512KB)
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Full TSOP recover");
+    itemPtr->functionPtr=(void *)BankSelectInit;
+    itemPtr->functionDataPtr = malloc(sizeof(u8));
+        *(u8 *)itemPtr->functionDataPtr = BNKFULLTSOP;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Bank1 (256KB)
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "bank0 TSOP recover");
+    itemPtr->functionPtr=(void *)BankSelectInit;
+    itemPtr->functionDataPtr = malloc(sizeof(u8));
+        *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Bank2 (OS)
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "bank1 TSOP recover");
+    itemPtr->functionPtr=(void *)BankSelectInit;
+    itemPtr->functionDataPtr = malloc(sizeof(u8));
+        *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    return menuPtr;
+}
+
+
 TEXTMENU* BankSelectInit(void * bank) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
@@ -55,7 +97,20 @@ TEXTMENU* BankSelectInit(void * bank) {
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
-    if(fHasHardware == SYSCON_ID_V1){
+    if(TSOPRecoveryMode){
+        if(*(u8 *)bank == BNKFULLTSOP)
+           strcpy(menuPtr->szCaption, "Flash menu : Full TSOP recover");
+        else if(*(u8 *)bank == BNKTSOPSPLIT0)
+            strcpy(menuPtr->szCaption, "Flash menu : bank0 TSOP recover");
+        else if(*(u8 *)bank == BNKTSOPSPLIT1)
+            strcpy(menuPtr->szCaption, "Flash menu : bank1 TSOP recover");
+        else
+            strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
+
+        switchBank(*(u8 *)bank);
+
+    }
+    else if(fHasHardware == SYSCON_ID_V1){
         if(*(u8 *)bank == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
         else if(*(u8 *)bank == BNK256)

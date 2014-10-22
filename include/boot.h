@@ -462,5 +462,12 @@ u8 mbVersion;
 //Global to hide code when running in XBE without modchip detected.
 u16 fHasHardware;
 
+//Globals to save value of LPC register
+u8 xF70ELPCRegister;
+u8 x00FFLPCRegister;
+u8 xF70FLPCRegister;
+
+bool TSOPRecoveryMode;
+
 u8 currentFlashBank;
 #endif // _Boot_H_

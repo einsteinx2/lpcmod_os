@@ -412,11 +412,13 @@ u8 ReadFromIO(u16 address)
 void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
     OBJECT_FLASH of;
     int i;
-    if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
-        memset(&of,0xFF,sizeof(of));
-        of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
-        for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
-            *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
+    if(!TSOPRecoveryMode){      //If in TSOP recovery, no setting in flash can be retreived.
+        if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
+            memset(&of,0xFF,sizeof(of));
+            of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
+            for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
+                *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
+            }
         }
     }
 }
@@ -431,7 +433,8 @@ void BootFlashSaveOSSettings(void) {
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
     };
-    if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
+    if((fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL)
+        && !TSOPRecoveryMode){                 //Do not try to save settings to flash in TSOP recovery mode.
     			
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;

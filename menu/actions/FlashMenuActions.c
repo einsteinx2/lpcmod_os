@@ -163,7 +163,8 @@ void enableWebupdate(void *whatever) {
 void switchBank(char bank)
 {
     currentFlashBank = bank;
-    WriteToIO(BNK_CONTROL, bank);    // switch to proper bank
+    xF70ELPCRegister  = bank;
+    WriteToIO(XBLAST_CONTROL, bank);    // switch to proper bank
                                                                          //Send OSBNKCTRLBIT when toggling a bank other than BNKOS.
 }    
 

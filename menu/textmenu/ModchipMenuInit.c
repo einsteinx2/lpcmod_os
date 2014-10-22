@@ -54,17 +54,12 @@ TEXTMENU *ModchipMenuInit(void) {
         strcpy(itemPtr->szParameter,"512KB");
     else if (LPCmodSettings.OSsettings.activeBank == BNK256)
         strcpy(itemPtr->szParameter,"256KB");
-    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP)
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)
-            strcpy(itemPtr->szParameter,"TSOP bank0");            //Show this string if TSOP is split.
-        else
-            strcpy(itemPtr->szParameter,"TSOP");                //TSOP is not split.
-    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP1)
+    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0)
+        strcpy(itemPtr->szParameter,"TSOP bank0");            //Show this string if TSOP is split.
+    else if (LPCmodSettings.OSsettings.activeBank == BNKFULLTSOP)
+        strcpy(itemPtr->szParameter,"TSOP");                //TSOP is not split.
+    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1)
         strcpy(itemPtr->szParameter,"TSOP bank1");
-    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP2)
-        strcpy(itemPtr->szParameter,"TSOP bank2");
-    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOP3)
-        strcpy(itemPtr->szParameter,"TSOP bank3");
     itemPtr->functionPtr=incrementActiveBank;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=decrementActiveBank;
@@ -80,17 +75,12 @@ TEXTMENU *ModchipMenuInit(void) {
         strcpy(itemPtr->szParameter,"512KB");
     else if (LPCmodSettings.OSsettings.altBank == BNK256)
         strcpy(itemPtr->szParameter,"256KB");
-    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP)
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)
-            strcpy(itemPtr->szParameter,"TSOP bank0");            //Show this string if TSOP is split.
-        else
-            strcpy(itemPtr->szParameter,"TSOP");                //TSOP is not split.
-    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP1)
+    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0)
+        strcpy(itemPtr->szParameter,"TSOP bank0");            //Show this string if TSOP is split.
+    else if (LPCmodSettings.OSsettings.activeBank == BNKFULLTSOP)
+        strcpy(itemPtr->szParameter,"TSOP");                //TSOP is not split.
+    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1)
         strcpy(itemPtr->szParameter,"TSOP bank1");
-    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP2)
-        strcpy(itemPtr->szParameter,"TSOP bank2");
-    else if (LPCmodSettings.OSsettings.altBank == BNKTSOP3)
-        strcpy(itemPtr->szParameter,"TSOP bank3");
     itemPtr->functionPtr=incrementAltBank;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=incrementAltBank;
@@ -113,18 +103,6 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
     itemPtr->functionRightDataPtr = itemPtr;
     TextMenuAddItem(menuPtr, itemPtr);
     
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption,"Xbox TSOP split : ");
-    sprintf(itemPtr->szParameter, "%s",        //Print "No" if Control Xbox TSOP is set to "No"
-            (LPCmodSettings.OSsettings.TSOPcontrol) & 0x01?    ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "4-way" : "2-way") : "No");
-    itemPtr->functionPtr= toggleTSOPSplit;
-    itemPtr->functionDataPtr= itemPtr;
-    itemPtr->functionLeftPtr=toggleTSOPSplit;
-    itemPtr->functionLeftDataPtr = itemPtr;
-    itemPtr->functionRightPtr=toggleTSOPSplit;
-    itemPtr->functionRightDataPtr = itemPtr;
-    TextMenuAddItem(menuPtr, itemPtr);
 }
 
 /*
@@ -155,31 +133,15 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank0 name");
         itemPtr->functionDataPtr= malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKTSOP;
+                *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
         TextMenuAddItem(menuPtr, itemPtr);
 
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank1 name");
         itemPtr->functionDataPtr= malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKTSOP1;
+                *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
         TextMenuAddItem(menuPtr, itemPtr);
-
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02) {    //Split 4-Way
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"TSOP bank2 name");
-            itemPtr->functionDataPtr= malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKTSOP2;
-            TextMenuAddItem(menuPtr, itemPtr);
-
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"TSOP bank3 name");
-            itemPtr->functionDataPtr= malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKTSOP3;
-            TextMenuAddItem(menuPtr, itemPtr);
-        }
     }
     else{
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -187,7 +149,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
         sprintf(itemPtr->szCaption,"TSOP BIOS name");
         itemPtr->functionPtr= editBIOSName;
         itemPtr->functionDataPtr= malloc(sizeof(char));
-            *(char*)itemPtr->functionDataPtr = BNKTSOP;
+            *(char*)itemPtr->functionDataPtr = BNKFULLTSOP;
         TextMenuAddItem(menuPtr, itemPtr);
     }
 

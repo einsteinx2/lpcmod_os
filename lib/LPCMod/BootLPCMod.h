@@ -18,6 +18,4 @@ u16 LPCMod_HW_rev(void);
 
 void LPCMod_LCDBankString(char * string, u8 bankID);
 
-u8 LPCModTSOPOutput(u8 bank);
-
 #endif // _BootLPCMod_H_

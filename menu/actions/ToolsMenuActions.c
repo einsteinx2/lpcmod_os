@@ -178,3 +178,15 @@ int testBank(int bank){
     }
     return result;
 }
+
+void TSOPRecoveryReboot(void *ignored){
+    if(ConfirmDialog("       Confirm reboot in TSOP recovery mode?", 1))
+        return;
+    WriteToIO(XODUS_CONTROL, RELEASED0 | GROUNDA15);
+    WriteToIO(XBLAST_CONTROL, BNKOS);   //Make sure A19 signal is not controlled.
+    BootFlashSaveOSSettings();
+    assertWriteEEPROM();
+    I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
+    I2CRebootQuick();        //Retry
+    while(1);
+}
