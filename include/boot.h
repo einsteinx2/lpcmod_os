@@ -463,7 +463,4 @@ u8 mbVersion;
 u16 fHasHardware;
 
 u8 currentFlashBank;
-
-u8 xblastControlRegister;
-u8 xodusControlRegister;
 #endif // _Boot_H_

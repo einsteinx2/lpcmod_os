@@ -37,10 +37,9 @@ void BootOriginalBios(void *data) {
     
     if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){
     	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-    	    //XXX: Fix new register map
-            WriteToIO(XODUS_CONTROL, 0x20);    // switch to original bios and mute modchip
+            WriteToIO(DISABLE_MOD, *(u8*)data);    // switch to original bios
         else
-            WriteToIO(XODUS_CONTROL, *(u8*)data);    // switch to original bios but modchip listen to LPC commands.
+            WriteToIO(XODUS_D0_TOGGLE, *(u8*)data);    // switch to original bios but modchip listen to LPC commands.
         I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     }
     else {

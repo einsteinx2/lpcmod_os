@@ -162,10 +162,8 @@ void enableWebupdate(void *whatever) {
 
 void switchBank(char bank)
 {
-    xblastControlRegister &= 0x8F;      //Strip bits relative to bank settings (bits 6-4)
-    xblastControlRegister |= bank;      //Puts new bits relative to bank settings.
     currentFlashBank = bank;
-    WriteToIO(XBLAST_CONTROL, xblastControlRegister);    // switch to proper bank
+    WriteToIO(BNK_CONTROL, bank);    // switch to proper bank
                                                                          //Send OSBNKCTRLBIT when toggling a bank other than BNKOS.
 }    
 

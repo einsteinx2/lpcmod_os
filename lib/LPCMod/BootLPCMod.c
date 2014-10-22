@@ -85,7 +85,7 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
                     sprintf(string, "%s", "OnBoard BIOS");
             }
             break;
-        case BNKTSOPSPLIT1:
+        case BNKTSOP1:
             if(LPCmodSettings.OSsettings.biosName3[0] != 0){
                 sprintf(string, "%s", LPCmodSettings.OSsettings.biosName3);
             }
@@ -93,7 +93,6 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
                 sprintf(string, "%s", "OnBoard Bank1");
             }
             break;
-/*
         case BNKTSOP2:
             if(LPCmodSettings.OSsettings.biosName3[0] != 0){
                 sprintf(string, "%s", LPCmodSettings.OSsettings.biosName4);
@@ -110,7 +109,6 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
                 sprintf(string, "%s", "OnBoard Bank3");
             }
             break;
-*/
          default:
          	sprintf(string, "%s", "Settings");
          	break;
@@ -121,7 +119,6 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
 
 u8 LPCModTSOPOutput(u8 bank){
     u8 output;
-/*
     switch(bank){
         case BNKTSOP2:		//third bank when split 4-way for now
             output = TSOP_BOOT | TSOP_512_SWITCH;
@@ -130,17 +127,16 @@ u8 LPCModTSOPOutput(u8 bank){
             output = TSOP_BOOT | TSOP_512_SWITCH | TSOP_256_SWITCH;
             break;
         default:		//No split TSOP for now
-*/
             output = TSOP_BOOT;
-//            break;
-//     }
+            break;
+     }
      if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02) {    //Split 4-Way
-     	if(bank == BNKTSOPSPLIT1)
+     	if(bank == BNKTSOP1)
      	    output |= TSOP_256_SWITCH;
      	output |= TSOP_4_BANKS;
      }
      else {
-         if(bank == BNKTSOPSPLIT1)
+         if(bank == BNKTSOP1)
              output |= TSOP_512_SWITCH;
      }
      
