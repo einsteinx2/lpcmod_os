@@ -128,7 +128,8 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xb
         *(char*)itemPtr->functionDataPtr = BNK256;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)){    //TSOP control active
+    if(((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)) || //TSOP control active
+       ((fHasHardware == SYSCON_ID_V1_TSOP) && (ReadFromIO(XODUS_CONTROL) & 0x02))){
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank0 name");

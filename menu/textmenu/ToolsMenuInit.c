@@ -60,7 +60,7 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
-
+/*
     //TSOP recovery entries. Do not show if already in TSOP recovery
     if((cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1)
        && !TSOPRecoveryMode) {
@@ -72,6 +72,7 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
+*/
     //Developers tools
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

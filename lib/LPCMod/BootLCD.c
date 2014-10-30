@@ -58,7 +58,7 @@ void setLCDBacklight(u8 value){
 
 void assertInitLCD(void){
     if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1){    //Display should be ON but is not initialized.
-        if(fHasHardware == SYSCON_ID_V1)                //XBlast Mod only.
+        if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP)     //XBlast Mod only.
             toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
         xLCD.enable = 1;
         if(fHasHardware != SYSCON_ID_X3 && fHasHardware != SYSCON_ID_XXOPX)

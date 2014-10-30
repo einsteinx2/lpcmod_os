@@ -27,13 +27,17 @@ void FlashBiosFromHDD(void *fname) {
     int res;
     int offset;
     char * stringTemp;
+    u8 * fileBuf;
 
     FATXPartition *partition;
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+    fileBuf = (u8 *)malloc(1024*1024);  //1MB buffer(max BIOS size)
+    memset(fileBuf, 0x00, 1024*1024);   //Fill with 0.
 
     FATXFILEINFO fileinfo;
-    res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
+    //res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
+    res = LoadFATXFilefixed(partition, fname, &fileinfo, fileBuf);
     if (!res) {
         printk("\n\n\n\n\n           Loading BIOS failed");
         dots();
@@ -44,8 +48,10 @@ void FlashBiosFromHDD(void *fname) {
     offset = 0;
     if(fHasHardware == SYSCON_ID_V1){
         if(currentFlashBank == BNKOS){
-            if(!ConfirmDialog("               Confirm update XBlast OS?", 1))
-                res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+            if(!ConfirmDialog("               Confirm update XBlast OS?", 1)){
+                //res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+                res = BootReflashAndReset(fileBuf,offset,fileinfo.fileSize);
+            }
             else
                 res = -1;
         }
@@ -54,19 +60,24 @@ void FlashBiosFromHDD(void *fname) {
                 stringTemp = "             Confirm flash bank0(512KB)?";
             else
                 stringTemp = "             Confirm flash bank1(256KB)?";
-            if(!ConfirmDialog(stringTemp, 1))
-                res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
+            if(!ConfirmDialog(stringTemp, 1)){
+                //res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
+                res = BootReflash(fileBuf,offset,fileinfo.fileSize);
+            }
             else
                 res = -1;
         }
     }
     else {
-        if(!ConfirmDialog("               Confirm flash active bank?", 1))
-                res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+        if(!ConfirmDialog("               Confirm flash active bank?", 1)){
+                //res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
+            res = BootReflashAndReset(fileBuf,offset,fileinfo.fileSize);
+        }
             else
                 res = -1;
     }
     CloseFATXPartition(partition);
+    free(fileBuf);
     if(res > 0) {
         cromwellError();
         printk("\n\n\n\n\n           Flash failed...");
@@ -171,8 +182,8 @@ void switchBank(char bank)
 void FlashFooter(void) {
     VIDEO_ATTR=0xffc8c8c8;
     printk("\n\n           Press Button 'A' to continue.");
-    if(fHasHardware == SYSCON_ID_V1)
-        switchBank(BNKOS);
+    //if(fHasHardware == SYSCON_ID_V1)
+    //    switchBank(BNKOS);
     while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
     initialSetLED(LPCmodSettings.OSsettings.LEDColor);
 }        

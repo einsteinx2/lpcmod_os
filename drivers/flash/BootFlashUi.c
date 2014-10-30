@@ -42,7 +42,7 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 
     // prep our flash object with start address and params
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-    of.m_dwStartOffset=dwStartOffset;
+    of.m_dwStartOffset=dwStartOffset;           //Must always be 0!
     of.m_dwLengthUsedArea=dwLength;
     of.m_pcallbackFlash=BootFlashUserInterface;
 
@@ -52,7 +52,8 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
-       (fHasHardware == SYSCON_ID_V1 && of.m_dwLengthUsedArea != 262144))
+       (fHasHardware == SYSCON_ID_V1 && of.m_dwLengthUsedArea != 262144) ||
+        (dwLength % 262144) != 0)                       //Image size is not a multiple of 256KB
         return 3; // requested layout won't fit device - sanity check fail
     if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
@@ -63,11 +64,27 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
             return 5;
     }
+    else{       //If not XBlast Mod, mirror image to fill the entire size of detected flash up to 1MB
+        if(dwLength < of.m_dwLengthInBytes ||                          //If image size is smaller than detected flash size.
+           (of.m_dwLengthInBytes > 1048576 && dwLength < 1048576)){     //If flash size is bigger than 1MB and image size is smaller than 1MB.
+            if(of.m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space
+               dwLength == 262144){                     //image is 256KB in size
+                memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
+                dwLength = dwLength * 2;      //Image to flash is now 512KB
+            }
+            if(of.m_dwLengthInBytes >= 1048576 && //Flash is at least 1MB in space
+               dwLength == 524288){             //image is 512KB in size
+                memcpy(&pbNewData[524288], &pbNewData[0], 524288);  //Mirror image in the next 512KB segment of the 1MB buffer.
+                dwLength = dwLength * 2;      //Image to flash is now 512KB
+            }
+            of.m_dwLengthUsedArea=dwLength;
+        }
+    }
     
     // committed to reflash now
     while(fMore) {
         VIDEO_ATTR=0xffef37;
-        printk("\n\n\n\n\n\n\n\n\n           \2Updating XBlast OS...\n\2\n");
+        printk("\n\n\n\n\n\n\n\n\n           \2%s\n\2\n", (fHasHardware == SYSCON_ID_V1)?"Updating XBlast OS...":"Updating flash bank...");
         VIDEO_ATTR=0xffffff;
         printk("           WARNING!\n"
                  "           Do not turn off your console during this process!\n"
@@ -102,6 +119,7 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     return 0; // keep compiler happy
 }
 
+/*Will only be used when XBlast Mod is detected*/
 int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 {
     OBJECT_FLASH of;
@@ -123,6 +141,17 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 1; // unable to ID device - fail
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
+    if(currentFlashBank == BNK512){
+        if(dwLength != 524288){             //If input image is not 512KB
+            if(dwLength == 262144){         //If a 256KB image is to be flashed.
+                memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
+                dwLength = 262144 * 2;      //Image to flash is now 512KB
+                of.m_dwLengthUsedArea=dwLength;
+            }
+            else
+                return 3;   //Wrong file size.
+        }
+    }
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
        (currentFlashBank == BNK512 && of.m_dwLengthUsedArea != 524288) ||
        (currentFlashBank == BNK256 && of.m_dwLengthUsedArea != 262144))
@@ -207,15 +236,16 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 }
 
 void BootShowFlashDevice(void){
-    OBJECT_FLASH of;
-    u8 class, subclass;
-    u16 vendorid, deviceid;
-    int i, j;
+    //u8 class, subclass;
+    //u16 vendorid, deviceid;
+    //int i, j;
     // A bit hacky, but easier to maintain.
+    OBJECT_FLASH of;
+
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
     };
-    
+
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])){

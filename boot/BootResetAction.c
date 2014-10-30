@@ -132,8 +132,19 @@ extern void BootResetAction ( void ) {
 
     if(fHasHardware == SYSCON_ID_V1){
         sprintf(modName,"%s", "XBlast Lite V1");
-        //Make sure we'll be reading from OS Bank
-        switchBank(BNKOS);
+        if(fHasHardware == SYSCON_ID_V1){
+            //Check which flash chip is detected by system.
+            BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
+            if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
+                //Make sure we'll be reading from OS Bank
+                switchBank(BNKOS);
+             }
+            else {  //SST49LF080A flash chip was NOT detected.
+                fHasHardware = SYSCON_ID_V1_TSOP;
+                WriteToIO(XODUS_CONTROL, 0x00); //Make sure D0/A15 is not grounded.
+            }
+        }
+
     }
     else {
         if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
@@ -195,6 +206,7 @@ extern void BootResetAction ( void ) {
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){
         if(fHasHardware == SYSCON_ID_V1 ||
+           fHasHardware == SYSCON_ID_V1_TSOP ||
            fHasHardware == SYSCON_ID_XX1 ||
            fHasHardware == SYSCON_ID_XX2 ||
            fHasHardware == SYSCON_ID_XXOPX ||
@@ -307,6 +319,9 @@ extern void BootResetAction ( void ) {
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
     VIDEO_CURSOR_POSY=vmode.ymargin;
 
+
+//Do not activate this for now. Will probably never work...
+/*
     //Now that we have something to display.
     if(fHasHardware == SYSCON_ID_V1){
     //Check which flash chip is detected by system.
@@ -319,9 +334,11 @@ extern void BootResetAction ( void ) {
             }
         }
         else {  //SST49LF080A flash chip was NOT detected.
+            fHasHardware = SYSCON_ID_V1_TSOP;
             WriteToIO(XODUS_CONTROL, 0x00); //Make sure A15 is not grounded.
         }
     }
+*/
 
     printk("\n\n");
     if (cromwell_config==XROMWELL) {

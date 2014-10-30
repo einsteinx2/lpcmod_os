@@ -24,7 +24,7 @@ TEXTMENU *TextMenuInit(void) {
     menuPtr->firstMenuItem=NULL;
 
     
-    if(fHasHardware == SYSCON_ID_V1) {                            //No need to display this menu if no modchip is present.
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP) {        //No need to display this menu if no modchip is present.
         //XBlast(modchip) SETTINGS MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -43,6 +43,7 @@ TEXTMENU *TextMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     if(fHasHardware == SYSCON_ID_V1 ||                  //No need to display this menu if no modchip is present.
+       fHasHardware == SYSCON_ID_V1_TSOP ||
        fHasHardware == SYSCON_ID_XX1 ||
        fHasHardware == SYSCON_ID_XX2 ||
        fHasHardware == SYSCON_ID_XXOPX ||

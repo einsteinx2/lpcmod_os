@@ -462,6 +462,7 @@ u8 mbVersion;
 //Global to hide code when running in XBE without modchip detected.
 u16 fHasHardware;
 
+
 //Globals to save value of LPC register
 u8 xF70ELPCRegister;
 u8 x00FFLPCRegister;
