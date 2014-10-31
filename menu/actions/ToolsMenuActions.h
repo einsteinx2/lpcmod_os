@@ -23,4 +23,7 @@ void ToolFooter(void);
 
 void TSOPRecoveryReboot(void *ignored);
 
+void saveXBlastcfg(void * ignored);
+void loadXBlastcfg(void * ignored);
+
 #endif

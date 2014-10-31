@@ -11,6 +11,7 @@
 #include "boot.h"
 #include "BootIde.h"
 #include "video.h"
+#include "BootFATX.h"
 
 
 void saveEEPromToFlash(void *whatever){
@@ -189,4 +190,55 @@ void TSOPRecoveryReboot(void *ignored){
     I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
     I2CRebootQuick();        //Retry
     while(1);
+}
+
+void saveXBlastcfg(void * ignored){
+    FATXFILEINFO fileinfo;
+    FATXPartition *partition;
+    FATXFILEINFO fileinfo;
+    int res = NULL;
+
+    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+
+    if(partition != NULL){
+        res = FATXFindFile(partition, "xblast.cfg", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+        if(res){                //File already exist
+            if(ConfirmDialog("                  Overwrite C:\\xblast.cfg?", 1)){
+                CloseFATXPartition(partition);
+            }
+        }
+        ToolHeader("Saved settings to C:\\xblast.cfg");
+
+        CloseFATXPartition(partition);
+    }
+    else{
+        ToolHeader("Error opening partition. Drive formatted?");
+    }
+
+    ToolFooter();
+}
+
+void loadXBlastcfg(void * ignored){
+    FATXFILEINFO fileinfo;
+    FATXPartition *partition;
+    FATXFILEINFO fileinfo;
+    int res = NULL;
+
+    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+    if(partition != NULL){
+        res = FATXFindFile(partition, "xblast.cfg", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+        if(res){
+            ToolHeader("Loaded settings from C:\\xblast.cfg");
+        }
+        else{
+            ToolHeader("Error. File \"xblast.cfg\" not found.");
+        }
+
+        CloseFATXPartition(partition);
+    }
+    else{
+        ToolHeader("Error opening partition. Drive formatted?");
+    }
+
+    ToolFooter();
 }
