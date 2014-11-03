@@ -70,6 +70,8 @@ extern void BootResetAction ( void ) {
         "1.6/1.6b",
         "Unknown"
     };
+    
+    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
     xF70ELPCRegister = 0x03;       //Assume no control over the banks but we are booting from bank3
     x00FFLPCRegister = ReadFromIO(XODUS_CONTROL);       //Read A15 and D0 states.
@@ -200,6 +202,9 @@ extern void BootResetAction ( void ) {
     else
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
 
+    if(fHasHardware == SYSCON_ID_V1_TSOP){
+    	LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x03);
+    }
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
     
@@ -355,9 +360,9 @@ extern void BootResetAction ( void ) {
 
     VIDEO_ATTR=0xff00ff00;
     //TODO: Remove debug string print.
-    printk("           Modchip: %s    DEBUG_XodusControl: 0x%02x\n",modName, x00FFLPCRegister);
+    printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
-    printk("           THIS IS A WIP BUILD\n ");
+    printk("           THIS IS A WIP BUILD, manID= %x  devID= %x\n", of.m_bManufacturerId, of.m_bDeviceId);
 
     VIDEO_ATTR=0xff00ff00;
     

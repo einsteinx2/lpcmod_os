@@ -59,28 +59,19 @@ TEXTMENU *TSOPBankSelectMenuInit(void * bank) {
     strcpy(menuPtr->szCaption, "Select TSOP flash bank");
 
 
-    //Bank0 (512KB)
+    //Bank0
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Full TSOP recover");
-    itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNKFULLTSOP;
-    TextMenuAddItem(menuPtr, itemPtr);
-
-    //Bank1 (256KB)
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "bank0 TSOP recover");
+    strcpy(itemPtr->szCaption, "TSOP bank0");
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    //Bank2 (OS)
+    //Bank1
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "bank1 TSOP recover");
+    strcpy(itemPtr->szCaption, "TSOP bank1");
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
@@ -121,6 +112,22 @@ TEXTMENU* BankSelectInit(void * bank) {
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
         switchBank(*(u8 *)bank);
+    }
+    else if(fHasHardware == SYSCON_ID_V1_TSOP){
+        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){
+    	    if(*(u8 *)bank == BNKTSOPSPLIT0)
+                strcpy(menuPtr->szCaption, "Flash menu : TSOP bank0");
+            else if(*(u8 *)bank == BNKTSOPSPLIT1)
+                strcpy(menuPtr->szCaption, "Flash menu : TSOP bank1");
+            else
+                strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
+            switchBank(*(u8 *)bank);
+        }
+        else{
+            strcpy(menuPtr->szCaption, "Flash menu : TSOP");
+            switchBank(0x83);	//Set modchip to OS bank, no TSOP control.
+        }
+        WriteToIO(XODUS_CONTROL, 0x00);
     }
     else {
         strcpy(menuPtr->szCaption, "Flash menu : Unknown device");

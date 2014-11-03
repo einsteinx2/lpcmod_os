@@ -6,8 +6,16 @@
 #define GROUNDA15 0x08 // Enable bit to ground TSOP signal
 #define GROUNDD0  0x04 // Enable bit to ground TSOP signal
 #define RELEASED0 0x00 //Load a full TSOP only requires to release D0.
-#define BNKFULLTSOP 0x03
+#define BNKFULLTSOP 0x03	//Don't do nothing to the register
 #define BOOTFROMTSOP 0x70 //Delimiter in logic to differentiate booting from TSOP and from on board flash.
+
+//0x00FF register read bits
+#define READA19VALUE	0x01
+#define READA19CONTROL	0x02
+#define READD0CONTROL	0x04
+#define READA15CONTROL	0x08
+#define READSWVALUES	0x30
+#define READGPI		0xC0
 
 //0xF70E register bits configuration
 #define OSBNKCTRLBIT    0x80    //Bit that must be sent when selecting a flash bank other than BNKOS
@@ -20,8 +28,10 @@
 #define NOBNKID  0xFF
 
 //0xF70F register bits configuration
-#define GPO1_ON 0x08
-#define GPO0_ON 0x04
+#define GPO3_ON 0x80
+#define GPO2_ON 0x40
+#define GPO1_ON 0x20
+#define GPO0_ON 0x10
 #define ENNABLE_5V 0x01
 
 

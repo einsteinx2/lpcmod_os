@@ -80,8 +80,8 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
             *(u8*)iconPtr->functionDataPtr = BNK256;
         AddIcon(iconPtr);
     }
-    if(((fHasHardware == SYSCON_ID_V1) && (LPCmodSettings.OSsettings.TSOPcontrol & 0x01)) || //TSOP control active
-        ((fHasHardware == SYSCON_ID_V1_TSOP) && (ReadFromIO(XODUS_CONTROL) & 0x02))){
+    if(((fHasHardware == SYSCON_ID_V1) || (fHasHardware == SYSCON_ID_V1_TSOP)) && 
+       (LPCmodSettings.OSsettings.TSOPcontrol & 0x02)){
             iconPtr = (ICON *)malloc(sizeof(ICON));
             iconPtr->iconSlot = ICON_SOURCE_SLOT2;
             iconPtr->szCaption = "Boot OnBoard Bank0";

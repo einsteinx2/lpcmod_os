@@ -80,7 +80,7 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
                 sprintf(string, "%s", LPCmodSettings.OSsettings.biosName2);
             }
             else{
-                if(LPCmodSettings.OSsettings.TSOPcontrol & 0x01)
+                if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02)
                     sprintf(string, "%s", "OnBoard Bank0");
                 else
                     sprintf(string, "%s", "OnBoard BIOS");

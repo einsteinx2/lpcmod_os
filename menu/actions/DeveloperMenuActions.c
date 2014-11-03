@@ -68,6 +68,16 @@ void LPCIOWrite(void * ignored){
                 
             refresh = true;
         }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y)) {
+            address += 0x1000;
+            
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X)) {
+            address -= 0x1000;
+            
+            refresh = true;
+        }
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1) {
             if(line < 2)
                 line += 1;
@@ -128,6 +138,16 @@ void LPCIORead(void * ignored){
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 ||
                  risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1) {
             address -= 1;
+            
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y)) {
+            address += 0x1000;
+            
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X)) {
+            address -= 0x1000;
             
             refresh = true;
         }

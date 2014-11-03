@@ -68,13 +68,16 @@ TEXTMENU *TextMenuInit(void) {
 
 
 #ifdef FLASH
-    if(TSOPRecoveryMode){
+    if(fHasHardware == SYSCON_ID_V1_TSOP){
         //FLASH MENU
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption, "TSOP Flash menu");
+        strcpy(itemPtr->szCaption, "Flash menu");
         itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit();
+        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02)
+            itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit();
+        else
+            itemPtr->functionDataPtr = (void *)BankSelectInit();
         TextMenuAddItem(menuPtr, itemPtr);
     }
     else if(fHasHardware == SYSCON_ID_V1){

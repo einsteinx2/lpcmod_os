@@ -77,6 +77,8 @@
 //Default number of retry if Write to disc fails.
 #define DEFAULT_WRITE_RETRY     3
 
+#define FATX16CLUSTERSIZE 16384
+
 // This structure describes a FATX partition
 typedef struct {
 
