@@ -22,7 +22,7 @@ int testBank(int bank);
 void ToolHeader(char *title);
 void ToolFooter(void);
 
-void TSOPRecoveryReboot(void *ignored);
+//void TSOPRecoveryReboot(void *ignored);
 
 void saveXBlastcfg(void * ignored);
 void loadXBlastcfg(void * ignored);

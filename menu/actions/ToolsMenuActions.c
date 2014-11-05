@@ -215,7 +215,7 @@ int testBank(int bank){
     }
     return result;
 }
-
+/*
 void TSOPRecoveryReboot(void *ignored){
     if(ConfirmDialog("       Confirm reboot in TSOP recovery mode?", 1))
         return;
@@ -227,7 +227,7 @@ void TSOPRecoveryReboot(void *ignored){
     I2CRebootQuick();        //Retry
     while(1);
 }
-
+*/
 void saveXBlastcfg(void * ignored){
     FATXFILEINFO fileinfo;
     FATXPartition *partition;

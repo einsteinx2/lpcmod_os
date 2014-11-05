@@ -143,7 +143,7 @@ extern void BootResetAction ( void ) {
              }
             else {  //SST49LF080A flash chip was NOT detected.
                 fHasHardware = SYSCON_ID_V1_TSOP;
-                WriteToIO(XODUS_CONTROL, 0x00); //Make sure D0/A15 is not grounded.
+                WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
             }
         }
 

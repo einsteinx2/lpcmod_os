@@ -127,7 +127,7 @@ TEXTMENU* BankSelectInit(void * bank) {
             strcpy(menuPtr->szCaption, "Flash menu : TSOP");
             switchBank(0x83);	//Set modchip to OS bank, no TSOP control.
         }
-        WriteToIO(XODUS_CONTROL, 0x00);
+        WriteToIO(XODUS_CONTROL, RELEASED0);
     }
     else {
         strcpy(menuPtr->szCaption, "Flash menu : Unknown device");
@@ -176,7 +176,8 @@ TEXTMENU* BankSelectInit(void * bank) {
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)FlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);*/
-    if(fHasHardware == SYSCON_ID_V1){
+    if(fHasHardware == SYSCON_ID_V1 ||
+       (fHasHardware == SYSCON_ID_V1_TSOP && ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02))){
         ResetDrawChildTextMenu(menuPtr);
     }
     return menuPtr;
