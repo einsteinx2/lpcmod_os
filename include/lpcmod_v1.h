@@ -4,8 +4,8 @@
 //0x00FF register bits configuration
 #define KILL_MOD 0x20   //Completely mute modchip until a power cycle
 #define GROUNDA15 0x08 // Enable bit to ground TSOP signal
-#define GROUNDD0  0x44 // Enable bit to ground TSOP signal
-#define RELEASED0 0x40 // Load a full TSOP only requires to release D0.
+#define GROUNDD0  0x04 // Enable bit to ground TSOP signal
+#define RELEASED0 0x00 // Load a full TSOP only requires to release D0.
 #define BNKFULLTSOP 0x03	//Don't do nothing to the register
 #define BOOTFROMTSOP 0x70 //Delimiter in logic to differentiate booting from TSOP and from on board flash.
 

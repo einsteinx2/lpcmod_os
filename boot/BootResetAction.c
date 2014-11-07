@@ -78,7 +78,8 @@ extern void BootResetAction ( void ) {
                                                         //Should return 0x04 on normal boot, 0x08 on TSOP recovery.
     xF70FLPCRegister = 0x00;       //Assume no output pins activated yet.
 
-    TSOPRecoveryMode = (x00FFLPCRegister & 0x08) >> 3;  //If we booted and A15 was already set.
+    TSOPRecoveryMode = 0;
+    //TSOPRecoveryMode = (x00FFLPCRegister & 0x08) >> 3;  //If we booted and A15 was already set.
                                                         //It means we are in TSOP recovery. Set to 1.
                                                         //We'll check later if TSOP flash is accessible.
 
@@ -203,7 +204,7 @@ extern void BootResetAction ( void ) {
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
 
     if(fHasHardware == SYSCON_ID_V1_TSOP){
-    	LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x03);
+    	LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x10);
     }
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
