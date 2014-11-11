@@ -114,6 +114,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         switchBank(*(u8 *)bank);
     }
     else if(fHasHardware == SYSCON_ID_V1_TSOP){
+        WriteToIO(XODUS_CONTROL, RELEASED0);
         if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){
     	    if(*(u8 *)bank == BNKTSOPSPLIT0)
                 strcpy(menuPtr->szCaption, "Flash menu : TSOP bank0");
@@ -127,7 +128,6 @@ TEXTMENU* BankSelectInit(void * bank) {
             strcpy(menuPtr->szCaption, "Flash menu : TSOP");
             switchBank(0x83);	//Set modchip to OS bank, no TSOP control.
         }
-        WriteToIO(XODUS_CONTROL, RELEASED0);
     }
     else {
         strcpy(menuPtr->szCaption, "Flash menu : Unknown device");

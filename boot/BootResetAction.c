@@ -204,7 +204,7 @@ extern void BootResetAction ( void ) {
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
 
     if(fHasHardware == SYSCON_ID_V1_TSOP){
-    	LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x10);
+    	LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20);     //A19ctrl maps to bit5
     }
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
@@ -258,11 +258,11 @@ extern void BootResetAction ( void ) {
                     switchBank(LPCmodSettings.OSsettings.altBank);
               	}
                 else{
-                    WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
+                    //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
                         WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
                     else{
-                        WriteToIO(XBLAST_CONTROL, LPCmodSettings.OSsettings.altBank | OSBNKCTRLBIT);    // switch to original bios but modchip listen to LPC commands.
+                        WriteToIO(XODUS_CONTROL, LPCmodSettings.OSsettings.altBank);    // switch to original bios but modchip listen to LPC commands.
                                                                                                         // Lock flash bank control with OSBNKCTRLBIT.
                     }
                 }
@@ -281,11 +281,11 @@ extern void BootResetAction ( void ) {
                     switchBank(LPCmodSettings.OSsettings.activeBank);
               	}
                 else{
-                    WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
+                    //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
                         WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
                     else{
-                        WriteToIO(XBLAST_CONTROL, LPCmodSettings.OSsettings.activeBank | OSBNKCTRLBIT);    // switch to original bios but modchip listen to LPC commands.
+                        WriteToIO(XODUS_CONTROL, LPCmodSettings.OSsettings.activeBank);    // switch to original bios but modchip listen to LPC commands.
                                                                                                            // Lock flash bank control with OSBNKCTRLBIT.
                     }
                 }

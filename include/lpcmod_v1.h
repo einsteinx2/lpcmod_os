@@ -1,33 +1,54 @@
 #ifndef lpcmod_v1_h
 #define lpcmod_v1_h
 
+//0x00FE always read 0xAA if no physical tampering with SW1-2 port.
+#define READPSW1 0x80
+#define READPSw2 0x20
+
 //0x00FF register bits configuration
 #define KILL_MOD 0x20   //Completely mute modchip until a power cycle
 #define GROUNDA15 0x08 // Enable bit to ground TSOP signal
 #define GROUNDD0  0x04 // Enable bit to ground TSOP signal
-#define RELEASED0 0x00 // Load a full TSOP only requires to release D0.
-#define BNKFULLTSOP 0x03	//Don't do nothing to the register
-#define BOOTFROMTSOP 0x70 //Delimiter in logic to differentiate booting from TSOP and from on board flash.
+#define RELEASED0 0x00 // Does not interfere with A19control and A19value
+#define BNKFULLTSOP 0x40	//Make sure to drop D0, A19control and A19value(while we're at it)
+#define XODUSBNK0TSOP 0x46      //Values on XODUS_CONTROL register to switch banks on TSOP.
+#define XODUSBNK1TSOP 0x47      //D0 signal must be set to '1' when TSOP is split
+#define XODUSBNK0MOD 0x44       //Values on XODUS_CONTROL register to switch user banks on XBlast Mod.
+#define XODUSBNK1MOD 0x45       //D0 signal must be set to '1'
+#define BOOTFROMTSOP 0x40 //Delimiter in logic to differentiate booting from TSOP and from on board flash.
 
-//0x00FF register read bits
+//0x00FF read register bits
+#define READISW1VALUE   0x10
+#define READA19CTRL     0x20
+#define READISW2VALUE   0x40
 #define READA19VALUE	0x01
-#define READA19CONTROL	0x02
-#define READD0CONTROL	0x04
-#define READA15CONTROL	0x08
-#define READSWVALUES	0x30
-#define READGPI		0xC0
+#define READA15CONTROL	0x02
+#define READCHAMMODE1   0x04
+#define READCHAMMODE0   0x08
+#define READCHAMMODE    0x0C
 
-//0xF70E register bits configuration
+//0xF70D read
+#define READGPO 0xF
+#define READGPO3 0x80
+#define READGPO2 0x40
+#define READGPO1 0x20
+#define READGPO0 0x10
+#define READISW2 0x04
+#define READOSBNKCTRLBIT 0x02
+#define READISW1 0x01
+
+//0xF70E write register bits configuration
 #define OSBNKCTRLBIT    0x80    //Bit that must be sent when selecting a flash bank other than BNKOS
 #define TSOPA19CTRLBIT  0x10    //Bit to enable manual drive of the TSOP's A19 pin.
+#define BNKTSOPSPLIT0 0x10
+#define BNKTSOPSPLIT1 0x12
+#define NOBNKID  0xFF
+//XBlast Mod bank toggle values
 #define BNK512  0x80
 #define BNK256  0x82
 #define BNKOS  0x83
-#define BNKTSOPSPLIT0 0x10
-#define BNKTSOPSPLIT1 0x18
-#define NOBNKID  0xFF
 
-//0xF70F register bits configuration
+//0xF70F write register bits configuration
 #define GPO3_ON 0x80
 #define GPO2_ON 0x40
 #define GPO1_ON 0x20
@@ -41,6 +62,7 @@
 
 
 //XBlast Mod and SmartXX LPC registers to drive LCD
+#define XBLAST_IO    0xF70D
 #define XBLAST_CONTROL    0xF70E
 #define XODUS_CONTROL    0x00FF
 #define PIN_CONTROL    0xF70F
