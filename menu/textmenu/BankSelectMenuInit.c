@@ -98,7 +98,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchBank(*(u8 *)bank);
+        switchOSBank(*(u8 *)bank);
 
     }
     else if(fHasHardware == SYSCON_ID_V1){
@@ -111,7 +111,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchBank(*(u8 *)bank);
+        switchOSBank(*(u8 *)bank);
     }
     else if(fHasHardware == SYSCON_ID_V1_TSOP){
         WriteToIO(XODUS_CONTROL, RELEASED0);
@@ -122,11 +122,11 @@ TEXTMENU* BankSelectInit(void * bank) {
                 strcpy(menuPtr->szCaption, "Flash menu : TSOP bank1");
             else
                 strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
-            switchBank(*(u8 *)bank);
+            switchOSBank(*(u8 *)bank);
         }
         else{
             strcpy(menuPtr->szCaption, "Flash menu : TSOP");
-            switchBank(0x83);	//Set modchip to OS bank, no TSOP control.
+            switchOSBank(0x83);	//Set modchip to OS bank, no TSOP control.
         }
     }
     else {

@@ -89,7 +89,7 @@ TEXTMENU *ModchipMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
-if(mbVersion == REV1_1 || mbVersion == REV1_0){        //Don't show this when Xbox motherboard is not 1.0/1.1.
+if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't show this when Xbox motherboard is not 1.0/1.1.
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

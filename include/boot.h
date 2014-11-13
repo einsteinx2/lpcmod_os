@@ -471,4 +471,11 @@ u8 xF70FLPCRegister;
 bool TSOPRecoveryMode;
 
 u8 currentFlashBank;
+
+//To show/hide stuff from public releases. Set to 1 for now but will need to be changed to 0 soon.
+#if 1
+#define DEV_FEATURES    1
+#else
+#define DEV_FEATURES    0
+#endif
 #endif // _Boot_H_

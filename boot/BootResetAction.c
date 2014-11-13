@@ -140,7 +140,7 @@ extern void BootResetAction ( void ) {
             BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
             if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
                 //Make sure we'll be reading from OS Bank
-                switchBank(BNKOS);
+                switchOSBank(BNKOS);
              }
             else {  //SST49LF080A flash chip was NOT detected.
                 fHasHardware = SYSCON_ID_V1_TSOP;
@@ -255,14 +255,14 @@ extern void BootResetAction ( void ) {
         if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
             if(EjectButtonPressed){              //Xbox was started from eject button.
                 if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP){
-                    switchBank(LPCmodSettings.OSsettings.altBank);
+                    switchBootBank(LPCmodSettings.OSsettings.altBank);
               	}
                 else{
                     //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-                        WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
+                        switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
                     else{
-                        WriteToIO(XODUS_CONTROL, LPCmodSettings.OSsettings.altBank);    // switch to original bios but modchip listen to LPC commands.
+                        switchBootBank(LPCmodSettings.OSsettings.altBank);    // switch to original bios but modchip listen to LPC commands.
                                                                                                         // Lock flash bank control with OSBNKCTRLBIT.
                     }
                 }
@@ -278,7 +278,7 @@ extern void BootResetAction ( void ) {
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
             if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //White button NOT pressed and Quickboot ON.
                 if(LPCmodSettings.OSsettings.activeBank > BOOTFROMTSOP){
-                    switchBank(LPCmodSettings.OSsettings.activeBank);
+                    switchBootBank(LPCmodSettings.OSsettings.activeBank);
               	}
                 else{
                     //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
@@ -360,15 +360,22 @@ extern void BootResetAction ( void ) {
 
 
     VIDEO_ATTR=0xff00ff00;
+#ifdef DEV_FEATURES
     //TODO: Remove debug string print.
     printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD, manID= %x  devID= %x\n", of.m_bManufacturerId, of.m_bDeviceId);
-
+#else
+    printk("           Modchip: %s\n",modName);
+#endif
     VIDEO_ATTR=0xff00ff00;
     
 
    mbVersion = I2CGetXboxMBRev();
+
+   if(mbVersion > REV1_1 && !DEV_FEATURES)
+       LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
+
    printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
    if (xbox_ram > 64) {
         VIDEO_ATTR=0xff00ff00;

@@ -264,9 +264,10 @@ u8 I2CGetXboxMBRev(void){
     ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[0]);
     ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[1]);
     ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[2]);
-
+#ifdef DEV_FEATURES
     //TODO: remove once fixed
     printk("          Debug MB_string: %s\n", ver);
+#endif
 
     if ( !strcmp(ver,("01D")) || !strcmp(ver,("D01")) || !strcmp(ver,("1D0")) || !strcmp(ver,("0D1"))) {
         result = DEVKIT;

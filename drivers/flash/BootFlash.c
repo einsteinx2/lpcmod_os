@@ -450,7 +450,7 @@ void BootFlashSaveOSSettings(void) {
             lastBlock = (u8 *)malloc(blocksize);
     
             if(currentFlashBank != BNKOS)              //Just to be sure, can only be true on a XBlast mod.
-                switchBank(BNKOS);
+                switchOSBank(BNKOS);
 
 
             memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
