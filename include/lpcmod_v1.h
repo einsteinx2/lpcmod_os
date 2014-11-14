@@ -11,10 +11,10 @@
 #define GROUNDD0  0x04 // Enable bit to ground TSOP signal
 #define RELEASED0 0x00 // Does not interfere with A19control and A19value
 #define BNKFULLTSOP 0x40	//Make sure to drop D0, A19control and A19value(while we're at it)
-#define XODUSBNK0TSOP 0x46      //Values on XODUS_CONTROL register to switch banks on TSOP.
+#define XODUSBNK0TSOP 0x45      //Values on XODUS_CONTROL register to switch banks on TSOP.
 #define XODUSBNK1TSOP 0x47      //D0 signal must be set to '1' when TSOP is split
 #define XODUSBNK0MOD 0x44       //Values on XODUS_CONTROL register to switch user banks on XBlast Mod.
-#define XODUSBNK1MOD 0x45       //D0 signal must be set to '1'
+#define XODUSBNK1MOD 0x46       //D0 signal must be set to '1'
 #define BOOTFROMTSOP 0x50 //Delimiter in logic to differentiate booting from TSOP and from on board flash.
 
 //0x00FF read register bits
