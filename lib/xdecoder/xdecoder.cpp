@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 	string xcodeString;
 	string outLine5, outLine4, outLine3, outLine2, outLine1, outLine0,
 			tempString;
-	char xcodeOp1[50], xcodeOp2[50];
+	char xcodeOp1[50], xcodeOp2[50], tempUnkown[3];
 	int op1Print = 0, op2Print = 0, ignore = 0, ignoreCount = 0;
 
 	struct xcodeStruct {
@@ -173,9 +173,11 @@ int main(int argc, char* argv[]) {
 				op2Print = 0;
 				break;
 			default:
-				xcodeString = "err!!!!!!";
-				op1Print = 0;
-				op2Print = 0;
+				xcodeString = "!!err_value=0x";
+				sprintf(tempUnkown, "%.2x", xcode->opcode);
+				xcodeString.append(tempUnkown);
+				op1Print = 1;
+				op2Print = 1;
 				break;
 			}
 
