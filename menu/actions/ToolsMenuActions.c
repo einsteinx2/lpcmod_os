@@ -13,9 +13,9 @@
 #include "video.h"
 #include "BootFATX.h"
 
-#define NBTXTPARAMS 29
+#define NBTXTPARAMS 30
 
-char * xblastcfgstrings[NBTXTPARAMS + 1] = {
+char * xblastcfgstrings[NBTXTPARAMS] = {
 	"activebank = ",
 	"altbank = ",
 	"quickboot = ",
@@ -233,17 +233,22 @@ void saveXBlastcfg(void * ignored){
     FATXPartition *partition;
     int res = false;
     char * filebuf;
-    char tempString[4];
-    u32 cursorpos;
+    char tempString[22];
+    u32 cursorpos, totalbytes = 0;
+    int dcluster, i;
+    char *path="\\XBlast\\";
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
 
     if(partition != NULL){
-        res = FATXFindFile(partition, "xblast.cfg", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
+        if((dcluster != -1) && (dcluster != 1)) {
+            res = FATXFindFile(partition, "xblast.cfg", dcluster, &fileinfo);
+        }
         if(res){                //File already exist
-            if(ConfirmDialog("                  Overwrite C:\\xblast.cfg?", 1)){
+            if(ConfirmDialog("              Overwrite C:\\XBlast\\xblast.cfg?", 1)){
                 CloseFATXPartition(partition);
-                ToolHeader("Saving to C:\\xblast.cfg aborted.");
+                ToolHeader("Saving to C:\\XBlast\\xblast.cfg aborted.");
                 cromwellWarning();
                 ToolFooter();
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
@@ -251,16 +256,21 @@ void saveXBlastcfg(void * ignored){
             }
             filebuf = (char *)malloc((u8)FATX16CLUSTERSIZE);
             memset(filebuf, 0x00, FATX16CLUSTERSIZE);
-            cursorpos = 0;
-            strcpy(&filebuf[cursorpos], xblastcfgstrings[0]);
-            cursorpos += strlen(xblastcfgstrings[0]);
-            //itoa(LPCmodSettings.OSsettings.activeBank, tempString, 10);
-            cursorpos += strlen(tempString);
-            strcpy(&filebuf[cursorpos],tempString);
-            filebuf[cursorpos] = 0x0A;
-            cursorpos += 1;
+            for(i = 0; i < NBTXTPARAMS; i++){
+                cursorpos = 0;
+                strcpy(&filebuf[cursorpos], xblastcfgstrings[i]);
+                cursorpos += strlen(xblastcfgstrings[i]);
+                //New line inserted in.
+                sprintf(tempString, "%d\n", LPCmodSettings.OSsettings.fanSpeed);
+                cursorpos += strlen(tempString);
+                strncpy(&filebuf[cursorpos],tempString, strlen(tempString));    //Skip terminating character.
+                //filebuf[cursorpos] = 0x0A;
+                //cursorpos += 1;
+                totalbytes += cursorpos;
+            }
+            filebuf[cursorpos] = 0;     //Terminating character at the end of file.
         }
-        ToolHeader("Saved settings to C:\\xblast.cfg");
+        ToolHeader("Saved settings to C:\\XBlast\\xblast.cfg");
 
         CloseFATXPartition(partition);
     }
@@ -275,12 +285,17 @@ void loadXBlastcfg(void * ignored){
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
     int res = false;
+    int dcluster;
+    char *path="\\XBlast\\";
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
     if(partition != NULL){
-        res = FATXFindFile(partition, "xblast.cfg", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
+        if((dcluster != -1) && (dcluster != 1)) {
+            res = FATXFindFile(partition, "xblast.cfg", dcluster, &fileinfo);
+        }
         if(res){
-             if(ConfirmDialog("           Restore settings from C:\\xblast.cfg?", 1)){
+             if(ConfirmDialog("        Restore settings from C:\\XBlast\\xblast.cfg?", 1)){
                 CloseFATXPartition(partition);
                 ToolHeader("Loading from C:\\xblast.cfg aborted.");
                 cromwellWarning();
@@ -288,10 +303,10 @@ void loadXBlastcfg(void * ignored){
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
                 return;
             }
-            ToolHeader("Loaded settings from C:\\xblast.cfg");
+            ToolHeader("Loaded settings from C:\\XBlast\\xblast.cfg");
         }
         else{
-            ToolHeader("Error. File \"xblast.cfg\" not found.");
+            ToolHeader("Error. File \"C:\\XBlast\\xblast.cfg\" not found.");
         }
 
         CloseFATXPartition(partition);
