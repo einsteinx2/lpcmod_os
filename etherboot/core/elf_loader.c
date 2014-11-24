@@ -31,7 +31,7 @@ struct elf_state
 };
 
 static struct elf_state estate;
-
+#if 0
 static void elf_boot(unsigned long machine, unsigned long entry)
 {
     int result;
@@ -48,7 +48,8 @@ static void elf_boot(unsigned long machine, unsigned long entry)
     printf("Secondary program returned %d\n", result);
     longjmp(restart_etherboot, result);
 }
-
+#endif
+#if 0
 #if ELF_NOTES
 static int elf_prep_segment(
     unsigned long start __unused, unsigned long mid __unused, unsigned long end __unused,
@@ -133,7 +134,9 @@ static void process_elf_notes(unsigned char *header,
     }
 }
 #endif
+#endif
 
+#if 0
 #ifdef    ELF_IMAGE
 static sector_t elf32_download(unsigned char *data, unsigned int len, int eof);
 static inline os_download_t elf32_probe(unsigned char *data, unsigned int len)
@@ -180,7 +183,7 @@ static inline os_download_t elf32_probe(unsigned char *data, unsigned int len)
             /* Ignore ELF notes outside of the first block */
             continue;
         }
-        process_elf_notes(data, 
+        process_elf_notes(data,
             estate.p.phdr32[estate.segment].p_offset, estate.p.phdr32[estate.segment].p_filesz);
     }
 #endif
@@ -203,6 +206,7 @@ static inline os_download_t elf32_probe(unsigned char *data, unsigned int len)
         if (!prep_segment(start, mid, end, istart, iend)) {
             return 0;
         }
+
         if (!elf_prep_segment(start, mid, end, istart, iend)) {
             return 0;
         }
@@ -213,6 +217,7 @@ static inline os_download_t elf32_probe(unsigned char *data, unsigned int len)
     estate.toread = 0;
     return elf32_download;
 }
+#endif
 
 static sector_t elf32_download(unsigned char *data, unsigned int len, int eof)
 {
@@ -345,7 +350,7 @@ elf_startkernel:
          */
         estate.e.elf32.e_phoff = (char *)&estate.p - (char *)&estate.e;
         elf_freebsd_boot(entry);
-        elf_boot(machine,entry);
+        //elf_boot(machine,entry);
     }
     return skip_sectors;
 }
@@ -398,7 +403,7 @@ static inline os_download_t elf64_probe(unsigned char *data, unsigned int len)
             /* Ignore ELF notes outside of the first block */
             continue;
         }
-        process_elf_notes(data, 
+        process_elf_notes(data,
             estate.p.phdr64[estate.segment].p_offset, estate.p.phdr64[estate.segment].p_filesz);
     }
 #endif
@@ -429,6 +434,7 @@ static inline os_download_t elf64_probe(unsigned char *data, unsigned int len)
         if (!prep_segment(start, mid, end, istart, iend)) {
             return 0;
         }
+
         if (!elf_prep_segment(start, mid, end, istart, iend)) {
             return 0;
         }

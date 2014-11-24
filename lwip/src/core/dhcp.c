@@ -95,7 +95,7 @@ static err_t dhcp_discover(struct netif *netif);
 static err_t dhcp_select(struct netif *netif);
 static void dhcp_check(struct netif *netif);
 static void dhcp_bind(struct netif *netif);
-static err_t dhcp_decline(struct netif *netif);
+//static err_t dhcp_decline(struct netif *netif);
 static err_t dhcp_rebind(struct netif *netif);
 static err_t dhcp_release(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, unsigned char new_state);
@@ -778,11 +778,15 @@ static void dhcp_bind(struct netif *netif)
   }
 
   LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_bind(): IP: 0x%08lx\n", dhcp->offered_ip_addr.addr));
-  printk ("%d.%d.%d.%d (DHCP)\n", 
+  printk ("%d.%d.%d.%d (DHCP), %d.%d.%d.%d(MASK)\n",
           (dhcp->offered_ip_addr.addr & 0x000000ff) ,
           (dhcp->offered_ip_addr.addr & 0x0000ff00) >> 8,
           (dhcp->offered_ip_addr.addr & 0x00ff0000) >> 16,
-          (dhcp->offered_ip_addr.addr & 0xff000000) >> 24);
+          (dhcp->offered_ip_addr.addr & 0xff000000) >> 24,
+          (sn_mask.addr & 0x000000ff) ,
+          (sn_mask.addr & 0x0000ff00) >> 8,
+          (sn_mask.addr & 0x00ff0000) >> 16,
+          (sn_mask.addr & 0xff000000) >> 24);
   netif_set_ipaddr(netif, &dhcp->offered_ip_addr);
   LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_bind(): SN: 0x%08lx\n", sn_mask.addr));
   netif_set_netmask(netif, &sn_mask);
@@ -1386,6 +1390,7 @@ static u8_t dhcp_get_option_byte(u8_t *ptr)
   return *ptr;
 }
 
+#if 0
 /**
  * Return the 16-bit value of DHCP option data.
  *
@@ -1402,6 +1407,7 @@ static u16_t dhcp_get_option_short(u8_t *ptr)
   LWIP_DEBUGF(DHCP_DEBUG, ("option short value=%u\n", value));
   return value;
 }
+#endif
 
 /**
  * Return the 32-bit value of DHCP option data.

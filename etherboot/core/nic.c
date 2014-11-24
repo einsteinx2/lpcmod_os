@@ -32,7 +32,7 @@ int hostnamelen = 0;
 static uint32_t xid;
 unsigned char *end_of_rfc1533 = NULL;
 static int vendorext_isvalid;
-static const unsigned char vendorext_magic[] = {0xE4,0x45,0x74,0x68}; /* äEth */
+static const unsigned char vendorext_magic[] = {0xE4,0x45,0x74,0x68}; /* ï¿½Eth */
 static const unsigned char broadcast[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 static const in_addr zeroIP = { 0L };
 
@@ -227,6 +227,11 @@ void eth_disable(void)
 int eth_load_configuration(struct dev *dev __unused)
 {
     int server_found;
+//FIXME: FlashBios way
+    extern int run_lwip(int A, int B, int C, int D, int P);
+    run_lwip(1336, -1, -1, -1, -1);
+
+
     /* Find a server to get BOOTP reply from */
 #ifdef    RARP_NOT_BOOTP
     printf("Searching for server (RARP)...\n");
@@ -266,7 +271,7 @@ int eth_load(struct dev *dev __unused)
     if (arptable[ARP_GATEWAY].ipaddr.s_addr)
         printf(", Gateway %@", arptable[ARP_GATEWAY].ipaddr.s_addr);
     putchar('\n');
-
+#if 0
 #ifdef    MDEBUG
     printf("\n=>>"); getchar();
 #endif
@@ -284,6 +289,8 @@ int eth_load(struct dev *dev __unused)
     printf("Unable to load file.\n");
     interruptible_sleep(2);        /* lay off the server for a while */
     longjmp(restart_etherboot, -1);
+#endif
+    return 0;   //Keep compiler happy.
 }
 
 

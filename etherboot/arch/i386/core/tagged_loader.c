@@ -20,7 +20,7 @@ struct imgheader
     } u;
     unsigned long execaddr;
 };
-
+#if 0
 /* Keep all context about loaded image in one place */
 static struct tagged_context
 {
@@ -92,6 +92,7 @@ static inline os_download_t tagged_probe(unsigned char *data, unsigned int len)
     return tagged_download;
 
 }
+
 static sector_t tagged_download(unsigned char *data, unsigned int len, int eof)
 {
     int    i;
@@ -167,3 +168,4 @@ static sector_t tagged_download(unsigned char *data, unsigned int len, int eof)
     } 
     return 0;
 }
+#endif

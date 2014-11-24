@@ -783,6 +783,7 @@ ext2fs_dir (char *dirname)
       *(dirname = rest) = ch;
     }
   /* never get here */
+  return 0;     //Keep compiler happy
 }
 
 #endif /* FSYS_EXT2_FS */

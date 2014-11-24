@@ -25,7 +25,7 @@
 extern u8 VIDEO_AV_MODE;
 // functions defined elsewhere
 int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite);
-int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite);
+//int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite);
 
 // internally used structures
 
@@ -36,12 +36,13 @@ typedef struct {
     long v_blanko;
     long vscale;
 } BLANKING_PARAMETER;
-
+#if 0
 #ifndef JUSTVIDEO
 static double fabs(double d) {
     if (d > 0) return d;
     else return -d;
 }
+#endif
 #endif
 
 static u8 NvGetCrtc(u8 * pbRegs, int nIndex) {

@@ -12,7 +12,7 @@
 static int position = -1;
 char appendPath[200];
 char *finalAppendPath = appendPath;
-extern int ipA, ipB, ipC, ipD, ipP;
+//extern int ipA, ipB, ipC, ipD, ipP;
 
 static void fixPosition(int len) {
     if(position < 0) {
@@ -26,8 +26,8 @@ void enableHttpcAppendPath(void *whatever) {
     VIDEO_ATTR=0xffef37;
     printk("\n\n\n\n\n\n");
     VIDEO_ATTR=0xffc8c8c8;
-    initialiseNetwork();
-    webBoot(ipA, ipB, ipC, ipD, ipP);
+    //initialiseNetwork();
+    //webBoot(ipA, ipB, ipC, ipD, ipP);
 }
 
 void incrementAlphabetAppendPath(void *chr) {

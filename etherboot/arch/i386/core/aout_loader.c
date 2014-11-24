@@ -19,7 +19,9 @@ struct aout_state {
     unsigned long toread;        /* remaining data to be read in the segment */
 };
 
+#if 0
 static struct aout_state astate;
+
 
 static sector_t aout_download(unsigned char *data, unsigned int len, int eof);
 static inline os_download_t aout_probe(unsigned char *data, unsigned int len)
@@ -142,3 +144,4 @@ aout_startkernel:
     }
     return 0;
 }
+#endif

@@ -125,7 +125,7 @@ struct Elf_Bhdr *prepare_boot_params(void *header)
     }
     return &notes.hdr;
 }
-
+#if 0
 int elf_start(unsigned long machine __unused_i386, unsigned long entry, unsigned long params)
 {
 #if defined(CONFIG_X86_64)
@@ -135,3 +135,4 @@ int elf_start(unsigned long machine __unused_i386, unsigned long entry, unsigned
 #endif
     return xstart32(entry, params);
 }
+#endif

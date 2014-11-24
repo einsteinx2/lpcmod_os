@@ -33,13 +33,16 @@ Modifications: Ken Yap (for Etherboot/16)
 
 struct os_entry_regs os_regs;
 
+#if 0
 static struct ebinfo        loaderinfo = {
     VERSION_MAJOR, VERSION_MINOR,
     0
 };
 
+
 static int prep_segment(unsigned long start, unsigned long mid, unsigned long end,
     unsigned long istart, unsigned long iend);
+#endif
 static void done(void);
 
 #if defined(IMAGE_FREEBSD) && defined(ELF_IMAGE)
@@ -160,7 +163,7 @@ static void done(void)
 #endif
     cleanup();
 }
-
+#if 0
 static int prep_segment(unsigned long start, unsigned long mid, unsigned long end,
     unsigned long istart __unused, unsigned long iend __unused)
 {
@@ -253,7 +256,7 @@ static int prep_segment(unsigned long start, unsigned long mid, unsigned long en
     }
     return 1;
 }
-
+#endif
 
 #ifdef RAW_IMAGE
 #warning "image_raw only works for x86 disks currently"
@@ -305,8 +308,10 @@ os_download_t probe_image(unsigned char *data, unsigned int len)
 #ifdef AOUT_IMAGE
     if (!os_download) os_download = aout_probe(data, len);
 #endif
+#if 0
 #ifdef ELF_IMAGE
     if (!os_download) os_download = elf32_probe(data, len);
+#endif
 #endif
 #ifdef ELF64_IMAGE
     if (!os_download) os_download = elf64_probe(data, len);

@@ -158,6 +158,7 @@ void enableNetflash (void *whatever) {
     VIDEO_ATTR = 0xffc8c8c8;
     initialiseNetwork ();
     netFlash ();
+    etherboot();
 #endif
 }
 
@@ -168,8 +169,8 @@ void enableWebupdate (void *whatever) {
     VIDEO_ATTR = 0xffef37;
     printk ("\n\n\n\n\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
-    initialiseNetwork ();
-    webUpdate ();
+    //initialiseNetwork ();
+    //webUpdate ();
 #endif
 }
 

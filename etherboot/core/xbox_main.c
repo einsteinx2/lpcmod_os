@@ -33,7 +33,7 @@ char freebsd_kernel_env[FREEBSD_KERNEL_ENV_SIZE];
 extern char        pxeemu_nbp_active;
 #endif    /* FREEBSD_PXEBOOT */
 
-
+#if 0
 /**************************************************************************
 LOADKERNEL - Try to load kernel image
 **************************************************************************/
@@ -124,7 +124,7 @@ int loadkernel(const char *fname)
     return tftp(fname, load_block);
 #endif
 }
-
+#endif
 
 /**************************************************************************
 CLEANUP - shut down networking and console so that the OS may be called 

@@ -49,6 +49,7 @@ int initialiseNetwork(void)
     return 0;           //Keep compiler happy.
 }
 
+
 int etherboot(void)
 {
     if (eth_load_configuration(dev) != 0)
@@ -162,6 +163,7 @@ void restart_etherboot(int status)
     sleep(5);
     BootResetAction();
 }
+#if 0
 static const unsigned char vendorext_magic[] = {0xE4,0x45,0x74,0x68}; /* Eth */
 static unsigned char    rfc1533_cookie[5] = { RFC1533_COOKIE, RFC1533_END };
 
@@ -351,3 +353,4 @@ int xstart32(unsigned long entry_point, ...)
     }
     return 0;           //Keep compiler happy.
 }
+#endif

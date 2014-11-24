@@ -11,8 +11,6 @@ extern void cromwellSuccess(void);
 void eth_transmit(const char *d, unsigned int t, unsigned int s, const void *p);
 int eth_poll_into(char *buf, int *len);
 
-int gotIP = 0;
-int applicationStarted = 0;
 int resetCount = 0;
 
 static struct pbuf *
@@ -54,6 +52,7 @@ ebd_low_level_output(struct netif *netif, struct pbuf *p)
         bufptr += q->len;
     }
     eth_transmit (&h->dest.addr[0], ntohs (h->type), p->tot_len - 14, &buf[14]);
+    return 0;   //Keep compiler happy.
 }
 
 static err_t
@@ -116,6 +115,7 @@ ebd_wait(struct netif *netif, u16_t time)
           }
       }
   }
+  return 0;   //Keep compiler happy.
 }
 
 extern char forcedeth_hw_addr[6];
@@ -150,11 +150,10 @@ int run_lwip(int A, int B, int C, int D, int P)
     cromwellSuccess();
     printk("            Waiting for IP...");
     printk(" ");
-    applicationStarted = 0;
-    gotIP = 0;
     resetCount = 0;
     
-/*    IP4_ADDR(&gw, 192,168,99,1);
+/*
+    IP4_ADDR(&gw, 192,168,99,1);
     IP4_ADDR(&ipaddr, 192,168,99,2);
     IP4_ADDR(&netmask, 255,255,255,0);
 */
@@ -163,10 +162,29 @@ int run_lwip(int A, int B, int C, int D, int P)
     IP4_ADDR(&netmask, 255,255,255,255);
     
     netif_add(&netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
-   dhcp_start(&netif);
+    dhcp_start(&netif);
 
     netif_set_default(&netif);
     
+
+    //if(netif.dhcp->state == DHCP_BOUND) {
+        //wait_ms(2000);
+        if(A == 1336) {
+            printk("            Starting Net Flash...");
+            netflash_init();
+        } else if(A == 1337) {
+            printk("            Starting Web Update...");
+            webupdate_init();
+        }/* else if(A == 1338) {
+             printk("           Starting Net Boot...");
+             netboot_init();
+        } else {
+            printk("           Starting Web Boot...");
+            webboot_init(A, B, C, D, P);
+        }*/
+    //}
+
+
    int divisor = 0;
     int first = 1;
     while (1) {
@@ -180,7 +198,7 @@ int run_lwip(int A, int B, int C, int D, int P)
         if (!ebd_wait(&netif, TCP_TMR_INTERVAL)) {
             if (divisor++ == 60 * 4) {
                 if (first && netif.dhcp->state != DHCP_BOUND) {
-                    printk ("192.168.0.250 (DHCP failed)\n");
+                    printk ("            192.168.0.250 (DHCP failed)\n");
                     dhcp_stop (&netif);
                     IP4_ADDR(&gw, 192,168,0,1);
                     IP4_ADDR(&ipaddr, 192,168,0,250);
@@ -188,7 +206,6 @@ int run_lwip(int A, int B, int C, int D, int P)
                     netif_set_ipaddr(&netif, &ipaddr);
                     netif_set_netmask(&netif, &netmask);
                     netif_set_gw(&netif, &gw);
-                    gotIP = 1;
                 }
                 first = 0;
                 dhcp_coarse_tmr();
@@ -201,29 +218,8 @@ int run_lwip(int A, int B, int C, int D, int P)
 
             tcp_tmr();
 
-            if(applicationStarted == 0) {
-                if((gotIP == 1) || (netif.dhcp->state == DHCP_BOUND)) {
-                    wait_ms(2000);
-                    if(A == 1336) {
-                        applicationStarted = 1;
-                        printk("            Starting Net Flash...");
-                        netflash_init();
-                    } else if(A == 1337) {
-                        applicationStarted = 1;
-                        printk("            Starting Web Update...");
-                        webupdate_init();
-                    }/* else if(A == 1338) {
-                        applicationStarted = 1;
-                        printk("           Starting Net Boot...");
-                        netboot_init();
-                    } else {
-                        applicationStarted = 1;
-                        printk("           Starting Web Boot...");
-                       webboot_init(A, B, C, D, P);
-                    }*/
-                }
-            }
         }
     }
+    return 0;   //Keep compiler happy.
 }
 
