@@ -138,7 +138,7 @@ int run_lwip(void)
 	udp_init();
 	tcp_init();
 	etharp_init();
-	printk("TCP/IP initialized.\n");
+	printk("            TCP/IP initialized.\n");
 	
 /*	IP4_ADDR(&gw, 192,168,99,1);
 	IP4_ADDR(&ipaddr, 192,168,99,2);
@@ -155,25 +155,32 @@ int run_lwip(void)
 	
 	httpd_init();
 	
-    int divisor = 0;
+        int divisor = 0;
 	int first = 1;
 	while (1) {
 		
 		if (!ebd_wait(&netif, TCP_TMR_INTERVAL)) {
 			if (divisor++ == 60 * 4) {
-				if (first && netif.dhcp->state != DHCP_BOUND) {
-					printk ("DHCP FAILED - Falling back to 192.168.0.99\n");
+			    if(first){
+				if (netif.dhcp->state != DHCP_BOUND) {
+					printk ("            DHCP FAILED - Falling back to 192.168.0.250\n");
 					dhcp_stop (&netif);
 					IP4_ADDR(&gw, 192,168,0,1);
-					IP4_ADDR(&ipaddr, 192,168,0,99);
+					IP4_ADDR(&ipaddr, 192,168,0,250);
 					IP4_ADDR(&netmask, 255,255,255,0);
 					netif_set_ipaddr(&netif, &ipaddr);
 					netif_set_netmask(&netif, &netmask);
 					netif_set_gw(&netif, &gw);
 				}
-				first = 0;
-				dhcp_coarse_tmr();
-				divisor=0;
+				printk("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
+				                         ((netif.ip_addr.addr) >> 24 & 0xff),
+				                         ((netif.ip_addr.addr) >> 16 & 0xff),
+				                         ((netif.ip_addr.addr) >> 8 & 0xff),
+				                         ((netif.ip_addr.addr) & 0xff));
+			    }
+			    first = 0;
+			    dhcp_coarse_tmr();
+			    divisor=0;
 			}
 			if (divisor & 1)
 				dhcp_fine_tmr();

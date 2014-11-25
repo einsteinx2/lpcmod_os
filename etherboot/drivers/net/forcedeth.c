@@ -710,7 +710,7 @@ static int forcedeth_reset(struct nic *nic)
 		goto out_drain;
 	}
 
-	printf("%d-Mbs Link, %s-Duplex\n",
+	printf("            %d-Mbs Link, %s-Duplex\n",
 	       np->linkspeed & NVREG_LINKSPEED_10 ? 10 : 100,
 	       np->duplex ? "Full" : "Half");
 	/* 6) continue setup */

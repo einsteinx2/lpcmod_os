@@ -115,7 +115,8 @@ static int pci_probe(struct dev *dev, const char *type_name)
 		dev->devid.device_id = htons(state->dev.dev_id);
 		/* FIXME how do I handle dev->index + PROBE_AGAIN?? */
 		
-		printf("[%s]", state->dev.name);
+		//No need to print driver's name. We know it's an nForce!
+		//printf("\n            [%s]", state->dev.name);
 		if (state->dev.driver->probe(dev, &state->dev)) {
 			state->advance = (dev->index == -1);
 			return PROBE_WORKED;

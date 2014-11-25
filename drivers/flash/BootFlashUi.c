@@ -274,3 +274,64 @@ void BootShowFlashDevice(void){
 
     return;
 }
+
+void BootFlashPrintResult(int res, u32 fileSize) {
+    if (res > 0) {
+            cromwellError ();
+            printk ("\n\n\n\n\n           Flash failed...");
+            switch (res) {
+                case 1:
+                    printk ("\n           ");
+                    cromwellError ();
+                    printk ("\n           Unknown flash device.\n           Write-Protect is enabled?");
+                    break;
+                case 2:
+                    printk ("\n           ");
+                    cromwellError ();
+                    printk ("\n           Cannot write to device.");
+                    break;
+                case 3:
+                    printk ("\n           ");
+                    cromwellError ();
+                    printk ("\n           File size error : %u", fileSize);
+                    break;
+                case 4:
+                    printk ("\n           ");
+                    cromwellError ();
+                    printk ("\n           Invalid XBlast OS update file.");
+                    break;
+                case 5:
+                    printk ("\n           ");
+                    cromwellError ();
+                    printk ("\n           CRC mismatch.");
+                    break;
+                default:
+                    printk ("\n           ");
+                    cromwellError ();
+                    printk ("\n           Unknown error! Congrats, you're not supposed to be here.");
+                    break;
+            }
+        }
+        else if (res == -1) {
+            printk ("\n\n\n\n\n\n\n\n\n\n\n           ");
+            cromwellWarning ();
+            printk ("\n           Flashing aborted.");
+        }
+        else if (res == -2) {
+            printk ("\n\n\n\n\n\n\n\n\n\n\n           ");
+            cromwellWarning ();
+            printk ("\n           Erasing failed, please reflash.");
+        }
+        else if (res == -3) {
+            printk ("\n\n\n\n\n\n\n\n\n\n\n           ");
+            cromwellWarning ();
+            printk ("\n           Programming failed, please reflash.");
+        }
+        else {
+            printk ("\n           ");
+            cromwellSuccess ();
+            printk ("\n           Flashing successful!!!");
+        }
+        FlashFooter ();
+        return;
+}
