@@ -175,7 +175,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/risefall.o
 ifeq ($(ETHERBOOT), yes)
 OBJECTS-CROM += $(TOPDIR)/obj/nfs.o
 OBJECTS-CROM += $(TOPDIR)/obj/nic.o
-OBJECTS-CROM += $(TOPDIR)/obj/osloader.o
+#OBJECTS-CROM += $(TOPDIR)/obj/osloader.o
 OBJECTS-CROM += $(TOPDIR)/obj/xbox.o
 OBJECTS-CROM += $(TOPDIR)/obj/forcedeth.o
 OBJECTS-CROM += $(TOPDIR)/obj/xbox_misc.o
@@ -185,8 +185,8 @@ OBJECTS-CROM += $(TOPDIR)/obj/xbox_main.o
 OBJECTS-CROM += $(TOPDIR)/obj/elf.o
 endif
 
-SUBDIRS += tcpListener networktools
-OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+#SUBDIRS += networktools #tcpListener
+OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
 OBJECTS-CROM += $(OBJECTS-LWIP)
 
 RESOURCES = $(TOPDIR)/obj/backdrop.elf

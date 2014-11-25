@@ -4,28 +4,28 @@
 #include "elf.h"
 #include "elf_boot.h"
 
-#define    ELF_MAGIC    0x464C457FL    /* e_ident[0:3], little-endian */
+#define	ELF_MAGIC	0x464C457FL	/* e_ident[0:3], little-endian */
 
 /* Most of this things are copied from etherboot.h in the mknbi sources */
 
 struct segoff
 {
-    unsigned short    offset, segment;
+	unsigned short	offset, segment;
 };
 
 struct imgheader
 {
-    unsigned long    magic;
-    unsigned long    length;
-    struct segoff    location;
-    struct segoff    execaddr;
+	unsigned long	magic;
+	unsigned long	length;
+	struct segoff	location;
+	struct segoff	execaddr;
 };
 
 union infoblock
 {
-    unsigned char        c[512];
-    struct imgheader    img;
-    Elf32_Ehdr            ehdr;
+	unsigned char		c[512];
+	struct imgheader	img;
+	Elf32_Ehdr			ehdr;
 };
 
 /* These are determined by mknbi.pl. If that changes, so must this. */

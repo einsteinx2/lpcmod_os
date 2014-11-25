@@ -74,16 +74,16 @@ extern segoff_t _trivial_irq_chain_to;
 extern uint8_t _trivial_irq_chain;
 extern void _trivial_irq_handler_end;
 #define TRIVIAL_IRQ_HANDLER_SIZE \
-    ((uint32_t)( &_trivial_irq_handler_end - &_trivial_irq_handler_start ))
+	((uint32_t)( &_trivial_irq_handler_end - &_trivial_irq_handler_start ))
 
 /* Function prototypes
  */
 int install_irq_handler ( irq_t irq, segoff_t *handler,
-              uint8_t *previously_enabled,
-              segoff_t *previous_handler );
+			  uint8_t *previously_enabled,
+			  segoff_t *previous_handler );
 int remove_irq_handler ( irq_t irq, segoff_t *handler,
-             uint8_t *previously_enabled,
-             segoff_t *previous_handler );
+			 uint8_t *previously_enabled,
+			 segoff_t *previous_handler );
 int install_trivial_irq_handler ( irq_t irq );
 int remove_trivial_irq_handler ( irq_t irq );
 int trivial_irq_triggered ( irq_t irq );

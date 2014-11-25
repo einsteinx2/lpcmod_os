@@ -156,8 +156,8 @@ void enableNetflash (void *whatever) {
     VIDEO_ATTR = 0xffef37;
     printk ("\n\n\n\n\n\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
-    initialiseNetwork ();
-    netFlash ();
+    //initialiseNetwork ();
+    //netFlash ();
     etherboot();
 #endif
 }
