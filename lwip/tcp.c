@@ -1034,6 +1034,7 @@ void
 tcp_err(struct tcp_pcb *pcb,
    void (* errf)(void *arg, err_t err))
 {
+    printk("tcp_err");
   pcb->errf = errf;
 }
 
@@ -1126,7 +1127,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   /* if there is an outstanding delayed ACKs, send it */
   if (pcb->state != TIME_WAIT &&
      pcb->state != LISTEN &&
-     pcb->flags & TF_ACK_DELAY) {
+     (pcb->flags & TF_ACK_DELAY)) {
     pcb->flags |= TF_ACK_NOW;
     tcp_output(pcb);
   }  

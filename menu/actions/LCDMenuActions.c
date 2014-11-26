@@ -11,6 +11,7 @@
 #include "LCDMenuActions.h"
 #include "lpcmod_v1.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "TextMenu.h"
 
 void LCDToggleEN5V(void * itemStr){
     LPCmodSettings.LCDsettings.enable5V = LPCmodSettings.LCDsettings.enable5V? 0 : 1;
@@ -71,7 +72,7 @@ void editCustomString0(void *whatever){
     if(LPCmodSettings.LCDsettings.customTextBoot){
         line = 0;
     }
-    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0, LPCmodSettings.LCDsettings.lineLength, line);
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     if(LPCmodSettings.LCDsettings.customTextBoot){
         xLCD.PrintLine0(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString0);
     }
@@ -85,7 +86,7 @@ void editCustomString1(void *whatever){
     if(LPCmodSettings.LCDsettings.customTextBoot){
         line = 1;
     }
-    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString1, LPCmodSettings.LCDsettings.lineLength, line);
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString1, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     if(LPCmodSettings.LCDsettings.customTextBoot){
         xLCD.PrintLine1(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString1);
     }
@@ -99,7 +100,7 @@ void editCustomString2(void *whatever){
     if(LPCmodSettings.LCDsettings.customTextBoot){
         line = 2;
     }
-    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString2, LPCmodSettings.LCDsettings.lineLength, line);
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString2, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     if(LPCmodSettings.LCDsettings.customTextBoot){
         xLCD.PrintLine2(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString2);
     }
@@ -110,7 +111,7 @@ void editCustomString2(void *whatever){
 
 void editCustomString3(void *whatever){
     u8 line = 3;
-    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength, line);
+    OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     if(LPCmodSettings.LCDsettings.customTextBoot){
         xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
     }

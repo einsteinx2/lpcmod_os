@@ -18,8 +18,28 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->OSsettings.bootTimeout = BOOT_TIMEWAIT;
     LPCmodSettings->OSsettings.LEDColor = LED_GREEN;    //Set for next boot
     LPCmodSettings->OSsettings.TSOPcontrol = 0;
-    LPCmodSettings->OSsettings.enableNetwork = 0;
-    LPCmodSettings->OSsettings.useDHCP = 0;
+    LPCmodSettings->OSsettings.enableNetwork = 1;
+    LPCmodSettings->OSsettings.useDHCP = 1;
+    LPCmodSettings->OSsettings.staticIP[0] = 192;
+    LPCmodSettings->OSsettings.staticIP[1] = 168;
+    LPCmodSettings->OSsettings.staticIP[2] = 0;
+    LPCmodSettings->OSsettings.staticIP[3] = 250;
+    LPCmodSettings->OSsettings.staticGateway[0] = 192;
+    LPCmodSettings->OSsettings.staticGateway[1] = 168;
+    LPCmodSettings->OSsettings.staticGateway[2] = 0;
+    LPCmodSettings->OSsettings.staticGateway[3] = 1;
+    LPCmodSettings->OSsettings.staticMask[0] = 255;
+    LPCmodSettings->OSsettings.staticMask[1] = 255;
+    LPCmodSettings->OSsettings.staticMask[2] = 255;
+    LPCmodSettings->OSsettings.staticMask[3] = 0;
+    LPCmodSettings->OSsettings.staticDNS1[0] = 192;
+    LPCmodSettings->OSsettings.staticDNS1[1] = 168;
+    LPCmodSettings->OSsettings.staticDNS1[2] = 0;
+    LPCmodSettings->OSsettings.staticDNS1[3] = 1;
+    LPCmodSettings->OSsettings.staticDNS2[0] = 192;
+    LPCmodSettings->OSsettings.staticDNS2[1] = 168;
+    LPCmodSettings->OSsettings.staticDNS2[2] = 0;
+    LPCmodSettings->OSsettings.staticDNS2[3] = 1;
 
 
     LPCmodSettings->LCDsettings.migrateLCD = 0;

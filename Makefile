@@ -109,6 +109,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/SystemMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/ToolsMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/DeveloperMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/ModchipMenuInit.o
+OBJECTS-CROM += $(TOPDIR)/obj/NetworkMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/MenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/VideoMenuActions.o
@@ -130,6 +131,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/ModchipMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/SystemMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/DeveloperMenuActions.o
+OBJECTS-CROM += $(TOPDIR)/obj/NetworkMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LoadLinux.o
 OBJECTS-CROM += $(TOPDIR)/obj/setup.o
 OBJECTS-CROM += $(TOPDIR)/obj/iso9660.o
@@ -186,7 +188,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/elf.o
 endif
 
 #SUBDIRS += networktools #tcpListener
-OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,dns.o ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
 OBJECTS-CROM += $(OBJECTS-LWIP)
 
 RESOURCES = $(TOPDIR)/obj/backdrop.elf

@@ -57,6 +57,7 @@ int etherboot(void)
 			eth_load(dev);
 		}
 	}
+	return 0;   //Keep compiler happy
 }
 
 int pcibios_read_config_byte(unsigned int bus, unsigned int device_fn, unsigned int where, uint8_t *value)

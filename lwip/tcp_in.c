@@ -562,7 +562,7 @@ tcp_process(struct tcp_pcb *pcb)
     }
     break;
   case SYN_RCVD:
-    if (flags & TCP_ACK &&
+    if ((flags & TCP_ACK) &&
        !(flags & TCP_RST)) {
       if (TCP_SEQ_LT(pcb->lastack, ackno) &&
           TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) {
@@ -598,7 +598,7 @@ tcp_process(struct tcp_pcb *pcb)
   case FIN_WAIT_1:
     tcp_receive(pcb);
     if (flags & TCP_FIN) {
-      if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
+      if ((flags & TCP_ACK) && ackno == pcb->snd_nxt) {
         LWIP_DEBUGF(TCP_DEBUG,
          ("TCP connection closed %d -> %d.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
   tcp_ack_now(pcb);
@@ -610,7 +610,7 @@ tcp_process(struct tcp_pcb *pcb)
   tcp_ack_now(pcb);
   pcb->state = CLOSING;
       }
-    } else if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
+    } else if ((flags & TCP_ACK) && ackno == pcb->snd_nxt) {
       pcb->state = FIN_WAIT_2;
     }
     break;
@@ -627,7 +627,7 @@ tcp_process(struct tcp_pcb *pcb)
     break;
   case CLOSING:
     tcp_receive(pcb);
-    if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
+    if ((flags & TCP_ACK) && ackno == pcb->snd_nxt) {
       LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_ack_now(pcb);
       tcp_pcb_purge(pcb);
@@ -638,7 +638,7 @@ tcp_process(struct tcp_pcb *pcb)
     break;
   case LAST_ACK:
     tcp_receive(pcb);
-    if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
+    if ((flags & TCP_ACK) && ackno == pcb->snd_nxt) {
       LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       pcb->state = CLOSED;
       recv_flags = TF_CLOSED;

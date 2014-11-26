@@ -166,17 +166,17 @@ void resetSettings(void *whatever){
 void editBIOSName(void *bankID){
     switch(*(u8 *)bankID){
         case BNK512:
-            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH, 3);
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH, 3, FULL_KEYBOARD);
             break;
         case BNK256:
-            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH, 3);
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName1, BIOSNAMEMAXLENGTH, 3, FULL_KEYBOARD);
             break;
         case BNKTSOPSPLIT0:
         case BNKFULLTSOP:
-            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName2, BIOSNAMEMAXLENGTH, 3);
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName2, BIOSNAMEMAXLENGTH, 3, FULL_KEYBOARD);
             break;
         default:        //BNKTSOPSPLIT1
-            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName3, BIOSNAMEMAXLENGTH, 3);
+            OnScreenKeyboard(LPCmodSettings.OSsettings.biosName3, BIOSNAMEMAXLENGTH, 3, FULL_KEYBOARD);
             break;
     }
     if(LPCmodSettings.LCDsettings.customTextBoot)

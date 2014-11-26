@@ -32,7 +32,7 @@ int hostnamelen = 0;
 static uint32_t xid;
 unsigned char *end_of_rfc1533 = NULL;
 static int vendorext_isvalid;
-static const unsigned char vendorext_magic[] = {0xE4,0x45,0x74,0x68}; /* äEth */
+static const unsigned char vendorext_magic[] = {0xE4,0x45,0x74,0x68}; /* ï¿½Eth */
 static const unsigned char broadcast[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 static const in_addr zeroIP = { 0L };
 
@@ -287,6 +287,7 @@ int eth_load(struct dev *dev __unused)
 	interruptible_sleep(2);		/* lay off the server for a while */
 	longjmp(restart_etherboot, -1);
 #endif
+	return 0;   //Keep compiler happy
 }
 
 

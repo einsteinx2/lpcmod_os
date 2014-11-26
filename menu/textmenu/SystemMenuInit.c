@@ -77,6 +77,15 @@ TEXTMENU *SystemMenuInit(void) {
     itemPtr->functionDataPtr = (void *)VideoMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
+    //VIDEO SETTINGS MENU
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Network settings");
+    itemPtr->szParameter[0]=0;
+    itemPtr->functionPtr=DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)NetworkMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
     //DVD REGION SETTINGS MENU
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

@@ -376,11 +376,12 @@ typedef struct _OSsettings {
     char    biosName5[21];        //Reserved for future use.
     char    biosName6[21];        //Reserved for future use.
     char    biosName7[21];        //Reserved for future use.
-    u8    reserved2[34];
+    u8    reserved2[30];
     u8    enableNetwork;        //Future use. For now, network is enabled only by NetFlash or WebUpdate
     u8    useDHCP;        //Self Explanatory
     u8    staticIP[4];        //Only useful when useDHCP is set to false.
     u8    staticGateway[4];    //Only useful when useDHCP is set to false.
+    u8    staticMask[4];       //Only useful when useDHCP is set to false.
     u8    staticDNS1[4];        //Only useful when useDHCP is set to false.
     u8    staticDNS2[4];        //Only useful when useDHCP is set to false.
 }__attribute__((packed))_OSsettings;                //For a total of 256 bytes

@@ -30,8 +30,9 @@ struct elf_state
 #endif
 };
 
-static struct elf_state estate;
 #if 0
+static struct elf_state estate;
+
 static void elf_boot(unsigned long machine, unsigned long entry)
 {
 	int result;
@@ -49,6 +50,7 @@ static void elf_boot(unsigned long machine, unsigned long entry)
 	longjmp(restart_etherboot, result);
 }
 #endif
+#if 0
 #if ELF_NOTES
 static int elf_prep_segment(
 	unsigned long start __unused, unsigned long mid __unused, unsigned long end __unused,
@@ -133,7 +135,7 @@ static void process_elf_notes(unsigned char *header,
 	}
 }
 #endif
-#if 0
+
 #ifdef	ELF_IMAGE
 static sector_t elf32_download(unsigned char *data, unsigned int len, int eof);
 static inline os_download_t elf32_probe(unsigned char *data, unsigned int len)

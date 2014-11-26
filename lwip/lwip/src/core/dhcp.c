@@ -94,7 +94,7 @@ static err_t dhcp_discover(struct netif *netif);
 static err_t dhcp_select(struct netif *netif);
 static void dhcp_check(struct netif *netif);
 static void dhcp_bind(struct netif *netif);
-static err_t dhcp_decline(struct netif *netif);
+//static err_t dhcp_decline(struct netif *netif);
 static err_t dhcp_rebind(struct netif *netif);
 static err_t dhcp_release(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, unsigned char new_state);
@@ -104,7 +104,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
 static err_t dhcp_unfold_reply(struct dhcp *dhcp);
 static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type);
 static u8_t dhcp_get_option_byte(u8_t *ptr);
-static u16_t dhcp_get_option_short(u8_t *ptr);
+//static u16_t dhcp_get_option_short(u8_t *ptr);
 static u32_t dhcp_get_option_long(u8_t *ptr);
 static void dhcp_free_reply(struct dhcp *dhcp);
 
@@ -1397,6 +1397,7 @@ static u8_t dhcp_get_option_byte(u8_t *ptr)
  *
  * @return byte value at the given address.
  */
+/*
 static u16_t dhcp_get_option_short(u8_t *ptr)
 {
   u16_t value;
@@ -1405,6 +1406,7 @@ static u16_t dhcp_get_option_short(u8_t *ptr)
   LWIP_DEBUGF(DHCP_DEBUG, ("option short value=%u\n", value));
   return value;
 }
+*/
 
 /**
  * Return the 32-bit value of DHCP option data.

@@ -167,11 +167,11 @@ http_poll(void *arg, struct tcp_pcb *pcb)
   
   /*  printf("Polll\n");*/
   if (hs == NULL) {
-	  printk("p");
+	  printk("http_poll");
 	  /*tcp_abort(pcb);*/
     return ERR_OK;
   } else {
-	  printk("P");
+	  printk("HTTP_POLL");
     ++hs->retries;
     if (hs->retries == 4) {
       tcp_abort(pcb);
@@ -209,7 +209,7 @@ handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 		if (strncmp (hs->lineBuf, "GET /", 4) == 0) {
 			unsigned long fno = simple_strtoul (&hs->lineBuf[5], NULL, NULL);
 			if (fno > 2) {
-				fno = 4; /* 404 */
+				fno = 3; /* 404 */
 			}
 			hs->file = http_files[fno].data;
 			hs->left = http_files[fno].len;
@@ -231,7 +231,7 @@ handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 			} else {
 				send_data(pcb, hs);
 				tcp_poll(pcb, http_poll, 4);
-				printk("\n  handle_line");
+				//printk("\n  handle_line");
 				tcp_sent(pcb, http_sent);
 				hs->gotfirst = 0;
 			}
@@ -440,6 +440,7 @@ httpd_init(void)
   tcp_bind(pcb, IP_ADDR_ANY, 80);
   pcb = tcp_listen(pcb);
   tcp_accept(pcb, http_accept);
+  printk("httpd_init");
   cromwellSuccess();
   //downloadingLED();
 }

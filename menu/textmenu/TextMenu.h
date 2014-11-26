@@ -26,6 +26,8 @@ struct TEXTMENU;
 #define MENUCAPTIONSIZE 51
 #define NOSELECTERROR   1
 
+#define FULL_KEYBOARD   0
+
 extern int breakOutOfMenu;
 
 typedef struct TEXTMENUITEM {
