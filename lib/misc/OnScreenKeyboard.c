@@ -23,7 +23,7 @@ char ipKeypad[4][3] = {{'1','2','3'},
 
 void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     bool exit = false;
-//    bool result = false;        //Start assuming user will not change string.
+//  bool result = false;        //Start assuming user will not change string.
     u8 cursorposX = 0;
     u8 cursorposY = 0;
     u8 textpos = 0;
@@ -31,6 +31,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     bool shift = false;
     bool refresh = true;
     u8 rowLength;
+    char ipFieldLength, dotCount = 3;     //Assume IP string is properly constructed.
     //Array of function pointers to let "line" value decide which function needs to be called.
     void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
     char oldString[20];
@@ -123,8 +124,10 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
         }
 
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){   //Backspace
-            if(textpos > 0){
+            if(textpos > 0){                                       //Full keyboard
                 textpos -= 1;                               //Move cursor one position to the left
+                if(string[textpos] == '.')
+                    dotCount -= 1;                          //Don't care if updated in full keyboard mode.
                 string[textpos] = '\0';                     //Erase character
                 refresh = true;
             }
@@ -132,17 +135,43 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
 
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){   //Select character
             if(textpos < maxLength){
-                if(shift){
-                    string[textpos] = shiftkeymap[cursorposY][cursorposX];
+                if(kbType == IP_KEYPAD){
+                    ipFieldLength = 0;
+                    if(textpos > 0){
+                        if(string[textpos - 1] != '.'){       //IP field already contains 1 digit, we're currently adding another so total length will be 2.
+                            ipFieldLength++;
+                            if(textpos > 1){
+                                if(string[textpos - 2] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
+                                    ipFieldLength++;
+                                }
+                            }
+                        }
+                    }
+                    if(dotCount < 3 && ipFieldLength == 2){             //If field contains 3 digit, add '.' automatically if not in the last IP field.
+                        string[textpos] = ipKeypad[cursorposY][cursorposX];
+                        string[textpos + 1] = '.';
+                    }
+                    else if(dotCount <= 3 && ipFieldLength < 2){        //Normal IP field write.
+                        string[textpos] = ipKeypad[cursorposY][cursorposX];
+                    }
+
                 }
-                else {
-                    string[textpos] = keymap[cursorposY][cursorposX];
+                else{
+                    if(shift){
+                        string[textpos] = shiftkeymap[cursorposY][cursorposX];
+                    }
+                    else {
+                        string[textpos] = keymap[cursorposY][cursorposX];
+                    }
                 }
-                                           //Move cursor one position to the right
                 refresh = true;
             }
             if(textpos < maxLength - 1)
             	textpos += 1;
+            if(string[textpos] == '.' && kbType == IP_KEYPAD){   //Moving cursor forward, we stumbled on a dot. just skip to next digit.
+                textpos += 1;
+                dotCount += 1;
+            }
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1){
@@ -163,14 +192,14 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1){
             if(cursorposX == 0)         //Already at the first column
-                cursorposX = 9;         //Roll to last
+                cursorposX = rowLength - 1;         //Roll to last
             else
                 cursorposX -= 1;
             refresh = true;
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1){
-            if(cursorposX == 9)         //Already at the last column
+            if(cursorposX == (rowLength - 1))         //Already at the last column
                 cursorposX = 0;         //Roll to first
             else
                 cursorposX += 1;
