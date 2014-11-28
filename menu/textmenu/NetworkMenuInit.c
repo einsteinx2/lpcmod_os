@@ -40,7 +40,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticIP[1],
              LPCmodSettings.OSsettings.staticIP[2],
              LPCmodSettings.OSsettings.staticIP[3]);
-    itemPtr->functionPtr = editStaticIPfield;
+    itemPtr->functionPtr = editStaticIP;
     itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticIP;
     TextMenuAddItem (menuPtr, itemPtr);
 
@@ -52,7 +52,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticMask[1],
              LPCmodSettings.OSsettings.staticMask[2],
              LPCmodSettings.OSsettings.staticMask[3]);
-    itemPtr->functionPtr = editStaticIPfield;
+    itemPtr->functionPtr = editStaticMask;
     itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticMask;
     TextMenuAddItem (menuPtr, itemPtr);
 
@@ -64,7 +64,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticGateway[1],
              LPCmodSettings.OSsettings.staticGateway[2],
              LPCmodSettings.OSsettings.staticGateway[3]);
-    itemPtr->functionPtr = editStaticIPfield;
+    itemPtr->functionPtr = editStaticGateway;
     itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticGateway;
     TextMenuAddItem (menuPtr, itemPtr);
 
@@ -76,7 +76,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticDNS1[1],
              LPCmodSettings.OSsettings.staticDNS1[2],
              LPCmodSettings.OSsettings.staticDNS1[3]);
-    itemPtr->functionPtr = editStaticIPfield;
+    itemPtr->functionPtr = editStaticDNS1;
     itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticDNS1;
     TextMenuAddItem (menuPtr, itemPtr);
 
@@ -88,7 +88,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticDNS2[1],
              LPCmodSettings.OSsettings.staticDNS2[2],
              LPCmodSettings.OSsettings.staticDNS2[3]);
-    itemPtr->functionPtr = editStaticIPfield;
+    itemPtr->functionPtr = editStaticDNS2;
     itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticDNS2;
     TextMenuAddItem (menuPtr, itemPtr);
 

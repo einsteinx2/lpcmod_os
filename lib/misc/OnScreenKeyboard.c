@@ -57,7 +57,10 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
             VIDEO_CURSOR_POSX=75;
             VIDEO_CURSOR_POSY=50;
-            printk("\n\n\n\n\2                 %s", string);
+            if(kbType == IP_KEYPAD)
+                printk("\n\n\n\n\2                        %s", string);
+            else
+                printk("\n\n\n\n\2                 %s", string);
             VIDEO_ATTR=0xffffffff;
             if(kbType == IP_KEYPAD){
                 printk("\n\n\n                                  ");
@@ -67,7 +70,10 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             }
             for(y = 0; y < 4; y++){
                 if(kbType == IP_KEYPAD){
-                    printk("\n\n\n                                  ");
+                    if(y == 3)
+                        printk("\n\n\n                                         ");      //Add extra space to align with other rows
+                    else
+                        printk("\n\n\n                                        ");
                 }
                 else{
                     printk("\n\n\n           ");
@@ -158,6 +164,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                         }
                         else if(dotCount <= 3 && ipFieldLength < 2){        //Normal IP field write.
                             string[textpos] = ipKeypad[cursorposY][cursorposX];
+                            string[textpos + 1] = '\0';               //Safe in this situation. Will not write outside buffer because of maxLength's check.
                         }
                     }
                     else{

@@ -13,8 +13,13 @@
 #define IP_KEYPAD   1
 
 void toggleUseDHCP(void * itemStr);
+void editStaticIP(void * itemStr);
+void editStaticMask(void * itemStr);
+void editStaticGateway(void * itemStr);
+void editStaticDNS1(void * itemStr);
+void editStaticDNS2(void * itemStr);
 
-void editStaticIPfield(void * ip);
+bool editIPfield(u8 * addr);
 
 u8 myAtoi(char *str);
 

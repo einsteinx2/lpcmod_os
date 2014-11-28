@@ -14,10 +14,60 @@ void toggleUseDHCP(void * itemStr) {
     sprintf(itemStr,"%s",LPCmodSettings.OSsettings.useDHCP? "Yes" : "No");
 }
 
-void editStaticIPfield(void * ip) {
-    u8 * addr = (u8 *) ip;
+void editStaticIP(void * itemStr){
+    if(editIPfield(LPCmodSettings.OSsettings.staticIP)){
+        sprintf(itemStr, "%u.%u.%u.%u",
+                LPCmodSettings.OSsettings.staticIP[0],
+                LPCmodSettings.OSsettings.staticIP[1],
+                LPCmodSettings.OSsettings.staticIP[2],
+                LPCmodSettings.OSsettings.staticIP[3]);
+    }
+}
+
+void editStaticMask(void * itemStr){
+    if(editIPfield(LPCmodSettings.OSsettings.staticMask)){
+        sprintf(itemStr, "%u.%u.%u.%u",
+                LPCmodSettings.OSsettings.staticMask[0],
+                LPCmodSettings.OSsettings.staticMask[1],
+                LPCmodSettings.OSsettings.staticMask[2],
+                LPCmodSettings.OSsettings.staticMask[3]);
+    }
+}
+
+void editStaticGateway(void * itemStr){
+    if(editIPfield(LPCmodSettings.OSsettings.staticGateway)){
+        sprintf(itemStr, "%u.%u.%u.%u",
+                LPCmodSettings.OSsettings.staticGateway[0],
+                LPCmodSettings.OSsettings.staticGateway[1],
+                LPCmodSettings.OSsettings.staticGateway[2],
+                LPCmodSettings.OSsettings.staticGateway[3]);
+    }
+}
+
+void editStaticDNS1(void * itemStr){
+    if(editIPfield(LPCmodSettings.OSsettings.staticDNS1)){
+        sprintf(itemStr, "%u.%u.%u.%u",
+                LPCmodSettings.OSsettings.staticDNS1[0],
+                LPCmodSettings.OSsettings.staticDNS1[1],
+                LPCmodSettings.OSsettings.staticDNS1[2],
+                LPCmodSettings.OSsettings.staticDNS1[3]);
+    }
+}
+
+void editStaticDNS2(void * itemStr){
+    if(editIPfield(LPCmodSettings.OSsettings.staticDNS2)){
+        sprintf(itemStr, "%u.%u.%u.%u",
+                LPCmodSettings.OSsettings.staticDNS2[0],
+                LPCmodSettings.OSsettings.staticDNS2[1],
+                LPCmodSettings.OSsettings.staticDNS2[2],
+                LPCmodSettings.OSsettings.staticDNS2[3]);
+    }
+}
+
+bool editIPfield(u8 * addr) {
     u8 cursorPos = 0, byteOffset = 0, tempAddr[4], countDots = 0, lastDotPos;
     char tempStringIP[16];      //+1 for terminating character
+    bool result = false;
 
     sprintf(tempStringIP, "%u.%u.%u.%u", addr[0], addr[1], addr[2], addr[3]);
     OnScreenKeyboard(tempStringIP, 15, 3, IP_KEYPAD);
@@ -37,7 +87,9 @@ void editStaticIPfield(void * ip) {
         addr[1] = tempAddr[1];
         addr[2] = tempAddr[2];
         addr[3] = tempAddr[3];
+        result = true;
     }
+    return result;
 }
 
 u8 myAtoi(char *str)

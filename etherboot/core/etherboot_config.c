@@ -121,7 +121,7 @@ static int pci_probe(struct dev *dev, const char *type_name)
 			state->advance = (dev->index == -1);
 			return PROBE_WORKED;
 		}
-		putchar('\n');
+		printk("\n\n\n");
 	}
 	return PROBE_FAILED;
 }

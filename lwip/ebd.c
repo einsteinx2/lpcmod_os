@@ -140,7 +140,7 @@ run_lwip (void) {
     udp_init ();
     tcp_init ();
     etharp_init ();
-    printk ("            TCP/IP initialized.\n");
+    printk ("\n\n            TCP/IP initialized.\n");
 
     /*	IP4_ADDR(&gw, 192,168,99,1);
      IP4_ADDR(&ipaddr, 192,168,99,2);
@@ -166,9 +166,10 @@ run_lwip (void) {
     else {
         //Not necessary, but polite.
         dhcp_stop (&netif);
-        netif_set_ipaddr (&netif, &ipaddr);
-        netif_set_netmask (&netif, &netmask);
-        netif_set_gw (&netif, &gw);
+        netif_set_addr(&netif, &ipaddr, &netmask, &gw);
+        //netif_set_ipaddr (&netif, &ipaddr);
+        //netif_set_netmask (&netif, &netmask);
+        //netif_set_gw (&netif, &gw);
         dhcp_inform (&netif);
     }
 
@@ -181,18 +182,13 @@ run_lwip (void) {
     while (1) {
         //printk ("while(1)");
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
-            printk ("!ebd_wait");
+            //printk ("!ebd_wait");
             if (divisor++ == 60 * 4) {
                 if (first) {
                     if (netif.dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
                         printk ("            DHCP FAILED - Falling back to 192.168.0.250\n");
                         dhcp_stop (&netif);
-                        IP4_ADDR(&gw, 192, 168, 0, 1);
-                        IP4_ADDR(&ipaddr, 192, 168, 0, 250);
-                        IP4_ADDR(&netmask, 255, 255, 255, 0);
-                        netif_set_ipaddr (&netif, &ipaddr);
-                        netif_set_netmask (&netif, &netmask);
-                        netif_set_gw (&netif, &gw);
+                        netif_set_addr(&netif, &ipaddr, &netmask, &gw);
                     }
                     printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
                             ((netif.ip_addr.addr) >> 24 & 0xff),
