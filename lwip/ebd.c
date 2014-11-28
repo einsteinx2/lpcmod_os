@@ -165,6 +165,10 @@ run_lwip (void) {
         dhcp_start (&netif);
     else {
         //Not necessary, but polite.
+        dhcp_stop (&netif);
+        netif_set_ipaddr (&netif, &ipaddr);
+        netif_set_netmask (&netif, &netmask);
+        netif_set_gw (&netif, &gw);
         dhcp_inform (&netif);
     }
 
@@ -175,7 +179,7 @@ run_lwip (void) {
     int divisor = 0;
     int first = 1;
     while (1) {
-        printk ("while(1)");
+        //printk ("while(1)");
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
             printk ("!ebd_wait");
             if (divisor++ == 60 * 4) {

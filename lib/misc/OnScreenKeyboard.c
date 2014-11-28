@@ -30,6 +30,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     u8 x,y;
     bool shift = false;
     bool refresh = true;
+    bool charAccepted = false;
     u8 rowLength;
     char ipFieldLength, dotCount = 3;     //Assume IP string is properly constructed.
     //Array of function pointers to let "line" value decide which function needs to be called.
@@ -50,7 +51,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
             if(kbType == IP_KEYPAD)
-                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace");
+                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace, %u  %u  %u", textpos, dotCount, ipFieldLength);
             else
                 printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
@@ -134,6 +135,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
         }
 
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1){   //Select character
+            charAccepted = false;
             if(textpos < maxLength){
                 if(kbType == IP_KEYPAD){
                     ipFieldLength = 0;
@@ -147,16 +149,23 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                             }
                         }
                     }
-                    if(dotCount < 3 && ipFieldLength == 2){             //If field contains 3 digit, add '.' automatically if not in the last IP field.
-                        string[textpos] = ipKeypad[cursorposY][cursorposX];
-                        string[textpos + 1] = '.';
+                    if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.') ||
+                       (textpos > 0 && string[textpos - 1] != '.' && ipKeypad[cursorposY][cursorposX] != '.')){
+                        charAccepted = true;
+                        if(dotCount < 3 && ipFieldLength == 2){             //If field contains 3 digit, add '.' automatically if not in the last IP field.
+                            string[textpos] = ipKeypad[cursorposY][cursorposX];
+                            string[textpos + 1] = '.';
+                        }
+                        else if(dotCount <= 3 && ipFieldLength < 2){        //Normal IP field write.
+                            string[textpos] = ipKeypad[cursorposY][cursorposX];
+                        }
                     }
-                    else if(dotCount <= 3 && ipFieldLength < 2){        //Normal IP field write.
-                        string[textpos] = ipKeypad[cursorposY][cursorposX];
+                    else{
+                        charAccepted = false;
                     }
-
                 }
                 else{
+                    charAccepted = true;
                     if(shift){
                         string[textpos] = shiftkeymap[cursorposY][cursorposX];
                     }
@@ -166,24 +175,30 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                 }
                 refresh = true;
             }
-            if(textpos < maxLength - 1)
-            	textpos += 1;
-            if(string[textpos] == '.' && kbType == IP_KEYPAD){   //Moving cursor forward, we stumbled on a dot. just skip to next digit.
-                textpos += 1;
-                dotCount += 1;
+            if(charAccepted){
+                if(textpos < maxLength - 1)
+            	    textpos += 1;
+                if(string[textpos] == '.' && kbType == IP_KEYPAD){   //Moving cursor forward, we stumbled on a dot. just skip to next digit.
+                    textpos += 1;
+                    dotCount += 1;
+                }
             }
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1){
-            if(cursorposY == 0)         //Already at the top line
-                cursorposY = 3;         //Roll to last
+            if(cursorposY == 0){         //Already at the top line
+            	if(kbType == IP_KEYPAD && cursorposX == 0)
+            	    cursorposY = 2;
+            	else
+                    cursorposY = 3;         //Roll to last
+            }
             else
                 cursorposY -= 1;
             refresh = true;
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1){
-            if(cursorposY == 3)         //Already at the last line
+            if((kbType == IP_KEYPAD && cursorposY == 2 && cursorposX == 0) || cursorposY == 3)         //Already at the last line
                 cursorposY = 0;         //Roll to top
             else
                 cursorposY += 1;
@@ -191,7 +206,9 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1){
-            if(cursorposX == 0)         //Already at the first column
+            if(kbType == IP_KEYPAD && cursorposY == 3 && cursorposX == 1)
+            	cursorposX = rowLength - 1;
+            else if(cursorposX == 0)         //Already at the first column
                 cursorposX = rowLength - 1;         //Roll to last
             else
                 cursorposX -= 1;
@@ -199,7 +216,9 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
         }
 
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1){
-            if(cursorposX == (rowLength - 1))         //Already at the last column
+            if(kbType == IP_KEYPAD && cursorposY == 3 && cursorposX == (rowLength - 1))
+            	cursorposX = 1;
+            else if(cursorposX == (rowLength - 1))         //Already at the last column
                 cursorposX = 0;         //Roll to first
             else
                 cursorposX += 1;
