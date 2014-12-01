@@ -74,9 +74,9 @@ bool editIPfield(u8 * addr) {
     while(tempStringIP[cursorPos] != '\0') {
 
         if(cursorPos == 0 && tempStringIP[cursorPos] != '.')      //First byte doesn't have a '.' in before.
-            tempAddr[byteOffset++] = myAtoi(tempStringIP);
+            tempAddr[byteOffset++] = (u8)myAtoi(tempStringIP);
         else if(tempStringIP[cursorPos] == '.' && tempStringIP[cursorPos + 1] != '.' && tempStringIP[cursorPos + 1] != '\0') {       //Others do.
-            tempAddr[byteOffset++] = myAtoi(&tempStringIP[cursorPos + 1]);
+            tempAddr[byteOffset++] = (u8)myAtoi(&tempStringIP[cursorPos + 1]);
             countDots += 1;
             lastDotPos = cursorPos;
         }
@@ -92,7 +92,7 @@ bool editIPfield(u8 * addr) {
     return result;
 }
 
-u8 myAtoi(char *str)
+u16 myAtoi(char *str)
 {
     u8 i, res = 0;
 

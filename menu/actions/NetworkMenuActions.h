@@ -21,6 +21,6 @@ void editStaticDNS2(void * itemStr);
 
 bool editIPfield(u8 * addr);
 
-u8 myAtoi(char *str);
+u16 myAtoi(char *str);
 
 #endif

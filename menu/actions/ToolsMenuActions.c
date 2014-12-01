@@ -317,3 +317,39 @@ void loadXBlastcfg(void * ignored){
 
     ToolFooter();
 }
+
+void prevA19controlModBootValue(void * itemPtr){
+    switch(A19controlModBoot){
+        case TSOPFULLBOOT:
+            A19controlModBoot = BNKTSOPSPLIT0;
+            sprintf(itemPtr, "%s", "Bank0");
+            break;
+        case BNKTSOPSPLIT0:
+            A19controlModBoot = BNKTSOPSPLIT1;
+            sprintf(itemPtr, "%s", "Bank1");
+            break;
+        case BNKTSOPSPLIT1:
+        default:
+            A19controlModBoot = TSOPFULLBOOT;
+            sprintf(itemPtr, "%s", "No");
+            break;
+    }
+}
+
+void nextA19controlModBootValue(void * itemPtr){
+    switch(A19controlModBoot){
+        case BNKTSOPSPLIT1:
+            A19controlModBoot = BNKTSOPSPLIT0;
+            sprintf(itemPtr, "%s", "Bank0");
+            break;
+        case TSOPFULLBOOT:
+            A19controlModBoot = BNKTSOPSPLIT1;
+            sprintf(itemPtr, "%s", "Bank1");
+            break;
+        case BNKTSOPSPLIT0:
+        default:
+            A19controlModBoot = TSOPFULLBOOT;
+            sprintf(itemPtr, "%s", "No");
+            break;
+    }
+}

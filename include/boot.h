@@ -362,11 +362,7 @@ typedef struct _OSsettings {
     u8    fanSpeed;        //Why not
     u8    bootTimeout;
     u8    LEDColor;
-    u8    TSOPcontrol;        //variable contains the following settings: bit0=active?
-                    //                                            bit1=Split4ways?
-                    //                                            bit2=A19 value
-                    //                                            bit3=A18 value
-                    //Make sure to mask properly when using this variable.
+    u8    TSOPcontrol;        //variable contains the following settings: bit0=active
     u8    reserved1[12];
     char    biosName0[21];        //512KB bank name. 20 characters max to properly display on LCD.
     char    biosName1[21];        //256KB bank name
@@ -472,6 +468,13 @@ u8 xF70FLPCRegister;
 bool TSOPRecoveryMode;
 
 u8 currentFlashBank;
+u8 A19controlModBoot;
+struct{
+    u8 GPOport : 4;
+    u8 GPIport : 2;
+    u8 EN_5V : 1;
+    u8 A19BufEn : 1;
+}__attribute__((packed))GenPurposeIOs;
 
 //To show/hide stuff from public releases. Set to 1 for now but will need to be changed to 0 soon.
 #if 1

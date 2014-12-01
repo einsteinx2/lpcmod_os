@@ -129,28 +129,10 @@ void switchOSBank (u8 bank) {
 //Use this function only when you're about to boot into another bank.
 void switchBootBank (u8 bank) {
     u8 resultBank = bank;
-    currentFlashBank = NOBNKID;         //We won't be coming back from this!
-    switch (bank) {
-        case BNKOS: //This one shouldn't happen but will boot to BNK512 in case.
-        case BNK512:
-            resultBank = XODUSBNK0MOD;
-            break;
-        case BNK256:
-            resultBank = XODUSBNK1MOD;
-            break;
-        case BNKTSOPSPLIT0:
-            resultBank = XODUSBNK0TSOP;
-            break;
-        case BNKTSOPSPLIT1:
-            resultBank = XODUSBNK1TSOP;
-            break;
-        default:
-            resultBank = bank; //Just pass what was input and hope for the best.
-            break;
-    }
-
-    x00FFLPCRegister = resultBank;            //Why even bother?
-    WriteToIO (XODUS_CONTROL, resultBank); // switch to proper bank from booting register
+    //currentFlashBank = NOBNKID;         //We won't be coming back from this!
+    if(bank > BOOTFROMTSOP)       //We're asked to boot from XBlast's flash
+        resultBank |= A19controlModBoot;  //Apply custom A19 control (if need be).
+    WriteToIO (XBLAST_CONTROL, resultBank); // switch to proper bank from booting register
 }
 
 void FlashFooter (void) {

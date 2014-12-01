@@ -10,6 +10,7 @@
 #define GROUNDA15 0x08 // Enable bit to ground TSOP signal
 #define GROUNDD0  0x04 // Enable bit to ground TSOP signal
 #define RELEASED0 0x00 // Does not interfere with A19control and A19value
+//Values used in Evolution-X dash to toggle banks.
 #define BNKFULLTSOP 0x40	//Make sure to drop D0, A19control and A19value(while we're at it)
 #define XODUSBNK0TSOP 0x45      //Values on XODUS_CONTROL register to switch banks on TSOP.
 #define XODUSBNK1TSOP 0x47      //D0 signal must be set to '1' when TSOP is split
@@ -42,13 +43,15 @@
 //0xF70E write register bits configuration
 #define OSBNKCTRLBIT    0x80u    //Bit that must be sent when selecting a flash bank other than BNKOS
 #define TSOPA19CTRLBIT  0x10u    //Bit to enable manual drive of the TSOP's A19 pin.
+#define OSGROUNDD0      0x04u    //Won't be used much here.
+#define TSOPFULLBOOT    0x00u
 #define BNKTSOPSPLIT0 0x10u
-#define BNKTSOPSPLIT1 0x12u
+#define BNKTSOPSPLIT1 0x18u
 #define NOBNKID  0xFF
 //XBlast Mod bank toggle values
-#define BNK512  0x80u
-#define BNK256  0x82u
-#define BNKOS  0x83u
+#define BNK512  0x84u
+#define BNK256  0x86u
+#define BNKOS  0x87u
 
 //0xF70F write register bits configuration
 #define GPO3_ON 0x80u

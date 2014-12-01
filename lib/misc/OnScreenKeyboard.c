@@ -2,6 +2,7 @@
 #include "video.h"
 #include "memory_layout.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "NetworkMenuActions.h"
 
 #define FULL_KEYBOARD   0
 #define IP_KEYPAD   1
@@ -33,6 +34,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     bool charAccepted = false;
     u8 rowLength;
     char ipFieldLength, dotCount = 3;     //Assume IP string is properly constructed.
+    char limitFieldString[4] = {0, 0, 0, 0};    //To check if user enters a number bigger than 255 in IP Keypad.
     //Array of function pointers to let "line" value decide which function needs to be called.
     void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
     char oldString[20];
@@ -155,16 +157,26 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                             }
                         }
                     }
-                    if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.') ||
-                       (textpos > 0 && string[textpos - 1] != '.' && ipKeypad[cursorposY][cursorposX] != '.')){
-                        charAccepted = true;
-                        if(dotCount < 3 && ipFieldLength == 2){             //If field contains 3 digit, add '.' automatically if not in the last IP field.
-                            string[textpos] = ipKeypad[cursorposY][cursorposX];
-                            string[textpos + 1] = '.';
-                        }
-                        else if(dotCount <= 3 && ipFieldLength < 3){        //Normal IP field write.
-                            string[textpos] = ipKeypad[cursorposY][cursorposX];
-                            string[textpos + 1] = '\0';               //Safe in this situation. Will not write outside buffer because of maxLength's check.
+                    if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.') || (textpos > 0)) {    //Don't start string with a '.'
+                        if((string[textpos - 1] == '.' && ipKeypad[cursorposY][cursorposX] != '.') ||   //Don't put 2 successive '.'
+                           (string[textpos - 1] != '.')){
+                            if(dotCount < 3 && ipFieldLength == 2){             //If field contains 3 digit, add '.' automatically if not in the last IP field.
+                                charAccepted = true;
+                                string[textpos] = ipKeypad[cursorposY][cursorposX];
+                                string[textpos + 1] = '.';
+                            }
+                            else if(dotCount <= 3 && ipFieldLength < 3){        //Normal IP field write.
+                                charAccepted = true;
+                                string[textpos] = ipKeypad[cursorposY][cursorposX];
+                                string[textpos + 1] = '\0';               //Safe in this situation. Will not write outside buffer because of maxLength's check.
+                            }
+
+                            //Check to see if entered value for current field is bigger than 255.
+                            memset(limitFieldString, 0, 4);     //Clear buffer.
+                            strncpy(limitFieldString, &string[textpos - ipFieldLength], ipFieldLength + 1);     //Copy field
+                            if(myAtoi(limitFieldString) > 255){
+                                strncpy(&string[textpos - ipFieldLength], "255", ipFieldLength + 1);    //Either that or cancel character input.
+                            }
                         }
                     }
                     else{

@@ -27,4 +27,7 @@ void ToolFooter(void);
 void saveXBlastcfg(void * ignored);
 void loadXBlastcfg(void * ignored);
 
+void prevA19controlModBootValue(void * itemPtr);
+void nextA19controlModBootValue(void * itemPtr);
+
 #endif

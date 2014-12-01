@@ -56,6 +56,10 @@ extern void BootResetAction ( void ) {
         #include "flashtypes.h"
     };
     u8 EjectButtonPressed=0;
+    A19controlModBoot=0;        //Start assuming no control over A19 line.
+    u8 *GPIOreg;
+    GPIOreg= (u8 *)&GenPurposeIOs;
+    *GPIOreg = 0;          //Default state;
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
@@ -146,6 +150,7 @@ extern void BootResetAction ( void ) {
                 fHasHardware = SYSCON_ID_V1_TSOP;
                 WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
             }
+            *GPIOreg = ReadFromIO(XBLAST_IO);
         }
 
     }
@@ -177,7 +182,7 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.OSsettings.fanSpeed > 100 ||
        LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
        LPCmodSettings.OSsettings.LEDColor == 0xFF ||
-       LPCmodSettings.OSsettings.TSOPcontrol == 0xFF ||
+       LPCmodSettings.OSsettings.TSOPcontrol > 0x01 ||
        LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
        LPCmodSettings.OSsettings.useDHCP == 0xFF ||
        LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
@@ -204,7 +209,8 @@ extern void BootResetAction ( void ) {
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
 
     if(fHasHardware == SYSCON_ID_V1_TSOP){
-    	LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20);     //A19ctrl maps to bit5
+    	//LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20) >> 5;     //A19ctrl maps to bit5
+        LPCmodSettings.OSsettings.TSOPcontrol = GenPurposeIOs.A19BufEn;
     }
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
@@ -259,6 +265,7 @@ extern void BootResetAction ( void ) {
               	}
                 else{
                     //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
+                    //If booting from TSOP, use of the XODUS_CONTROL register is fine.
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
                         switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
                     else{
@@ -282,6 +289,7 @@ extern void BootResetAction ( void ) {
               	}
                 else{
                     //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
+                    //If booting from TSOP, use of the XODUS_CONTROL register is fine.
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
                         WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
                     else{

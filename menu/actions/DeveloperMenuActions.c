@@ -10,6 +10,7 @@
 #include "ToolsMenuActions.h"
 #include "boot.h"
 #include "video.h"
+#include "lpcmod_v1.h"
 
 void LPCIOWrite(void * ignored){
     u16 address = 0x00FF;
@@ -164,5 +165,18 @@ void LPCIORead(void * ignored){
             refresh = true;
         }
     }
+    return;
+}
+
+void GPIORead(void * ignored){
+
+    ToolHeader("Read GPI/O");
+    u8 * structPtr = (u8 *)&GenPurposeIOs;
+    *structPtr = ReadFromIO(XBLAST_IO);
+    printk("\n\n\2           GPO : 0b%u%u%u%u", (GenPurposeIOs.GPOport >> 3) & 0x01,  (GenPurposeIOs.GPOport >> 2) & 0x01, (GenPurposeIOs.GPOport >> 1) & 0x01, GenPurposeIOs.GPOport & 0x01);
+    printk("\n\2           GPI : 0b%u%u", (GenPurposeIOs.GPIport >> 1) & 0x01, GenPurposeIOs.GPIport & 0x01);
+    printk("\n\2           A19Ctrl : 0b%u", GenPurposeIOs.A19BufEn);
+    printk("\n\2           EN_5V : 0b%u", GenPurposeIOs.EN_5V);
+    ToolFooter();
     return;
 }

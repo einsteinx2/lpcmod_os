@@ -17,7 +17,7 @@
 void decrementActiveBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.activeBank){
     case BNK512:
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){        //TSOP is split
+        if(LPCmodSettings.OSsettings.TSOPcontrol){        //TSOP is split
             LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT1;
             sprintf(itemStr,"TSOP bank1");
         }
@@ -53,7 +53,7 @@ void incrementActiveBank(void * itemStr) {
         break;
     case BNK256:
 
-        if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02){
+        if(LPCmodSettings.OSsettings.TSOPcontrol){
             sprintf(itemStr,"TSOP bank0");
             LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT0;
         }
@@ -78,7 +78,7 @@ void incrementActiveBank(void * itemStr) {
 void decrementAltBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.altBank){
         case BNK512:
-            if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){        //TSOP is split
+            if(LPCmodSettings.OSsettings.TSOPcontrol){        //TSOP is split
                 LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT1;
                 sprintf(itemStr,"TSOP bank1");
             }
@@ -114,7 +114,7 @@ void incrementAltBank(void * itemStr) {
             break;
         case BNK256:
 
-            if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02){
+            if(LPCmodSettings.OSsettings.TSOPcontrol){
                 sprintf(itemStr,"TSOP bank0");
                 LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT0;
             }
@@ -188,8 +188,8 @@ void editBIOSName(void *bankID){
 //Quickboot bank->Alternative Bank->TSOP Control->TSOP Split
 void toggleTSOPControl(void * itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    if(LPCmodSettings.OSsettings.TSOPcontrol & 0x02){            //If already active
-        LPCmodSettings.OSsettings.TSOPcontrol &= 0xFD;    //Make sure to toggle only bit1 and turn OFF.
+    if(LPCmodSettings.OSsettings.TSOPcontrol){            //If already active
+        LPCmodSettings.OSsettings.TSOPcontrol = 0x00;    //turn OFF.
         if(LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT0 ||
            LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT1){    //If altBank setting was set to TSOP bank 1,2 or 3.
             LPCmodSettings.OSsettings.altBank = BNKFULLTSOP;    //Single TSOP bank so make sure altBank is properly set.
@@ -202,7 +202,7 @@ void toggleTSOPControl(void * itemPtr){
         }
     }
     else{
-        LPCmodSettings.OSsettings.TSOPcontrol |= 0x02;    //Make sure to toggle only bit1.
+        LPCmodSettings.OSsettings.TSOPcontrol = 0x01;    //Make sure to toggle only bit1.
     }
-    sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "Yes" : "No");
+    sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
 }

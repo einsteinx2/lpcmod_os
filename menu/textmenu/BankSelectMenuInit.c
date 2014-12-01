@@ -114,8 +114,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         switchOSBank(*(u8 *)bank);
     }
     else if(fHasHardware == SYSCON_ID_V1_TSOP){
-        WriteToIO(XODUS_CONTROL, RELEASED0);
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02){
+        if(LPCmodSettings.OSsettings.TSOPcontrol){
     	    if(*(u8 *)bank == BNKTSOPSPLIT0)
                 strcpy(menuPtr->szCaption, "Flash menu : TSOP bank0");
             else if(*(u8 *)bank == BNKTSOPSPLIT1)
@@ -126,7 +125,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         }
         else{
             strcpy(menuPtr->szCaption, "Flash menu : TSOP");
-            switchOSBank(0x83);	//Set modchip to OS bank, no TSOP control.
+            switchOSBank(TSOPFULLBOOT);	//Release everything.
         }
     }
     else {
@@ -177,7 +176,7 @@ TEXTMENU* BankSelectInit(void * bank) {
     itemPtr->functionDataPtr = (void *)FlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);*/
     if(fHasHardware == SYSCON_ID_V1 ||
-       (fHasHardware == SYSCON_ID_V1_TSOP && ((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02))){
+       (fHasHardware == SYSCON_ID_V1_TSOP && (LPCmodSettings.OSsettings.TSOPcontrol))){
         ResetDrawChildTextMenu(menuPtr);
     }
     return menuPtr;

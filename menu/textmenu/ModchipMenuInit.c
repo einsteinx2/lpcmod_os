@@ -94,7 +94,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Control Xbox TSOP : ");
-    sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol) & 0x02? "Yes" : "No");
+    sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
     itemPtr->functionPtr= toggleTSOPControl;
     itemPtr->functionDataPtr= itemPtr;
     itemPtr->functionLeftPtr=toggleTSOPControl;
@@ -129,7 +129,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
     TextMenuAddItem(menuPtr, itemPtr);
 
     if(((fHasHardware == SYSCON_ID_V1) || (fHasHardware == SYSCON_ID_V1_TSOP)) && 
-       (LPCmodSettings.OSsettings.TSOPcontrol & 0x02)){
+       (LPCmodSettings.OSsettings.TSOPcontrol)){
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank0 name");

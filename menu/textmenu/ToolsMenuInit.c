@@ -60,6 +60,26 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
+    if((mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES) &&  //Don't show this when Xbox motherboard is not 1.0/1.1.
+       (LPCmodSettings.OSsettings.TSOPcontrol)){               //Don't show if TSOP split is not enabled.
+        //TSOP split manual control
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "TSOP split manual bank control");
+        if(A19controlModBoot == BNKTSOPSPLIT0)
+            sprintf(itemPtr->szParameter, "%s", "Bank0");
+        else if(A19controlModBoot == BNKTSOPSPLIT1)
+            sprintf(itemPtr->szParameter, "%s", "Bank1");
+        else
+            sprintf(itemPtr->szParameter, "%s", "No");
+        itemPtr->functionPtr= nextA19controlModBootValue;
+        itemPtr->functionDataPtr= itemPtr->szParameter;
+        itemPtr->functionLeftPtr=prevA19controlModBootValue;
+        itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+        itemPtr->functionRightPtr=nextA19controlModBootValue;
+        itemPtr->functionRightDataPtr = itemPtr->szParameter;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 /*
     //TSOP recovery entries. Do not show if already in TSOP recovery
     if((cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1)

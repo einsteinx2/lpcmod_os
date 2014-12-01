@@ -74,7 +74,7 @@ TEXTMENU *TextMenuInit(void) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Flash menu");
         itemPtr->functionPtr=DrawChildTextMenu;
-        if((LPCmodSettings.OSsettings.TSOPcontrol) & 0x02)
+        if(LPCmodSettings.OSsettings.TSOPcontrol)
             itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit();
         else
             itemPtr->functionDataPtr = (void *)BankSelectInit();
