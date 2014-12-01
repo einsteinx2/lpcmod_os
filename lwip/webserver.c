@@ -440,8 +440,8 @@ httpd_init(void)
   tcp_bind(pcb, IP_ADDR_ANY, 80);
   pcb = tcp_listen(pcb);
   tcp_accept(pcb, http_accept);
-  printk("httpd_init");
-  cromwellSuccess();
+  //printk("httpd_init");
+  //cromwellSuccess();
   //downloadingLED();
 }
 /*-----------------------------------------------------------------------------------*/

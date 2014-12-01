@@ -41,7 +41,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticIP[2],
              LPCmodSettings.OSsettings.staticIP[3]);
     itemPtr->functionPtr = editStaticIP;
-    itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticIP;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
     TextMenuAddItem (menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*) malloc (sizeof(TEXTMENUITEM));
@@ -53,7 +53,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticMask[2],
              LPCmodSettings.OSsettings.staticMask[3]);
     itemPtr->functionPtr = editStaticMask;
-    itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticMask;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
     TextMenuAddItem (menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*) malloc (sizeof(TEXTMENUITEM));
@@ -65,7 +65,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticGateway[2],
              LPCmodSettings.OSsettings.staticGateway[3]);
     itemPtr->functionPtr = editStaticGateway;
-    itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticGateway;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
     TextMenuAddItem (menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*) malloc (sizeof(TEXTMENUITEM));
@@ -77,7 +77,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticDNS1[2],
              LPCmodSettings.OSsettings.staticDNS1[3]);
     itemPtr->functionPtr = editStaticDNS1;
-    itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticDNS1;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
     TextMenuAddItem (menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*) malloc (sizeof(TEXTMENUITEM));
@@ -89,7 +89,7 @@ TEXTMENU * NetworkMenuInit (void) {
              LPCmodSettings.OSsettings.staticDNS2[2],
              LPCmodSettings.OSsettings.staticDNS2[3]);
     itemPtr->functionPtr = editStaticDNS2;
-    itemPtr->functionDataPtr = LPCmodSettings.OSsettings.staticDNS2;
+    itemPtr->functionDataPtr = itemPtr->szParameter;
     TextMenuAddItem (menuPtr, itemPtr);
 
     return menuPtr;

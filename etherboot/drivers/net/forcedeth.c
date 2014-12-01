@@ -710,7 +710,7 @@ static int forcedeth_reset(struct nic *nic)
 		goto out_drain;
 	}
 
-	printf("            %d-Mbs Link, %s-Duplex\n",
+	printf("           %d-Mbs Link, %s-Duplex\n",
 	       np->linkspeed & NVREG_LINKSPEED_10 ? 10 : 100,
 	       np->duplex ? "Full" : "Half");
 	/* 6) continue setup */
@@ -981,7 +981,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		printf("Please complain to your hardware vendor.\n");
 		return 0;
 	}
-	printf("%s: MAC Address %!", pci->name, nic->node_addr);
+	printf("\n\n\n           MAC Address %!",nic->node_addr);
 
 	np->tx_flags =
 	    cpu_to_le16(NV_TX_LASTPACKET | NV_TX_LASTPACKET1 |

@@ -162,7 +162,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                             string[textpos] = ipKeypad[cursorposY][cursorposX];
                             string[textpos + 1] = '.';
                         }
-                        else if(dotCount <= 3 && ipFieldLength < 2){        //Normal IP field write.
+                        else if(dotCount <= 3 && ipFieldLength < 3){        //Normal IP field write.
                             string[textpos] = ipKeypad[cursorposY][cursorposX];
                             string[textpos + 1] = '\0';               //Safe in this situation. Will not write outside buffer because of maxLength's check.
                         }
