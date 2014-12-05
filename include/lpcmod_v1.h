@@ -40,8 +40,16 @@
 #define READ5V   0x02
 #define READOSTSOPCTRL 0x01
 
-//0xF70E write register bits configuration
+//0xF70D write register bits configuration
+#define GPO3_ON 0x80u
+#define GPO2_ON 0x40u
+#define GPO1_ON 0x20u
+#define GPO0_ON 0x10u
+#define ENABLE_5V 0x01u
+
+//0xF70F write register bits configuration
 #define OSBNKCTRLBIT    0x80u    //Bit that must be sent when selecting a flash bank other than BNKOS
+#define OSKILLMOD       0x20u    //Completely mute modchip until a power cycle
 #define TSOPA19CTRLBIT  0x10u    //Bit to enable manual drive of the TSOP's A19 pin.
 #define OSGROUNDD0      0x04u    //Won't be used much here.
 #define TSOPFULLBOOT    0x00u
@@ -53,13 +61,6 @@
 #define BNK256  0x86u
 #define BNKOS  0x87u
 
-//0xF70F write register bits configuration
-#define GPO3_ON 0x80u
-#define GPO2_ON 0x40u
-#define GPO1_ON 0x20u
-#define GPO0_ON 0x10u
-#define ENNABLE_5V 0x01u
-
 
 
 #define LPCMOD_TRUE 0x01u
@@ -68,9 +69,8 @@
 
 //XBlast Mod and SmartXX LPC registers to drive LCD
 #define XBLAST_IO    0xF70Du
-#define XBLAST_CONTROL    0xF70Eu
+#define XBLAST_CONTROL    0xF70Fu
 #define XODUS_CONTROL    0x00FFu
-#define PIN_CONTROL    0xF70Fu
 #define LCD_DATA    0xF700u
 #define LCD_BL        0xF701u
 #define LCD_CT        0xF703u

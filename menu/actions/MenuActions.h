@@ -26,8 +26,8 @@ void DrawBootMenu(void *entry);
 void BootMenuEntry(void *entry);
 
 //Ick, this needs to be removed.
-void BootFromCD(void *driveId);
-void BootFromNet(void *whatever);
+//void BootFromCD(void *driveId);
+//void BootFromNet(void *whatever);
 
 #ifdef FLASH
 //void FlashBios(void *);
@@ -42,8 +42,5 @@ void BootOriginalBios(void * data);
 
 // Booting 256k Modbios
 void BootModBios(void * data);
-
-// Booting 512k Modbios
-void BootModBios2(void * data);
 
 #endif

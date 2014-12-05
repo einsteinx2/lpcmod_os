@@ -779,10 +779,10 @@ static void dhcp_bind(struct netif *netif)
 
   LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_bind(): IP: 0x%08lx\n", dhcp->offered_ip_addr.addr));
   printk ("%d.%d.%d.%d (DHCP), %d.%d.%d.%d(MASK)\n",
-          (dhcp->offered_ip_addr.addr & 0x000000ff) ,
-          (dhcp->offered_ip_addr.addr & 0x0000ff00) >> 8,
-          (dhcp->offered_ip_addr.addr & 0x00ff0000) >> 16,
           (dhcp->offered_ip_addr.addr & 0xff000000) >> 24,
+          (dhcp->offered_ip_addr.addr & 0x00ff0000) >> 16,
+          (dhcp->offered_ip_addr.addr & 0x0000ff00) >> 8,
+          (dhcp->offered_ip_addr.addr & 0x000000ff) ,
           (sn_mask.addr & 0x000000ff) ,
           (sn_mask.addr & 0x0000ff00) >> 8,
           (sn_mask.addr & 0x00ff0000) >> 16,

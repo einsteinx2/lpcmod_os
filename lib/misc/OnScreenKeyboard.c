@@ -73,9 +73,9 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             for(y = 0; y < 4; y++){
                 if(kbType == IP_KEYPAD){
                     if(y == 3)
-                        printk("\n\n\n                                         ");      //Add extra space to align with other rows
+                        printk("\n\n\n                                           ");      //Add extra space to align with other rows
                     else
-                        printk("\n\n\n                                        ");
+                        printk("\n\n\n                                          ");
                 }
                 else{
                     printk("\n\n\n           ");
@@ -165,7 +165,8 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                                 string[textpos] = ipKeypad[cursorposY][cursorposX];
                                 string[textpos + 1] = '.';
                             }
-                            else if(dotCount <= 3 && ipFieldLength < 3){        //Normal IP field write.
+                            else if((dotCount <= 3 && ipFieldLength < 2) ||     //Normal IP field write.
+                                    (dotCount == 3 && ipFieldLength == 2)){     //or last possible character to write
                                 charAccepted = true;
                                 string[textpos] = ipKeypad[cursorposY][cursorposX];
                                 string[textpos + 1] = '\0';               //Safe in this situation. Will not write outside buffer because of maxLength's check.

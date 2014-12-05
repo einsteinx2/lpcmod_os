@@ -131,6 +131,7 @@ int
 run_lwip (void) {
     struct ip_addr ipaddr, netmask, gw;
     struct netif netif;
+    int first = 1;
 
     mem_init ();
     memp_init ();
@@ -161,8 +162,14 @@ run_lwip (void) {
              LPCmodSettings.OSsettings.staticMask[3]);
 
     netif_add (&netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
-    if (LPCmodSettings.OSsettings.useDHCP)
+    if (LPCmodSettings.OSsettings.useDHCP){
         dhcp_start (&netif);
+        printk ("\n            DHCP Attempt - Received %u.%u.%u.%u",
+                                    (netif.dhcp->offered_ip_addr.addr & 0xff000000) >> 24,
+                                    (netif.dhcp->offered_ip_addr.addr & 0x00ff0000) >> 16,
+                                    (netif.dhcp->offered_ip_addr.addr & 0x0000ff00) >> 8,
+                                     netif.dhcp->offered_ip_addr.addr & 0x000000ff);
+    }
     else {
         //Not necessary, but polite.
         dhcp_stop (&netif);
@@ -178,7 +185,6 @@ run_lwip (void) {
     httpd_init ();
 
     int divisor = 0;
-    int first = 1;
     while (1) {
         //printk ("while(1)");
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
@@ -186,7 +192,11 @@ run_lwip (void) {
             if (divisor++ == 60 * 4) {
                 if (first) {
                     if (netif.dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
-                        printk ("            DHCP FAILED - Falling back to 192.168.0.250\n");
+                        printk ("\n            DHCP FAILED - Falling back to %u.%u.%u.%u",
+                                (ipaddr.addr & 0xff000000) >> 24,
+                                (ipaddr.addr & 0x00ff0000) >> 16,
+                                (ipaddr.addr & 0x0000ff00) >> 8,
+                                 ipaddr.addr & 0x000000ff);
                         dhcp_stop (&netif);
                         netif_set_addr(&netif, &ipaddr, &netmask, &gw);
                     }
@@ -195,8 +205,8 @@ run_lwip (void) {
                             ((netif.ip_addr.addr) >> 16 & 0xff),
                             ((netif.ip_addr.addr) >> 8 & 0xff),
                             ((netif.ip_addr.addr) & 0xff));
+                    first = 0;
                 }
-                first = 0;
                 dhcp_coarse_tmr ();
                 divisor = 0;
             }

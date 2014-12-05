@@ -35,10 +35,10 @@ void BootOriginalBios(void *data) {
     
     BootStopUSB();
     
-    if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){
+    if((fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL) || fHasHardware == SYSCON_ID_V1_TSOP){
         //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
     	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-    	switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
+    	    switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
         else
             switchBootBank(*(u8*)data);    // switch to original bios but modchip listen to LPC commands.
 
@@ -59,14 +59,14 @@ void BootModBios(void *data) {
     
     BootStopUSB();
     
-    if(cromwell_config==CROMWELL)
+    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1_TSOP)
       I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     else
       I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
     I2CRebootQuick();
     while(1);
 }
-
+/*
 void BootFromCD(void *data) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
@@ -85,7 +85,7 @@ void BootFromCD(void *data) {
     }
     DrawBootMenu(config);
 }
-/*
+
 void BootFromNet(void *whatever) {
    extern unsigned char *videosavepage;
    memcpy((void*)FB_START,videosavepage,FB_SIZE);

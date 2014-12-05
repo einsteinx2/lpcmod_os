@@ -20,6 +20,7 @@ CROM_CFLAGS=$(INCLUDE)
 
 #You can override these if you wish.
 CFLAGS= -O2 -g -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct
+#CFLAGS= -Os -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct
 
 # add the option for gcc 3.3 only, again, non-overridable
 ifeq ($(GCC_3.3), 1)
@@ -39,6 +40,7 @@ ETH_SUBDIRS = etherboot
 CROM_CFLAGS	+= -DETHERBOOT
 ETH_INCLUDE = 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include	
 ETH_CFLAGS  = 	-O2 -march=pentium -Werror $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
+#ETH_CFLAGS  = 	-Os -march=pentium -Werror $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
 endif
 
 LDFLAGS-ROM     = -s -S -T $(TOPDIR)/scripts/ldscript-crom.ld

@@ -33,7 +33,7 @@ void BootLCDInit(void){
 void toggleEN5V(u8 value){
     xF70FLPCRegister &= 0xFE;   //Remove bit setting regarding Enable_5V state
     xF70FLPCRegister |= (value & 0x01);  //Add in proper bit if value if necessary.
-    WriteToIO(PIN_CONTROL, xF70FLPCRegister);     //Write to LPC register
+    WriteToIO(XBLAST_IO, xF70FLPCRegister);     //Write to LPC register
 }
 
 void setLCDContrast(u8 value){

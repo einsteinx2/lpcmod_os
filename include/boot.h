@@ -469,12 +469,20 @@ bool TSOPRecoveryMode;
 
 u8 currentFlashBank;
 u8 A19controlModBoot;
+
 struct{
-    u8 GPOport : 4;
-    u8 GPIport : 2;
-    u8 EN_5V : 1;
-    u8 A19BufEn : 1;
-}__attribute__((packed))GenPurposeIOs;
+    bool GPO3;
+    bool GPO2;
+    bool GPO1;
+    bool GPO0;
+
+    bool GPI1;
+    bool GPI0;
+
+    bool A19BufEn;
+
+    bool EN_5V;
+}__attribute__((packed))GenPurposeIOs;  //byte-long struct.
 
 //To show/hide stuff from public releases. Set to 1 for now but will need to be changed to 0 soon.
 #if 1

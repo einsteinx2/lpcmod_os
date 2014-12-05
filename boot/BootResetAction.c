@@ -210,7 +210,7 @@ extern void BootResetAction ( void ) {
 
     if(fHasHardware == SYSCON_ID_V1_TSOP){
     	//LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20) >> 5;     //A19ctrl maps to bit5
-        LPCmodSettings.OSsettings.TSOPcontrol = GenPurposeIOs.A19BufEn;
+        LPCmodSettings.OSsettings.TSOPcontrol = (u8)GenPurposeIOs.A19BufEn;
     }
 
     BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
@@ -283,7 +283,7 @@ extern void BootResetAction ( void ) {
             I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
             I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-            if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //White button NOT pressed and Quickboot ON.
+            if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //Eject button NOT pressed and Quickboot ON.
                 if(LPCmodSettings.OSsettings.activeBank > BOOTFROMTSOP){
                     switchBootBank(LPCmodSettings.OSsettings.activeBank);
               	}
@@ -291,9 +291,9 @@ extern void BootResetAction ( void ) {
                     //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     //If booting from TSOP, use of the XODUS_CONTROL register is fine.
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-                        WriteToIO(XODUS_CONTROL, KILL_MOD);    // switch to original bios. Mute modchip.
+                        switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
                     else{
-                        WriteToIO(XODUS_CONTROL, LPCmodSettings.OSsettings.activeBank);    // switch to original bios but modchip listen to LPC commands.
+                        switchBootBank(LPCmodSettings.OSsettings.activeBank);    // switch to original bios but modchip listen to LPC commands.
                                                                                                            // Lock flash bank control with OSBNKCTRLBIT.
                     }
                 }
