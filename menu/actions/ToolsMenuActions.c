@@ -131,17 +131,17 @@ void showMemTest(void *whatever){
 
 void memtest(void){
     u8 bank = 0;
-    char Bank1Text[20];
-    char Bank2Text[20];
-    char Bank3Text[20];
-    char Bank4Text[20];
-    char *BankText[4] = {Bank1Text, Bank2Text, Bank3Text, Bank4Text};
-/*
-    strcpy(Bank1Text,"Untested");
-    strcpy(Bank2Text,"Untested");
-    strcpy(Bank3Text,"Untested");
-    strcpy(Bank4Text,"Untested");
-*/
+//    char Bank1Text[20];
+//    char Bank2Text[20];
+//    char Bank3Text[20];
+//    char Bank4Text[20];
+//    char *BankText[4] = {Bank1Text, Bank2Text, Bank3Text, Bank4Text};
+
+//    strcpy(Bank1Text,"Untested");
+//    strcpy(Bank2Text,"Untested");
+//    strcpy(Bank3Text,"Untested");
+//    strcpy(Bank4Text,"Untested");
+
     if (xbox_ram == 64){
         //Unknown why this is done but has to be executed
         //It probably has to do with video memory allocation.
@@ -152,14 +152,16 @@ void memtest(void){
     }
     DisplayProgressBar(0, 4, 0xffff00ff);                      //Draw ProgressBar frame.
     for(bank = 0; bank < 4; bank++)    {
-        sprintf(BankText[bank], "%s", testBank(bank)? "Failed" : "Success");
+//        sprintf(BankText[bank], "%s", testBank(bank)? "Failed" : "Success");
+        printk("\n           Ram chip %u : %s",bank+1, testBank(bank)? "Failed" : "Success");
         DisplayProgressBar(bank + 1, 4, 0xffff00ff);                   //Purple progress bar.
     }
+//    sprintf(BankText[1], "%s", testBank(1)? "Failed" : "Success");
     VIDEO_ATTR=0xffc8c8c8;
-    printk("\n           Bank1 : %s",Bank1Text);
-    printk("\n           Bank2 : %s",Bank2Text);
-    printk("\n           Bank3 : %s",Bank3Text);
-    printk("\n           Bank4 : %s",Bank4Text);
+//    printk("\n           Ram chip 1 : %s",Bank1Text);
+//    printk("\n           Ram chip 2 : %s",Bank2Text);
+//    printk("\n           Ram chip 3 : %s",Bank3Text);
+//    printk("\n           Ram chip 4 : %s",Bank4Text);
     if (xbox_ram == 64) {    //Revert to 64MB RAM if previously set.
         PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x84, 0x3FFFFFF);  // 64 MB
     }
@@ -180,36 +182,39 @@ void ToolHeader(char *title) {
 }
 
 int testBank(int bank){
-    u32 counter, lastValue;
+    u32 counter, subCounter, lastValue;
     u32 *membasetop = (u32*)((64*1024*1024));
-    u32 startBad = 0, stopBad = 0;
+//    u32 startBad = 0, stopBad = 0;
     u8 result=0;    //Start assuming everything is good.
 
     lastValue = 1;
     //Clear Upper 64MB
-    for (counter= 0; counter < (64*1024*1024/(4*4));counter++) {
-        membasetop[counter*4+bank] = lastValue;                         //Set it all to 0x1
+    for (counter= 0; counter < (64*1024*1024/4);counter+=16) {
+        for(subCounter = 0; subCounter < 3; subCounter++)
+            membasetop[counter+subCounter+bank*4] = lastValue;                         //Set it all to 0x1
     }
 
     while(lastValue < 0x80000000){                                      //Test every data bit pins.
-        for (counter= 0; counter< (64*1024*1024/(4*4));counter++) {     //Test every address bit pin
-            if(membasetop[counter*4+bank]!=lastValue){
+        for (counter= 0; counter < (64*1024*1024/4);counter+=16) {     //Test every address bit pin. 4194304 * 8 = 32MB
+            for(subCounter = 0; subCounter < 3; subCounter++){
+            if(membasetop[counter+subCounter+bank*4]!=lastValue){
                 result = 1;    //1=no no
-                if(startBad == 0){
-                    startBad = counter*4+bank;
-                    printk("\n           StartBad = 0x%08X , ",startBad);
-                }
-                //lastValue = 0x80000000;
-                //return result;        //No need to go further. Bank is broken.
+//                if(startBad == 0){
+//                    startBad = counter+subCounter+bank*4;
+//                    printk("\n           StartBad = 0x%08X , ",startBad);
+//                }
+                lastValue = 0x80000000;
+                return result;        //No need to go further. Bank is broken.
             }
-            else{
-                if(startBad){
-                    startBad = 0;
-                    stopBad = counter*4+bank - 1;
-                    printk("StopBad = 0x%08X , ",stopBad);
-                }
-            }
-            membasetop[counter*4+bank] = lastValue<<1;                  //Prepare for next read.
+//            else{
+//                if(startBad){
+//                    startBad = 0;
+//                    stopBad = counter+subCounter+bank*4 - 1;
+//                    printk("StopBad = 0x%08X , ",stopBad);
+//                }
+//            }
+            membasetop[counter+subCounter+bank*4] = lastValue<<1;                  //Prepare for next read.
+        }
         }
         lastValue = lastValue << 1;                                     //Next data bit pin.
     }
