@@ -323,7 +323,7 @@ void loadXBlastcfg(void * ignored){
     ToolFooter();
 }
 
-void prevA19controlModBootValue(void * itemPtr){
+void nextA19controlModBootValue(void * itemPtr){
     switch(A19controlModBoot){
         case TSOPFULLBOOT:
             A19controlModBoot = BNKTSOPSPLIT0;
@@ -341,7 +341,7 @@ void prevA19controlModBootValue(void * itemPtr){
     }
 }
 
-void nextA19controlModBootValue(void * itemPtr){
+void prevA19controlModBootValue(void * itemPtr){
     switch(A19controlModBoot){
         case BNKTSOPSPLIT1:
             A19controlModBoot = BNKTSOPSPLIT0;

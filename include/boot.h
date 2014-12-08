@@ -470,7 +470,7 @@ bool TSOPRecoveryMode;
 u8 currentFlashBank;
 u8 A19controlModBoot;
 
-struct{
+struct _GenPurposeIOs{
     bool GPO3;
     bool GPO2;
     bool GPO1;

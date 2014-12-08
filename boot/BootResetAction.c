@@ -56,10 +56,7 @@ extern void BootResetAction ( void ) {
         #include "flashtypes.h"
     };
     u8 EjectButtonPressed=0;
-    A19controlModBoot=0;        //Start assuming no control over A19 line.
-    u8 *GPIOreg;
-    GPIOreg= (u8 *)&GenPurposeIOs;
-    *GPIOreg = 0;          //Default state;
+    A19controlModBoot=TSOPFULLBOOT;        //Start assuming no control over A19 line.
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
@@ -89,6 +86,15 @@ extern void BootResetAction ( void ) {
 
 
     fHasHardware = 0;
+
+    GenPurposeIOs.GPO3 = 0;
+    GenPurposeIOs.GPO2 = 0;
+    GenPurposeIOs.GPO1 = 0;
+    GenPurposeIOs.GPO0 = 0;
+    GenPurposeIOs.GPI1 = 0;
+    GenPurposeIOs.GPI0 = 0;
+    GenPurposeIOs.A19BufEn = 0;
+    GenPurposeIOs.EN_5V = 0;
 
     memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
     memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);
@@ -150,7 +156,7 @@ extern void BootResetAction ( void ) {
                 fHasHardware = SYSCON_ID_V1_TSOP;
                 WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
             }
-            *GPIOreg = ReadFromIO(XBLAST_IO);
+            LPCMod_ReadIO(NULL);
         }
 
     }

@@ -21,7 +21,7 @@
 #include "VideoInitialization.h"
 #include "TextMenu.h"
 #include "lpcmod_v1.h"
-CONFIGENTRY *LoadConfigCD(int);
+//CONFIGENTRY *LoadConfigCD(int);
 //TEXTMENU *TextMenuInit(void);
 
 void AdvancedMenu(void *textmenu) {

@@ -76,6 +76,25 @@ u16 LPCMod_HW_rev(void){
     return ReadFromIO(SYSCON_REG);
 }
 
+void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct){
+    struct _GenPurposeIOs *localGPIOstruct;
+    u8 temp = ReadFromIO(XBLAST_IO);
+    //If no valid pointer is specified, take Global struct.
+    if(GPIOstruct == NULL)
+        localGPIOstruct = &GenPurposeIOs;
+    else
+        localGPIOstruct = GPIOstruct;
+
+    localGPIOstruct->GPO3 = (temp & 0x80) >> 7;
+    localGPIOstruct->GPO2 = (temp & 0x40) >> 6;
+    localGPIOstruct->GPO1 = (temp & 0x20) >> 5;
+    localGPIOstruct->GPO0 = (temp & 0x10) >> 4;
+    localGPIOstruct->GPI1 = (temp & 0x08) >> 3;
+    localGPIOstruct->GPI0 = (temp & 0x04) >> 2;
+    localGPIOstruct->A19BufEn = (temp & 0x02) >> 1;
+    localGPIOstruct->EN_5V = (temp & 0x01);
+}
+
 void LPCMod_LCDBankString(char * string, u8 bankID){
     switch(bankID){
         case BNK512:

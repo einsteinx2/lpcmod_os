@@ -171,12 +171,11 @@ void LPCIORead(void * ignored){
 void GPIORead(void * ignored){
 
     ToolHeader("Read GPI/O");
-    u8 * structPtr = (u8 *)&GenPurposeIOs;
-    *structPtr = ReadFromIO(XBLAST_IO);
+    LPCMod_ReadIO(NULL);
     printk("\n\n\2           GPO : 0b%u%u%u%u", GenPurposeIOs.GPO3,  GenPurposeIOs.GPO2, GenPurposeIOs.GPO1, GenPurposeIOs.GPO0);
-    printk("\n\2           GPI : 0b%u%u", GenPurposeIOs.GPI1, GenPurposeIOs.GPI0);
-    printk("\n\2           A19Ctrl : 0b%u", GenPurposeIOs.A19BufEn);
-    printk("\n\2           EN_5V : 0b%u", GenPurposeIOs.EN_5V);
+    printk("\n\n\2           GPI : 0b%u%u", GenPurposeIOs.GPI1, GenPurposeIOs.GPI0);
+    printk("\n\n\2           A19Ctrl : 0b%u", GenPurposeIOs.A19BufEn);
+    printk("\n\n\2           EN_5V : 0b%u", GenPurposeIOs.EN_5V);
     ToolFooter();
     return;
 }
