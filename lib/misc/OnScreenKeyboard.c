@@ -53,7 +53,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
             if(kbType == IP_KEYPAD)
-                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace, %u  %u  %u", textpos, dotCount, ipFieldLength);
+                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace, %u  %u  %u", myAtoi(limitFieldString), dotCount, ipFieldLength);
             else
                 printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
@@ -154,16 +154,23 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                                 if(string[textpos - 2] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
                                     ipFieldLength++;
                                 }
+                                if(textpos > 2){
+                                    if(string[textpos - 3] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
+                                        ipFieldLength++;
+                                    }
+                                }
                             }
                         }
                     }
                     if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.') || (textpos > 0)) {    //Don't start string with a '.'
                         if((string[textpos - 1] == '.' && ipKeypad[cursorposY][cursorposX] != '.') ||   //Don't put 2 successive '.'
                            (string[textpos - 1] != '.')){
-                            if(dotCount < 3 && ipFieldLength == 2){             //If field contains 3 digit, add '.' automatically if not in the last IP field.
+                            if(dotCount < 3 &&  //if not in the last IP field.
+                               (ipFieldLength == 2 || //And field contains 3 digit
+                                (ipKeypad[cursorposY][cursorposX] = '0' && string[textpos - 1] == '.'))){  //or '0' is entered just after a '.'. 
                                 charAccepted = true;
                                 string[textpos] = ipKeypad[cursorposY][cursorposX];
-                                string[textpos + 1] = '.';
+                                string[textpos + 1] = '.';     //add '.' automatically
                             }
                             else if((dotCount <= 3 && ipFieldLength < 2) ||     //Normal IP field write.
                                     (dotCount == 3 && ipFieldLength == 2)){     //or last possible character to write

@@ -47,9 +47,8 @@ void incrementGameRegion(void * itemStr){
             gameRegion = setGameRegionValue(EURO_AUSTRALIA);
             break;
         case EURO_AUSTRALIA:
-            gameRegion = setGameRegionValue(NORTH_AMERICA);
-            break;
         default:
+            gameRegion = setGameRegionValue(NORTH_AMERICA);
             break;
         }
     sprintf(itemStr, "%s",Gameregiontext[gameRegion]);
@@ -71,11 +70,12 @@ void decrementGameRegion(void * itemStr){
         case NORTH_AMERICA:
             gameRegion = setGameRegionValue(EURO_AUSTRALIA);
             break;
-        case JAPAN:
-            gameRegion = setGameRegionValue(NORTH_AMERICA);
-            break;
         case EURO_AUSTRALIA:
             gameRegion = setGameRegionValue(JAPAN);
+            break;
+        case JAPAN:
+        default:
+            gameRegion = setGameRegionValue(NORTH_AMERICA);
             break;
         }
     sprintf(itemStr, "%s",Gameregiontext[gameRegion]);

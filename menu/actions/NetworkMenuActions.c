@@ -94,7 +94,8 @@ bool editIPfield(u8 * addr) {
 
 u16 myAtoi(char *str)
 {
-    u8 i, res = 0;
+    u8 i;
+    u16 res = 0;
 
     for (i = 0; str[i] != '\0' && str[i] != '.'; ++i)   //Will stop converting if it hit a '.' or the end of the string.
         res = res*10 + str[i] - '0';
