@@ -1,5 +1,5 @@
-#ifndef _TOOLSMENUACTIONS_H_
-#define _TOOLSMENUACTIONS_H_
+#ifndef _EEPROMEDITMENUACTIONS_H_
+#define _EEPROMEDITMENUACTIONS_H_
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -9,25 +9,13 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "boot.h"
 
-void saveEEPromToFlash(void *whatever);
-void restoreEEPromFromFlash(void *whatever);
-void warningDisplayEepromEditMenu(void *ignored);
-void wipeEEPromUserSettings(void *whatever);
+void LastResortRecovery(void *ignored);
 
-void showMemTest(void *whatever);
-void memtest(void);
-int testBank(int bank);
+void bruteForceFixDisplayresult(void *ignored);
+bool bruteForceFixEEprom(void);
 
-void ToolHeader(char *title);
-void ToolFooter(void);
-
-//void TSOPRecoveryReboot(void *ignored);
-
-void saveXBlastcfg(void * ignored);
-void loadXBlastcfg(void * ignored);
-
-void prevA19controlModBootValue(void * itemPtr);
-void nextA19controlModBootValue(void * itemPtr);
+void confirmSaveToEEPROMChip(void *ignored);
 
 #endif

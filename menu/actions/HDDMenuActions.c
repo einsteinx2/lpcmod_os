@@ -76,28 +76,45 @@ bool LockHDD(int nIndexDrive, bool verbose) {
 
 bool UnlockHDD(int nIndexDrive, bool verbose) {
     u8 password[20];
+    bool result = false; //Start assuming not good.
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     if(verbose){
         if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
     }
     
     if (CalculateDrivePassword(nIndexDrive,password)) {
-        printk("           Unable to calculate drive password - eeprom corrupt?  Aborting\n");
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-        return false;
+        printk("           Unable to calculate drive password - eeprom corrupt?  Trying Master Password unlock\n");
+        if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive)){
+            printk("           Master Password(TEAMASSEMBLY) Unlock failed... \n");
+            result = false;
+        }
+        else
+            result = true;
     }
-    if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
-        printk("           Failed!");
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-        return false;
+    else{
+        if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
+            printk("           Failed! Trying Master Password unlock");
+            if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive)){
+                printk("           Master Password(TEAMASSEMBLY) Unlock failed... \n");
+                result = false;
+            }
+            else
+                result = true;
+                printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+        }
+        else{
+            if(verbose){
+                printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+                result = true;
+
+            }
+        }
     }
     if(verbose){
-        printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
         printk("           \2Press Button A to continue");
-
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
     }
-    return true;
+    return result;
 }
 
 

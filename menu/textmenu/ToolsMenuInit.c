@@ -42,6 +42,14 @@ TEXTMENU *ToolsMenuInit(void) {
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
+    //Dangerous stuff is going on in there.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Edit EEPROM content");
+    itemPtr->functionPtr= warningDisplayEepromEditMenu;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
     //Wipe EEPROM section that holds non-vital data.
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

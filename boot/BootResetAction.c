@@ -61,7 +61,7 @@ extern void BootResetAction ( void ) {
 
     //Length of array is set depending on how many revision can be uniquely identified.
     //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
-    char *xbox_mb_rev[8] = {
+    const char *xbox_mb_rev[8] = {
         "DevKit",
         "DebugKit",
         "1.0",

@@ -801,6 +801,55 @@ int CalculateDrivePassword(int driveId, unsigned char *key) {
     return 0;
 }
 
+bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId){
+    char ide_cmd_data[2+512];
+    char baBuffer[512];
+    char *master_password="TEAMASSEMBLY";
+    unsigned short*    drive_info = (unsigned short*)baBuffer;
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    tsIdeCommandParams tsicp1 = IDE_DEFAULT_COMMAND;
+    //IDE_CMD_SECURITY_DISABLE
+
+    if(BootIdeWaitNotBusy(uIoBase))
+    {
+        //printk("  %d:  Not Ready\n", driveId);
+        return false;
+    }
+    tsicp1.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
+
+    memset(ide_cmd_data,0x00,512);
+    //Set master password flag
+    ide_cmd_data[0]|=0x01;
+
+    memcpy(&ide_cmd_data[2],master_password,12);
+
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp1)) return 1;
+
+    BootIdeWaitDataReady(uIoBase);
+    BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
+
+    if (BootIdeWaitNotBusy(uIoBase))
+    {
+        return false;
+    }
+    // check that we are unlocked
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp))
+    {
+        return false;
+    }
+    BootIdeWaitDataReady(uIoBase);
+    if(BootIdeReadData(uIoBase, baBuffer, IDE_SECTOR_SIZE))
+    {
+        return false;
+    }
+
+    tsaHarddiskInfo[driveId].m_securitySettings = drive_info[128];
+    //Success, hopefully.
+
+    return true;
+}
+
 
 /////////////////////////////////////////////////
 //  BootIdeInit

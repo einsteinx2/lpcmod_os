@@ -114,6 +114,15 @@ failed:
     ToolFooter();
 }
 
+void warningDisplayEepromEditMenu(void *ignored){
+    if(ConfirmDialog("        Warning: use this tool at your own risk!", 1))
+            return;
+    editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
+    memcpy(editeeprom, &eeprom, sizeof(EEPROMDATA));   //Initial copy into edition buffer.
+    DrawChildTextMenu((void *)eepromEditMenuInit());
+    free(editeeprom);
+}
+
 void wipeEEPromUserSettings(void *whatever){
     if(ConfirmDialog("        Reset user EEProm settings(safe)?", 1))
         return;
