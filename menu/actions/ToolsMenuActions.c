@@ -115,11 +115,11 @@ failed:
 }
 
 void warningDisplayEepromEditMenu(void *ignored){
-    if(ConfirmDialog("        Warning: use this tool at your own risk!", 1))
+    if(ConfirmDialog("         Use these tools at your own risk!", 1))
             return;
     editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
     memcpy(editeeprom, &eeprom, sizeof(EEPROMDATA));   //Initial copy into edition buffer.
-    DrawChildTextMenu((void *)eepromEditMenuInit());
+    ResetDrawChildTextMenu(eepromEditMenuInit());
     free(editeeprom);
 }
 
