@@ -10,6 +10,56 @@
 #include "ToolsMenuActions.h"
 #include "lpcmod_v1.h"
 
+void displayEditEEPROMBuffer(void *ignored){
+    int i;
+    u8 decryptedConfounder[8];
+    u8 decryptedGameRegion[4];
+    u8 decryptedWholeBuffer[0x30];
+    u8 version;
+    char serialString[13];
+    char *Gameregiontext[5] = {
+        "Unknown/Error",
+        "NTSC-U",
+        "NTSC-J",
+        "n/a",
+        "PAL"
+    };
+    version = decryptEEPROMData((u8 *)editeeprom, decryptedWholeBuffer);
+    ToolHeader("Modified EEPROM buffer content");
+    printk("\n\n           EEPROM version: %u", version);
+/*
+    printk("\n           Encrypted HDDKey: ");
+    for(i = 0; i < 16; i++){
+        printk(" %02X", editeeprom->HDDKkey[i]);
+    }
+    */
+    printk("\n           Decrypted Confounder:");
+    for(i = 0; i < 8; i++){
+        printk(" %02X", decryptedWholeBuffer[20+i]);
+    }
+    printk("\n           Decrypted HDDKey:");
+    for(i = 0; i < 16; i++){
+        printk(" %02X", decryptedWholeBuffer[28+i]);
+    }
+    printk("\n           Decrypted GameRegion:");
+    for(i = 0; i < 4; i++){
+        printk(" %02X", decryptedWholeBuffer[44+i]);
+    }
+    printk(" (%s)", Gameregiontext[decryptedWholeBuffer[47]]);
+    printk("\n           MAC address: %02X:%02X:%02X:%02X:%02X:%02X",
+    editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
+    editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
+    memcpy(serialString, editeeprom->SerialNumber, 12);
+    serialString[12]='\0';
+    printk("\n           Serial Number: %s", serialString);
+    printk("\n           Online Key:");
+    for(i = 0; i < 16; i++){
+        printk(" %02X", editeeprom->OnlineKey[i]);
+    }
+    ToolFooter();
+}
+
+
 void LastResortRecovery(void *ignored){
     const char *xbox_mb_rev[8] = {
         "DevKit",
@@ -123,32 +173,12 @@ void LastResortRecovery(void *ignored){
     };
 
     char revString[50];
-    u8 nIndexDrive, unlockConfirm[2], mbVersion = I2CGetXboxMBRev();
+    u8 mbVersion = I2CGetXboxMBRev();
     if(ConfirmDialog("     Overwrite EEPROM with generic image?", 1))       //First generic warning
         return;
     sprintf(revString, "    Overwriting with %s EEPROM image. OK?", xbox_mb_rev[mbVersion]);
     if(ConfirmDialog(revString, 1))             //Second warning for user to assert if Xbox revision detection is right.
         return;
-    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
-        if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
-            if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
-                    if(UnlockHDD(nIndexDrive, 0))                                             //0 is for silent
-                        unlockConfirm[nIndexDrive] = 1;                                   //Everything went well, we<ll relock after eeprom write.
-                    else{
-                        unlockConfirm[0] = 255;       //error
-                        unlockConfirm[1] = 255;       //error
-                        break;
-                    }
-            }
-            else{
-                unlockConfirm[nIndexDrive] = 0;                                         //Drive not locked, won't relock after eeprom write.
-            }
-        }
-        else{
-            unlockConfirm[nIndexDrive] = 0;       //Won't relock as no HDD was detected on that port.
-        }
-    }
-    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error
         switch(mbVersion){
             //TODO: Validate if all DevKits and DebugKits are 1.0!
             case DEVKIT:
@@ -169,22 +199,13 @@ void LastResortRecovery(void *ignored){
                 memcpy(&eeprom, EEPROMimg16, sizeof(EEPROMDATA));
                 break;
         }
-        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
-            if(unlockConfirm[nIndexDrive] == 1){
-                LockHDD(nIndexDrive, 0);                                //0 is for silent mode.
-            }
-        }
-
-        SlowReboot(NULL);
-        while(1);
-    }
 }
 
 void bruteForceFixDisplayresult(void *ignored){
     u8 eepromVersion;
     char unused[20];
     ToolHeader("Brute Force Fix EEPROM");
-    eepromVersion = BootHddKeyGenerateEepromKeyData(eeprom,unused);
+    eepromVersion = BootHddKeyGenerateEepromKeyData(editeeprom,unused);
 
     if(eepromVersion == 13){
         if(bruteForceFixEEprom()){
@@ -216,11 +237,11 @@ bool bruteForceFixEEprom(void){
     //EEPROM with only a single corrupt byte in it's first 48 bytes.
     for (bytepos=0;bytepos<0x30;bytepos++) {
         for (bytecombinations=0;bytecombinations<0x100;bytecombinations++) {
-            memcpy(teeprom,&eeprom,256);
+            memcpy(teeprom,editeeprom,256);
             teeprom[bytepos]=bytecombinations;
             ver = BootHddKeyGenerateEepromKeyData(teeprom,unused);
             if (ver!=13) {
-                memcpy(&eeprom,teeprom,256);
+                memcpy(editeeprom,teeprom,256);
                 free(teeprom);
                 return true;
             }
@@ -232,12 +253,47 @@ bool bruteForceFixEEprom(void){
 }
 
 void confirmSaveToEEPROMChip(void *ignored){
+    u8 nIndexDrive, unlockConfirm[2];
+
     if(ConfirmDialog("          Save modified EEPROM to chip?", 1))
             return;
     memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));   //Copy back edition buffer to main eeprom buffer.
     ToolHeader("Saved EEPROM image");
-    printk("\n\n           Modified buffer has been saved to main EEPROM buffer\n\n           Pressing \'A\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
+    printk("\n\n           Modified buffer has been saved to main EEPROM buffer.\n           Pressing \'A\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
     ToolFooter();
-    SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.
-    while(1);
+    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
+        if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
+            if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
+                    if(UnlockHDD(nIndexDrive, 0))                                             //0 is for silent
+                        unlockConfirm[nIndexDrive] = 1;                                   //Everything went well, we<ll relock after eeprom write.
+                    else{
+                        unlockConfirm[0] = 255;       //error
+                        unlockConfirm[1] = 255;       //error
+                        break;
+                    }
+            }
+            else{
+                unlockConfirm[nIndexDrive] = 0;                                         //Drive not locked, won't relock after eeprom write.
+            }
+        }
+        else{
+            unlockConfirm[nIndexDrive] = 0;       //Won't relock as no HDD was detected on that port.
+        }
+    }
+    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error
+        memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));
+        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
+            if(unlockConfirm[nIndexDrive] == 1){
+                LockHDD(nIndexDrive, 0);                                //0 is for silent mode.
+            }
+        }
+        SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.
+        while(1);
+    }
+    else{
+        printk("\n\n           Error unlocking drives with previous key.");
+        printk("\n           Actual EEPROM has NOT been changed.");
+        printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");
+        ToolFooter();
+    }
 }

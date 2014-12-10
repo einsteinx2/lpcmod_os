@@ -205,5 +205,3 @@ u32 BootHddKeyGenerateEepromKeyData(
     
     return version;
 }
-
-

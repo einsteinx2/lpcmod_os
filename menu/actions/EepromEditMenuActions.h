@@ -11,6 +11,8 @@
 
 #include "boot.h"
 
+void displayEditEEPROMBuffer(void *ignored);
+
 void LastResortRecovery(void *ignored);
 
 void bruteForceFixDisplayresult(void *ignored);

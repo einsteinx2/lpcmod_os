@@ -123,6 +123,8 @@ void BootEepromWriteEntireEEPROM(void);
 void EepromCRC(unsigned char *crc, unsigned char *data, long dataLen);
 void EepromSetVideoStandard(VIDEO_STANDARD standard);
 void EepromSetWidescreen(int enable);
+u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf);
+
 
 void assertWriteEEPROM(void);
 void changeDVDRegion(u8 value);
