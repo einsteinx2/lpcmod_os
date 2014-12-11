@@ -53,7 +53,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
             if(kbType == IP_KEYPAD)
-                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace, %u  %u  %u", myAtoi(limitFieldString), dotCount, ipFieldLength);
+                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace,  %u  %u", dotCount, ipFieldLength);
             else
                 printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
@@ -73,9 +73,9 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             for(y = 0; y < 4; y++){
                 if(kbType == IP_KEYPAD){
                     if(y == 3)
-                        printk("\n\n\n                                           ");      //Add extra space to align with other rows
+                        printk("\n\n\n                                            ");      //Add extra space to align with other rows
                     else
-                        printk("\n\n\n                                          ");
+                        printk("\n\n\n                                           ");
                 }
                 else{
                     printk("\n\n\n           ");

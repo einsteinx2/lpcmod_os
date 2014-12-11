@@ -1034,7 +1034,7 @@ void
 tcp_err(struct tcp_pcb *pcb,
    void (* errf)(void *arg, err_t err))
 {
-    printk("tcp_err");
+  //printk("tcp_err");
   pcb->errf = errf;
 }
 

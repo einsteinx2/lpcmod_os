@@ -27,16 +27,19 @@ void displayEditEEPROMBuffer(void *ignored){
     version = decryptEEPROMData((u8 *)editeeprom, decryptedWholeBuffer);
     ToolHeader("Modified EEPROM buffer content");
     printk("\n\n           EEPROM version: %u", version);
-/*
-    printk("\n           Encrypted HDDKey: ");
-    for(i = 0; i < 16; i++){
-        printk(" %02X", editeeprom->HDDKkey[i]);
+    if(version < 9 || version > 12){
+        printk(" (corrupted!)");
     }
-    */
     printk("\n           Decrypted Confounder:");
     for(i = 0; i < 8; i++){
         printk(" %02X", decryptedWholeBuffer[20+i]);
     }
+/*
+    printk("\n           Encrypted HDDKey:");
+    for(i = 0; i < 16; i++){
+        printk(" %02X", editeeprom->HDDKkey[i]);
+    }
+*/
     printk("\n           Decrypted HDDKey:");
     for(i = 0; i < 16; i++){
         printk(" %02X", decryptedWholeBuffer[28+i]);
@@ -45,7 +48,7 @@ void displayEditEEPROMBuffer(void *ignored){
     for(i = 0; i < 4; i++){
         printk(" %02X", decryptedWholeBuffer[44+i]);
     }
-    printk(" (%s)", Gameregiontext[decryptedWholeBuffer[47]]);
+    printk(" (%s)", Gameregiontext[(decryptedWholeBuffer[44] <= 4)? decryptedWholeBuffer[44] : 0]);  //Hopefully, everything we need is in first byte.
     printk("\n           MAC address: %02X:%02X:%02X:%02X:%02X:%02X",
     editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
     editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
@@ -237,11 +240,11 @@ bool bruteForceFixEEprom(void){
     //EEPROM with only a single corrupt byte in it's first 48 bytes.
     for (bytepos=0;bytepos<0x30;bytepos++) {
         for (bytecombinations=0;bytecombinations<0x100;bytecombinations++) {
-            memcpy(teeprom,editeeprom,256);
+            memcpy(teeprom,editeeprom,sizeof(EEPROMDATA));
             teeprom[bytepos]=bytecombinations;
             ver = BootHddKeyGenerateEepromKeyData(teeprom,unused);
             if (ver!=13) {
-                memcpy(editeeprom,teeprom,256);
+                memcpy(editeeprom,teeprom,sizeof(EEPROMDATA));
                 free(teeprom);
                 return true;
             }

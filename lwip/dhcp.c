@@ -777,7 +777,7 @@ static void dhcp_bind(struct netif *netif)
   }
 
   LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_bind(): IP: 0x%08lx\n", dhcp->offered_ip_addr.addr));
-  printk ("DHCP IP: %d.%d.%d.%d/%d.%d.%d.%d\n", 
+  printk ("DHCP IP: %u.%u.%u.%u/%u.%u.%u.%u\n",
 		  (dhcp->offered_ip_addr.addr & 0x000000ff) ,
 		  (dhcp->offered_ip_addr.addr & 0x0000ff00) >> 8,
 		  (dhcp->offered_ip_addr.addr & 0x00ff0000) >> 16,

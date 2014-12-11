@@ -19,6 +19,7 @@
 void AssertLockUnlock(void *driveId);
 bool LockHDD(int nIndexDrive, bool verbose);
 bool UnlockHDD(int nIndexDrive, bool verbose);
+bool masterPasswordUnlockSequence(int nIndexDrive);
 
 void DisplayHDDPassword(void *driveId);
 

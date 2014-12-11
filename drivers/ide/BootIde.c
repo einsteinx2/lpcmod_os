@@ -509,11 +509,11 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
         
         if (cromwell_config==CROMWELL) {
-            if((drive_info[128]&0x0004)==0x0004) 
+            if((drive_info[128]&0x0004)==0x0004) //Drive in locked status
             { 
                 unsigned char password[20];
                 if (CalculateDrivePassword(nIndexDrive,password)) {
-                    printk("Unable to calculate drive password - eeprom corrupt?");
+                    printk("\n          Unable to calculate drive password - eeprom corrupt?");
                     return 1;
                 }
                 
@@ -801,10 +801,9 @@ int CalculateDrivePassword(int driveId, unsigned char *key) {
     return 0;
 }
 
-bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId){
+bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master_password){
     char ide_cmd_data[2+512];
     char baBuffer[512];
-    char *master_password="TEAMASSEMBLY";
     unsigned short*    drive_info = (unsigned short*)baBuffer;
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     tsIdeCommandParams tsicp1 = IDE_DEFAULT_COMMAND;
@@ -821,7 +820,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId){
     //Set master password flag
     ide_cmd_data[0]|=0x01;
 
-    memcpy(&ide_cmd_data[2],master_password,12);
+    memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
 
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp1)) return 1;
 

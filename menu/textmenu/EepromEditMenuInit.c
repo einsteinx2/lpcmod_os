@@ -27,7 +27,7 @@ TEXTMENU *eepromEditMenuInit(void) {
 /*
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Edit HDD key");
+    strcpy(itemPtr->szCaption, "Edit HDD password");
     itemPtr->functionPtr=NULL;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);

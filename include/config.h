@@ -1,7 +1,7 @@
 ////////////////////// compile-time options ////////////////////////////////
 
-//LPCMod OS version number
-#define VERSION "0.1 (beta)"
+//XBlast OS version number
+#define VERSION "0.2 (beta)"
 
 // selects between the supported video modes, see boot.h for enum listing those available
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600
@@ -58,3 +58,6 @@
 #define WF_BLOCK_C 0
 #define WF_BLOCK_D 254
 #define WF_PORT 80
+
+//To show/hide stuff from public releases. Set now but will need to be changed to 0 soon.
+#define DEV_FEATURES

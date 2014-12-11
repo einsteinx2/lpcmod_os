@@ -78,42 +78,70 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
     u8 password[20];
     bool result = false; //Start assuming not good.
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
+    if(tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0010){            //Unlock attempt counter expired
+        printk("\n\n\n\n\n           \2Drive is now locked out.\n           \2Reboot system to reset HDD unlock capabilities.\n\n");
+        printk("           \2Press Button A to continue");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        return false;
+    }
     if(verbose){
         if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
     }
     
     if (CalculateDrivePassword(nIndexDrive,password)) {
         printk("           Unable to calculate drive password - eeprom corrupt?  Trying Master Password unlock\n");
-        if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive)){
-            printk("           Master Password(TEAMASSEMBLY) Unlock failed... \n");
+        if(!masterPasswordUnlockSequence(nIndexDrive)){
+            printk("           Master Password unlock failed. Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
             result = false;
+            verbose = true;
         }
-        else
+        else{
             result = true;
+        }
     }
     else{
         if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
             printk("           Failed! Trying Master Password unlock");
-            if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive)){
-                printk("           Master Password(TEAMASSEMBLY) Unlock failed... \n");
+            if(!masterPasswordUnlockSequence(nIndexDrive)){
+                printk("           Master Password unlock failed. Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
                 result = false;
+                verbose = true;
             }
-            else
-                result = true;
-                printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
         }
         else{
-            if(verbose){
-                printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
                 result = true;
-
-            }
         }
     }
+    if(verbose && result)
+        printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
     if(verbose){
         printk("           \2Press Button A to continue");
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
     }
+    return result;
+}
+
+bool masterPasswordUnlockSequence(int nIndexDrive){
+    bool result = false;
+    u8 i;
+    unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
+    const char * MasterPasswordList[] = {
+            "TEAMASSEMBLY",
+            "XBOXSCENE",
+            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD",
+            "Seagate                         "
+    };
+
+    for(i = 0; i < 4; i++){
+        if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive, MasterPasswordList[i])){
+            printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
+        }
+        else{
+            result = true;
+            break;
+        }
+    }
+
     return result;
 }
 
