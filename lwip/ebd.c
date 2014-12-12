@@ -179,7 +179,6 @@ run_lwip (void) {
 
     httpd_init ();
     int divisor = 0;
-    printk ("\n            while(1)");
     while (1) {
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
             //printk ("!ebd_wait");

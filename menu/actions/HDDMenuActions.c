@@ -87,29 +87,35 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
     if(verbose){
         if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
     }
-    
-    if (CalculateDrivePassword(nIndexDrive,password)) {
-        printk("\n\n           Unable to calculate drive password - eeprom corrupt?\n           Trying Master Password unlock");
+    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004){
+        printk("\n\n           Something's wrong with the drive!\n           Jumping to Master Password Unlock sequence.");
         if(!masterPasswordUnlockSequence(nIndexDrive)){
-            printk("\n           Master Password unlock failed. Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
             result = false;
             verbose = true;
         }
-        else{
-            result = true;
-        }
     }
     else{
-        if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
-            printk("\n           Failed! Trying Master Password unlock");
+        if (CalculateDrivePassword(nIndexDrive,password)) {
+            printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
             if(!masterPasswordUnlockSequence(nIndexDrive)){
-                printk("\n           Master Password unlock failed.\n           Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
                 result = false;
                 verbose = true;
             }
+            else{
+                result = true;
+            }
         }
         else{
-                result = true;
+            if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
+                printk("\n           Security disable failed!");
+                if(!masterPasswordUnlockSequence(nIndexDrive)){
+                    result = false;
+                    verbose = true;
+                }
+            }
+            else{
+                    result = true;
+            }
         }
     }
     if(verbose && result)
@@ -128,21 +134,27 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
     const char * MasterPasswordList[] = {
             "TEAMASSEMBLY",
             "XBOXSCENE",
-            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD",
-            "Seagate                         "
+            "Seagate                         ",
+            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD"
     };
-
+    printk("\n           Trying Master Password unlock.");
     for(i = 0; i < 4; i++){
-        if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive, MasterPasswordList[i])){
-            printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
+        if(!(tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0010)){           //Drive is not locked out.
+            if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive, MasterPasswordList[i])){
+                printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
+            }
+            else{
+                printk("\n           Unlock Using Master Password %s successful.", MasterPasswordList[i]);
+                result = true;
+                break;
+            }
         }
         else{
-            printk("\n           Unlock Using Master Password %s successful.", MasterPasswordList[i]);
-            result = true;
+            printk("\n           Drive is locked out. No further unlock attempts possible.\n           Power cycle console to reset HDD state.");
             break;
         }
     }
-
+    printk("\n          Master Password Unlock failed.\n          No suitable password found.");
     return result;
 }
 

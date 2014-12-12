@@ -11,6 +11,8 @@
 
 #include "boot.h"
 
+#define HEX_KEYPAD   2
+
 void displayEditEEPROMBuffer(void *ignored);
 
 void LastResortRecovery(void *ignored);
@@ -19,5 +21,6 @@ void bruteForceFixDisplayresult(void *ignored);
 bool bruteForceFixEEprom(void);
 
 void confirmSaveToEEPROMChip(void *ignored);
+void editMACAddress(void *ignored);
 
 #endif

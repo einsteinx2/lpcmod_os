@@ -264,7 +264,7 @@ void confirmSaveToEEPROMChip(void *ignored){
     ToolHeader("Saved EEPROM image");
     printk("\n\n           Modified buffer has been saved to main EEPROM buffer.\n           Pressing \'A\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
     ToolFooter();
-/*    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
+    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
         if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
             if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
                     if(UnlockHDD(nIndexDrive, 0))                                             //0 is for silent
@@ -283,20 +283,89 @@ void confirmSaveToEEPROMChip(void *ignored){
             unlockConfirm[nIndexDrive] = 0;       //Won't relock as no HDD was detected on that port.
         }
     }
-    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error*/
+    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error
         memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));
-/*        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
+        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
             if(unlockConfirm[nIndexDrive] == 1){
                 LockHDD(nIndexDrive, 0);                                //0 is for silent mode.
             }
-        }*/
+        }
         SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.
         while(1);
-/*    }
+    }
     else{
         printk("\n\n           Error unlocking drives with previous key.");
         printk("\n           Actual EEPROM has NOT been changed.");
         printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");
         ToolFooter();
-    }*/
+    }
+}
+
+void editMACAddress(void *ignored){
+    u8 i, j;
+    char macString[13];
+    u8 nibble[2];
+    u8 tempMac[6];
+    sprintf(macString, "%02X%02X%02X%02X%02X%02X",
+    editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
+    editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
+    OnScreenKeyboard(macString, 12, 3, HEX_KEYPAD);
+    if(strlen(macString) == 12){
+        for(i = 0; i < 6; i++){
+            for(j = 0; j < 2; j++){
+                //Dumdum way of converting string of hex into actual hex.
+                switch(macString[i*2 + j]){
+                    case '0':
+                        nibble[j] = 0;
+                        break;
+                    case '1':
+                        nibble[j] = 0x1;
+                        break;
+                    case '2':
+                        nibble[j] = 0x2;
+                        break;
+                    case '3':
+                        nibble[j] = 0x3;
+                        break;
+                    case '4':
+                        nibble[j] = 0x4;
+                        break;
+                    case '5':
+                        nibble[j] = 0x5;
+                        break;
+                    case '6':
+                        nibble[j] = 0x6;
+                        break;
+                    case '7':
+                        nibble[j] = 0x7;
+                        break;
+                    case '8':
+                        nibble[j] = 0x8;
+                        break;
+                    case '9':
+                        nibble[j] = 0x9;
+                        break;
+                    case 'A':
+                        nibble[j] = 0xA;
+                        break;
+                    case 'B':
+                        nibble[j] = 0xB;
+                        break;
+                    case 'C':
+                        nibble[j] = 0xC;
+                        break;
+                    case 'D':
+                        nibble[j] = 0xD;
+                        break;
+                    case 'E':
+                        nibble[j] = 0xE;
+                        break;
+                    case 'F':
+                        nibble[j] = 0xF;
+                        break;
+                }
+            }
+            editeeprom->MACAddress[i] = (nibble[0] << 4) | nibble[1];
+        }
+    }
 }

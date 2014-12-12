@@ -38,14 +38,14 @@ TEXTMENU *eepromEditMenuInit(void) {
     itemPtr->functionPtr=NULL;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-
+*/
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Edit MAC address");
-    itemPtr->functionPtr=NULL;
+    itemPtr->functionPtr=editMACAddress;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-
+/*
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Edit Online key");

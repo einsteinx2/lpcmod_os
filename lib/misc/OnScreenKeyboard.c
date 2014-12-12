@@ -5,7 +5,8 @@
 #include "NetworkMenuActions.h"
 
 #define FULL_KEYBOARD   0
-#define IP_KEYPAD   1
+#define IP_KEYPAD       1
+#define HEX_KEYPAD      2
 
 char keymap[4][10] = {{'1','2','3','4','5','6','7','8','9','0'},
                       {'A','B','C','D','E','F','G','H','I','J'},
@@ -21,6 +22,11 @@ char ipKeypad[4][3] = {{'1','2','3'},
                        {'4','5','6'},
                        {'7','8','9'},
                        {' ','0','.'}};
+
+char hexKeypad[4][4] = {{'A','1','2','3'},
+                       {'B','4','5','6'},
+                       {'C','7','8','9'},
+                       {'D','E','F','0'}};
 
 void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     bool exit = false;
@@ -43,6 +49,8 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     
     if(kbType == IP_KEYPAD)
         rowLength = 3;
+    else if(kbType == HEX_KEYPAD)
+        rowLength = 4;
     else
         rowLength = 10; //Full keyboard by default;
 
@@ -52,20 +60,23 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_CURSOR_POSX=50;
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
-            if(kbType == IP_KEYPAD)
+            if(kbType == IP_KEYPAD || kbType == HEX_KEYPAD)
                 printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace,  %u  %u", dotCount, ipFieldLength);
             else
                 printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
             VIDEO_CURSOR_POSX=75;
             VIDEO_CURSOR_POSY=50;
-            if(kbType == IP_KEYPAD)
+            if(kbType == IP_KEYPAD || kbType == HEX_KEYPAD)
                 printk("\n\n\n\n\2                        %s", string);
             else
                 printk("\n\n\n\n\2                 %s", string);
             VIDEO_ATTR=0xffffffff;
             if(kbType == IP_KEYPAD){
                 printk("\n\n\n                                  ");
+            }
+            else if(kbType == HEX_KEYPAD){
+                printk("\n\n\n                               ");
             }
             else{
                 printk("\n\n\n           ");
@@ -77,6 +88,9 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                     else
                         printk("\n\n\n                                           ");
                 }
+                else if(kbType == HEX_KEYPAD){
+                                printk("\n\n\n                               ");
+                }
                 else{
                     printk("\n\n\n           ");
                 }
@@ -87,6 +101,9 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                         VIDEO_ATTR=0xffffffff;                  //the rest in white.
                     if(kbType == IP_KEYPAD){
                         printk("\2%c    ",ipKeypad[y][x]);
+                    }
+                    else if(kbType == HEX_KEYPAD){
+                        printk("\2%c    ",hexKeypad[y][x]);
                     }
                     else{
                         if(shift){
@@ -115,14 +132,14 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             exit = true;
         }
 
-        if(kbType != IP_KEYPAD){
+        if(kbType != IP_KEYPAD && kbType != HEX_KEYPAD){
             if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y) == 1){   //Shift toggle
                 shift = !shift;
                 refresh = true;
             }
         }
 
-        if(kbType != IP_KEYPAD){
+        if(kbType != IP_KEYPAD && kbType != HEX_KEYPAD){
             if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X) == 1){   //Space
                 if(textpos < maxLength){
                     string[textpos] = ' ';                  //Add space character
@@ -164,10 +181,10 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                     }
                     if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.') || (textpos > 0)) {    //Don't start string with a '.'
                         if((string[textpos - 1] == '.' && ipKeypad[cursorposY][cursorposX] != '.') ||   //Don't put 2 successive '.'
-                           (string[textpos - 1] != '.')){
+                           (string[textpos - 1] != '.')){                                               //Selected character is not a '.'. Let it go through.
                             if(dotCount < 3 &&  //if not in the last IP field.
                                (ipFieldLength == 2 || //And field contains 3 digit
-                                (ipKeypad[cursorposY][cursorposX] = '0' && string[textpos - 1] == '.'))){  //or '0' is entered just after a '.'. 
+                                (ipKeypad[cursorposY][cursorposX] == '0' && string[textpos - 1] == '.'))){  //or '0' is entered just after a '.'.
                                 charAccepted = true;
                                 string[textpos] = ipKeypad[cursorposY][cursorposX];
                                 string[textpos + 1] = '.';     //add '.' automatically
@@ -190,6 +207,10 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                     else{
                         charAccepted = false;
                     }
+                }
+                else if(kbType == HEX_KEYPAD){
+                    charAccepted = true;
+                    string[textpos] = hexKeypad[cursorposY][cursorposX];
                 }
                 else{
                     charAccepted = true;

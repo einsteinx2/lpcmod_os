@@ -371,6 +371,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     unsigned short* drive_info;
     u8 baBuffer[512];
     u8 n = 0;
+    char * repetitiveString1 = "\n          Consider using Unlock HDD option in settings \n          to try unlocking with Master Password.";
      
     tsaHarddiskInfo[nIndexDrive].m_fwPortBase = uIoBase;
     tsaHarddiskInfo[nIndexDrive].m_wCountHeads = 0u;
@@ -494,7 +495,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     } 
         
         
-    if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).
+    if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).CoolingEquipment
         unsigned long ulDriveCapacity1024=((tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal /1000)*512)/1000;
         
 #ifndef SILENT_MODE
@@ -515,12 +516,12 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             { 
                 unsigned char password[20];
                 if (CalculateDrivePassword(nIndexDrive,password)) {
-                    printk("\n          Unable to calculate drive password - eeprom corrupt?");
-                    return 1;
+                    printk("\n\n\n\n\n\n\n          Unable to calculate drive password - eeprom corrupt?%s", repetitiveString1);
+                        return 1;
                 }
                 
                 if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_UNLOCK, password)) {
-                    printk("Unlock failed!");
+                    printk("\n\n\n\n\n\n\n          Unlock using HDD key failed. Wrong key.%s", repetitiveString1);
                 }
                 else {
 #ifndef SILENT_MODE
@@ -557,7 +558,10 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //Depending on PIO cycle time value returned by IDENTIFY command, we select a PIO mode.
         //Can be from 0 to 4. One thing important is that bit3 must be set to 1(0x08).
         //Bits 2 to 0 select the PIO mode.
-        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120
+
+
+        //We'll just try mode 0 and 1 for now.
+/*        if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 120
               && tsaHarddiskInfo[nIndexDrive].m_bIORDY){        //Mode4
             n = BootIdeSetTransferMode(nIndexDrive, 0x0C); 
             //Mode4 timing specs are as follow:
@@ -604,7 +608,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //AMD-766 datasheet notes that C1A4C register should be left to default value when using PIO
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x3F3F0000);
         }
-        else if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383){   //Mode1
+        else*/ if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383){   //Mode1
             n = BootIdeSetTransferMode(nIndexDrive, 0x09);
             //Mode1 timing specs are as follow:
             //Register 0x48, set at 0x65656565 for all drives(4)
@@ -814,22 +818,21 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     char baBuffer[512];
     unsigned short*    drive_info = (unsigned short*)baBuffer;
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
-    tsIdeCommandParams tsicp1 = IDE_DEFAULT_COMMAND;
-    //IDE_CMD_SECURITY_DISABLE
 
+    //IDE_CMD_SECURITY_UNLOCK
     if(BootIdeWaitNotBusy(uIoBase))
     {
         //printk("  %d:  Not Ready\n", driveId);
         return false;
     }
-    tsicp1.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
 
     memset(ide_cmd_data,0x00,512);
     //Set master password flag
     ide_cmd_data[0]|=0x01;
 
     memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp1)) return 1;
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp)) return 1;
 
     BootIdeWaitDataReady(uIoBase);
     BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
@@ -838,8 +841,9 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     {
         return false;
     }
+
+
     // check that we are unlocked
-    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp))
     {
         return false;
@@ -857,24 +861,17 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
         printk("\n              Unlock ATA command using Master Password failed.");
         return false;
     }
-    
-    //tsicp = IDE_DEFAULT_COMMAND;
-    //tsicp1 = IDE_DEFAULT_COMMAND;
-    //IDE_CMD_SECURITY_DISABLE
 
+
+    //IDE_CMD_SECURITY_DISABLE
     if(BootIdeWaitNotBusy(uIoBase))
     {
         //printk("  %d:  Not Ready\n", driveId);
         return false;
     }
-    tsicp1.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
 
-    memset(ide_cmd_data,0x00,512);
-    //Set master password flag
-    ide_cmd_data[0]|=0x01;
-
-    memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp1)) return 1;
+    //ide_cmd_data's content is the same for both commands so we'll just reuse it to disable lock.
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp)) return 1;
 
     BootIdeWaitDataReady(uIoBase);
     BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
@@ -884,7 +881,6 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
         return false;
     }
     // check that we are unlocked
-    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp))
     {
         return false;
@@ -899,10 +895,10 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     tsaHarddiskInfo[driveId].m_masterPassSupport = drive_info[92];
     if((drive_info[128]&0x0002)==0x0002) //Drive security is still enabled.
     {
-        printk("\n              Security Enable ATA command using Master Password failed.");
+        printk("\n              Security Disable ATA command using Master Password failed.");
         return false;
     }
-    //Success, hopefully.
+    //Success, surely.
 
     return true;
 }
