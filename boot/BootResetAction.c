@@ -488,7 +488,8 @@ extern void BootResetAction ( void ) {
     //Check for unformatted drives.
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi
-            && tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND - 1)) {
+            && tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND - 1)
+            && !(tsaHarddiskInfo[i].m_securitySettings&0x0002)) {    //Drive not locked.
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
                 // We save the complete framebuffer to memory (we restore at exit)
                 u8 *videosavepage = malloc(FB_SIZE);

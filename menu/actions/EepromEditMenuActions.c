@@ -187,19 +187,19 @@ void LastResortRecovery(void *ignored){
             case DEVKIT:
             case DEBUGKIT:
             case REV1_0:
-                memcpy(&eeprom, EEPROMimg10, sizeof(EEPROMDATA));
+                memcpy(editeeprom, EEPROMimg10, sizeof(EEPROMDATA));
                 break;
             case REV1_1:
-                memcpy(&eeprom, EEPROMimg11, sizeof(EEPROMDATA));
+                memcpy(editeeprom, EEPROMimg11, sizeof(EEPROMDATA));
                 break;
             case REV1_2:
-                memcpy(&eeprom, EEPROMimg12, sizeof(EEPROMDATA));
+                memcpy(editeeprom, EEPROMimg12, sizeof(EEPROMDATA));
                 break;
             case REV1_4:
-                memcpy(&eeprom, EEPROMimg14, sizeof(EEPROMDATA));
+                memcpy(editeeprom, EEPROMimg14, sizeof(EEPROMDATA));
                 break;
             case REV1_6:
-                memcpy(&eeprom, EEPROMimg16, sizeof(EEPROMDATA));
+                memcpy(editeeprom, EEPROMimg16, sizeof(EEPROMDATA));
                 break;
         }
 }
@@ -264,7 +264,7 @@ void confirmSaveToEEPROMChip(void *ignored){
     ToolHeader("Saved EEPROM image");
     printk("\n\n           Modified buffer has been saved to main EEPROM buffer.\n           Pressing \'A\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
     ToolFooter();
-    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
+/*    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
         if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
             if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
                     if(UnlockHDD(nIndexDrive, 0))                                             //0 is for silent
@@ -283,20 +283,20 @@ void confirmSaveToEEPROMChip(void *ignored){
             unlockConfirm[nIndexDrive] = 0;       //Won't relock as no HDD was detected on that port.
         }
     }
-    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error
+    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error*/
         memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));
-        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
+/*        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
             if(unlockConfirm[nIndexDrive] == 1){
                 LockHDD(nIndexDrive, 0);                                //0 is for silent mode.
             }
-        }
+        }*/
         SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.
         while(1);
-    }
+/*    }
     else{
         printk("\n\n           Error unlocking drives with previous key.");
         printk("\n           Actual EEPROM has NOT been changed.");
         printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");
         ToolFooter();
-    }
+    }*/
 }

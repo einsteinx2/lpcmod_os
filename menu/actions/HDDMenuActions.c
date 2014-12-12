@@ -89,9 +89,9 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
     }
     
     if (CalculateDrivePassword(nIndexDrive,password)) {
-        printk("           Unable to calculate drive password - eeprom corrupt?  Trying Master Password unlock\n");
+        printk("\n\n           Unable to calculate drive password - eeprom corrupt?\n           Trying Master Password unlock");
         if(!masterPasswordUnlockSequence(nIndexDrive)){
-            printk("           Master Password unlock failed. Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
+            printk("\n           Master Password unlock failed. Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
             result = false;
             verbose = true;
         }
@@ -101,9 +101,9 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
     }
     else{
         if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
-            printk("           Failed! Trying Master Password unlock");
+            printk("\n           Failed! Trying Master Password unlock");
             if(!masterPasswordUnlockSequence(nIndexDrive)){
-                printk("           Master Password unlock failed. Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
+                printk("\n           Master Password unlock failed.\n           Drive is NOT lock with TEAMASSEMBLY or XBOXSCENE.\n");
                 result = false;
                 verbose = true;
             }
@@ -122,7 +122,7 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
 }
 
 bool masterPasswordUnlockSequence(int nIndexDrive){
-    bool result = false;
+    bool result = false;    //Assume not working.
     u8 i;
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     const char * MasterPasswordList[] = {
@@ -137,6 +137,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
         }
         else{
+            printk("\n           Unlock Using Master Password %s successful.", MasterPasswordList[i]);
             result = true;
             break;
         }

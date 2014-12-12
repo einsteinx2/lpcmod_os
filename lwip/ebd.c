@@ -131,6 +131,7 @@ int
 run_lwip (void) {
     struct ip_addr ipaddr, netmask, gw;
     struct netif netif;
+    bool first = 1;
 
     mem_init ();
     memp_init ();
@@ -177,31 +178,36 @@ run_lwip (void) {
     netif_set_default (&netif);
 
     httpd_init ();
-    if (netif.dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
-        printk ("\n            DHCP FAILED - Falling back to %u.%u.%u.%u",
-                (ipaddr.addr & 0xff000000) >> 24,
-                (ipaddr.addr & 0x00ff0000) >> 16,
-                (ipaddr.addr & 0x0000ff00) >> 8,
-                ipaddr.addr & 0x000000ff);
-        dhcp_stop (&netif);
-        netif_set_addr(&netif, &ipaddr, &netmask, &gw);
-    }
-    printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
-                ((netif.ip_addr.addr) >> 24 & 0xff),
-                ((netif.ip_addr.addr) >> 16 & 0xff),
-                ((netif.ip_addr.addr) >> 8 & 0xff),
-                ((netif.ip_addr.addr) & 0xff));
     int divisor = 0;
     printk ("\n            while(1)");
     while (1) {
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
             //printk ("!ebd_wait");
             if (divisor++ == 60 * 4) {
+                
                 dhcp_coarse_tmr ();
                 divisor = 0;
             }
-            if (divisor & 1)
+            if(first && divisor == 10){
+	        if (netif.dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
+	            printk ("\n            DHCP FAILED - Falling back to %u.%u.%u.%u",
+	                ipaddr.addr & 0x000000ff,
+	                (ipaddr.addr & 0x0000ff00) >> 8,
+	                (ipaddr.addr & 0x00ff0000) >> 16,
+	                (ipaddr.addr & 0xff000000) >> 24);
+	            dhcp_stop (&netif);
+	            netif_set_addr(&netif, &ipaddr, &netmask, &gw);
+	        }
+	        printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
+	            ((netif.ip_addr.addr) & 0xff),
+	            ((netif.ip_addr.addr) >> 8 & 0xff),
+	            ((netif.ip_addr.addr) >> 16 & 0xff),
+	            ((netif.ip_addr.addr) >> 24 & 0xff));
+	        first = 0;
+                }
+            if (divisor & 1){
                 dhcp_fine_tmr ();
+            }
             tcp_tmr ();
             //else
             //	printk("Got packet!! \n");

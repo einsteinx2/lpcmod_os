@@ -384,6 +384,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsaHarddiskInfo[nIndexDrive].m_wAtaRevisionSupported=0;
     tsaHarddiskInfo[nIndexDrive].m_fHasMbr=0;
     tsaHarddiskInfo[nIndexDrive].m_securitySettings = 0;
+    tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = 0;
     tsaHarddiskInfo[nIndexDrive].m_bIORDY = 0;
 
 //Why disable DMA?
@@ -507,6 +508,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         );
 #endif
         tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
+        tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = drive_info[92];
         
         if (cromwell_config==CROMWELL) {
             if((drive_info[128]&0x0004)==0x0004) //Drive in locked status
@@ -737,11 +739,16 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
     
         memcpy(&ide_cmd_data[2],master_password,12);
         
+        memcpy(&ide_cmd_data[34], &(tsaHarddiskInfo[driveId].m_masterPassSupport),2);
+        
         if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1)) return 1;
         BootIdeWaitDataReady(uIoBase);
         BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
 
-        BootIdeWaitNotBusy(uIoBase);
+        if(BootIdeWaitNotBusy(uIoBase)){
+            printk("\n           Setting Master Password failed.");
+            return 1;
+        }
     }
 
     memset(ide_cmd_data,0x00,512);
@@ -771,6 +778,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
     }
 
     tsaHarddiskInfo[driveId].m_securitySettings = drive_info[128];
+    tsaHarddiskInfo[driveId].m_masterPassSupport = drive_info[92];
     //Success, hopefully.
     return 0;
 }
@@ -821,7 +829,51 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     ide_cmd_data[0]|=0x01;
 
     memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp1)) return 1;
 
+    BootIdeWaitDataReady(uIoBase);
+    BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
+
+    if (BootIdeWaitNotBusy(uIoBase))
+    {
+        return false;
+    }
+    // check that we are unlocked
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp))
+    {
+        return false;
+    }
+    BootIdeWaitDataReady(uIoBase);
+    if(BootIdeReadData(uIoBase, baBuffer, IDE_SECTOR_SIZE))
+    {
+        return false;
+    }
+
+    tsaHarddiskInfo[driveId].m_securitySettings = drive_info[128];
+    tsaHarddiskInfo[driveId].m_masterPassSupport = drive_info[92];
+    if((drive_info[128]&0x0004)==0x0004) //Drive in locked status, not good...
+    {
+        printk("\n              Unlock ATA command using Master Password failed.");
+        return false;
+    }
+    
+    //tsicp = IDE_DEFAULT_COMMAND;
+    //tsicp1 = IDE_DEFAULT_COMMAND;
+    //IDE_CMD_SECURITY_DISABLE
+
+    if(BootIdeWaitNotBusy(uIoBase))
+    {
+        //printk("  %d:  Not Ready\n", driveId);
+        return false;
+    }
+    tsicp1.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
+
+    memset(ide_cmd_data,0x00,512);
+    //Set master password flag
+    ide_cmd_data[0]|=0x01;
+
+    memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp1)) return 1;
 
     BootIdeWaitDataReady(uIoBase);
@@ -844,6 +896,12 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     }
 
     tsaHarddiskInfo[driveId].m_securitySettings = drive_info[128];
+    tsaHarddiskInfo[driveId].m_masterPassSupport = drive_info[92];
+    if((drive_info[128]&0x0002)==0x0002) //Drive security is still enabled.
+    {
+        printk("\n              Security Enable ATA command using Master Password failed.");
+        return false;
+    }
     //Success, hopefully.
 
     return true;

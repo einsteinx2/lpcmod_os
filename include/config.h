@@ -60,4 +60,4 @@
 #define WF_PORT 80
 
 //To show/hide stuff from public releases. Set now but will need to be changed to 0 soon.
-#define DEV_FEATURES
+#define DEV_FEATURES 1
