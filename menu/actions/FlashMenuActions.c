@@ -96,13 +96,23 @@ void FlashBiosFromCD (void *cdromId) {
 void enableNetflash (void *whatever) {
 #ifdef FLASH
     extern unsigned char *videosavepage;
+
+    //Save current frameBuffer
+    u8 currentFrameBuffer = malloc(FB_SIZE);
+    memcpy(currentFrameBuffer,(void*)FB_START,FB_SIZE);
+
     memcpy ((void*) FB_START, videosavepage, FB_SIZE);
+    //videosavepage contains data set at the beginning of IconMenu() function.
+    //Cheap way to get a blank screen with only Header text data.
     VIDEO_ATTR = 0xffef37;
     printk ("\n\n\n\n\n\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
     //initialiseNetwork ();
     //netFlash ();
     etherboot();
+    //Restore FrameBuffer for Menu display
+    memcpy((void*)FB_START,currentFrameBuffer,FB_SIZE);
+    free(currentFrameBuffer);
 #endif
 }
 

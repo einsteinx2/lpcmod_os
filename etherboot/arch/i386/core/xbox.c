@@ -52,10 +52,12 @@ int etherboot(void)
 		{
 			printk("eth_load_configuration failed\n");
 		}
+#if 0
 		else
 		{
 			eth_load(dev);
 		}
+#endif
 	}
 	return 0;   //Keep compiler happy
 }

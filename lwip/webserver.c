@@ -118,7 +118,7 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         else {
             res = BootReflash(fileBuf,0,hs->bios_len);
         }
-        BootFlashPrintResult(res, hs->bios_len);
+        netFlashOver = BootFlashPrintResult(res, hs->bios_len);
   }
 
   if (hs->postdata)

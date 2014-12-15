@@ -64,7 +64,7 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 void BootReflashAndReset_RAM(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 void BootShowFlashDevice(void);
-void BootFlashPrintResult(int res, u32 fileSize);
+bool BootFlashPrintResult(int res, u32 fileSize);
 
 bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft );
 bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof);

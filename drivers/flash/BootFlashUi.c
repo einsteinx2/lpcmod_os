@@ -58,9 +58,6 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
             return 4;  //Not valid XBlast OS image.
-        //printk("\n              CRC32 = 0x%08X", crc32buf(pbNewData,0x3F000));
-        //printk("\n             in BIN = 0x%08X", *(u32 *)&pbNewData[0x3FDFC]);
-        //while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
         if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
             return 5;
     }
@@ -75,7 +72,7 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
             if(of.m_dwLengthInBytes >= 1048576 && //Flash is at least 1MB in space
                dwLength == 524288){             //image is 512KB in size
                 memcpy(&pbNewData[524288], &pbNewData[0], 524288);  //Mirror image in the next 512KB segment of the 1MB buffer.
-                dwLength = dwLength * 2;      //Image to flash is now 512KB
+                dwLength = dwLength * 2;      //Image to flash is now 1MB
             }
             of.m_dwLengthUsedArea=dwLength;
         }
@@ -275,7 +272,7 @@ void BootShowFlashDevice(void){
     return;
 }
 
-void BootFlashPrintResult(int res, u32 fileSize) {
+bool BootFlashPrintResult(int res, u32 fileSize) {
     if (res > 0) {
             cromwellError ();
             printk ("\n\n\n\n\n           Flash failed...");
@@ -333,5 +330,5 @@ void BootFlashPrintResult(int res, u32 fileSize) {
             printk ("\n           Flashing successful!!!");
         }
         FlashFooter ();
-        return;
+        return true; //Flashing is over.
 }

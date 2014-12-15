@@ -228,7 +228,7 @@ int eth_load_configuration(struct dev *dev __unused)
 	extern int run_lwip(void);
 
 	run_lwip();
-
+#if 0
 	/* Find a server to get BOOTP reply from */
 #ifdef	RARP_NOT_BOOTP
 	printf("Searching for server (RARP)...\n");
@@ -249,6 +249,7 @@ int eth_load_configuration(struct dev *dev __unused)
 		printf("No Server found\n");
 		longjmp(restart_etherboot, -1);
 	}
+#endif
 	return 0;
 }
 

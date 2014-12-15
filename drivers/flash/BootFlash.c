@@ -62,7 +62,7 @@ bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft )
             fMore=false;
             //Initially printd spaces before actual string. I don't want this...
             //nPos+=sprintf(&pof->m_szFlashDescription[nPos], "           %s (%dK)", pkft->m_szFlashDescription, pkft->m_dwLengthInBytes/1024);
-            nPos+=sprintf(&pof->m_szFlashDescription[nPos], "%s (%dK)", pkft->m_szFlashDescription, pkft->m_dwLengthInBytes/1024);
+            nPos+=sprintf(&pof->m_szFlashDescription[nPos], "%s", pkft->m_szFlashDescription);
             pof->m_dwLengthInBytes = pkft->m_dwLengthInBytes;
         }
         pkft++;
@@ -441,7 +441,6 @@ void BootFlashSaveOSSettings(void) {
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
             if(assert4KBErase(&of)){                //XBlast Lite V1 has 4KB-sector erase capability
                 blocksize = 4 * 1024;                       //4KB allocation
-                //LEDOff(NULL);                          //XXX:Debug, remove.
             }
             else {                                           //Other devices, we assume 64KB block erasing only
                 blocksize = 64 * 1024;
@@ -461,8 +460,6 @@ void BootFlashSaveOSSettings(void) {
     		        return;
                 memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
                 BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
-               // LEDOff(NULL);        //Here only to debug everytime flash is updated.
-                //wait_ms(3000);        //Will hang with solid Red LED for 3 seconds.
             }
             free(lastBlock);
         }

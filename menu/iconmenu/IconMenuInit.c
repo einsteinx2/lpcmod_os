@@ -88,7 +88,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
             iconPtr->bankID = BNKTSOPSPLIT0;
             iconPtr->functionPtr = BootOriginalBios;
             iconPtr->functionDataPtr = malloc(sizeof(u8));
-                    *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT0;    //send 0x03
+                    *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT0;
             AddIcon(iconPtr);
 
             iconPtr = (ICON *)malloc(sizeof(ICON));
@@ -97,7 +97,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
             iconPtr->bankID = BNKTSOPSPLIT1;
             iconPtr->functionPtr = BootOriginalBios;
             iconPtr->functionDataPtr = malloc(sizeof(u8));
-                    *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT1;    //send 0x0B
+                    *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT1;
             AddIcon(iconPtr);
     }
     else {                                        //No split.
@@ -107,7 +107,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
         iconPtr->bankID = BNKFULLTSOP;
         iconPtr->functionPtr = BootOriginalBios;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
-                *(u8*)iconPtr->functionDataPtr = BNKFULLTSOP;    //send 0x01
+                *(u8*)iconPtr->functionDataPtr = BNKFULLTSOP;
         AddIcon(iconPtr);
     }
 }

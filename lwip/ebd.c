@@ -142,6 +142,7 @@ run_lwip (void) {
     tcp_init ();
     etharp_init ();
     printk ("\n\n            TCP/IP initialized.\n");
+    netFlashOver = false;
 
     /*	IP4_ADDR(&gw, 192,168,99,1);
      IP4_ADDR(&ipaddr, 192,168,99,2);
@@ -179,7 +180,7 @@ run_lwip (void) {
 
     httpd_init ();
     int divisor = 0;
-    while (1) {
+    while (!netFlashOver) {
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
             //printk ("!ebd_wait");
             if (divisor++ == 60 * 4) {

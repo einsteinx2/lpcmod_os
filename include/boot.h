@@ -484,4 +484,7 @@ struct _GenPurposeIOs{
 
     bool EN_5V;
 }__attribute__((packed))GenPurposeIOs;  //byte-long struct.
+
+bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash too much... Sorry.
+
 #endif // _Boot_H_

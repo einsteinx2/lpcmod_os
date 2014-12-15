@@ -29,6 +29,7 @@
 #include "config.h"
 #include "IconMenu.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "lpcmod_v1.h"
 
 #define TRANSPARENTNESS 0x30
 #define SELECTED 0xff
@@ -73,8 +74,33 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 
     //Seeking icon with desired bankID value must be done when both firstVisibleIcon and selectedIcon are NULL.
     //This way, seeking desired icon will only occur at initial draw.
+/*
     if (firstVisibleIcon==NULL) firstVisibleIcon = firstIcon;
     if (selectedIcon==NULL) selectedIcon = firstIcon;
+    iconPtr = firstVisibleIcon;
+*/
+    if (firstVisibleIcon==NULL && selectedIcon==NULL){
+        switch(LPCmodSettings.OSsettings.activeBank){
+            default:
+            case BNK512:
+                firstVisibleIcon = firstIcon;
+                selectedIcon = firstIcon;
+                break;
+            case BNK256:
+                firstVisibleIcon = firstIcon;
+                selectedIcon = firstIcon->nextIcon;
+                break;
+            case BNKFULLTSOP:
+            case BNKTSOPSPLIT0:
+                firstVisibleIcon = firstIcon->nextIcon;
+                selectedIcon = firstIcon->nextIcon->nextIcon;
+                break;
+            case BNKTSOPSPLIT1:
+                firstVisibleIcon = firstIcon->nextIcon->nextIcon;
+                selectedIcon = firstIcon->nextIcon->nextIcon->nextIcon;
+                break;
+        }
+    }
     iconPtr = firstVisibleIcon;
 
     //There are max 3 (three) 'bays' for displaying icons in - we only draw the 3.
