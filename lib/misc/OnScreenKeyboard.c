@@ -76,7 +76,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                 printk("\n\n\n                                  ");
             }
             else if(kbType == HEX_KEYPAD){
-                printk("\n\n\n                               ");
+                printk("\n\n\n                                     ");
             }
             else{
                 printk("\n\n\n           ");
@@ -84,12 +84,12 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             for(y = 0; y < 4; y++){
                 if(kbType == IP_KEYPAD){
                     if(y == 3)
-                        printk("\n\n\n                                            ");      //Add extra space to align with other rows
+                        printk("\n\n\n                                                ");      //Add extra space to align with other rows
                     else
-                        printk("\n\n\n                                           ");
+                        printk("\n\n\n                                              ");
                 }
                 else if(kbType == HEX_KEYPAD){
-                                printk("\n\n\n                               ");
+                                printk("\n\n\n                                  ");
                 }
                 else{
                     printk("\n\n\n           ");
@@ -152,8 +152,14 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1){   //Backspace
             if(textpos > 0){                                       //Full keyboard
                 textpos -= 1;                               //Move cursor one position to the left
-                if(string[textpos] == '.')
-                    dotCount -= 1;                          //Don't care if updated in full keyboard mode.
+                if(kbType == IP_KEYPAD){
+                    if(string[textpos] == '.')
+                        dotCount -= 1;     
+                    if(textpos > 2 && string[textpos - 1] == '0' && string[textpos - 2] == '.'){
+                        string[textpos] = '\0';
+                        textpos -= 1;
+                    }                    
+                }
                 string[textpos] = '\0';                     //Erase character
                 refresh = true;
             }
@@ -170,10 +176,10 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                             if(textpos > 1){
                                 if(string[textpos - 2] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
                                     ipFieldLength++;
-                                }
-                                if(textpos > 2){
-                                    if(string[textpos - 3] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
-                                        ipFieldLength++;
+                                    if(textpos > 2){
+                                        if(string[textpos - 3] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
+                                            ipFieldLength++;
+                                        }
                                     }
                                 }
                             }

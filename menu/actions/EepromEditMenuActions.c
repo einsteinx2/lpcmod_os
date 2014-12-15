@@ -305,11 +305,10 @@ void editMACAddress(void *ignored){
     u8 i, j;
     char macString[13];
     u8 nibble[2];
-    u8 tempMac[6];
     sprintf(macString, "%02X%02X%02X%02X%02X%02X",
     editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
     editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
-    OnScreenKeyboard(macString, 12, 3, HEX_KEYPAD);
+    OnScreenKeyboard(macString, 13, 3, HEX_KEYPAD); //Function will add terminating character.
     if(strlen(macString) == 12){
         for(i = 0; i < 6; i++){
             for(j = 0; j < 2; j++){
