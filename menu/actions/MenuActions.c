@@ -186,7 +186,7 @@ void DrawLargeHDDTextMenu(u8 drive){
     TEXTMENU *menuPtr;
     breakOutOfMenu = 1;
     menuPtr = (TEXTMENU *)LargeHDDMenuInit((void *)&drive);
-    freeTextMenuAllocMem(menuPtr);
+    //Memory allocation freeing is done in ResetDrawChildTextMenu which is called by LargeHDDMenuInit.
 }
 
 #ifdef ETHERBOOT 
