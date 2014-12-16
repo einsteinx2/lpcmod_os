@@ -268,7 +268,7 @@ void saveXBlastcfg(void * ignored){
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
                 return;
             }
-            filebuf = (char *)malloc((u8)FATX16CLUSTERSIZE);
+            filebuf = (char *)malloc(FATX16CLUSTERSIZE);
             memset(filebuf, 0x00, FATX16CLUSTERSIZE);
             for(i = 0; i < NBTXTPARAMS; i++){
                 cursorpos = 0;
@@ -283,6 +283,9 @@ void saveXBlastcfg(void * ignored){
                 totalbytes += cursorpos;
             }
             filebuf[cursorpos] = 0;     //Terminating character at the end of file.
+
+
+            free(filebuf);
         }
         ToolHeader("Saved settings to C:\\XBlast\\xblast.cfg");
 

@@ -101,21 +101,23 @@ TEXTMENU *ToolsMenuInit(void) {
         TextMenuAddItem(menuPtr, itemPtr);
     }
 */
-    //Save xblast.cfg
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Save C:\\xblast.cfg");
-    itemPtr->functionPtr= saveXBlastcfg;
-    itemPtr->functionDataPtr = NULL;
-    TextMenuAddItem(menuPtr, itemPtr);
+    if(DEV_FEATURES){
+        //Save xblast.cfg
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Save C:\\xblast.cfg");
+        itemPtr->functionPtr= saveXBlastcfg;
+        itemPtr->functionDataPtr = NULL;
+        TextMenuAddItem(menuPtr, itemPtr);
 
-    //Load xblast.cfg
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
-    itemPtr->functionPtr= loadXBlastcfg;
-    itemPtr->functionDataPtr = NULL;
-    TextMenuAddItem(menuPtr, itemPtr);
+        //Load xblast.cfg
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
+        itemPtr->functionPtr= loadXBlastcfg;
+        itemPtr->functionDataPtr = NULL;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     //Developers tools
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

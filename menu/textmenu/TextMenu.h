@@ -40,6 +40,8 @@ typedef struct TEXTMENUITEM {
     void (*functionPtr) (void *);
     //Pointer to data used by the function above.
     void *functionDataPtr;
+    //Flag to indicate a malloc was executed to store data pointed by functionDataPtr.
+    bool functionDataPtrMemAlloc;
 
     void (*functionLeftPtr) (void *);
     void (*functionRightPtr) (void *);

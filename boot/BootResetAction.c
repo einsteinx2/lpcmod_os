@@ -492,7 +492,7 @@ extern void BootResetAction ( void ) {
             && !(tsaHarddiskInfo[i].m_securitySettings&0x0002)) {    //Drive not locked.
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
                 // We save the complete framebuffer to memory (we restore at exit)
-                u8 *videosavepage = malloc(FB_SIZE);
+                videosavepage = malloc(FB_SIZE);
                 memcpy(videosavepage,(void*)FB_START,FB_SIZE);
                 char ConfirmDialogString[50];
                 sprintf(ConfirmDialogString, "               Format new drive (%s)?\0", i ? "slave":"master");
@@ -519,6 +519,8 @@ extern void BootResetAction ( void ) {
     IconMenuInit();
     //inputLED();
     IconMenu();
+    //Good practice.
+    free(videosavepage);
 
     //Should never come back here.
     while(1);

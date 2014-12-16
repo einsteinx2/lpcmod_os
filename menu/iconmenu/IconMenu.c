@@ -42,8 +42,6 @@ int timedOut=0;
 int iconTimeRemain = 0;
 u32 temp=1;
 
-unsigned char *videosavepage;
-
 
 
 void AddIcon(ICON *newIcon) {

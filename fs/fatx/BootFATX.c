@@ -50,11 +50,13 @@ int checkForLastDirectoryEntry(unsigned char* entry) {
 int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen, char *prefix){
     unsigned char* curEntry;
     unsigned char clusterData[partition->clusterSize];
+    char *tempSortPtr;
     int i = 0;
     int c = 0;
     u_int32_t filenameSize;
     u_int32_t entryClusterId;
     char foundFilename[50];
+    int sortNotOver = 1;
 
     while(clusterId != -1) {
         // load cluster data
@@ -101,8 +103,20 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
     }
     
     //place quicksort here.
-    //compare((char *)&res[0], (char *)&res[1]);
-    
+
+    //TODO: Freakin bubble sort for now... Just to test "strcmpbynum" function
+    while(sortNotOver){
+        sortNotOver = 0;
+        for(i = 0; i < (c - 1); i++){
+            if(strcmpbynum(res[c], res[c + 1]) > 0){
+                sortNotOver++;
+                tempSortPtr = res[c];
+                res[c] = res[c + 1];
+                res[c + 1] = tempSortPtr;
+            }
+        }
+    }
+
     return c;
 }
 
@@ -1465,8 +1479,8 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
             cromwellWarning();
             return;
         }
-        free(ptrBuffer);
     }
+    free(ptrBuffer);
     cromwellSuccess();
 
     // Root Dir
@@ -1498,40 +1512,48 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     return;
 }
 
-
+/*
 int compare(const void *p1, const void *p2) {
     const char * const *ps1 = p1;
     const char * const *ps2 = p2;
     return strcmpbynum(*ps1, *ps2);
 }
+*/
 
+/*Function taken from : http://www.acnenomor.com/2430019p1/natural-sort-in-c-array-of-strings-containing-numbers-and-letters */
 /* like strcmp but compare sequences of digits numerically */
+/* Return +int if s1 should come after s2. -int if s2 should come after s1.*/
+/* Return 0 if equals, shouldn't happen since you can't have 2 files with the same name!*/
 int strcmpbynum(const char *s1, const char *s2) 
 {
     char *lim1, *lim2;
     unsigned long n1;
     unsigned long n2;
     for (;;) {
-        if (*s2 == '\0')
-            return *s1 != '\0';
-        else if (*s1 == '\0')
-            return 1;
-        else if (!((*s1 >= '0' && *s1 <= '9') && (*s2 >= '0' && *s2 <= '9'))){
+        if (*s2 == '\0')                //End of string for s2
+            return *s1 != '\0';         //return 1 if s1 is longer.
+        else if (*s1 == '\0')           //It's not the end of s2 but it is for s1
+            return -1;                   //They are different and s1 is shorter.
+        else if (!((*s1 >= '0' && *s1 <= '9') && (*s2 >= '0' && *s2 <= '9'))){  //If one of the 2 characters is not a ascii number
         //else if (!(isdigit(*s1) && isdigit(*s2))) {
-            if (*s1 != *s2)
-                return (int)*s1 - (int)*s2;
+            if (*s1 != *s2)             //If both characters aren't the same
+                return (int)*s1 - (int)*s2;     //Return difference between s1 and s2, asci-wise
             else
-                (++s1, ++s2);
-        } 
-        else {
-            n1 = strtoul(s1, &lim1, 10);
-            n2 = strtoul(s2, &lim2, 10);
-            if (n1 > n2)
+                (++s1, ++s2);           //If they are equals, move on to the next set of numbers/characters
+        }                               //Go back to start of forever loop
+
+        else {                          //both characters are numbers
+            n1 = strtoul(s1, &lim1, 10);//Convert partial string to number
+            n2 = strtoul(s2, &lim2, 10);//Will return 0 if no numerical string can be converted.
+                                        //This is useful to skip letters during string comparison.
+            if (n1 > n2)                //if s1 contains a bigger value
                 return 1;
-            else if (n1 < n2)
+            else if (n1 < n2)           //Opposite
                 return -1;
-            s1 = lim1;
+            s1 = lim1;                  //Move pointers after converter number values.
             s2 = lim2;
-        }
+        }                               //Go back to start of forever loop
     }
+    return 0;
 }
+

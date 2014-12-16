@@ -22,13 +22,13 @@ TEXTMENU* HDDFlashMenuInit(void) {
     FATXPartition *partition;
 
     int i=0;
-    char *fnames[256];
+    char *fnames[4096]; //Because Each dir can have up to 4096 files when not in root of partition.
     int n=0;
     int bioses=0;
     int res;
     int dcluster;
     char *path="\\BIOS\\";
-    char *fullPath = (char*)malloc(20);
+    char fullPath[20];
     char *fullPathptr = fullPath;
 
     memset(fullPath, 0, 20);
@@ -67,6 +67,7 @@ TEXTMENU* HDDFlashMenuInit(void) {
                     TextMenuAddItem(menuPtr, itemPtr);
                     bioses++;
                 }
+                //TODO: fix memory leak from fnames
             }
             if(n < 1) {
                 // If there were no directories and no files.

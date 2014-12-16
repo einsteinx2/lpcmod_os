@@ -87,7 +87,6 @@ void FlashBiosFromHDD (void *fname) {
 
 void FlashBiosFromCD (void *cdromId) {
 #ifdef FLASH
-    extern unsigned char *videosavepage;
     memcpy ((void*) FB_START, videosavepage, FB_SIZE);
     BootLoadFlashCD (*(int *) cdromId);
 #endif
@@ -95,7 +94,6 @@ void FlashBiosFromCD (void *cdromId) {
 
 void enableNetflash (void *whatever) {
 #ifdef FLASH
-    extern unsigned char *videosavepage;
 
     //Save current frameBuffer
     //u8 currentFrameBuffer = malloc(FB_SIZE);
@@ -118,7 +116,6 @@ void enableNetflash (void *whatever) {
 
 void enableWebupdate (void *whatever) {
 #ifdef FLASH
-    extern unsigned char *videosavepage;
     memcpy ((void*) FB_START, videosavepage, FB_SIZE);
     VIDEO_ATTR = 0xffef37;
     printk ("\n\n\n\n\n\n");

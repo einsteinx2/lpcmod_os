@@ -25,6 +25,7 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNK512;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Bank1 (256KB)
@@ -34,6 +35,7 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNK256;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Bank2 (OS)
@@ -43,6 +45,7 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKOS;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
     
     return menuPtr;
@@ -66,6 +69,7 @@ TEXTMENU *TSOPBankSelectMenuInit(void * bank) {
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Bank1
@@ -75,6 +79,7 @@ TEXTMENU *TSOPBankSelectMenuInit(void * bank) {
     itemPtr->functionPtr=(void *)BankSelectInit;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     return menuPtr;
@@ -157,6 +162,7 @@ TEXTMENU* BankSelectInit(void * bank) {
             itemPtr->functionPtr= FlashBiosFromCD;
             itemPtr->functionDataPtr = malloc(sizeof(int));
             *(int*)itemPtr->functionDataPtr = i;
+            itemPtr->functionDataPtrMemAlloc = true;    //Could pass &i... meh.
             TextMenuAddItem(menuPtr, itemPtr);
         }
     }

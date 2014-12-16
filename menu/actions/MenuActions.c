@@ -23,6 +23,7 @@
 #include "lpcmod_v1.h"
 //CONFIGENTRY *LoadConfigCD(int);
 //TEXTMENU *TextMenuInit(void);
+void freeTextMenuAllocMem(TEXTMENU* menu);
 
 void AdvancedMenu(void *textmenu) {
     TextMenu((TEXTMENU*)textmenu, NULL);
@@ -87,7 +88,6 @@ void BootFromCD(void *data) {
 }
 
 void BootFromNet(void *whatever) {
-   extern unsigned char *videosavepage;
    memcpy((void*)FB_START,videosavepage,FB_SIZE);
    VIDEO_ATTR=0xffef37;
    VIDEO_ATTR=0xffc8c8c8;
@@ -95,7 +95,7 @@ void BootFromNet(void *whatever) {
    netBoot();
 }
 */
-
+/*
 void DrawBootMenu(void *rootEntry) {
     //entry is the pointer to the root config entry
     TEXTMENU *menu;
@@ -153,7 +153,6 @@ void DrawBootMenu(void *rootEntry) {
 void BootMenuEntry(void *entry) {
     CONFIGENTRY *config = (CONFIGENTRY*)entry;
     if (!(config->nextConfigEntry==NULL) || !(config->previousConfigEntry==NULL)) {
-        extern unsigned char *videosavepage;
         memcpy((void*)FB_START,videosavepage,FB_SIZE);
     }
 
@@ -170,39 +169,24 @@ void BootMenuEntry(void *entry) {
     }
     ExittoLinux(config);
 }
-
+*/
 void DrawChildTextMenu(void *menu) {
+    TEXTMENU * menuPtr = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu);
+    freeTextMenuAllocMem(menuPtr);
 }
 
 void ResetDrawChildTextMenu(void *menu) {
     TEXTMENU * resetSelection = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
+    freeTextMenuAllocMem(resetSelection);
 }
 
 void DrawLargeHDDTextMenu(u8 drive){
     TEXTMENU *menuPtr;
     breakOutOfMenu = 1;
     menuPtr = (TEXTMENU *)LargeHDDMenuInit((void *)&drive);
-    
-    //Free memory
-    if(menuPtr->firstMenuItem != NULL){
-        if(menuPtr->firstMenuItem->nextMenuItem != NULL){
-            if(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem != NULL){
-                if(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->nextMenuItem != NULL){
-                    free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->nextMenuItem->functionDataPtr);
-                    free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->nextMenuItem);
-                }
-                free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem->functionDataPtr);
-                free(menuPtr->firstMenuItem->nextMenuItem->nextMenuItem);
-            }
-            free(menuPtr->firstMenuItem->nextMenuItem->functionDataPtr);
-            free(menuPtr->firstMenuItem->nextMenuItem);
-        }
-        free(menuPtr->firstMenuItem->functionDataPtr);
-        free(menuPtr->firstMenuItem);
-    }
-    free(menuPtr);
+    freeTextMenuAllocMem(menuPtr);
 }
 
 #ifdef ETHERBOOT 
@@ -222,5 +206,35 @@ void FlashBios(void *data) {
     BootLoadFlashCD();
 }
 */
+
+void freeTextMenuAllocMem(TEXTMENU* menu){
+    TEXTMENUITEM * itemPtr = menu->firstMenuItem;
+    int itemCount = 0;
+
+    //Count the number of entries from menu we just left.
+    //Make sure there's at least 1 entry.
+    if(itemPtr != NULL){
+        itemCount++;
+        while(itemPtr->nextMenuItem != NULL){
+            itemCount++;
+            itemPtr = itemPtr->nextMenuItem;
+        }
+    }
+    while(itemCount > 0){
+        itemCount--;
+        //malloc was made to store data pointed by functionDataPtr in this specific entry.
+        if(itemPtr->functionDataPtrMemAlloc)
+            free(itemPtr->functionDataPtr);
+
+        itemPtr = itemPtr->previousMenuItem;
+        free(itemPtr->nextMenuItem);
+    }
+    if(itemPtr->functionDataPtrMemAlloc)
+        free(itemPtr->functionDataPtr);
+    free(itemPtr);      //Free First item in the list
+
+    //Finally free menuPtr since it no longer points to an allocated item entry.
+    free(menu);
+}
 #endif
 

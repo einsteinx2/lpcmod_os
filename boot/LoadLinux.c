@@ -74,7 +74,7 @@ void memPlaceKernel(const u8* kernelOrg, u32 kernelSize)
 }
 
 
-
+/*
 CONFIGENTRY* LoadConfigNative(int drive, int partition) {
     busyLED();
     CONFIGENTRY *config;
@@ -139,7 +139,7 @@ CONFIGENTRY* LoadConfigNative(int drive, int partition) {
     free(szGrub);
     return config;
 }
-
+*/
 int LoadKernelNative(CONFIGENTRY *config) {
     busyLED();
     VIDEO_CURSOR_POSY=vmode.ymargin+96;
@@ -228,7 +228,7 @@ int LoadKernelNative(CONFIGENTRY *config) {
     free(szGrub);
     return true;
 }
-
+/*
 CONFIGENTRY* LoadConfigFatX(void) {
     busyLED();
     FATXPartition *partition = NULL;
@@ -260,7 +260,7 @@ CONFIGENTRY* LoadConfigFatX(void) {
     }
     return config;
 }
-
+*/
 int LoadKernelFatX(CONFIGENTRY *config) {
     busyLED();
     static FATXPartition *partition = NULL;

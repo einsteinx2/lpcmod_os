@@ -487,4 +487,7 @@ struct _GenPurposeIOs{
 
 bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash too much... Sorry.
 
+//Global for convenience.
+unsigned char *videosavepage;
+
 #endif // _Boot_H_

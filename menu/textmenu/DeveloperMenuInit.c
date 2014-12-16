@@ -36,14 +36,15 @@ TEXTMENU *DeveloperMenuInit(void) {
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    //Read GPI/O port data.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Read GPI/O");
-    itemPtr->functionPtr= GPIORead;
-    itemPtr->functionDataPtr = NULL;
-    TextMenuAddItem(menuPtr, itemPtr);
-
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP){
+        //Read GPI/O port data.
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Read XBlast GPI/O port");
+        itemPtr->functionPtr= GPIORead;
+        itemPtr->functionDataPtr = NULL;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     return menuPtr;
 }

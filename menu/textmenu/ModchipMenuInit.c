@@ -118,6 +118,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
     itemPtr->functionPtr= editBIOSName;
     itemPtr->functionDataPtr= malloc(sizeof(char));
         *(char*)itemPtr->functionDataPtr = BNK512;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
@@ -126,6 +127,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
     itemPtr->functionPtr= editBIOSName;
     itemPtr->functionDataPtr= malloc(sizeof(char));
         *(char*)itemPtr->functionDataPtr = BNK256;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     if(((fHasHardware == SYSCON_ID_V1) || (fHasHardware == SYSCON_ID_V1_TSOP)) && 
@@ -134,14 +136,15 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank0 name");
         itemPtr->functionDataPtr= malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
+            *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
         TextMenuAddItem(menuPtr, itemPtr);
 
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank1 name");
         itemPtr->functionDataPtr= malloc(sizeof(char));
-                *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
+            *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
+        itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
     else{
@@ -151,6 +154,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
         itemPtr->functionPtr= editBIOSName;
         itemPtr->functionDataPtr= malloc(sizeof(char));
             *(char*)itemPtr->functionDataPtr = BNKFULLTSOP;
+        itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
