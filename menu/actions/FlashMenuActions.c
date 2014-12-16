@@ -98,8 +98,8 @@ void enableNetflash (void *whatever) {
     extern unsigned char *videosavepage;
 
     //Save current frameBuffer
-    u8 currentFrameBuffer = malloc(FB_SIZE);
-    memcpy(currentFrameBuffer,(void*)FB_START,FB_SIZE);
+    //u8 currentFrameBuffer = malloc(FB_SIZE);
+    //memcpy(currentFrameBuffer,(void*)FB_START,FB_SIZE);
 
     memcpy ((void*) FB_START, videosavepage, FB_SIZE);
     //videosavepage contains data set at the beginning of IconMenu() function.
@@ -111,8 +111,8 @@ void enableNetflash (void *whatever) {
     //netFlash ();
     etherboot();
     //Restore FrameBuffer for Menu display
-    memcpy((void*)FB_START,currentFrameBuffer,FB_SIZE);
-    free(currentFrameBuffer);
+    //memcpy((void*)FB_START,currentFrameBuffer,FB_SIZE);
+    //free(currentFrameBuffer);
 #endif
 }
 

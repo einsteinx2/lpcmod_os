@@ -4,6 +4,8 @@
 #include "boot.h"
 #include "BootFATX.h"
 #include <sys/types.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 
 #undef FATX_DEBUG
@@ -79,7 +81,7 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
             // check size is OK
             if ((filenameSize < 1) || (filenameSize > FATX_FILENAME_MAX)) {
 #ifdef FATX_INFO
-                printk("Invalid filename size: %i\n", filenameSize);
+                printk("     Invalid filename size: %i\n", filenameSize);
 #endif
                 continue;
             }
@@ -97,7 +99,10 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
         // Find next cluster
         clusterId = getNextClusterInChain(partition, clusterId);
     }
-
+    
+    //place quicksort here.
+    //compare((char *)&res[0], (char *)&res[1]);
+    
     return c;
 }
 
@@ -1491,4 +1496,42 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
 
 
     return;
+}
+
+
+int compare(const void *p1, const void *p2) {
+    const char * const *ps1 = p1;
+    const char * const *ps2 = p2;
+    return strcmpbynum(*ps1, *ps2);
+}
+
+/* like strcmp but compare sequences of digits numerically */
+int strcmpbynum(const char *s1, const char *s2) 
+{
+    char *lim1, *lim2;
+    unsigned long n1;
+    unsigned long n2;
+    for (;;) {
+        if (*s2 == '\0')
+            return *s1 != '\0';
+        else if (*s1 == '\0')
+            return 1;
+        else if (!((*s1 >= '0' && *s1 <= '9') && (*s2 >= '0' && *s2 <= '9'))){
+        //else if (!(isdigit(*s1) && isdigit(*s2))) {
+            if (*s1 != *s2)
+                return (int)*s1 - (int)*s2;
+            else
+                (++s1, ++s2);
+        } 
+        else {
+            n1 = strtoul(s1, &lim1, 10);
+            n2 = strtoul(s2, &lim2, 10);
+            if (n1 > n2)
+                return 1;
+            else if (n1 < n2)
+                return -1;
+            s1 = lim1;
+            s2 = lim2;
+        }
+    }
 }
