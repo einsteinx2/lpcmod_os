@@ -53,6 +53,7 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
     char *tempSortPtr;
     int i = 0;
     int c = 0;
+    int sortResult;
     u_int32_t filenameSize;
     u_int32_t entryClusterId;
     char foundFilename[50];
@@ -69,7 +70,7 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
 
             // first of all, check that it isn't an end of directory marker
             if (checkForLastDirectoryEntry(curEntry)) {
-                return c;
+                goto exit;
             }
 
             // get the filename size
@@ -95,7 +96,7 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
 
             c++;
             if (c >= reslen)
-                return c;
+                goto exit;
 
         }
         // Find next cluster
@@ -105,17 +106,29 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
     //place quicksort here.
 
     //TODO: Freakin bubble sort for now... Just to test "strcmpbynum" function
-    while(sortNotOver){
+exit:
+printk("\n\n");
+    while(sortNotOver && c >= 2){
+    	
         sortNotOver = 0;
         for(i = 0; i < (c - 1); i++){
-            if(strcmpbynum(res[c], res[c + 1]) > 0){
+        sortResult = strcmpbynum(res[i], res[i + 1]);
+/*        printk("\n           sortResult= %u     c=%u\n", sortNotOver, c);
+        printk(res[i]);
+        printk("         ");
+        printk(res[i + 1]);*/
+            if(sortResult > 0){
                 sortNotOver++;
-                tempSortPtr = res[c];
-                res[c] = res[c + 1];
-                res[c + 1] = tempSortPtr;
+                tempSortPtr = res[i];
+                res[i] = res[i + 1];
+                res[i + 1] = tempSortPtr;
+                
             }
         }
+        
     }
+   // while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    
 
     return c;
 }
@@ -1526,6 +1539,8 @@ int compare(const void *p1, const void *p2) {
 /* Return 0 if equals, shouldn't happen since you can't have 2 files with the same name!*/
 int strcmpbynum(const char *s1, const char *s2) 
 {
+    const char to_caps = 32;
+    int temps1, temps2;
     char *lim1, *lim2;
     unsigned long n1;
     unsigned long n2;
@@ -1535,9 +1550,18 @@ int strcmpbynum(const char *s1, const char *s2)
         else if (*s1 == '\0')           //It's not the end of s2 but it is for s1
             return -1;                   //They are different and s1 is shorter.
         else if (!((*s1 >= '0' && *s1 <= '9') && (*s2 >= '0' && *s2 <= '9'))){  //If one of the 2 characters is not a ascii number
-        //else if (!(isdigit(*s1) && isdigit(*s2))) {
-            if (*s1 != *s2)             //If both characters aren't the same
-                return (int)*s1 - (int)*s2;     //Return difference between s1 and s2, asci-wise
+            if(*s1 >= 'a' && *s1 <= 'z')
+		temps1 = *s1 - to_caps;
+            else
+                temps1 = *s1;
+                
+            if(*s2 >= 'a' && *s2 <= 'z')
+		temps2 = *s2 - to_caps;
+            else
+                temps2 = *s2;    
+                
+            if (temps1 != temps2)             //If both characters aren't the same
+                return temps1 - temps2;     //Return difference between s1 and s2, asci-wise
             else
                 (++s1, ++s2);           //If they are equals, move on to the next set of numbers/characters
         }                               //Go back to start of forever loop

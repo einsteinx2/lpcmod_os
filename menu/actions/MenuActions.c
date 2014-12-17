@@ -173,13 +173,13 @@ void BootMenuEntry(void *entry) {
 void DrawChildTextMenu(void *menu) {
     TEXTMENU * menuPtr = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu);
-    freeTextMenuAllocMem(menuPtr);
+    //freeTextMenuAllocMem(menuPtr);
 }
 
 void ResetDrawChildTextMenu(void *menu) {
     TEXTMENU * resetSelection = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
-    freeTextMenuAllocMem(resetSelection);
+    //freeTextMenuAllocMem(resetSelection);
 }
 
 void DrawLargeHDDTextMenu(u8 drive){
