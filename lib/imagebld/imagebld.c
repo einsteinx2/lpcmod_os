@@ -84,10 +84,12 @@ void writeBiosIdentifier(unsigned char *cromimage, int biosSize) {
                                     BiosID_Version13 |
                                     BiosID_Version14 |
                                     BiosID_Version15 |
-                                    BiosID_Version16 ;
+                                    BiosID_Version16 |
+                                    BiosID_Version17 ;
                                      
     BiosHeader->VideoEncoder =      BiosID_VideoEncoder_Conexant |
-                                    BiosID_VideoEncoder_Focus;
+                                    BiosID_VideoEncoder_Focus |
+                                    BiosID_VideoEncoder_Xcalibur;
                                     
     MD5Init(&hashcontext);
     MD5Update(&hashcontext, cromimage, biosSize-16);
@@ -199,7 +201,7 @@ int xberepair (    unsigned char * xbeimage,
     fwrite(xbe, 1, xbesize, f);
            fclose(f);            
         
-        printf("XRomwell File Created    : %s\n",xbeimage);
+        printf("XRomwell File Created    : %s\n\n",xbeimage);
         
     return 0;    
 }
@@ -268,7 +270,7 @@ int vmlbuild (    unsigned char * vmlimage,
     fwrite(vml, 1, vmlsize, f);
         fclose(f);            
     
-    printf("VML File Created         : %s\n",vmlimage);            
+    printf("VML File Created         : %s\n\n",vmlimage);
     
     return 0;
 }
@@ -276,9 +278,7 @@ int vmlbuild (    unsigned char * vmlimage,
 int romcopy (
         unsigned char * blbinname,
         unsigned char * cromimage,
-        unsigned char * binname256,
-        unsigned char * binname1024
-        
+        unsigned char * binname256
         )
 {
     
@@ -287,9 +287,9 @@ int romcopy (
     FILE *f;
     unsigned char *loaderimage;
     unsigned char *flash256;
-    unsigned char *flash1024;
+    //unsigned char *flash1024;
     unsigned char *crom;
-    unsigned int freeflashspace = 256*1024;
+    unsigned int freeflashspace = 252*1024;     //Reserve last 4KB of flash space for persistent settings.
            unsigned int romsize=0;
            unsigned int a=0;
     struct Checksumstruct bootloaderstruct ;
@@ -299,12 +299,12 @@ int romcopy (
     
     loaderimage = malloc(256*1024);
     flash256 = malloc(256*1024);
-    flash1024 = malloc(1024*1024);
-    crom = malloc(1024*1024);
+    //flash1024 = malloc(1024*1024);
+    crom = malloc(256*1024);
            
            memset(flash256,0x00,256*1024);
-    memset(flash1024,0x00,1024*1024);
-           memset(crom,0x00,1024*1024);
+          //memset(flash1024,0x00,1024*1024);
+          memset(crom,0x00,256*1024);
            memset(loaderimage,0x00,256*1024);
 
            printf("ROM Mode\n");
@@ -368,7 +368,7 @@ int romcopy (
     memcpy(&bootloaderstruct,&loaderimage[bootloaderpos],sizeof(struct Checksumstruct));
     
     memcpy(flash256,loaderimage,256*1024);
-    memcpy(flash1024,loaderimage,256*1024);
+    //memcpy(flash1024,loaderimage,256*1024);
     
     // We make now sure, there are some "space" bits and we start oranized with 16
     temp = bootloaderpos + bootloaderstruct.Size_ramcopy;
@@ -383,11 +383,26 @@ int romcopy (
     //freeflashspace = freeflashspace - 512; // We decrement the TOP ROM
     // We have no TOP ROM anymore
     freeflashspace = freeflashspace - bootloaderstruct.compressed_image_start;
+    //compressed crom image too big for available flash space
+    //This condition is valid for 256KB image of XBlast OS as the
+    //last 4 KB of flash space is reserved for settings, CRC and header information
+    //Specifically for XBlast OS, it is forbidden to generate an image of
+    //total size bigger than 252KB + 4KB.
+    //Fail bin generation if size condition cannot be met.
+    if(freeflashspace < romsize){
+        printf("!!!!!!!!WARNING!!!!!!!!\n");
+        printf("Compressed image cannot fit in specified maximum file size.\n");
+        printf("Image generation was aborted.\n");
+        printf("Total size required            : %08x (%d Byte)\n",bootloaderstruct.compressed_image_start + bootloaderstruct.compressed_image_size - 1, bootloaderstruct.compressed_image_start + bootloaderstruct.compressed_image_size - 1);
+        printf("Maximum size allowed           : %08x (%d Byte)\n\n",freeflashspace + bootloaderstruct.compressed_image_start, freeflashspace + bootloaderstruct.compressed_image_start);
+
+        return 0;
+    }
     
     bootloaderstruct.Biossize_type = 0; // Means it is a 256 kbyte Image
     memcpy(&flash256[bootloaderpos],&bootloaderstruct,sizeof(struct Checksumstruct));
-    bootloaderstruct.Biossize_type = 1; // Means it is a 1MB Image
-    memcpy(&flash1024[bootloaderpos],&bootloaderstruct,sizeof(struct Checksumstruct));        
+    //bootloaderstruct.Biossize_type = 1; // Means it is a 1MB Image
+    //memcpy(&flash1024[bootloaderpos],&bootloaderstruct,sizeof(struct Checksumstruct));
     
 #ifdef debug        
     printf("BootLoaderPos            : %08x\n",bootloaderpos);
@@ -418,24 +433,24 @@ int romcopy (
 #endif
     // This is for 1MB Image kbyte image
     // We start with offset 20, as the first 20 bytes are the checksum
-    SHA1Reset(&context);
-    SHA1Input(&context,&flash1024[bootloaderpos+20],(bootloaderstruct.Size_ramcopy-20));
-    SHA1Result(&context,SHA1_result);
+    //SHA1Reset(&context);
+    //SHA1Input(&context,&flash1024[bootloaderpos+20],(bootloaderstruct.Size_ramcopy-20));
+    //SHA1Result(&context,SHA1_result);
       
         // We dump now the SHA1 sum into the 2bl loader image
-          memcpy(&flash1024[bootloaderpos],&SHA1_result[0],20);
+        //memcpy(&flash1024[bootloaderpos],&SHA1_result[0],20);
              
 #ifdef debug
-    printf("2bl Hash 1MB image       : ");
-    for(a=0; a<SHA1HashSize; a++) {
-        printf("%02X",SHA1_result[a]);
-    }
-          printf("\n");
+    //printf("2bl Hash 1MB image       : ");
+    //for(a=0; a<SHA1HashSize; a++) {
+    //    printf("%02X",SHA1_result[a]);
+    //}
+    //      printf("\n");
 #endif
           
     // In 1MB flash we need the Image 2 times, as ... you know
-    memset(&flash1024[(0*256*1024)+bootloaderstruct.compressed_image_start],0xff,256*1024-bootloaderstruct.compressed_image_start-512);
-    memcpy(&flash1024[3*256*1024],&flash1024[0],256*1024);
+    //memset(&flash1024[(0*256*1024)+bootloaderstruct.compressed_image_start],0xff,256*1024-bootloaderstruct.compressed_image_start-512);
+    //memcpy(&flash1024[3*256*1024],&flash1024[0],256*1024);
                 
     // Ok, the 2BL loader is ready, we now go to the "Kernel"
            memset(&flash256[bootloaderstruct.compressed_image_start+20+romsize],0xff,256*1024-(bootloaderstruct.compressed_image_start+20+romsize)-512);
@@ -445,36 +460,36 @@ int romcopy (
     SHA1Input(&context,&flash256[bootloaderstruct.compressed_image_start+20],romsize);
     SHA1Result(&context,SHA1_result);                                
     memcpy(&flash256[bootloaderstruct.compressed_image_start],SHA1_result,20);            
-    memset(&flash1024[1*256*1024],0xff,2*1024*256);
+    //memset(&flash1024[1*256*1024],0xff,2*1024*256);
                 
-    memcpy(&flash1024[bootloaderstruct.compressed_image_start+(1*256*1024)],SHA1_result,20);            
-    memcpy(&flash1024[bootloaderstruct.compressed_image_start+20+(1*256*1024)],&crom[0],romsize);
-    memcpy(&flash1024[bootloaderstruct.compressed_image_start+(2*256*1024)],SHA1_result,20);            
-          memcpy(&flash1024[bootloaderstruct.compressed_image_start+20+(2*256*1024)],&crom[0],romsize);
+    //memcpy(&flash1024[bootloaderstruct.compressed_image_start+(1*256*1024)],SHA1_result,20);
+    //memcpy(&flash1024[bootloaderstruct.compressed_image_start+20+(1*256*1024)],&crom[0],romsize);
+    //memcpy(&flash1024[bootloaderstruct.compressed_image_start+(2*256*1024)],SHA1_result,20);
+    //memcpy(&flash1024[bootloaderstruct.compressed_image_start+20+(2*256*1024)],&crom[0],romsize);
                       
 #ifdef debug
-    printf("ROM Hash 1MB             : ");
-    for(a=0; a<SHA1HashSize; a++) {
-        printf("%02X",SHA1_result[a]);
-    }
-          printf("\n");
+//    printf("ROM Hash 1MB             : ");
+//    for(a=0; a<SHA1HashSize; a++) {
+//        printf("%02X",SHA1_result[a]);
+//    }
+//          printf("\n");
 #endif
      
     //Apply the SmartXX bios identifier data
           writeBiosIdentifier(flash256, 256*1024);
-          writeBiosIdentifier(flash1024, 1024*1024);
+          //writeBiosIdentifier(flash1024, 1024*1024);
     // Write the 256 /1024 Kbyte Image Back
           f = fopen(binname256, "w");               
     fwrite(flash256, 1, 256*1024, f);
            fclose(f);    
     
-          f = fopen(binname1024, "w");               
-    fwrite(flash1024, 1, 1024*1024, f);
-           fclose(f);    
+    //      f = fopen(binname1024, "w");
+    //fwrite(flash1024, 1, 1024*1024, f);
+    //       fclose(f);
               
 #ifdef debug
-    printf("Binary 256k File Created : %s\n",binname256);
-    printf("Binary 1MB  File Created : %s\n",binname1024);
+    printf("Binary 256k File Created : %s\n\n",binname256);
+   // printf("Binary 1MB  File Created : %s\n",binname1024);
 #endif                  
     return 0;    
 }        
@@ -488,7 +503,7 @@ int main (int argc, const char * argv[])
     
     if( argc < 3 ) {
         showUsage(argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (!strcmp(argv[1],"-xbe")) { 
@@ -498,18 +513,19 @@ int main (int argc, const char * argv[])
         vmlbuild((unsigned char*)argv[2],(unsigned char*)argv[3]);
     }
     else if (!strcmp(argv[1],"-rom")) { 
-        if( argc != 6  ) {
+        if( argc != 5  ) {
             showUsage(argv[0]);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
-        romcopy((unsigned char*)argv[2],(unsigned char*)argv[3],(unsigned char*)argv[4],(unsigned char*)argv[5]);
+        if(romcopy((unsigned char*)argv[2],(unsigned char*)argv[3],(unsigned char*)argv[4]))
+            exit(EXIT_FAILURE);
     }
     else {
         showUsage(argv[0]);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 void showUsage(char *progname) {
