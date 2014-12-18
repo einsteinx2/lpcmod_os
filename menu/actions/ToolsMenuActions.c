@@ -14,38 +14,48 @@
 #include "BootFATX.h"
 
 #define NBTXTPARAMS 30
+#define IPTEXTPARAMGROUP 17
+#define TEXTPARAMGROUP 21
+#define SPECIALPARAMGROUP 29
 
 char * xblastcfgstrings[NBTXTPARAMS] = {
-	"activebank = ",
-	"altbank = ",
-	"quickboot = ",
-	"fanspeed = ",
-	"boottimeout = ",
-	"ledcolor = ",
-	"tsopcontrol = ",
-	"512kbname = ",
-	"256kbname = ",
-	"tsop0name = ",
-	"tsop1name = ",
-	"enablenetwork = ",
-	"usedhcp = ",
-	"staticip = ",
-	"staticgateway = ",
-	"staticdns1 = ",
-	"staticdns2 = ",
-	"enable5v = ",
-	"lcdtype = ",
-	"nblines = ",
-	"linelength = ",
-	"backlight = ",
-	"contrast = ",
-	"displaybootmsg = ",
-	"customtextboot = ",
-	"displaybiosnameboot = ",
-	"customstring0 = ",
-	"customstring1 = ",
-	"customstring2 = ",
-	"customstring3 = "
+        //Contains either numerical or boolean values.
+	"activebank=",
+	"altbank=",
+	"quickboot=",
+	"fanspeed=",
+	"boottimeout=",
+	"ledcolor=",
+	"tsopcontrol=",
+	"enablenetwork=",
+	"usedhcp=",
+	"enable5v=",
+	"nblines=",
+	"linelength=",
+	"backlight=",
+	"contrast=",
+	"displaybootmsg=",
+	"customtextboot=",
+	"displaybiosnameboot=",
+
+	//Contains IP text strings.
+        "staticip=",
+        "staticgateway=",
+        "staticdns1=",
+        "staticdns2=",
+
+        //Contains text strings.
+        "512kbname=",
+        "256kbname=",
+        "tsop0name=",
+        "tsop1name=",
+	"customstring0=",
+	"customstring1=",
+	"customstring2=",
+	"customstring3=",
+
+	//Special case.
+        "lcdtype="
 };
 
 
@@ -250,14 +260,16 @@ void saveXBlastcfg(void * ignored){
     char tempString[22];
     u32 cursorpos, totalbytes = 0;
     int dcluster, i;
-    char *path="\\XBlast\\";
+    const char *path="\\XBlast\\";
+    const char *cfgFileName = "\\XBlast\\xblast.cfg";
+
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
 
     if(partition != NULL){
         dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
         if((dcluster != -1) && (dcluster != 1)) {
-            res = FATXFindFile(partition, "xblast.cfg", dcluster, &fileinfo);
+            res = FATXFindFile(partition, (char *)cfgFileName, dcluster, &fileinfo);
         }
         if(res){                //File already exist
             if(ConfirmDialog("              Overwrite C:\\XBlast\\xblast.cfg?", 1)){
@@ -303,13 +315,50 @@ void loadXBlastcfg(void * ignored){
     FATXPartition *partition;
     int res = false;
     int dcluster;
-    char *path="\\XBlast\\";
+    const char *cfgFileName = "\\XBlast\\xblast.cfg";
+    const char *path="\\XBlast\\";
+    char compareBuf[100];                     //100 character long seems acceptable
+    u8 * fileBuf;
+    u8 i;
+    bool settingLoaded[NBTXTPARAMS];
+    int stringStartPtr = 0, stringStopPtr = 0, valueStartPtr = 0;
+    bool CRdetected;
+    u8 textStringCopyLength;
+    u8 *settingsPtrArray[] = {
+            &(LPCmodSettings.OSsettings.activeBank),
+            &(LPCmodSettings.OSsettings.altBank),
+            &(LPCmodSettings.OSsettings.Quickboot),
+            &(LPCmodSettings.OSsettings.fanSpeed),
+            &(LPCmodSettings.OSsettings.bootTimeout),
+            &(LPCmodSettings.OSsettings.LEDColor),
+            &(LPCmodSettings.OSsettings.TSOPcontrol),
+            &(LPCmodSettings.OSsettings.enableNetwork),
+            &(LPCmodSettings.OSsettings.useDHCP),
+            &(LPCmodSettings.LCDsettings.enable5V),
+            &(LPCmodSettings.LCDsettings.nbLines),
+            &(LPCmodSettings.LCDsettings.lineLength),
+            &(LPCmodSettings.LCDsettings.backlight),
+            &(LPCmodSettings.LCDsettings.contrast),
+            &(LPCmodSettings.LCDsettings.displayMsgBoot),
+            &(LPCmodSettings.LCDsettings.customTextBoot),
+            &(LPCmodSettings.LCDsettings.displayBIOSNameBoot)
+    };
+    char *textSettingsPtrArray[] = {
+            LPCmodSettings.OSsettings.biosName0,
+            LPCmodSettings.OSsettings.biosName1,
+            LPCmodSettings.OSsettings.biosName2,
+            LPCmodSettings.OSsettings.biosName3,
+            LPCmodSettings.LCDsettings.customString0,
+            LPCmodSettings.LCDsettings.customString1,
+            LPCmodSettings.LCDsettings.customString2,
+            LPCmodSettings.LCDsettings.customString3
+    };
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
     if(partition != NULL){
         dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
         if((dcluster != -1) && (dcluster != 1)) {
-            res = FATXFindFile(partition, "xblast.cfg", dcluster, &fileinfo);
+            res = FATXFindFile(partition, (char *)cfgFileName, dcluster, &fileinfo);
         }
         if(res){
              if(ConfirmDialog("        Restore settings from C:\\XBlast\\xblast.cfg?", 1)){
@@ -320,7 +369,77 @@ void loadXBlastcfg(void * ignored){
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
                 return;
             }
-            ToolHeader("Loaded settings from C:\\XBlast\\xblast.cfg");
+            //Initially, no setting has been loaded from txt.
+            for(i = 0; i < NBTXTPARAMS; i++)
+            {
+                settingLoaded[i] = false;
+            }
+
+            if(LoadFATXFilefixed (partition, (char *)cfgFileName, &fileinfo, fileBuf)){
+                while(stringStartPtr < fileinfo.fileSize){      //We stay in file
+                    while(fileBuf[stringStopPtr] != '\n' && stringStopPtr <= fileinfo.fileSize){        //While we don't hit a new line and still in file
+                        stringStopPtr++;        //Move on to next character in file.
+                    }
+                    valueStartPtr = 0;
+                    CRdetected = fileBuf[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
+                    strncpy(compareBuf, &fileBuf[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
+                    compareBuf[stringStopPtr - CRdetected - stringStartPtr] = '\0';
+                    while(compareBuf[valueStartPtr] != '=' && valueStartPtr < 100 && compareBuf[valueStartPtr] != '\0'){     //Search for '=' character.
+                        valueStartPtr++;
+                    }
+                    if(valueStartPtr >= 99){    //If line is not properly constructed
+                        stringStartPtr = stringStopPtr + 1;     //Move on to next line.
+                        continue;
+                    }
+                    else{
+                        for(i = 0; i < NBTXTPARAMS; i++)
+                        {
+                            if(!strncmp(compareBuf, xblastcfgstrings[i], valueStartPtr) && !settingLoaded[i]){   //Match
+                                settingLoaded[i] = true;        //Don't know why I do this.
+                                valueStartPtr++;
+                                if(i < IPTEXTPARAMGROUP){       //Numerical value parse
+                                    if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9')
+                                        *settingsPtrArray[i] = atoi(&compareBuf[valueStartPtr]);
+                                    else if(!strncmp(&compareBuf[valueStartPtr], "Y", 1) ||
+                                            !strncmp(&compareBuf[valueStartPtr], "y", 1) ||
+                                            !strncmp(&compareBuf[valueStartPtr], "T", 1) ||
+                                            !strncmp(&compareBuf[valueStartPtr], "t", 1)){
+                                        *settingsPtrArray[i] = 1;
+                                    }
+                                    else if(!strncmp(&compareBuf[valueStartPtr], "N", 1) ||
+                                            !strncmp(&compareBuf[valueStartPtr], "n", 1) ||
+                                            !strncmp(&compareBuf[valueStartPtr], "F", 1) ||
+                                            !strncmp(&compareBuf[valueStartPtr], "f", 1)){
+                                        *settingsPtrArray[i] = 0;
+                                    }
+                                }
+                                else if(i < TEXTPARAMGROUP){       //IP string value parse
+
+                                }
+                                else if(i < SPECIALPARAMGROUP){    //Text value parse
+                                    if((stringStopPtr - valueStartPtr) >= 20)
+                                        textStringCopyLength = 20;
+                                    else
+                                        textStringCopyLength = stringStopPtr - valueStartPtr;
+                                    strncpy(textSettingsPtrArray[i - TEXTPARAMGROUP], &compareBuf[valueStartPtr], textStringCopyLength);
+                                    textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
+                                }
+                                else{
+                                    //Only one case for now.
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+
+                ToolHeader("Loaded settings from C:\\XBlast\\xblast.cfg");
+            }
+            else{
+                ToolHeader("Error. Unable to open \"C:\\XBlast\\xblast.cfg\".");
+            }
+
         }
         else{
             ToolHeader("Error. File \"C:\\XBlast\\xblast.cfg\" not found.");

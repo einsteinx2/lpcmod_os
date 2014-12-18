@@ -178,6 +178,26 @@ int strncmp(const char * cs,const char * ct,size_t count)
     return __res;
 }
 
+int atoi(const char *str)
+{
+    int i, res = 0; // Initialize result
+
+    // Iterate through all characters of input string and update result
+    for (i = 0; str[i] >= '0' && str[i] <= '9'; ++i)
+        res = res*10 + str[i] - '0';
+
+    // return result.
+    return res;
+}
+
+int strcmp(s1, s2)
+register const char *s1, *s2;
+{
+   while (*s1 == *s2++)
+       if (*s1++ == 0)
+           return (0);
+   return (*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
+}
 
 
 
