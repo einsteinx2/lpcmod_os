@@ -22,5 +22,6 @@ void editStaticDNS2(void * itemStr);
 bool editIPfield(u8 * addr);
 
 u16 myAtoi(char *str);
+bool assertCorrectIPString(u8 *out, char *in);
 
 #endif

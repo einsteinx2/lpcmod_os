@@ -7,21 +7,18 @@
  *                                                                         *
  ***************************************************************************/
 #include "ToolsMenuActions.h"
+#include "LEDMenuActions.h"
+#include "NetworkMenuActions.h"
 #include "lpcmod_v1.h"
 #include "boot.h"
 #include "BootIde.h"
 #include "video.h"
 #include "BootFATX.h"
 
-#define NBTXTPARAMS 30
-#define IPTEXTPARAMGROUP 16
-#define TEXTPARAMGROUP IPTEXTPARAMGROUP + 4
-#define SPECIALPARAMGROUP TEXTPARAMGROUP + 8
 
-char * xblastcfgstrings[NBTXTPARAMS] = {
+
+char *xblastcfgstrings[NBTXTPARAMS] = {
         //Contains either numerical or boolean values.
-	"activebank=",
-	"altbank=",
 	"quickboot=",
 	"fanspeed=",
 	"boottimeout=",
@@ -40,6 +37,7 @@ char * xblastcfgstrings[NBTXTPARAMS] = {
 	//Contains IP text strings.
         "staticip=",
         "staticgateway=",
+        "staticmask=",
         "staticdns1=",
         "staticdns2=",
 
@@ -54,8 +52,53 @@ char * xblastcfgstrings[NBTXTPARAMS] = {
 	"customstring3=",
 
 	//Special case.
+        "activebank=",
+        "altbank=",
 	"ledcolor=",
         "lcdtype="
+};
+
+unsigned char *settingsPtrArray[] = {
+        &(LPCmodSettings.OSsettings.Quickboot),
+        &(LPCmodSettings.OSsettings.fanSpeed),
+        &(LPCmodSettings.OSsettings.bootTimeout),
+        &(LPCmodSettings.OSsettings.TSOPcontrol),
+        &(LPCmodSettings.OSsettings.enableNetwork),
+        &(LPCmodSettings.OSsettings.useDHCP),
+        &(LPCmodSettings.LCDsettings.enable5V),
+        &(LPCmodSettings.LCDsettings.nbLines),
+        &(LPCmodSettings.LCDsettings.lineLength),
+        &(LPCmodSettings.LCDsettings.backlight),
+        &(LPCmodSettings.LCDsettings.contrast),
+        &(LPCmodSettings.LCDsettings.displayMsgBoot),
+        &(LPCmodSettings.LCDsettings.customTextBoot),
+        &(LPCmodSettings.LCDsettings.displayBIOSNameBoot)
+};
+
+unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP] = {
+        LPCmodSettings.OSsettings.staticIP,
+        LPCmodSettings.OSsettings.staticGateway,
+        LPCmodSettings.OSsettings.staticMask,
+        LPCmodSettings.OSsettings.staticDNS1,
+        LPCmodSettings.OSsettings.staticDNS2
+};
+
+char *textSettingsPtrArray[] = {
+        LPCmodSettings.OSsettings.biosName0,
+        LPCmodSettings.OSsettings.biosName1,
+        LPCmodSettings.OSsettings.biosName2,
+        LPCmodSettings.OSsettings.biosName3,
+        LPCmodSettings.LCDsettings.customString0,
+        LPCmodSettings.LCDsettings.customString1,
+        LPCmodSettings.LCDsettings.customString2,
+        LPCmodSettings.LCDsettings.customString3
+};
+
+unsigned char *specialCasePtrArray[] = {
+        &(LPCmodSettings.OSsettings.activeBank),
+        &(LPCmodSettings.OSsettings.altBank),
+        &(LPCmodSettings.OSsettings.LEDColor),
+        &(LPCmodSettings.LCDsettings.lcdType)
 };
 
 
@@ -287,7 +330,6 @@ void saveXBlastcfg(void * ignored){
                 strcpy(&filebuf[cursorpos], xblastcfgstrings[i]);
                 cursorpos += strlen(xblastcfgstrings[i]);
                 //New line inserted in.
-                sprintf(tempString, "%d\n", LPCmodSettings.OSsettings.fanSpeed);
                 cursorpos += strlen(tempString);
                 strncpy(&filebuf[cursorpos],tempString, strlen(tempString));    //Skip terminating character.
                 //filebuf[cursorpos] = 0x0A;
@@ -324,42 +366,10 @@ void loadXBlastcfg(void * ignored){
     int stringStartPtr = 0, stringStopPtr = 0, valueStartPtr = 0;
     bool CRdetected;
     u8 textStringCopyLength;
-    u8 *settingsPtrArray[] = {
-            &(LPCmodSettings.OSsettings.activeBank),
-            &(LPCmodSettings.OSsettings.altBank),
-            &(LPCmodSettings.OSsettings.Quickboot),
-            &(LPCmodSettings.OSsettings.fanSpeed),
-            &(LPCmodSettings.OSsettings.bootTimeout),
-            &(LPCmodSettings.OSsettings.TSOPcontrol),
-            &(LPCmodSettings.OSsettings.enableNetwork),
-            &(LPCmodSettings.OSsettings.useDHCP),
-            &(LPCmodSettings.LCDsettings.enable5V),
-            &(LPCmodSettings.LCDsettings.nbLines),
-            &(LPCmodSettings.LCDsettings.lineLength),
-            &(LPCmodSettings.LCDsettings.backlight),
-            &(LPCmodSettings.LCDsettings.contrast),
-            &(LPCmodSettings.LCDsettings.displayMsgBoot),
-            &(LPCmodSettings.LCDsettings.customTextBoot),
-            &(LPCmodSettings.LCDsettings.displayBIOSNameBoot)
-    };
-    char *textSettingsPtrArray[] = {
-            LPCmodSettings.OSsettings.biosName0,
-            LPCmodSettings.OSsettings.biosName1,
-            LPCmodSettings.OSsettings.biosName2,
-            LPCmodSettings.OSsettings.biosName3,
-            LPCmodSettings.LCDsettings.customString0,
-            LPCmodSettings.LCDsettings.customString1,
-            LPCmodSettings.LCDsettings.customString2,
-            LPCmodSettings.LCDsettings.customString3
-    };
-    
-    u8 *specialCasePtrArray[] = {
-            &(LPCmodSettings.OSsettings.LEDColor),
-            &(LPCmodSettings.LCDsettings.lcdType)
-    };
+
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    if(partition != NULL){
+    if(partition != NULL){printk("\n           %s = %u", xblastcfgstrings[i], *settingsPtrArray[i]);
         dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
         if((dcluster != -1) && (dcluster != 1)) {
         
@@ -368,12 +378,10 @@ void loadXBlastcfg(void * ignored){
         else
             LEDOff(NULL);
         if(res){
-             if(ConfirmDialog("        Restore settings from C:\\XBlast\\xblast.cfg?", 1)){
+             if(ConfirmDialog("        Restore settings from \"xblast.cfg\"?", 1)){
                 CloseFATXPartition(partition);
                 ToolHeader("Loading from C:\\xblast.cfg aborted.");
-                cromwellWarning();
                 ToolFooter();
-                initialSetLED(LPCmodSettings.OSsettings.LEDColor);
                 return;
             }
             //Initially, no setting has been loaded from txt.
@@ -403,7 +411,7 @@ void loadXBlastcfg(void * ignored){
                         for(i = 0; i < NBTXTPARAMS; i++)
                         {
                             if(!strncmp(compareBuf, xblastcfgstrings[i], valueStartPtr) && !settingLoaded[i]){   //Match
-                                settingLoaded[i] = true;        //Don't know why I do this.
+                                settingLoaded[i] = true;        //Recurring entries not allowed.
                                 valueStartPtr++;
                                 if(i < IPTEXTPARAMGROUP){       //Numerical value parse
                                     if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9'){
@@ -423,7 +431,7 @@ void loadXBlastcfg(void * ignored){
                                     }
                                 }
                                 else if(i < TEXTPARAMGROUP){       //IP string value parse
-
+                                    assertCorrectIPString(IPsettingsPtrArray[i - IPTEXTPARAMGROUP], &compareBuf[valueStartPtr]);
                                 }
                                 else if(i < SPECIALPARAMGROUP){    //Text value parse
                                     if((stringStopPtr - valueStartPtr) >= 20)
@@ -434,15 +442,42 @@ void loadXBlastcfg(void * ignored){
                                     textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
                                 }
                                 else{
-                                    //Only one case for now.
-
+                                    switch(i){
+                                        case 27:
+                                        case 28:
+                                            if(!strcmp(&compareBuf[valueStartPtr], "BNK512"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
+                                            else if(!strcmp(&compareBuf[valueStartPtr], "BNK256"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK256;
+                                            else if(!strcmp(&compareBuf[valueStartPtr], "BNKTSOPSPLIT0"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT0;
+                                            else if(!strcmp(&compareBuf[valueStartPtr], "BNKTSOPSPLIT1"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
+                                            else if(!strcmp(&compareBuf[valueStartPtr], "BNKFULLTSOP"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
+                                            break;
+                                        case 29:
+                                            if(!strncmp(&compareBuf[valueStartPtr], "Of", 2) || !strncmp(&compareBuf[valueStartPtr], "of", 2))    //LED_OFF
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
+                                            else if(!strncmp(&compareBuf[valueStartPtr], "G", 1) || !strncmp(&compareBuf[valueStartPtr], "g", 1))    //LED_GREEN
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_GREEN;
+                                            if(!strncmp(&compareBuf[valueStartPtr], "R", 1) || !strncmp(&compareBuf[valueStartPtr], "r", 1))    //LED_RED
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_RED;
+                                            if(!strncmp(&compareBuf[valueStartPtr], "Or", 2) || !strncmp(&compareBuf[valueStartPtr], "or", 2))    //LED_ORANGE
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_ORANGE;
+                                            if(!strncmp(&compareBuf[valueStartPtr], "C", 1) || !strncmp(&compareBuf[valueStartPtr], "c", 1))    //LED_CYCLE
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
+                                            break;
+                                        case 30:
+                                            if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = 0 ;
+                                            break;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-
-
                 ToolHeader("Success.");
                 printk("\n           Settings loaded from \"C:\\XBlast\\xblast.cfg\".");
                 printk("\n          fan : %u%%,   start=%u   stop=%u", LPCmodSettings.OSsettings.fanSpeed, stringStartPtr, stringStopPtr);
@@ -458,11 +493,11 @@ void loadXBlastcfg(void * ignored){
             ToolHeader("Error!!!");
             printk("\n           File \"C:\\XBlast\\xblast.cfg\" not found.");
         }
-
-        //CloseFATXPartition(partition);
+        CloseFATXPartition(partition);
     }
     else{
-        ToolHeader("Error opening partition.");
+        ToolHeader("Error!!!");
+        printk("\n           Unable to open partition. Is drive formatted?");
     }
     ToolFooter();
 }

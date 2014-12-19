@@ -46,5 +46,13 @@ TEXTMENU *DeveloperMenuInit(void) {
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
+    //Print LPCmodsettings struct data.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Print settings values");
+    itemPtr->functionPtr= settingsPrintData;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
     return menuPtr;
 }

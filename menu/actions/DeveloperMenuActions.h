@@ -14,4 +14,6 @@ void LPCIORead(void * ignored);
 
 void GPIORead(void * ignored);
 
+void settingsPrintData(void * ignored);
+
 #endif

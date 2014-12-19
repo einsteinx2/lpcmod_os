@@ -24,6 +24,6 @@ void LEDCycle(void *);
 void LEDOff(void *);
 void LEDFirstBoot(void *);
 
-void initialSetLED(u8 ledChoice);
+void initialSetLED(unsigned char ledChoice);
 
 #endif

@@ -8,6 +8,7 @@
  ***************************************************************************/
 #include "DeveloperMenuActions.h"
 #include "ToolsMenuActions.h"
+#include "LEDMenuActions.h"
 #include "boot.h"
 #include "video.h"
 #include "lpcmod_v1.h"
@@ -178,4 +179,74 @@ void GPIORead(void * ignored){
     printk("\n\n\2           EN_5V : 0b%u", GenPurposeIOs.EN_5V);
     ToolFooter();
     return;
+}
+
+void settingsPrintData(void * ignored){
+    u8 i;
+    char specialCasesBuf[15];
+    ToolHeader("Persistent settings");
+    for(i = 0; i < NBTXTPARAMS; i++){
+        if(i < IPTEXTPARAMGROUP)
+            printk("\n           %s%u", xblastcfgstrings[i], *settingsPtrArray[i]);
+        else if(i < TEXTPARAMGROUP)
+            printk("\n           %s%u.%u.%u.%u", xblastcfgstrings[i], settingsPtrArray[i][0], settingsPtrArray[i][1], settingsPtrArray[i][2], settingsPtrArray[i][3]);
+        else if(i < SPECIALPARAMGROUP)
+            printk("\n           %s%s", xblastcfgstrings[i], textSettingsPtrArray[i]);
+        else{
+            switch(i){
+                case 27:
+                case 28:
+                    switch(*specialCasePtrArray[i]){
+                        case BNK512:
+                            sprintf(specialCasesBuf, "BNK512");
+                            break;
+                        case BNK256:
+                            sprintf(specialCasesBuf, "BNK256");
+                            break;
+                        case BNKTSOPSPLIT0:
+                            sprintf(specialCasesBuf, "BNKTSOPSPLIT0");
+                            break;
+                        case BNKTSOPSPLIT1:
+                            sprintf(specialCasesBuf, "BNKTSOPSPLIT1");
+                            break;
+                        case BNKFULLTSOP:
+                            sprintf(specialCasesBuf, "BNKFULLTSOP");
+                            break;
+                        default:
+                            sprintf(specialCasesBuf, "Error!");
+                            break;
+                    }
+                    printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
+                    break;
+                case 29:
+                    switch(*specialCasePtrArray[i]){
+                        case LED_OFF:
+                            sprintf(specialCasesBuf, "LED_OFF");
+                            break;
+                        case LED_GREEN:
+                            sprintf(specialCasesBuf, "LED_GREEN");
+                            break;
+                        case LED_RED:
+                            sprintf(specialCasesBuf, "LED_RED");
+                            break;
+                        case LED_ORANGE:
+                            sprintf(specialCasesBuf, "LED_ORANGE");
+                            break;
+                        case LED_CYCLE:
+                            sprintf(specialCasesBuf, "LED_CYCLE");
+                            break;
+                        default:
+                            sprintf(specialCasesBuf, "LED_FIRSTBOOT?");
+                            break;
+                    }
+                    printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
+                    break;
+                case 30:
+                    if(*specialCasePtrArray[i] == 0)
+                        printk("\n           %s%s", xblastcfgstrings[i], "HD44780");
+                    else
+                        printk("\n           %s%s", xblastcfgstrings[i], "Error!");
+            }
+        }
+    }
 }

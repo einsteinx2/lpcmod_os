@@ -1540,6 +1540,7 @@ int compare(const void *p1, const void *p2) {
 int strcmpbynum(const char *s1, const char *s2) 
 {
     const char to_caps = 32;
+    const char symbol_adjust = 49;
     int temps1, temps2;
     char *lim1, *lim2;
     unsigned long n1;
@@ -1552,11 +1553,15 @@ int strcmpbynum(const char *s1, const char *s2)
         else if (!((*s1 >= '0' && *s1 <= '9') && (*s2 >= '0' && *s2 <= '9'))){  //If one of the 2 characters is not a ascii number
             if(*s1 >= 'a' && *s1 <= 'z')
 		temps1 = *s1 - to_caps;
+            else if(*s1 >= '[' && *s1 <= '`')
+                temps1 = *s1 - symbol_adjust;
             else
                 temps1 = *s1;
                 
             if(*s2 >= 'a' && *s2 <= 'z')
 		temps2 = *s2 - to_caps;
+            else if(*s2 >= '[' && *s2 <= '`')
+                temps2 = *s2 - symbol_adjust;
             else
                 temps2 = *s2;    
                 

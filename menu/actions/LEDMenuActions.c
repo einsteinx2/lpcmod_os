@@ -43,7 +43,7 @@ void LEDFirstBoot(void *whatever) {
     LPCmodSettings.OSsettings.LEDColor = LED_GREEN;        //Just in case
 }
 
-void initialSetLED(u8 ledChoice) {
+void initialSetLED(unsigned char ledChoice) {
     if(ledChoice == LED_RED)
             LEDRed(NULL);
     else if(ledChoice == LED_ORANGE)

@@ -65,30 +65,13 @@ void editStaticDNS2(void * itemStr){
 }
 
 bool editIPfield(u8 * addr) {
-    u8 cursorPos = 0, byteOffset = 0, tempAddr[4], countDots = 0, lastDotPos;
     char tempStringIP[16];      //+1 for terminating character
     bool result = false;
 
     sprintf(tempStringIP, "%u.%u.%u.%u", addr[0], addr[1], addr[2], addr[3]);
     OnScreenKeyboard(tempStringIP, 15, 3, IP_KEYPAD);
-    while(tempStringIP[cursorPos] != '\0') {
+    result = assertCorrectIPString(addr, tempStringIP);
 
-        if(cursorPos == 0 && tempStringIP[cursorPos] != '.')      //First byte doesn't have a '.' in before.
-            tempAddr[byteOffset++] = (u8)myAtoi(tempStringIP);
-        else if(tempStringIP[cursorPos] == '.' && tempStringIP[cursorPos + 1] != '.' && tempStringIP[cursorPos + 1] != '\0') {       //Others do.
-            tempAddr[byteOffset++] = (u8)myAtoi(&tempStringIP[cursorPos + 1]);
-            countDots += 1;
-            lastDotPos = cursorPos;
-        }
-        cursorPos += 1; //First character cannot be a '.'
-    }
-    if(countDots == 3 && tempStringIP[lastDotPos + 1] != '\0'){
-        addr[0] = tempAddr[0];
-        addr[1] = tempAddr[1];
-        addr[2] = tempAddr[2];
-        addr[3] = tempAddr[3];
-        result = true;
-    }
     return result;
 }
 
@@ -101,4 +84,30 @@ u16 myAtoi(char *str)
         res = res*10 + str[i] - '0';
 
     return res;
+}
+
+bool assertCorrectIPString(u8 *out, char *in){
+    u8 byteOffset = 0, cursorPos = 0, tempAddr[4], countDots = 0, lastDotPos;
+    bool result = false;        //Assume not OK.
+    while(in[cursorPos] != '\0') {
+
+            if(cursorPos == 0 && in[cursorPos] != '.')      //First byte doesn't have a '.' in before.
+                tempAddr[byteOffset++] = (u8)myAtoi(in);
+            else if(in[cursorPos] == '.' && in[cursorPos + 1] != '.' && in[cursorPos + 1] != '\0') {       //Others do.
+                tempAddr[byteOffset++] = (u8)myAtoi(&in[cursorPos + 1]);
+                countDots += 1;
+                lastDotPos = cursorPos;
+            }
+            cursorPos += 1; //First character cannot be a '.'
+        }
+        if(countDots == 3 && in[lastDotPos + 1] != '\0'){
+            out[0] = tempAddr[0];
+            out[1] = tempAddr[1];
+            out[2] = tempAddr[2];
+            out[3] = tempAddr[3];
+            result = true;
+        }
+        else
+            result = false;
+    return result;
 }
