@@ -14,9 +14,9 @@
 #include "BootFATX.h"
 
 #define NBTXTPARAMS 30
-#define IPTEXTPARAMGROUP 17
-#define TEXTPARAMGROUP 21
-#define SPECIALPARAMGROUP 29
+#define IPTEXTPARAMGROUP 16
+#define TEXTPARAMGROUP IPTEXTPARAMGROUP + 4
+#define SPECIALPARAMGROUP TEXTPARAMGROUP + 8
 
 char * xblastcfgstrings[NBTXTPARAMS] = {
         //Contains either numerical or boolean values.
@@ -25,7 +25,6 @@ char * xblastcfgstrings[NBTXTPARAMS] = {
 	"quickboot=",
 	"fanspeed=",
 	"boottimeout=",
-	"ledcolor=",
 	"tsopcontrol=",
 	"enablenetwork=",
 	"usedhcp=",
@@ -55,6 +54,7 @@ char * xblastcfgstrings[NBTXTPARAMS] = {
 	"customstring3=",
 
 	//Special case.
+	"ledcolor=",
         "lcdtype="
 };
 
@@ -330,7 +330,6 @@ void loadXBlastcfg(void * ignored){
             &(LPCmodSettings.OSsettings.Quickboot),
             &(LPCmodSettings.OSsettings.fanSpeed),
             &(LPCmodSettings.OSsettings.bootTimeout),
-            &(LPCmodSettings.OSsettings.LEDColor),
             &(LPCmodSettings.OSsettings.TSOPcontrol),
             &(LPCmodSettings.OSsettings.enableNetwork),
             &(LPCmodSettings.OSsettings.useDHCP),
@@ -353,13 +352,21 @@ void loadXBlastcfg(void * ignored){
             LPCmodSettings.LCDsettings.customString2,
             LPCmodSettings.LCDsettings.customString3
     };
+    
+    u8 *specialCasePtrArray[] = {
+            &(LPCmodSettings.OSsettings.LEDColor),
+            &(LPCmodSettings.LCDsettings.lcdType)
+    };
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
     if(partition != NULL){
         dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
         if((dcluster != -1) && (dcluster != 1)) {
-            res = FATXFindFile(partition, (char *)cfgFileName, dcluster, &fileinfo);
+        
+            res = FATXFindFile(partition, (char *)cfgFileName, FATX_ROOT_FAT_CLUSTER, &fileinfo);
         }
+        else
+            LEDOff(NULL);
         if(res){
              if(ConfirmDialog("        Restore settings from C:\\XBlast\\xblast.cfg?", 1)){
                 CloseFATXPartition(partition);
@@ -376,19 +383,20 @@ void loadXBlastcfg(void * ignored){
             }
 
             if(LoadFATXFilefixed (partition, (char *)cfgFileName, &fileinfo, fileBuf)){
-                while(stringStartPtr < fileinfo.fileSize){      //We stay in file
-                    while(fileBuf[stringStopPtr] != '\n' && stringStopPtr <= fileinfo.fileSize){        //While we don't hit a new line and still in file
+                while(stringStopPtr < (fileinfo.fileSize - 1)){      //We stay in file
+                    while(fileBuf[stringStopPtr] != '\n' && stringStopPtr < (fileinfo.fileSize - 1)){        //While we don't hit a new line and still in file
                         stringStopPtr++;        //Move on to next character in file.
                     }
                     valueStartPtr = 0;
                     CRdetected = fileBuf[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
                     strncpy(compareBuf, &fileBuf[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
                     compareBuf[stringStopPtr - CRdetected - stringStartPtr] = '\0';
+                    printk("\n       %s", compareBuf);
                     while(compareBuf[valueStartPtr] != '=' && valueStartPtr < 100 && compareBuf[valueStartPtr] != '\0'){     //Search for '=' character.
                         valueStartPtr++;
                     }
-                    if(valueStartPtr >= 99){    //If line is not properly constructed
-                        stringStartPtr = stringStopPtr + 1;     //Move on to next line.
+                    stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+                    if(valueStartPtr >= 30){    //If line is not properly constructed
                         continue;
                     }
                     else{
@@ -398,8 +406,9 @@ void loadXBlastcfg(void * ignored){
                                 settingLoaded[i] = true;        //Don't know why I do this.
                                 valueStartPtr++;
                                 if(i < IPTEXTPARAMGROUP){       //Numerical value parse
-                                    if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9')
-                                        *settingsPtrArray[i] = atoi(&compareBuf[valueStartPtr]);
+                                    if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9'){
+                                        *settingsPtrArray[i] = (u8)atoi(&compareBuf[valueStartPtr]);
+                                    }
                                     else if(!strncmp(&compareBuf[valueStartPtr], "Y", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "y", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "T", 1) ||
@@ -434,23 +443,27 @@ void loadXBlastcfg(void * ignored){
                 }
 
 
-                ToolHeader("Loaded settings from C:\\XBlast\\xblast.cfg");
+                ToolHeader("Success.");
+                printk("\n           Settings loaded from \"C:\\XBlast\\xblast.cfg\".");
+                printk("\n          fan : %u%%,   start=%u   stop=%u", LPCmodSettings.OSsettings.fanSpeed, stringStartPtr, stringStopPtr);
+                
             }
             else{
-                ToolHeader("Error. Unable to open \"C:\\XBlast\\xblast.cfg\".");
+                ToolHeader("Error!!!");
+                printk("\n           Unable to open \"C:\\XBlast\\xblast.cfg\".");
             }
 
         }
         else{
-            ToolHeader("Error. File \"C:\\XBlast\\xblast.cfg\" not found.");
+            ToolHeader("Error!!!");
+            printk("\n           File \"C:\\XBlast\\xblast.cfg\" not found.");
         }
 
-        CloseFATXPartition(partition);
+        //CloseFATXPartition(partition);
     }
     else{
-        ToolHeader("Error opening partition. Drive formatted?");
+        ToolHeader("Error opening partition.");
     }
-
     ToolFooter();
 }
 
