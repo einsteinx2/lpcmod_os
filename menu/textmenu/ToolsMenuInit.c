@@ -73,7 +73,7 @@ TEXTMENU *ToolsMenuInit(void) {
         //TSOP split manual control
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption, "TSOP recover bank control");
+        strcpy(itemPtr->szCaption, "TSOP recover force bank : ");
         if(A19controlModBoot == BNKTSOPSPLIT0)
             sprintf(itemPtr->szParameter, "%s", "Bank0");
         else if(A19controlModBoot == BNKTSOPSPLIT1)

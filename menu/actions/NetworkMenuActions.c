@@ -69,7 +69,7 @@ bool editIPfield(u8 * addr) {
     bool result = false;
 
     sprintf(tempStringIP, "%u.%u.%u.%u", addr[0], addr[1], addr[2], addr[3]);
-    OnScreenKeyboard(tempStringIP, 15, 3, IP_KEYPAD);
+    OnScreenKeyboard(tempStringIP, 16, 3, IP_KEYPAD);
     result = assertCorrectIPString(addr, tempStringIP);
 
     return result;

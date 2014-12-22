@@ -12,6 +12,7 @@
 #include "boot.h"
 #include "video.h"
 #include "lpcmod_v1.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 void LPCIOWrite(void * ignored){
     u16 address = 0x00FF;
@@ -184,19 +185,24 @@ void GPIORead(void * ignored){
 void settingsPrintData(void * ignored){
     u8 i;
     char specialCasesBuf[15];
-    ToolHeader("Persistent settings");
+    VIDEO_ATTR=0xffffef37;
+    printk("\n           Persistent settings\n");
+    VIDEO_ATTR=0xffc8c8c8;
     for(i = 0; i < NBTXTPARAMS; i++){
-        if(i < IPTEXTPARAMGROUP)
-            printk("\n           %s%u", xblastcfgstrings[i], *settingsPtrArray[i]);
+        if(i < IPTEXTPARAMGROUP){
+            if(!(i%2))
+                printk("\n");
+            printk("           %s%u", xblastcfgstrings[i], *settingsPtrArray[i]);
+        }
         else if(i < TEXTPARAMGROUP)
-            printk("\n           %s%u.%u.%u.%u", xblastcfgstrings[i], settingsPtrArray[i][0], settingsPtrArray[i][1], settingsPtrArray[i][2], settingsPtrArray[i][3]);
+            printk("\n           %s%u.%u.%u.%u", xblastcfgstrings[i], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][0], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][1], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][2], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][3]);
         else if(i < SPECIALPARAMGROUP)
-            printk("\n           %s%s", xblastcfgstrings[i], textSettingsPtrArray[i]);
+            printk("\n           %s%s", xblastcfgstrings[i],  textSettingsPtrArray[i-TEXTPARAMGROUP]);
         else{
             switch(i){
                 case 27:
                 case 28:
-                    switch(*specialCasePtrArray[i]){
+                    switch(*specialCasePtrArray[i - SPECIALPARAMGROUP]){
                         case BNK512:
                             sprintf(specialCasesBuf, "BNK512");
                             break;
@@ -219,7 +225,7 @@ void settingsPrintData(void * ignored){
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
                 case 29:
-                    switch(*specialCasePtrArray[i]){
+                    switch(*specialCasePtrArray[i - SPECIALPARAMGROUP]){
                         case LED_OFF:
                             sprintf(specialCasesBuf, "LED_OFF");
                             break;
@@ -242,11 +248,13 @@ void settingsPrintData(void * ignored){
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
                 case 30:
-                    if(*specialCasePtrArray[i] == 0)
+                    if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == 0)
                         printk("\n           %s%s", xblastcfgstrings[i], "HD44780");
                     else
                         printk("\n           %s%s", xblastcfgstrings[i], "Error!");
             }
         }
     }
+    printk("\n\n           Press Button 'A' to continue.");
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
 }

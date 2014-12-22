@@ -244,7 +244,7 @@ void I2CSetFanSpeed(u8 speed){
         WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC
     }while((I2CGetFanSpeed() != (speed >> 1)) && giveUp++ < 10);    //If the Xbox is hard of hearing, repeat max 10 times.
 */
-	WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC
+	WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC, divide incoming value by 2.
 	wait_us(5);
         WriteToSMBus(0x10,0x05,1,1);             //Activate manual fan speed control
         wait_us(5);

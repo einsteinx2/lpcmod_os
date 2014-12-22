@@ -135,6 +135,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank0 name");
+        itemPtr->functionPtr= editBIOSName;
         itemPtr->functionDataPtr= malloc(sizeof(char));
             *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
         TextMenuAddItem(menuPtr, itemPtr);
@@ -142,6 +143,7 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"TSOP bank1 name");
+        itemPtr->functionPtr= editBIOSName;
         itemPtr->functionDataPtr= malloc(sizeof(char));
             *(char*)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
         itemPtr->functionDataPtrMemAlloc = true;

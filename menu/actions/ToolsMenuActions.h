@@ -8,15 +8,6 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#define NBTXTPARAMS 31
-#define IPTEXTPARAMGROUP 14
-#define TEXTPARAMGROUP IPTEXTPARAMGROUP + 5
-#define SPECIALPARAMGROUP TEXTPARAMGROUP + 8
-extern char *xblastcfgstrings[NBTXTPARAMS];
-extern unsigned char *settingsPtrArray[];
-unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP];
-extern char *textSettingsPtrArray[];
-extern unsigned char *specialCasePtrArray[];
 
 void saveEEPromToFlash(void *whatever);
 void restoreEEPromFromFlash(void *whatever);

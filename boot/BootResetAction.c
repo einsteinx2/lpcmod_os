@@ -23,6 +23,7 @@
 #include "video.h"
 #include "memory_layout.h"
 #include "lpcmod_v1.h"
+#include "lib/LPCMod/BootLPCMod.h"
 //#include "lib/LPCMod/BootLCD.h"
 
 JPEG jpegBackdrop;
@@ -50,6 +51,7 @@ extern void BootResetAction ( void ) {
     int nTempCursorX, nTempCursorY;
     int n, nx, i;
     char *modName = "Unsupported modchip!";
+    _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH of;
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -219,7 +221,7 @@ extern void BootResetAction ( void ) {
         LPCmodSettings.OSsettings.TSOPcontrol = (u8)GenPurposeIOs.A19BufEn;
     }
 
-    BootLCDInit();                              //Basic init. Do it even if no LCD is connected on the system.
+    BootLCDInit();    //Basic init. Do it even if no LCD is connected on the system.
     
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){
@@ -387,9 +389,6 @@ extern void BootResetAction ( void ) {
 
    mbVersion = I2CGetXboxMBRev();
 
-   if(mbVersion > REV1_1 && !DEV_FEATURES)
-       LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
-
    printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
    if (xbox_ram > 64) {
         VIDEO_ATTR=0xff00ff00;
@@ -461,6 +460,30 @@ extern void BootResetAction ( void ) {
     VIDEO_CURSOR_POSY=0;
 
     BootIdeInit();
+    
+    //Load settings from xblast.cfg file if not booting from flash or XBlast Mod isn't detected.
+    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1_TSOP && fHasHardware != SYSCON_ID_V1){
+    	tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
+    	initialLPCModOSBoot(tempLPCmodSettings);
+        if(!LPCMod_ReadCFGFromHDD(tempLPCmodSettings)){
+            memcpy(&LPCmodSettings, tempLPCmodSettings, sizeof(_LPCmodSettings));
+            I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+            initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+            //Stuff to do right after loading persistent settings from file.
+            if(fHasHardware == SYSCON_ID_XX1 ||
+               fHasHardware == SYSCON_ID_XX2 ||
+               fHasHardware == SYSCON_ID_XXOPX ||
+               fHasHardware == SYSCON_ID_XX3 ||
+               fHasHardware == SYSCON_ID_X3){
+                assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+            }
+        }
+        free(tempLPCmodSettings);
+    }
+    
+    if(mbVersion > REV1_1 && !DEV_FEATURES)
+       LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
+
 
     printk("\n\n\n\n");
 

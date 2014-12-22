@@ -30,7 +30,8 @@ TEXTMENU* HDDFlashMenuInit(void) {
     char *path="\\BIOS\\";
     char fullPath[20];
     char *fullPathptr = fullPath;
-
+    for(i = 0; i < 4096; i++)
+        fnames[i] = NULL;
     memset(fullPath, 0, 20);
 
     // Generate the menu title.
@@ -92,6 +93,7 @@ TEXTMENU* HDDFlashMenuInit(void) {
             itemPtr->functionPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
         }
+        CloseFATXPartition(partition);
     } else {
         // If the partition couldn't be opened at all.
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

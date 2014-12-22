@@ -202,6 +202,9 @@ int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fil
 
     if(partition == NULL) {
         VIDEO_ATTR=0xffe8e8e8;
+#ifdef FATX_INFO
+        printk("LoadFATXFile : no open FATX partition\n");
+#endif
     } else {
         if(FATXFindFile(partition,filename,FATX_ROOT_FAT_CLUSTER,fileinfo)) {
 #ifdef FATX_DEBUG
@@ -250,6 +253,7 @@ int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo
 #ifdef FATX_INFO
                 printk("LoadFATXFile : error loading %s\n",filename);
 #endif
+                free(fileinfo->buffer);
                 return false;
             }
         } else {
@@ -376,7 +380,8 @@ FATXPartition *OpenFATXPartition(int nDriveIndex,
         VIDEO_ATTR=0xffe8e8e8;
 #ifdef FATX_INFO
         printk("OpenFATXPartition : Out of memory\n");
-#endif
+#endif	
+	free(partition);
         return NULL;
     }
 
@@ -745,7 +750,7 @@ u_int32_t getNextClusterInChain(FATXPartition* partition, int clusterId) {
     // get the next ID
     if (partition->chainMapEntrySize == 2) {
         nextClusterId = partition->clusterChainMap.words[clusterId];
-            eocMarker = 0xffff;
+        eocMarker = 0xffff;
         rootFatMarker = 0xfff8;
         maxCluster = 0xfff4;
     } else if (partition->chainMapEntrySize == 4) {
@@ -808,13 +813,13 @@ int FATXRawRead(int drive, int sector, unsigned long long byte_offset, int byte_
         int nThisTime=512;
         if(byte_len<512) nThisTime=byte_len;
                 if(byte_offset) {
-                    u8 ba[512];
+                    //u8 ba[512];
             if(BootIdeReadSector(drive, buf, sector, 0, 512)) {
                 VIDEO_ATTR=0xffe8e8e8;
                 printk("Unable to get first sector\n");
                                 return false;
             }
-            memcpy(buf, &ba[byte_offset], nThisTime-byte_offset);
+            //memcpy(buf, &ba[byte_offset], nThisTime-byte_offset);
             buf+=nThisTime-byte_offset;
             byte_len-=nThisTime-byte_offset;
             byte_read += nThisTime-byte_offset;
