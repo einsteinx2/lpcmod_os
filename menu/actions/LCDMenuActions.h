@@ -10,6 +10,7 @@
  ***************************************************************************/
 
 void LCDToggleEN5V(void * itemStr);
+void LCDChangeLCDType(void * itemStr);
 void LCDIncrementBacklight(void * itemStr);
 void LCDDecrementBacklight(void * itemStr);
 void LCDIncrementContrast(void * itemStr);

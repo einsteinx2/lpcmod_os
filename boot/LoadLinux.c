@@ -11,21 +11,23 @@
 #include "memory_layout.h"
 #include <shared.h>
 #include <filesys.h>
-#include "rc4.h"
+//#include "rc4.h"
 #include "sha1.h"
-#include "BootFATX.h"
+//#include "BootFATX.h"
 #include "xbox.h"
 #include "BootFlash.h"
 #include "cpu.h"
 #include "BootIde.h"
-#include "BootParser.h"
+//#include "BootParser.h"
 #include "config.h"
 #include "iso_fs.h"
 #include "Gentoox.h"
 
+
 //Grub bits
 unsigned long saved_drive;
 grub_error_t errnum;
+#if 0
 unsigned long saved_partition;
 unsigned long boot_drive;
 
@@ -291,11 +293,14 @@ int LoadKernelFatX(CONFIGENTRY *config) {
     tempBuf = (u8*)INITRD_START;
     printk("           Boot: Loading kernel '%s'", config->szKernel);
     dots();
-    if(! LoadFATXFilefixed(partition,config->szKernel,&infokernel,tempBuf)) {
+    if(! LoadFATXFile(partition,config->szKernel,&infokernel)) {
         //printk("Error loading kernel %s\n",config->szKernel);
+        //Won't free fileinfo.buffer because we don't know if malloc was called and program is stuck there anyway.
         cromwellError();
         while(1);
     } else {
+        memcpy(tempBuf, fileinfo.buffer, fileinfo.fileSize);
+        free(fileinfo.buffer);
         dwKernelSize = infokernel.fileSize;
         // moving the kernel to its final location
         memPlaceKernel(tempBuf, dwKernelSize);
@@ -310,10 +315,12 @@ int LoadKernelFatX(CONFIGENTRY *config) {
         printk("\t ");
         wait_ms(50);
 
-        if(! LoadFATXFilefixed(partition,config->szInitrd,&infoinitrd, (void*)INITRD_START)) {
+        if(! LoadFATXFile(partition,config->szInitrd,&infoinitrd)) {
             cromwellError();
             while(1);
         }
+        memcpy((void*)INITRD_START, fileinfo.buffer, fileinfo.fileSize);
+        free(fileinfo.buffer);
         dwInitrdSize = infoinitrd.fileSize;
         cromwellSuccess();
         //printk(" - %d %d bytes\n", dwInitrdSize,infoinitrd.fileRead);
@@ -462,7 +469,7 @@ int LoadKernelCdrom(CONFIGENTRY *config) {
     }
     return true;
 }
-
+#endif
 
 #ifdef FLASH 
 int BootLoadFlashCD(int cdromId) {
@@ -599,7 +606,7 @@ int BootLoadFlashCD(int cdromId) {
 }
 #endif //Flash
 
-
+#if 0
 void ExittoLinux(CONFIGENTRY *config) {
     busyLED();
     VIDEO_ATTR=0xff8888a8;
@@ -729,4 +736,4 @@ void startLinux(void* initrdStart, unsigned long initrdSize, const char* appendL
     // See you again in Linux then
     while(1);
 }
-
+#endif

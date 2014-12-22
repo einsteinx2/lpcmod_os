@@ -198,6 +198,8 @@ int FATXFindDir(FATXPartition *partition, int clusterId, char *dir){
     return 0;           //Keep compiler happy.
 }
 
+#if 0
+//Your services are no longer needed my friend.
 int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position) {
 
     if(partition == NULL) {
@@ -231,6 +233,7 @@ int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fil
     }
     return false;
 }
+#endif
 
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo) {
 

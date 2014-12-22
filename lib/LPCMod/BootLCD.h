@@ -50,6 +50,7 @@
 
 
 void BootLCDInit(void);
+void BootLCDSwitchType(void);
 
 void toggleEN5V(u8 value);
 void setLCDContrast(u8 value);

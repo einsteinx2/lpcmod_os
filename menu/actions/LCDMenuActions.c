@@ -19,6 +19,12 @@ void LCDToggleEN5V(void * itemStr){
     assertInitLCD();
 }
 
+void LCDChangeLCDType(void * itemStr){
+    LPCmodSettings.LCDsettings.lcdType = LPCmodSettings.LCDsettings.lcdType? HD44780 : KS0073;
+    BootLCDSwitchType();
+    sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.lcdType? "KS0073" : "HD44780");
+}
+
 void LCDIncrementBacklight(void * itemStr){
     if(LPCmodSettings.LCDsettings.backlight < 100)
         LPCmodSettings.LCDsettings.backlight += 1;

@@ -232,7 +232,6 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
     const char *cfgFileName = "\\XBlast\\xblast.cfg";
     const char *path="\\XBlast\\";
     char compareBuf[100];                     //100 character long seems acceptable
-    u8 * fileBuf;
     u8 i;
     bool settingLoaded[NBTXTPARAMS];
     int stringStartPtr = 0, stringStopPtr = 0, valueStartPtr = 0;
@@ -248,20 +247,18 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
         }
         if(res){
             
-            fileBuf = (u8 *)malloc(fileinfo.fileSize);
-            
             //Initially, no setting has been loaded from txt.
             for(i = 0; i < NBTXTPARAMS; i++)
             {
                 settingLoaded[i] = false;
             }
             //partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-            if(LoadFATXFilefixed (partition, (char *)cfgFileName, &fileinfo, fileBuf)){
+            if(LoadFATXFile(partition, (char *)cfgFileName, &fileinfo)){
                 while(stringStopPtr < fileinfo.fileSize){      //We stay in file
-                    while(fileBuf[stringStopPtr] != '\n' && stringStopPtr < fileinfo.fileSize){        //While we don't hit a new line and still in file
+                    while(fileinfo.buffer[stringStopPtr] != '\n' && stringStopPtr < fileinfo.fileSize){        //While we don't hit a new line and still in file
                         stringStopPtr++;        //Move on to next character in file.
                     }
-                    if(fileBuf[stringStartPtr] == '#' ){       //This is a comment or empty line
+                    if(fileinfo.buffer[stringStartPtr] == '#' ){       //This is a comment or empty line
                     
                         stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
                         continue;
@@ -269,9 +266,9 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
                     
                     //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
                     valueStartPtr = 0;
-                    CRdetected = fileBuf[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
+                    CRdetected = fileinfo.buffer[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
                     //Copy line in compareBuf.
-                    strncpy(compareBuf, &fileBuf[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
+                    strncpy(compareBuf, &fileinfo.buffer[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
                     //Manually append terminating character at the end of the string
                     compareBuf[stringStopPtr - CRdetected - stringStartPtr] = '\0';
                     //if(compareBuf[0] != '\0')
@@ -347,7 +344,9 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
                                             break;
                                         case 30:
                                             if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = 0 ;
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = HD44780 ;
+                                            if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = KS0073 ;
                                             break;
                                     } //switch(i)
                                 } //!if(i < IPTEXTPARAMGROUP){
@@ -355,6 +354,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
                         } //for(i = 0; i < NBTXTPARAMS; i++)
                     } //!if(valueStartPtr >= 30)
                 } //while(stringStopPtr < fileinfo.fileSize)
+                free(fileinfo.buffer);
             } //if(LoadFATXFilefixed (partition, (char *)cfgFileName, &fileinfo, fileBuf))
             else{
                 return 4; //Cannot open file.
@@ -398,7 +398,7 @@ FATXFILEINFO fileinfo;
                 cromwellWarning();
                 ToolFooter();
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
-                return;
+                return 1;
             }
             filebuf = (char *)malloc(FATX16CLUSTERSIZE);
             memset(filebuf, 0x00, FATX16CLUSTERSIZE);
@@ -427,4 +427,5 @@ FATXFILEINFO fileinfo;
     }
 
     ToolFooter();
+    return 0;
 }

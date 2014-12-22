@@ -195,7 +195,7 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.OSsettings.useDHCP == 0xFF ||
        LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
        LPCmodSettings.LCDsettings.enable5V > 1 ||
-       LPCmodSettings.LCDsettings.lcdType == 0xFF ||
+       LPCmodSettings.LCDsettings.lcdType > 1 ||        //Because HDD44780 = 0 and KS0073 = 1. No other valid value possible.
        LPCmodSettings.LCDsettings.nbLines == 0xFF ||
        LPCmodSettings.LCDsettings.lineLength == 0xFF ||
        LPCmodSettings.LCDsettings.backlight > 100 ||

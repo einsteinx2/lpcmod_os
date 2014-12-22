@@ -438,6 +438,12 @@ void BootFlashSaveOSSettings(void) {
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
+        if(fHasHardware == SYSCON_ID_XX1 ||
+           fHasHardware == SYSCON_ID_XX2 ||
+           fHasHardware == SYSCON_ID_XXOPX ||
+           fHasHardware == SYSCON_ID_XX3){
+            IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 1);       //Enable flash write on SmartXX mods.
+        }
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
             if(assert4KBErase(&of)){                //XBlast Lite V1 has 4KB-sector erase capability
                 blocksize = 4 * 1024;                       //4KB allocation
@@ -462,6 +468,12 @@ void BootFlashSaveOSSettings(void) {
                 BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
             }
             free(lastBlock);
+        }
+        if(fHasHardware == SYSCON_ID_XX1 ||
+           fHasHardware == SYSCON_ID_XX2 ||
+           fHasHardware == SYSCON_ID_XXOPX ||
+           fHasHardware == SYSCON_ID_XX3){
+            IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
         }
     }
 }

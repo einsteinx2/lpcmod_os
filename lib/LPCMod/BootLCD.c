@@ -9,11 +9,7 @@ void BootLCDInit(void){
     xLCD.LineSize = HDD4780_DEFAULT_LINELGTH;    //Default for common 4 lines LCDs
     xLCD.TimingCMD = 1500;                        //Arbitrary but safe.
     xLCD.TimingData = 90;
-    xLCD.Line1Start = 0x00;
-    xLCD.Line2Start = 0x40;    //Check the datasheet if you don't believe me.
-    xLCD.Line3Start = 0x14;
-    xLCD.Line4Start = 0x54;
-
+    BootLCDSwitchType();
 
     //Function pointers included in struct for easier access throughout the program.
     xLCD.Init = WriteLCDInit;
@@ -28,6 +24,23 @@ void BootLCDInit(void){
     xLCD.PrintLine2 = WriteLCDLine2;
     xLCD.PrintLine3 = WriteLCDLine3;
     xLCD.ClearLine = WriteLCDClearLine;
+}
+
+void BootLCDSwitchType(void){
+    switch(LPCmodSettings.LCDsettings.lcdType){
+        case KS0073:
+            xLCD.Line1Start = 0x00;
+            xLCD.Line2Start = 0x20;    //Check the datasheet if you don't believe me.
+            xLCD.Line3Start = 0x40;
+            xLCD.Line4Start = 0x60;
+            break;
+        default:
+            xLCD.Line1Start = 0x00;    //HD44780 by default
+            xLCD.Line2Start = 0x40;    //Check the datasheet if you don't believe me.
+            xLCD.Line3Start = 0x14;
+            xLCD.Line4Start = 0x54;
+            break;
+    }
 }
 
 void toggleEN5V(u8 value){

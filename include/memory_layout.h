@@ -39,4 +39,14 @@
 //#define LPCFlashadress 0xFFF00000
 #define LPCFlashadress 0xFF000000
 
+//Location and max size of extracted 2BL from BFM BIOS
+#define MIN_2BL 0x400000
+#define MAX_2BL 0x405FFF
+#define THE_2BL_SIZE 0x6000
+
+//Kernel location range and size definition for BFM BIOS
+#define MIN_SHADOW_ROM 0x0000000
+#define MAX_SHADOW_ROM 0x3000000
+#define SHADOW_ROM_SIZE 0x100000
+
 #endif /* #ifndef memory_layout_h */

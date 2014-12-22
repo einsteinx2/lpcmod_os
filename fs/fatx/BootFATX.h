@@ -162,7 +162,8 @@ typedef struct
 //TODO: One of the 2 functions below will need to be removed.
 //LoadFATXFilefixed requires you to specify pointer (u8* Position) for allocated memory.
 //LoadFATXFile allocates memory and point to it using the "buffer" u8 pointer in fileinfo struct.
-int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
+//int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
+//A decision has been made. Left it commented for "legacy" purposes.
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo);
 void PrintFAXPartitionTable(int nDriveIndex);
 int FATXSignature(int nDriveIndex,unsigned int block);

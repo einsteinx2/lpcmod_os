@@ -386,8 +386,8 @@ typedef struct _OSsettings {
 typedef struct _LCDsettings {
     u8 migrateLCD;            //Flag to indicate if settings in this struct should be carried over a OS update.
     u8 enable5V;            //Flag to indicate if +5V rail should be enabled(for LCD power)
-    u8 lcdType;            //HD44780 only for now
-    u8 nbLines;            //User puts 4, meens 2 lines from HD44780 POV
+    u8 lcdType;            //HD44780, KS0073 only for now
+    u8 nbLines;            //User puts 4, means 2 lines from HD44780 POV
     u8 lineLength;            //Should be 16 or 20 most of the time.
     u8 backlight;            //7-bit value
     u8 contrast;            //7-bit value

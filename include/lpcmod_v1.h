@@ -76,6 +76,8 @@
 #define LCD_CT        0xF703u
 #define XODUS_ID      0x00FEu
 
+#define SMARTXX_FLASH_WRITEPROTECT 0xF704
+
 //Xecuter 3 LPC registers to drive LCD
 #define X3_DISP_O_DAT      0xF504u
 #define X3_DISP_O_CMD      0xF505u
@@ -109,6 +111,7 @@
 
 
 #define HD44780        0x0u
+#define KS0073         0x1u
 
 /*
 #define ADR_ACTIVEBANK 0xFF010

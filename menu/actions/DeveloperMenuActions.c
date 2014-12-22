@@ -248,8 +248,10 @@ void settingsPrintData(void * ignored){
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
                 case 30:
-                    if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == 0)
+                    if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == HD44780)
                         printk("\n           %s%s", xblastcfgstrings[i], "HD44780");
+                    if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == KS0073)
+                        printk("\n           %s%s", xblastcfgstrings[i], "KS0073");
                     else
                         printk("\n           %s%s", xblastcfgstrings[i], "Error!");
             }

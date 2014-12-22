@@ -37,7 +37,7 @@ void FlashBiosFromHDD (void *fname) {
 
     FATXFILEINFO fileinfo;
     //res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
-    res = LoadFATXFilefixed (partition, fname, &fileinfo, fileBuf);
+    res = LoadFATXFile(partition, fname, &fileinfo);
     if (!res) {
         printk ("\n\n\n\n\n           Loading BIOS failed");
         dots ();
@@ -45,6 +45,8 @@ void FlashBiosFromHDD (void *fname) {
         while (1)
             ;
     }
+    memcpy(fileBuf, fileinfo.buffer, fileinfo.fileSize);
+    free(fileinfo.buffer);
 
     offset = 0;
     if (fHasHardware == SYSCON_ID_V1) {

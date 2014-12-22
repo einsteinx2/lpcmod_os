@@ -32,12 +32,19 @@ TEXTMENU *LCDMenuInit(void) {
         case HD44780 :
             strcpy(itemPtr->szParameter,"HD44780");
             break;
+        case KS0073 :
+            strcpy(itemPtr->szParameter,"KS0073");
+            break;
         default:
             strcpy(itemPtr->szParameter,"Unknown");
             break;
     }
-    itemPtr->functionPtr= NULL;
-    itemPtr->functionDataPtr= NULL;
+    itemPtr->functionPtr= LCDChangeLCDType;
+    itemPtr->functionDataPtr= itemPtr->szParameter;
+    itemPtr->functionLeftPtr=LCDChangeLCDType;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=LCDChangeLCDType;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

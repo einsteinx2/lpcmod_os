@@ -115,8 +115,11 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 res = BootReflash(fileBuf,0,hs->bios_len);
             }
         }
-        else {
+        else if(fHasHardware == SYSCON_ID_V1_TSOP){
             res = BootReflash(fileBuf,0,hs->bios_len);
+        }
+        else{
+            res = BootReflashAndReset(fileBuf,0,hs->bios_len);
         }
         netFlashOver = BootFlashPrintResult(res, hs->bios_len);
   }

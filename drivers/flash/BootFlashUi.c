@@ -46,6 +46,13 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     of.m_dwLengthUsedArea=dwLength;
     of.m_pcallbackFlash=BootFlashUserInterface;
 
+    if(fHasHardware == SYSCON_ID_XX1 ||
+       fHasHardware == SYSCON_ID_XX2 ||
+       fHasHardware == SYSCON_ID_XXOPX ||
+       fHasHardware == SYSCON_ID_XX3){
+        IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 1);       //Enable flash write on SmartXX mods.
+    }
+
     // check device type and parameters are sane
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
         return 1; // unable to ID device - fail
@@ -62,8 +69,8 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
             return 5;
     }
     else{       //If not XBlast Mod, mirror image to fill the entire size of detected flash up to 1MB
-        if(dwLength < of.m_dwLengthInBytes ||                          //If image size is smaller than detected flash size.
-           (of.m_dwLengthInBytes > 1048576 && dwLength < 1048576)){     //If flash size is bigger than 1MB and image size is smaller than 1MB.
+        if(dwLength < of.m_dwLengthInBytes                          //If image size is smaller than detected flash size.
+           && dwLength < 1048576){                                  //and image size is smaller than 1MB.
             if(of.m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space
                dwLength == 262144){                     //image is 256KB in size
                 memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
@@ -105,11 +112,23 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
             }
             else { // failed program
                 //printk("           Programming failed...\n");
+                if(fHasHardware == SYSCON_ID_XX1 ||
+                   fHasHardware == SYSCON_ID_XX2 ||
+                   fHasHardware == SYSCON_ID_XXOPX ||
+                   fHasHardware == SYSCON_ID_XX3){
+                    IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
+                }
                 return -3;
             }
         }
         else { // failed erase
             //printk("           Erasing failed...\n");
+            if(fHasHardware == SYSCON_ID_XX1 ||
+               fHasHardware == SYSCON_ID_XX2 ||
+               fHasHardware == SYSCON_ID_XXOPX ||
+               fHasHardware == SYSCON_ID_XX3){
+                IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
+            }
             return -2;
         }
     }
@@ -245,10 +264,22 @@ void BootShowFlashDevice(void){
 
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
+    if(fHasHardware == SYSCON_ID_XX1 ||
+       fHasHardware == SYSCON_ID_XX2 ||
+       fHasHardware == SYSCON_ID_XXOPX ||
+       fHasHardware == SYSCON_ID_XX3){
+        IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 1);       //Enable flash write on SmartXX mods.
+    }
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])){
         VIDEO_ATTR=0xffc8c8c8;
         printk("No valid Flash device Detected!!!");
         return;
+    }
+    if(fHasHardware == SYSCON_ID_XX1 ||
+       fHasHardware == SYSCON_ID_XX2 ||
+       fHasHardware == SYSCON_ID_XXOPX ||
+       fHasHardware == SYSCON_ID_XX3){
+        IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
     }
 
 
