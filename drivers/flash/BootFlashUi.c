@@ -157,7 +157,7 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 1; // unable to ID device - fail
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
-    if(currentFlashBank == BNK512){
+    if(currentFlashBank == BNK512 || (fHasHardware == SYSCON_ID_V1_TSOP && LPCmodSettings.OSsettings.TSOPcontrol)){
         if(dwLength != 524288){             //If input image is not 512KB
             if(dwLength == 262144){         //If a 256KB image is to be flashed.
                 memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
@@ -166,6 +166,22 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
             }
             else
                 return 3;   //Wrong file size.
+        }
+    }
+    else{  //Highly improbable since this function will only be called when XBlast Mod's is detected or TSOP is split and these cases are covered above.
+        if(dwLength < of.m_dwLengthInBytes                          //If image size is smaller than detected flash size.
+           && dwLength < 1048576){                                  //and image size is smaller than 1MB.
+            if(of.m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space
+               dwLength == 262144){                     //image is 256KB in size
+                memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
+                dwLength = dwLength * 2;      //Image to flash is now 512KB
+            }
+            if(of.m_dwLengthInBytes >= 1048576 && //Flash is at least 1MB in space
+               dwLength == 524288){             //image is 512KB in size
+                memcpy(&pbNewData[524288], &pbNewData[0], 524288);  //Mirror image in the next 512KB segment of the 1MB buffer.
+                dwLength = dwLength * 2;      //Image to flash is now 1MB
+            }
+            of.m_dwLengthUsedArea=dwLength;
         }
     }
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||

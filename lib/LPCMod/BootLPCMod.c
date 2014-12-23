@@ -345,7 +345,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
                                         case 30:
                                             if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = HD44780 ;
-                                            if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))
+                                            else if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = KS0073 ;
                                             break;
                                     } //switch(i)

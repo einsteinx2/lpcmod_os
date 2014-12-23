@@ -437,7 +437,7 @@ void BootFlashSaveOSSettings(void) {
     			
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-
+        
         if(fHasHardware == SYSCON_ID_XX1 ||
            fHasHardware == SYSCON_ID_XX2 ||
            fHasHardware == SYSCON_ID_XXOPX ||
