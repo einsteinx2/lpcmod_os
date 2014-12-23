@@ -58,7 +58,7 @@ extern void BootResetAction ( void ) {
         #include "flashtypes.h"
     };
     u8 EjectButtonPressed=0;
-    A19controlModBoot=TSOPFULLBOOT;        //Start assuming no control over A19 line.
+    A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
@@ -380,7 +380,7 @@ extern void BootResetAction ( void ) {
     //TODO: Remove debug string print.
     printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
-    printk("           THIS IS A WIP BUILD, manID= %x  devID= %x\n", of.m_bManufacturerId, of.m_bDeviceId);
+    printk("           THIS IS A WIP BUILD, flash manID= %x  devID= %x\n", of.m_bManufacturerId, of.m_bDeviceId);
 #else
     printk("           Modchip: %s\n",modName);
 #endif
@@ -541,7 +541,8 @@ extern void BootResetAction ( void ) {
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     //inputLED();
-    IconMenu();
+    while(IconMenu())
+        IconMenuInit();
     //Good practice.
     free(videosavepage);
 

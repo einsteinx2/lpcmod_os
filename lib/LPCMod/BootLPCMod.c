@@ -163,7 +163,14 @@ u16 LPCMod_HW_rev(void){
 
 void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct){
     struct _GenPurposeIOs *localGPIOstruct;
-    u8 temp = ReadFromIO(XBLAST_IO);
+    u8 temp;
+
+    //We have a XBlast Mod detected or else there's a strong possibility function will return 0xff;
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP)
+        temp = ReadFromIO(XBLAST_IO);
+    else
+        temp = 0;
+
     //If no valid pointer is specified, take Global struct.
     if(GPIOstruct == NULL)
         localGPIOstruct = &GenPurposeIOs;

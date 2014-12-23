@@ -11,7 +11,7 @@
 #define GROUNDD0  0x04 // Enable bit to ground TSOP signal
 #define RELEASED0 0x00 // Does not interfere with A19control and A19value
 //Values used in Evolution-X dash to toggle banks.
-#define BNKFULLTSOP 0x40	//Make sure to drop D0, A19control and A19value(while we're at it)
+#define XODUSFULLTSOP 0x40	//Make sure to drop D0, A19control and A19value(while we're at it)
 #define XODUSBNK0TSOP 0x45      //Values on XODUS_CONTROL register to switch banks on TSOP.
 #define XODUSBNK1TSOP 0x47      //D0 signal must be set to '1' when TSOP is split
 #define XODUSBNK0MOD 0x44       //Values on XODUS_CONTROL register to switch user banks on XBlast Mod.
@@ -52,7 +52,7 @@
 #define OSKILLMOD       0x20u    //Completely mute modchip until a power cycle
 #define TSOPA19CTRLBIT  0x10u    //Bit to enable manual drive of the TSOP's A19 pin.
 #define OSGROUNDD0      0x04u    //Won't be used much here.
-#define TSOPFULLBOOT    0x00u
+#define BNKFULLTSOP    0x00u
 #define BNKTSOPSPLIT0 0x10u
 #define BNKTSOPSPLIT1 0x18u
 #define NOBNKID  0xFF

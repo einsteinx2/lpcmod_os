@@ -130,7 +130,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         }
         else{
             strcpy(menuPtr->szCaption, "Flash menu : TSOP");
-            switchOSBank(TSOPFULLBOOT);	//Release everything.
+            switchOSBank(BNKFULLTSOP);	//Release everything.
         }
     }
     else {
@@ -144,13 +144,14 @@ TEXTMENU* BankSelectInit(void * bank) {
     itemPtr->functionPtr= enableNetflash;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-
+#if DEV_FEATURES
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
        sprintf(itemPtr->szCaption,"Web Update");
     itemPtr->functionPtr= enableWebupdate;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+#endif
 #endif
 
     for (i=0; i<2; ++i) {
@@ -167,12 +168,15 @@ TEXTMENU* BankSelectInit(void * bank) {
         }
     }
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-      sprintf(itemPtr->szCaption,"HDD Flash");
-    itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)HDDFlashMenuInit();
-    TextMenuAddItem(menuPtr, itemPtr);
+    //Only Master HDD will be supported here.
+    if (tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi){
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+          sprintf(itemPtr->szCaption,"HDD Flash");
+        itemPtr->functionPtr=DrawChildTextMenu;
+        itemPtr->functionDataPtr = (void *)HDDFlashMenuInit();
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
 /*
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

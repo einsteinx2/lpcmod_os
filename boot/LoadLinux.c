@@ -480,8 +480,9 @@ int BootLoadFlashCD(int cdromId) {
     struct SHA1Context context;
     unsigned char SHA1_result[20];
     unsigned char checksum[20];
-
-    memset((u8 *)KERNEL_SETUP,0,4096);
+    u8 *fileBuf;
+    fileBuf = (u8 *)malloc(1024 * 1024);
+    memset(fileBuf,0x0,1024 * 1024);
 
     //See if we already have a CDROM in the drive
     //Try for 4 seconds - takes a while to 'spin up'.
@@ -492,7 +493,7 @@ int BootLoadFlashCD(int cdromId) {
     dots();
 
     for (n=0;n<16;++n) {
-        imageSize = BootIso9660GetFile(cdromId,"/image.bin", (u8 *)KERNEL_PM_CODE, 0x10);
+        imageSize = BootIso9660GetFile(cdromId,"/image.bin", fileBuf, 0x10);
         if (imageSize>0) {
             imageFound=1;
             break;
@@ -540,7 +541,7 @@ int BootLoadFlashCD(int cdromId) {
 
         //Try to load image.bin - if we can't after a while, give up.
         for (n=0;n<48;++n) {
-            imageSize = BootIso9660GetFile(cdromId,"/image.bin", (u8 *)KERNEL_PM_CODE, 0x10);
+            imageSize = BootIso9660GetFile(cdromId,"/image.bin", fileBuf, 0x10);
             if (imageSize>0) {
                 imageFound=1;
                 break;
@@ -563,7 +564,7 @@ int BootLoadFlashCD(int cdromId) {
     dots();
 
     // Read in a full 1MB bios (read will be truncated if the file is not this big).
-    imageSize=BootIso9660GetFile(cdromId, "/image.bin", (u8 *)KERNEL_PM_CODE, 4*256*1024);
+    imageSize=BootIso9660GetFile(cdromId, "/image.bin", fileBuf, 1024*1024);
 
     if(imageSize < 0) { //It's not there
         cromwellWarning();
@@ -573,35 +574,7 @@ int BootLoadFlashCD(int cdromId) {
         return 0;
     }
 
-    if((imageSize > 0) && (imageSize <= 4*256*1024) && (imageSize%256 == 0)) {
-        SHA1Reset(&context);
-        SHA1Input(&context,(u8 *)KERNEL_PM_CODE,imageSize);
-        SHA1Result(&context,SHA1_result);
-        memcpy(checksum,SHA1_result,20);
-        ClearScreen();
-        BootReflashAndReset((u8*) KERNEL_PM_CODE, (u32) 0, (u32) imageSize);
-        SHA1Reset(&context);
-        SHA1Input(&context,(void *)LPCFlashadress,imageSize);
-        SHA1Result(&context,SHA1_result);
-        if (memcmp(checksum,SHA1_result,20)==0) {
-            //printk("Checksum in flash matches - Flash successful.\nRebooting.");
-            wait_ms(2000);
-            I2CRebootSlow();
-        } else {
-            //printk("Checksum in Flash not matching - MISTAKE - Reflashing!\n");
-            //printk("Result code: %d\n", BootReflashAndReset((u8*) KERNEL_PM_CODE, (u32) 0, (u32) imageSize));
-        }
-    } else {
-        cromwellWarning();
-        printk("           Image size is not divisible by 256.");
-        printk("           (e.g. 256K, 512K, 768K, 1024K...");
-        wait_ms(2000);
-        inputLED();
-        return 0;
-    }
-    // Should never get here.
-    wait_ms(2000);
-    inputLED();
+    FlashFileFromBuffer(fileBuf, imageSize, 1);
     return 0;
 }
 #endif //Flash

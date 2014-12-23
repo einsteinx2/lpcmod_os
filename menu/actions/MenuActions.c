@@ -173,13 +173,13 @@ void BootMenuEntry(void *entry) {
 void DrawChildTextMenu(void *menu) {
     TEXTMENU * menuPtr = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu);
-    //freeTextMenuAllocMem(menuPtr);
+    freeTextMenuAllocMem(menuPtr);
 }
 
 void ResetDrawChildTextMenu(void *menu) {
     TEXTMENU * resetSelection = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
-    //freeTextMenuAllocMem(resetSelection);
+    freeTextMenuAllocMem(resetSelection);
 }
 
 void DrawLargeHDDTextMenu(u8 drive){
@@ -211,30 +211,44 @@ void freeTextMenuAllocMem(TEXTMENU* menu){
     TEXTMENUITEM * itemPtr = menu->firstMenuItem;
     int itemCount = 0;
 
-    //Count the number of entries from menu we just left.
-    //Make sure there's at least 1 entry.
-    if(itemPtr != NULL){
-        itemCount++;
-        while(itemPtr->nextMenuItem != NULL){
-            itemCount++;
-            itemPtr = itemPtr->nextMenuItem;
+    if(menu != NULL){
+        //Count the number of entries from menu we just left.
+        //Make sure there's at least 1 entry.
+        if(itemPtr != NULL){
+            while(itemPtr->nextMenuItem != NULL){
+                itemCount++;
+                itemPtr = itemPtr->nextMenuItem;
+            }
+
+            printk("\n\n           number of items=%u", itemCount);
+
+            while(itemCount > 0){
+                itemCount--;
+                //malloc was made to store data pointed by functionDataPtr in this specific entry.
+                if(itemPtr->functionDataPtrMemAlloc && itemPtr->functionDataPtr != NULL)
+                    free(itemPtr->functionDataPtr);
+
+                itemPtr = itemPtr->previousMenuItem;
+                free(itemPtr->nextMenuItem);
+            }
+
+            if(itemPtr->functionDataPtrMemAlloc && itemPtr->functionDataPtr != NULL)
+                free(itemPtr->functionDataPtr);
+            free(itemPtr);      //Free First item in the list
         }
-    }
-    while(itemCount > 0){
-        itemCount--;
-        //malloc was made to store data pointed by functionDataPtr in this specific entry.
-        if(itemPtr->functionDataPtrMemAlloc)
-            free(itemPtr->functionDataPtr);
+        else{       //TODO: Remove after debug
+            printk("\n\n           item PTR is NULL???");
+            while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        }
 
-        itemPtr = itemPtr->previousMenuItem;
-        free(itemPtr->nextMenuItem);
+        //Finally free menuPtr since it no longer points to an allocated item entry.
+        free(menu);
+        menu = NULL;
     }
-    if(itemPtr->functionDataPtrMemAlloc)
-        free(itemPtr->functionDataPtr);
-    free(itemPtr);      //Free First item in the list
-
-    //Finally free menuPtr since it no longer points to an allocated item entry.
-    free(menu);
+    else{       //TODO: Remove after debug
+        printk("\n\n           menu PTR is NULL???");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    }
 }
 #endif
 

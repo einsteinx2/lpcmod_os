@@ -34,12 +34,12 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     u8 cursorposX = 0;
     u8 cursorposY = 0;
     u8 textpos = 0;
-    u8 x,y;
+    u8 x, y, i;
     bool shift = false;
     bool refresh = true;
     bool charAccepted = false;
-    u8 rowLength;
-    char ipFieldLength, dotCount = 3;     //Assume IP string is properly constructed.
+    u8 rowLength, stringLength;
+    char ipFieldLength, dotCount;     //Assume IP string is properly constructed.
     char limitFieldString[4] = {0, 0, 0, 0};    //To check if user enters a number bigger than 255 in IP Keypad.
     //Array of function pointers to let "line" value decide which function needs to be called.
     void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
@@ -61,7 +61,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
             if(kbType == IP_KEYPAD || kbType == HEX_KEYPAD)
-                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace,  %u  %u", dotCount, ipFieldLength);
+                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace,  %u", ipFieldLength);
             else
                 printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
@@ -153,8 +153,6 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             if(textpos > 0){                                       //Full keyboard
                 textpos -= 1;                               //Move cursor one position to the left
                 if(kbType == IP_KEYPAD){
-                    if(string[textpos] == '.')
-                        dotCount -= 1;     
                     if(textpos > 2 && string[textpos - 1] == '0' && string[textpos - 2] == '.'){
                         string[textpos] = '\0';
                         textpos -= 1;
@@ -177,7 +175,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                                 if(string[textpos - 2] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
                                     ipFieldLength++;
                                     if(textpos > 2){
-                                        if(string[textpos - 3] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
+                                        if(string[textpos - 2] != '.'){   //IP field already contains 3 digits max digit per field. Useful only for last IP field.
                                             ipFieldLength++;
                                         }
                                     }
@@ -185,18 +183,22 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                             }
                         }
                     }
-                    if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.') || (textpos > 0)) {    //Don't start string with a '.'
+                    if((textpos == 0 && ipKeypad[cursorposY][cursorposX] != '.' && ipKeypad[cursorposY][cursorposX] != '0') || (textpos > 0)) {    //Don't start string with a '.' or '0'
                         if((string[textpos - 1] == '.' && ipKeypad[cursorposY][cursorposX] != '.') ||   //Don't put 2 successive '.'
                            (string[textpos - 1] != '.')){                                               //Selected character is not a '.'. Let it go through.
+                            stringLength = strlen(string);
+                            for(i = 0; 1 < stringLength; i++){
+                                dotCount += (string[i] == '.');
+                            }
                             if(dotCount < 3 &&  //if not in the last IP field.
-                               (ipFieldLength == 2 || //And field contains 3 digit
+                               (ipFieldLength == 2 || //And field will contain 3 digit(with current character input)
                                 (ipKeypad[cursorposY][cursorposX] == '0' && string[textpos - 1] == '.'))){  //or '0' is entered just after a '.'.
                                 charAccepted = true;
                                 string[textpos] = ipKeypad[cursorposY][cursorposX];
                                 string[textpos + 1] = '.';     //add '.' automatically
+                                string[textpos + 2] = '\0';
                             }
-                            else if((dotCount <= 3 && ipFieldLength < 2) ||     //Normal IP field write.
-                                    (dotCount == 3 && ipFieldLength == 2)){     //or last possible character to write
+                            else if(dotCount <= 3 && ipFieldLength <= 2){     //or last possible character to write
                                 charAccepted = true;
                                 string[textpos] = ipKeypad[cursorposY][cursorposX];
                                 string[textpos + 1] = '\0';               //Safe in this situation. Will not write outside buffer because of maxLength's check.
@@ -234,7 +236,6 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             	    textpos += 1;
                 if(string[textpos] == '.' && kbType == IP_KEYPAD){   //Moving cursor forward, we stumbled on a dot. just skip to next digit.
                     textpos += 1;
-                    dotCount += 1;
                 }
             }
         }

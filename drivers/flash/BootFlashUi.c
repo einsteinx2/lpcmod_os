@@ -16,6 +16,53 @@
 #include "video.h"
 #include "include/lpcmod_v1.h"
 
+//Selects which function should be called for flashing.
+bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm){
+    int res;
+    char * stringTemp;
+    int offset = 0;
+    if (fHasHardware == SYSCON_ID_V1 ||
+        (LPCmodSettings.OSsettings.TSOPcontrol && fHasHardware == SYSCON_ID_V1_TSOP)) {
+        if (currentFlashBank == BNKOS) {
+            if (!askConfirm || !ConfirmDialog ("               Confirm update XBlast OS?", 1)) {
+                res = BootReflashAndReset (fileBuf, offset, fileSize);
+            }
+            else
+                res = -1;
+        }
+        else {
+            if (currentFlashBank == BNK512)
+                stringTemp = "             Confirm flash bank0(512KB)?";
+            else if (currentFlashBank == BNK256)
+                stringTemp = "             Confirm flash bank1(256KB)?";
+            else if (currentFlashBank == BNKTSOPSPLIT0)
+                stringTemp = "             Confirm TSOP bank0(512KB)?";
+            else if (currentFlashBank == BNKTSOPSPLIT1)
+                stringTemp = "             Confirm TSOP bank1(512KB)?";
+            //The 2 cases below shouldn't happen.
+            else if (currentFlashBank == BNKFULLTSOP)
+                stringTemp = "                Confirm TSOP (whole)?";
+            else
+                stringTemp = "                 Confirm flash bank?";
+            if (!askConfirm || !ConfirmDialog (stringTemp, 1)) {
+                res = BootReflash(fileBuf, offset, fileSize);
+            }
+            else
+                res = -1;
+        }
+    }
+    else { //If no XBlast mod or XBlast detected, from full(not split) TSOP.
+        if (!askConfirm || !ConfirmDialog ("               Confirm flash active bank?", 1)) {
+            res = BootReflashAndReset(fileBuf, offset, fileSize);
+        }
+        else
+            res = -1;
+    }
+
+    return BootFlashPrintResult(res, fileSize);
+}
+
+
  // callback to show progress
 bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, u32 dwPos, u32 dwExtent) {
     if(ee==EE_ERASE_UPDATE){
@@ -60,29 +107,16 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 2; // seems to be write-protected - fail
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
        (fHasHardware == SYSCON_ID_V1 && of.m_dwLengthUsedArea != 262144) ||
-        (dwLength % 262144) != 0)                       //Image size is not a multiple of 256KB
+        (dwLength % 262144) != 0 || dwLength == 0)                       //Image size is not a multiple of 256KB or is 0.
         return 3; // requested layout won't fit device - sanity check fail
-    if(fHasHardware == SYSCON_ID_V1){			//Only check when on a XBlast mod. For the rest, I don't care.
+    if(fHasHardware == SYSCON_ID_V1 && currentFlashBank == BNKOS){ //Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
             return 4;  //Not valid XBlast OS image.
         if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
             return 5;
     }
-    else{       //If not XBlast Mod, mirror image to fill the entire size of detected flash up to 1MB
-        if(dwLength < of.m_dwLengthInBytes                          //If image size is smaller than detected flash size.
-           && dwLength < 1048576){                                  //and image size is smaller than 1MB.
-            if(of.m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space
-               dwLength == 262144){                     //image is 256KB in size
-                memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
-                dwLength = dwLength * 2;      //Image to flash is now 512KB
-            }
-            if(of.m_dwLengthInBytes >= 1048576 && //Flash is at least 1MB in space
-               dwLength == 524288){             //image is 512KB in size
-                memcpy(&pbNewData[524288], &pbNewData[0], 524288);  //Mirror image in the next 512KB segment of the 1MB buffer.
-                dwLength = dwLength * 2;      //Image to flash is now 1MB
-            }
-            of.m_dwLengthUsedArea=dwLength;
-        }
+    else{       //If not XBlast Mod on BNKOS, mirror image to fill the entire size of detected flash up to 1MB
+        mirrorImage(pbNewData, dwLength, &of);
     }
     
     // committed to reflash now
@@ -157,6 +191,7 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         return 1; // unable to ID device - fail
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
+    //512KB image mirror if necessary. BNK512 and split TSOP make use of this. Other cases are treated in the "else" portion.
     if(currentFlashBank == BNK512 || (fHasHardware == SYSCON_ID_V1_TSOP && LPCmodSettings.OSsettings.TSOPcontrol)){
         if(dwLength != 524288){             //If input image is not 512KB
             if(dwLength == 262144){         //If a 256KB image is to be flashed.
@@ -168,21 +203,12 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
                 return 3;   //Wrong file size.
         }
     }
+    //Current bank is NOT BNK512 or a split TSOP bank.
     else{  //Highly improbable since this function will only be called when XBlast Mod's is detected or TSOP is split and these cases are covered above.
-        if(dwLength < of.m_dwLengthInBytes                          //If image size is smaller than detected flash size.
-           && dwLength < 1048576){                                  //and image size is smaller than 1MB.
-            if(of.m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space
-               dwLength == 262144){                     //image is 256KB in size
-                memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
-                dwLength = dwLength * 2;      //Image to flash is now 512KB
-            }
-            if(of.m_dwLengthInBytes >= 1048576 && //Flash is at least 1MB in space
-               dwLength == 524288){             //image is 512KB in size
-                memcpy(&pbNewData[524288], &pbNewData[0], 524288);  //Mirror image in the next 512KB segment of the 1MB buffer.
-                dwLength = dwLength * 2;      //Image to flash is now 1MB
-            }
-            of.m_dwLengthUsedArea=dwLength;
-        }
+        if(dwLength > 0 && (dwLength % 262144) != 0) //Image is a multiple of 256KB and not 0.
+            mirrorImage(pbNewData, dwLength, &of);
+        else
+            return 3;
     }
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
        (currentFlashBank == BNK512 && of.m_dwLengthUsedArea != 524288) ||
@@ -378,4 +404,21 @@ bool BootFlashPrintResult(int res, u32 fileSize) {
         }
         FlashFooter ();
         return true; //Flashing is over.
+}
+
+void mirrorImage(u8 *pbNewData, u32 dwLength, OBJECT_FLASH* of){
+    if(dwLength < of->m_dwLengthInBytes                          //If image size is smaller than detected flash size.
+       && dwLength < 1048576){                                  //and image size is smaller than 1MB.
+        if(of->m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space
+           dwLength == 262144){                     //image is 256KB in size
+            memcpy(&pbNewData[262144], &pbNewData[0], 262144);  //Mirror image in the next 256KB segment of the 1MB buffer.
+            dwLength = dwLength * 2;      //Image to flash is now 512KB
+        }
+        if(of->m_dwLengthInBytes >= 1048576 && //Flash is at least 1MB in space
+           dwLength == 524288){             //image is 512KB in size
+            memcpy(&pbNewData[524288], &pbNewData[0], 524288);  //Mirror image in the next 512KB segment of the 1MB buffer.
+            dwLength = dwLength * 2;      //Image to flash is now 1MB
+        }
+        of->m_dwLengthUsedArea=dwLength;
+    }
 }

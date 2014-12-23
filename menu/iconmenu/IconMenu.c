@@ -177,8 +177,9 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
     VIDEO_CURSOR_POSY = tempY;
 }
 
-void IconMenu(void) {
-        
+bool IconMenu(void) {
+
+    bool reloadUI = true;
     u32 COUNT_start;
     int oldIconTimeRemain = 0;
     ICON *iconPtr=NULL;
@@ -230,7 +231,7 @@ void IconMenu(void) {
     }
     COUNT_start = IoInputDword(0x8008);
     //Main menu event loop.
-    while(1)
+    while(reloadUI)
     {
         int changed=0;
         wait_ms(10);    
@@ -345,5 +346,6 @@ void IconMenu(void) {
         }
         
     }
+    return 1;   //Always return 1 to stay in while loop in BootResetAction.
 }
 

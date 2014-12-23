@@ -20,8 +20,6 @@
 extern void cromwellError (void);
 extern void dots (void);
 
-void FlashFileFromBuffer(FATXFILEINFO* fileinfo);
-
 void FlashBiosFromHDD (void *fname) {
 #ifdef FLASH
     int res;
@@ -45,8 +43,8 @@ void FlashBiosFromHDD (void *fname) {
     memcpy(fileBuf, fileinfo.buffer, fileinfo.fileSize);
     free(fileinfo.buffer);
     fileinfo.buffer = fileBuf;
-    FlashFileFromBuffer(&fileinfo);
-    
+    FlashFileFromBuffer(fileinfo.buffer, fileinfo.fileSize, 1); //1 to display confirmDialog
+    free(fileinfo.buffer);
     CloseFATXPartition (partition);
     
     return;
@@ -118,55 +116,4 @@ void FlashFooter (void) {
     while ((risefall_xpad_BUTTON (TRIGGER_XPAD_KEY_A) != 1))
         wait_ms (10);
     initialSetLED (LPCmodSettings.OSsettings.LEDColor);
-}
-
-void FlashFileFromBuffer(FATXFILEINFO* fileinfo){
-    int res;
-    char * stringTemp;
-    int offset = 0;
-    if (fHasHardware == SYSCON_ID_V1 || 
-        (LPCmodSettings.OSsettings.TSOPcontrol && fHasHardware == SYSCON_ID_V1_TSOP)) {
-        if (currentFlashBank == BNKOS) {
-            if (!ConfirmDialog ("               Confirm update XBlast OS?",
-                                1)) {
-                //res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
-                res = BootReflashAndReset (fileinfo->buffer, offset, fileinfo->fileSize);
-            }
-            else
-                res = -1;
-        }
-        else {
-            if (currentFlashBank == BNK512)
-                stringTemp = "             Confirm flash bank0(512KB)?";
-            else if (currentFlashBank == BNK256)
-                stringTemp = "             Confirm flash bank1(256KB)?";
-            else if (currentFlashBank == BNKTSOPSPLIT0)
-                stringTemp = "             Confirm TSOP bank0(512KB)?";
-            else if (currentFlashBank == BNKTSOPSPLIT1)
-                stringTemp = "             Confirm TSOP bank1(512KB)?";
-            //The 2 cases below shouldn't happen.
-            else if (currentFlashBank == BNKFULLTSOP)
-                stringTemp = "                Confirm TSOP (whole)?";
-            else
-                stringTemp = "                 Confirm flash bank?";
-            if (!ConfirmDialog (stringTemp, 1)) {
-                //res = BootReflash((char*)0x100000,offset,fileinfo.fileSize);
-                res = BootReflash(fileinfo->buffer, offset, fileinfo->fileSize);
-            }
-            else
-                res = -1;
-        }
-    }
-    else { //If no XBlast mod or XBlast detected, from full(not split) TSOP.
-        if (!ConfirmDialog ("               Confirm flash active bank?", 1)) {
-            //res = BootReflashAndReset((char*)0x100000,offset,fileinfo.fileSize);
-            res = BootReflashAndReset(fileinfo->buffer, offset, fileinfo->fileSize);
-        }
-        else
-            res = -1;
-    }
-    
-    free(fileinfo->buffer);
-    BootFlashPrintResult(res, fileinfo->fileSize);
-    return;
 }

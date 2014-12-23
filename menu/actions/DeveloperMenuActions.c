@@ -185,14 +185,25 @@ void GPIORead(void * ignored){
 void settingsPrintData(void * ignored){
     u8 i;
     char specialCasesBuf[15];
+    char spaceCountBuf[31];
+    u8 stringLength;
     VIDEO_ATTR=0xffffef37;
     printk("\n           Persistent settings\n");
     VIDEO_ATTR=0xffc8c8c8;
     for(i = 0; i < NBTXTPARAMS; i++){
         if(i < IPTEXTPARAMGROUP){
-            if(!(i%2))
-                printk("\n");
-            printk("           %s%u", xblastcfgstrings[i], *settingsPtrArray[i]);
+            if(!(i%2)){ //Pair increments
+                sprintf(spaceCountBuf, "%s%u", xblastcfgstrings[i], *settingsPtrArray[i]);
+            }
+            else{
+                stringLength = strlen(spaceCountBuf);
+                if(stringLength)
+                    memset(&spaceCountBuf[stringLength - 1], ' ', 30); //Fill end of string with 'space' characters
+                spaceCountBuf[30] = '\0';
+                //spaceCountBuf is now invariably 30 characters long
+                //Printk will display 2 aligned columns
+                printk("\n           %s%s%u", spaceCountBuf, xblastcfgstrings[i], *settingsPtrArray[i]);
+            }
         }
         else if(i < TEXTPARAMGROUP)
             printk("\n           %s%u.%u.%u.%u", xblastcfgstrings[i], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][0], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][1], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][2], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][3]);

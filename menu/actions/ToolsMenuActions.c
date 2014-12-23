@@ -248,7 +248,7 @@ void loadXBlastcfg(void * ignored){
 
 void nextA19controlModBootValue(void * itemPtr){
     switch(A19controlModBoot){
-        case TSOPFULLBOOT:
+        case BNKFULLTSOP:
             A19controlModBoot = BNKTSOPSPLIT0;
             sprintf(itemPtr, "%s", "Bank0");
             break;
@@ -258,7 +258,7 @@ void nextA19controlModBootValue(void * itemPtr){
             break;
         case BNKTSOPSPLIT1:
         default:
-            A19controlModBoot = TSOPFULLBOOT;
+            A19controlModBoot = BNKFULLTSOP;
             sprintf(itemPtr, "%s", "No");
             break;
     }
@@ -270,13 +270,13 @@ void prevA19controlModBootValue(void * itemPtr){
             A19controlModBoot = BNKTSOPSPLIT0;
             sprintf(itemPtr, "%s", "Bank0");
             break;
-        case TSOPFULLBOOT:
+        case BNKFULLTSOP:
             A19controlModBoot = BNKTSOPSPLIT1;
             sprintf(itemPtr, "%s", "Bank1");
             break;
         case BNKTSOPSPLIT0:
         default:
-            A19controlModBoot = TSOPFULLBOOT;
+            A19controlModBoot = BNKFULLTSOP;
             sprintf(itemPtr, "%s", "No");
             break;
     }

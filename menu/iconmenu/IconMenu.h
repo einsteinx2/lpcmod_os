@@ -42,6 +42,6 @@ extern int timedOut;
 void AddIcon(ICON *newIcon);
 
 //This draws and handles input for the main menu
-void IconMenu(void);
+bool IconMenu(void);
 
 #endif

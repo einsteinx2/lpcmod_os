@@ -107,21 +107,7 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         busyLED();
         //printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
         memcpy (fileBuf, hs->bios_start, hs->bios_len);
-        if (fHasHardware == SYSCON_ID_V1) {
-            if(currentFlashBank == BNKOS){
-                res = BootReflashAndReset(fileBuf,0,hs->bios_len);
-            }
-            else{
-                res = BootReflash(fileBuf,0,hs->bios_len);
-            }
-        }
-        else if(fHasHardware == SYSCON_ID_V1_TSOP){
-            res = BootReflash(fileBuf,0,hs->bios_len);
-        }
-        else{
-            res = BootReflashAndReset(fileBuf,0,hs->bios_len);
-        }
-        netFlashOver = BootFlashPrintResult(res, hs->bios_len);
+        netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
   }
 
   if (hs->postdata)

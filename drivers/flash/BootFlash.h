@@ -59,6 +59,8 @@ typedef struct {
 
 // requires pof->m_pbMemoryMappedStartAddress set to start address of flash in memory on entry
 
+bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm);
+
 int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
 int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength);
@@ -85,3 +87,5 @@ void BootFlashSaveOSSettings(void);
 
 int assertOSUpdateValidInput(u8 * inputFile);
 bool assert4KBErase(OBJECT_FLASH *pof);
+
+void mirrorImage(u8 *pbNewData, u32 dwLength, OBJECT_FLASH* of);
