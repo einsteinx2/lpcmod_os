@@ -61,7 +61,7 @@ void IconMenuInit(void) {
 #endif
 */
 if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
-    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP) {
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_XT_TSOP) {
         iconPtr = (ICON *)malloc(sizeof(ICON));
         iconPtr->iconSlot = ICON_SOURCE_SLOT4;
         iconPtr->szCaption = "Boot 512KB bank";

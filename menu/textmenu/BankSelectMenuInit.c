@@ -106,7 +106,7 @@ TEXTMENU* BankSelectInit(void * bank) {
         switchOSBank(*(u8 *)bank);
 
     }
-    else if(fHasHardware == SYSCON_ID_V1){
+    else if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
         if(*(u8 *)bank == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
         else if(*(u8 *)bank == BNK256)
@@ -118,7 +118,7 @@ TEXTMENU* BankSelectInit(void * bank) {
 
         switchOSBank(*(u8 *)bank);
     }
-    else if(fHasHardware == SYSCON_ID_V1_TSOP){
+    else if(fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP){
         if(LPCmodSettings.OSsettings.TSOPcontrol){
     	    if(*(u8 *)bank == BNKTSOPSPLIT0)
                 strcpy(menuPtr->szCaption, "Flash menu : TSOP bank0");
@@ -185,7 +185,7 @@ TEXTMENU* BankSelectInit(void * bank) {
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)FlashMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);*/
-    if(fHasHardware == SYSCON_ID_V1 ||
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT ||
        (fHasHardware == SYSCON_ID_V1_TSOP && (LPCmodSettings.OSsettings.TSOPcontrol))){
         ResetDrawChildTextMenu(menuPtr);
     }

@@ -46,49 +46,6 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
         "lcdtype="
 };
 
-unsigned char *settingsPtrArray[IPTEXTPARAMGROUP] = {
-        &(LPCmodSettings.OSsettings.Quickboot),
-        &(LPCmodSettings.OSsettings.fanSpeed),
-        &(LPCmodSettings.OSsettings.bootTimeout),
-        &(LPCmodSettings.OSsettings.TSOPcontrol),
-        &(LPCmodSettings.OSsettings.enableNetwork),
-        &(LPCmodSettings.OSsettings.useDHCP),
-        &(LPCmodSettings.LCDsettings.enable5V),
-        &(LPCmodSettings.LCDsettings.nbLines),
-        &(LPCmodSettings.LCDsettings.lineLength),
-        &(LPCmodSettings.LCDsettings.backlight),
-        &(LPCmodSettings.LCDsettings.contrast),
-        &(LPCmodSettings.LCDsettings.displayMsgBoot),
-        &(LPCmodSettings.LCDsettings.customTextBoot),
-        &(LPCmodSettings.LCDsettings.displayBIOSNameBoot)
-};
-
-unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP] = {
-        LPCmodSettings.OSsettings.staticIP,
-        LPCmodSettings.OSsettings.staticGateway,
-        LPCmodSettings.OSsettings.staticMask,
-        LPCmodSettings.OSsettings.staticDNS1,
-        LPCmodSettings.OSsettings.staticDNS2
-};
-
-char *textSettingsPtrArray[SPECIALPARAMGROUP - TEXTPARAMGROUP] = {
-        LPCmodSettings.OSsettings.biosName0,
-        LPCmodSettings.OSsettings.biosName1,
-        LPCmodSettings.OSsettings.biosName2,
-        LPCmodSettings.OSsettings.biosName3,
-        LPCmodSettings.LCDsettings.customString0,
-        LPCmodSettings.LCDsettings.customString1,
-        LPCmodSettings.LCDsettings.customString2,
-        LPCmodSettings.LCDsettings.customString3
-};
-
-unsigned char *specialCasePtrArray[4] = {
-        &(LPCmodSettings.OSsettings.activeBank),
-        &(LPCmodSettings.OSsettings.altBank),
-        &(LPCmodSettings.OSsettings.LEDColor),
-        &(LPCmodSettings.LCDsettings.lcdType)
-};
-
 
 //Sets default values to most important settings.
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
@@ -231,7 +188,77 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
     }
 }
 
-int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
+void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
+    settingsPtrArray[0] =
+        &(tempLPCmodSettings->OSsettings.Quickboot);
+        settingsPtrArray[1] =
+        &(tempLPCmodSettings->OSsettings.fanSpeed);
+        settingsPtrArray[2] =
+        &(tempLPCmodSettings->OSsettings.bootTimeout);
+        settingsPtrArray[3] =
+        &(tempLPCmodSettings->OSsettings.TSOPcontrol);
+        settingsPtrArray[4] =
+        &(tempLPCmodSettings->OSsettings.enableNetwork);
+        settingsPtrArray[5] =
+        &(tempLPCmodSettings->OSsettings.useDHCP);
+        settingsPtrArray[6] =
+        &(tempLPCmodSettings->LCDsettings.enable5V);
+        settingsPtrArray[7] =
+        &(tempLPCmodSettings->LCDsettings.nbLines);
+        settingsPtrArray[8] =
+        &(tempLPCmodSettings->LCDsettings.lineLength);
+        settingsPtrArray[9] =
+        &(tempLPCmodSettings->LCDsettings.backlight);
+        settingsPtrArray[10] =
+        &(tempLPCmodSettings->LCDsettings.contrast);
+        settingsPtrArray[11] =
+        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
+        settingsPtrArray[12] =
+        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        settingsPtrArray[13] =
+        &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
+        
+
+IPsettingsPtrArray[0] =
+        tempLPCmodSettings->OSsettings.staticIP;
+        IPsettingsPtrArray[1] =
+        tempLPCmodSettings->OSsettings.staticGateway;
+        IPsettingsPtrArray[2] =
+        tempLPCmodSettings->OSsettings.staticMask;
+        IPsettingsPtrArray[3] =
+        tempLPCmodSettings->OSsettings.staticDNS1;
+        IPsettingsPtrArray[4] =
+        tempLPCmodSettings->OSsettings.staticDNS2;
+
+
+textSettingsPtrArray[0] = 
+        tempLPCmodSettings->OSsettings.biosName0;
+        textSettingsPtrArray[1] = 
+        tempLPCmodSettings->OSsettings.biosName1;
+        textSettingsPtrArray[2] = 
+        tempLPCmodSettings->OSsettings.biosName2;
+        textSettingsPtrArray[3] = 
+        tempLPCmodSettings->OSsettings.biosName3;
+        textSettingsPtrArray[4] = 
+        tempLPCmodSettings->LCDsettings.customString0;
+        textSettingsPtrArray[5] = 
+        tempLPCmodSettings->LCDsettings.customString1;
+        textSettingsPtrArray[6] = 
+        tempLPCmodSettings->LCDsettings.customString2;
+        textSettingsPtrArray[7] = 
+        tempLPCmodSettings->LCDsettings.customString3;
+
+
+specialCasePtrArray[0] =
+        &(tempLPCmodSettings->OSsettings.activeBank);
+        specialCasePtrArray[1] =
+        &(tempLPCmodSettings->OSsettings.altBank);
+        specialCasePtrArray[2] =
+        &(tempLPCmodSettings->OSsettings.LEDColor);
+        specialCasePtrArray[3] =
+        &(tempLPCmodSettings->LCDsettings.lcdType);
+}
+int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
     int res = false;
@@ -244,6 +271,8 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
     int stringStartPtr = 0, stringStopPtr = 0, valueStartPtr = 0;
     bool CRdetected;
     u8 textStringCopyLength;
+    
+    setCFGFileTransferPtr(LPCmodSettingsPtr);
 
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
@@ -376,7 +405,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettings){
     else{
         return 2; //Cannot open partition.
     }
-    return 0;
+    return 0; //Everything went fine.
 }
 
 int LPCMod_SaveCFGToHDD(void){

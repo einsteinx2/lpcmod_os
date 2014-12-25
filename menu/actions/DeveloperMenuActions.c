@@ -190,6 +190,10 @@ void settingsPrintData(void * ignored){
     VIDEO_ATTR=0xffffef37;
     printk("\n           Persistent settings\n");
     VIDEO_ATTR=0xffc8c8c8;
+    
+    setCFGFileTransferPtr(&
+    LPCmodSettings);
+    
     for(i = 0; i < NBTXTPARAMS; i++){
         if(i < IPTEXTPARAMGROUP){
             if(!(i%2)){ //Pair increments
@@ -198,7 +202,7 @@ void settingsPrintData(void * ignored){
             else{
                 stringLength = strlen(spaceCountBuf);
                 if(stringLength)
-                    memset(&spaceCountBuf[stringLength - 1], ' ', 30); //Fill end of string with 'space' characters
+                    memset(&spaceCountBuf[stringLength], ' ', 30); //Fill end of string with 'space' characters
                 spaceCountBuf[30] = '\0';
                 //spaceCountBuf is now invariably 30 characters long
                 //Printk will display 2 aligned columns

@@ -21,7 +21,7 @@ bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm){
     int res;
     char * stringTemp;
     int offset = 0;
-    if (fHasHardware == SYSCON_ID_V1 ||
+    if (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT ||
         (LPCmodSettings.OSsettings.TSOPcontrol && fHasHardware == SYSCON_ID_V1_TSOP)) {
         if (currentFlashBank == BNKOS) {
             if (!askConfirm || !ConfirmDialog ("               Confirm update XBlast OS?", 1)) {
@@ -92,24 +92,24 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     of.m_dwStartOffset=dwStartOffset;           //Must always be 0!
     of.m_dwLengthUsedArea=dwLength;
     of.m_pcallbackFlash=BootFlashUserInterface;
-
+/*
     if(fHasHardware == SYSCON_ID_XX1 ||
        fHasHardware == SYSCON_ID_XX2 ||
        fHasHardware == SYSCON_ID_XXOPX ||
        fHasHardware == SYSCON_ID_XX3){
         IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 1);       //Enable flash write on SmartXX mods.
     }
-
+*/
     // check device type and parameters are sane
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
         return 1; // unable to ID device - fail
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
-       (fHasHardware == SYSCON_ID_V1 && of.m_dwLengthUsedArea != 262144) ||
+       ((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && of.m_dwLengthUsedArea != 262144) ||
         (dwLength % 262144) != 0 || dwLength == 0)                       //Image size is not a multiple of 256KB or is 0.
         return 3; // requested layout won't fit device - sanity check fail
-    if(fHasHardware == SYSCON_ID_V1 && currentFlashBank == BNKOS){ //Only check when on a XBlast mod. For the rest, I don't care.
+    if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && currentFlashBank == BNKOS){ //Only check when on a XBlast mod. For the rest, I don't care.
         if(assertOSUpdateValidInput(pbNewData))
             return 4;  //Not valid XBlast OS image.
         if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
@@ -122,7 +122,7 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     // committed to reflash now
     while(fMore) {
         VIDEO_ATTR=0xffef37;
-        printk("\n\n\n\n\n\n\n\n\n           \2%s\n\2\n", (fHasHardware == SYSCON_ID_V1)?"Updating XBlast OS...":"Updating flash bank...");
+        printk("\n\n\n\n\n\n\n\n\n           \2%s\n\2\n", (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)?"Updating XBlast OS...":"Updating flash bank...");
         VIDEO_ATTR=0xffffff;
         printk("           WARNING!\n"
                  "           Do not turn off your console during this process!\n"
@@ -146,23 +146,27 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
             }
             else { // failed program
                 //printk("           Programming failed...\n");
+/*
                 if(fHasHardware == SYSCON_ID_XX1 ||
                    fHasHardware == SYSCON_ID_XX2 ||
                    fHasHardware == SYSCON_ID_XXOPX ||
                    fHasHardware == SYSCON_ID_XX3){
                     IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
                 }
+*/
                 return -3;
             }
         }
         else { // failed erase
             //printk("           Erasing failed...\n");
+/*
             if(fHasHardware == SYSCON_ID_XX1 ||
                fHasHardware == SYSCON_ID_XX2 ||
                fHasHardware == SYSCON_ID_XXOPX ||
                fHasHardware == SYSCON_ID_XX3){
                 IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
             }
+*/
             return -2;
         }
     }
@@ -203,15 +207,18 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
                 return 3;   //Wrong file size.
         }
     }
-    //Current bank is NOT BNK512 or a split TSOP bank.
+    else if(currentFlashBank == BNK256){
+        if(dwLength != 262144)
+            return 3;
+    }
+    //Current bank is NOT BNK512, BNK256 or a split TSOP bank.
     else{  //Highly improbable since this function will only be called when XBlast Mod's is detected or TSOP is split and these cases are covered above.
         if(dwLength > 0 && (dwLength % 262144) != 0) //Image is a multiple of 256KB and not 0.
             mirrorImage(pbNewData, dwLength, &of);
         else
             return 3;
     }
-    if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
-       (currentFlashBank == BNK512 && of.m_dwLengthUsedArea != 524288) ||
+    if((currentFlashBank == BNK512 && of.m_dwLengthUsedArea != 524288) ||
        (currentFlashBank == BNK256 && of.m_dwLengthUsedArea != 262144))
         return 3; // requested layout won't fit device - sanity check fail
 
@@ -305,25 +312,27 @@ void BootShowFlashDevice(void){
     };
 
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-
+/*
     if(fHasHardware == SYSCON_ID_XX1 ||
        fHasHardware == SYSCON_ID_XX2 ||
        fHasHardware == SYSCON_ID_XXOPX ||
        fHasHardware == SYSCON_ID_XX3){
         IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 1);       //Enable flash write on SmartXX mods.
     }
+*/
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])){
         VIDEO_ATTR=0xffc8c8c8;
         printk("No valid Flash device Detected!!!");
         return;
     }
+/*
     if(fHasHardware == SYSCON_ID_XX1 ||
        fHasHardware == SYSCON_ID_XX2 ||
        fHasHardware == SYSCON_ID_XXOPX ||
        fHasHardware == SYSCON_ID_XX3){
         IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
     }
-
+*/
 
     VIDEO_ATTR=0xffc8c8c8;
     printk("Manufacturer ID : ");

@@ -45,12 +45,10 @@ void ClearScreen (void) {
 
 extern void BootResetAction ( void ) {
     bool fMbrPresent=false;
-    bool fSeenActive=false;
-    int nFATXPresent=false;
     bool fFirstBoot=false;                    //Flag to indicate first boot since flash update
     int nTempCursorX, nTempCursorY;
-    int n, nx, i;
-    char *modName = "Unsupported modchip!";
+    int n, nx, i, returnValue = 255;
+    char modName[30] = "Unsupported modchip!";
     _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH of;
     // A bit hacky, but easier to maintain.
@@ -129,8 +127,9 @@ extern void BootResetAction ( void ) {
     
     
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
-
-    LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
+    
+    if(cromwell_config==CROMWELL)
+        LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
 //    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
     fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
 //    }
@@ -147,20 +146,30 @@ extern void BootResetAction ( void ) {
 
     if(fHasHardware == SYSCON_ID_V1){
         sprintf(modName,"%s", "XBlast Lite V1");
-        if(fHasHardware == SYSCON_ID_V1){
-            //Check which flash chip is detected by system.
-            BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
-            if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
-                //Make sure we'll be reading from OS Bank
-                switchOSBank(BNKOS);
-             }
-            else {  //SST49LF080A flash chip was NOT detected.
-                fHasHardware = SYSCON_ID_V1_TSOP;
-                WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
-            }
-            LPCMod_ReadIO(NULL);
+        //Check which flash chip is detected by system.
+        BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
+        if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
+            //Make sure we'll be reading from OS Bank
+            switchOSBank(BNKOS);
         }
-
+        else {  //SST49LF080A flash chip was NOT detected.
+            fHasHardware = SYSCON_ID_V1_TSOP;
+            WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
+        }
+        LPCMod_ReadIO(NULL);
+    }
+    else if(fHasHardware == SYSCON_ID_XT){
+       sprintf(modName,"%s", "Aladdin XBlast");
+       //Check which flash chip is detected by system.
+       BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
+       if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
+           //Make sure we'll be reading from OS Bank
+           switchOSBank(BNKOS);
+       }
+       else {  //SST49LF080A flash chip was NOT detected.
+           fHasHardware = SYSCON_ID_XT_TSOP;
+           WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
+       }
     }
     else {
         if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
@@ -178,6 +187,7 @@ extern void BootResetAction ( void ) {
         TSOPRecoveryMode = 0;               //Whatever happens, it's not possible to recover TSOP on other modchips.
     }
 
+    LPCmodSettings.OSsettings.migrateSetttings = 0xFF; //Will never be 0xFF
     //Retrieve XBlast OS settings from flash. Function checks if valid device can be read from.
     BootFlashGetOSSettings(&LPCmodSettings);
 
@@ -211,7 +221,8 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
-    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1)	//If coming from XBE and no XBlast Mod is detected
+
+    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT)	//If coming from XBE and no XBlast Mod is detected
     	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();		//Get previously set fan speed
     else
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
@@ -266,7 +277,7 @@ extern void BootResetAction ( void ) {
     BootStartUSB();
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
-        if(fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
+        if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
             if(EjectButtonPressed){              //Xbox was started from eject button.
                 if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP){
                     switchBootBank(LPCmodSettings.OSsettings.altBank);
@@ -376,7 +387,7 @@ extern void BootResetAction ( void ) {
 
 
     VIDEO_ATTR=0xff00ff00;
-#ifdef DEV_FEATURES
+#if DEV_FEATURES
     //TODO: Remove debug string print.
     printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
     VIDEO_ATTR=0xffc8c8c8;
@@ -461,16 +472,19 @@ extern void BootResetAction ( void ) {
 
     BootIdeInit();
     
-    //Load settings from xblast.cfg file if not booting from flash or XBlast Mod isn't detected.
-    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1_TSOP && fHasHardware != SYSCON_ID_V1){
+    //Load settings from xblast.cfg file if no settings were detected.
+    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
     	tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
-    	initialLPCModOSBoot(tempLPCmodSettings);
-        if(!LPCMod_ReadCFGFromHDD(tempLPCmodSettings)){
+    	returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings);
+        if(returnValue == 0){
             memcpy(&LPCmodSettings, tempLPCmodSettings, sizeof(_LPCmodSettings));
+            //settingsPrintData(NULL);
             I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
             initialSetLED(LPCmodSettings.OSsettings.LEDColor);
             //Stuff to do right after loading persistent settings from file.
-            if(fHasHardware == SYSCON_ID_XX1 ||
+            if(fHasHardware == SYSCON_ID_V1 ||
+               fHasHardware == SYSCON_ID_V1_TSOP ||
+               fHasHardware == SYSCON_ID_XX1 ||
                fHasHardware == SYSCON_ID_XX2 ||
                fHasHardware == SYSCON_ID_XXOPX ||
                fHasHardware == SYSCON_ID_XX3 ||
@@ -478,14 +492,15 @@ extern void BootResetAction ( void ) {
                 assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
             }
         }
+         
         free(tempLPCmodSettings);
     }
     
     if(mbVersion > REV1_1 && !DEV_FEATURES)
        LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
 
-
     printk("\n\n\n\n");
+//printk("\n\n\n\n\n           firstBoot=%u", fFirstBoot);  
 
     nTempCursorMbrX=VIDEO_CURSOR_POSX;
     nTempCursorMbrY=VIDEO_CURSOR_POSY;

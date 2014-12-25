@@ -19,12 +19,16 @@ void AssertLockUnlock(void *itemPtr){
         nIndexDrive = 0;                                //It means we need to change the master lock status.
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-        if(UnlockHDD(nIndexDrive, 1))                                             //1 is for verbose
-            sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");                     //Next action will be to lock it
+        UnlockHDD(nIndexDrive, 1);                                        //1 is for verbose
     }
     else {
-        if(LockHDD(nIndexDrive, 1))                                                   //1 is for verbose
-            sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD : ");
+        LockHDD(nIndexDrive, 1);                                                 //1 is for verbose
+    }
+    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
+        sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");
+    }
+    else{
+        sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD : ");
     }
 }
 
@@ -146,11 +150,13 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             else{
                 printk("\n           Unlock Using Master Password %s successful.", MasterPasswordList[i]);
                 result = true;
+                i = 4;
                 break;
             }
         }
         else{
             printk("\n           Drive is locked out. No further unlock attempts possible.\n           Power cycle console to reset HDD state.");
+            i = 4;
             break;
         }
     }

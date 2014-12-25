@@ -14,6 +14,7 @@ TEXTMENU *ModchipMenuInit(void) {
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "XBlast settings");
 
+if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Idle timeout : ");
@@ -89,7 +90,8 @@ TEXTMENU *ModchipMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
-if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't show this when Xbox motherboard is not 1.0/1.1.
+if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP) && 
+   (mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES)){        //Don't show this when Xbox motherboard is not 1.0/1.1.
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -166,6 +168,18 @@ if(mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES){        //Don't s
     itemPtr->functionPtr= resetSettings;
     itemPtr->functionDataPtr= NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+}
+else{
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Reboot from Modchip");
+    TextMenuAddItem(menuPtr, itemPtr);
+    
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"to edit these settings.");
+    TextMenuAddItem(menuPtr, itemPtr);
+}
 
     return menuPtr;
 }

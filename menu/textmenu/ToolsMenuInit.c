@@ -24,7 +24,7 @@ TEXTMENU *ToolsMenuInit(void) {
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Tools");
 
-    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1) {
+    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) {
         //Save EEPROM data to flash
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -109,23 +109,24 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionPtr= saveXBlastcfg;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
-
-        //Load xblast.cfg
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
-        itemPtr->functionPtr= loadXBlastcfg;
-        itemPtr->functionDataPtr = NULL;
-        TextMenuAddItem(menuPtr, itemPtr);
     }
-
-    //Developers tools
+    //Load xblast.cfg
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Developer tools");
-    itemPtr->functionPtr= DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)DeveloperMenuInit();
+    strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
+    itemPtr->functionPtr= loadXBlastcfg;
+    itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    if(DEV_FEATURES){
+        //Developers tools
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Developer tools");
+        itemPtr->functionPtr= DrawChildTextMenu;
+        itemPtr->functionDataPtr = (void *)DeveloperMenuInit();
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     return menuPtr;
 }

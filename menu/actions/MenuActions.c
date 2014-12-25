@@ -36,7 +36,7 @@ void BootOriginalBios(void *data) {
     
     BootStopUSB();
     
-    if((fHasHardware == SYSCON_ID_V1 && cromwell_config==CROMWELL) || fHasHardware == SYSCON_ID_V1_TSOP){
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP){
         //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
     	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
     	    switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
@@ -60,7 +60,7 @@ void BootModBios(void *data) {
     
     BootStopUSB();
     
-    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1_TSOP)
+    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP)
       I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     else
       I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
@@ -173,13 +173,13 @@ void BootMenuEntry(void *entry) {
 void DrawChildTextMenu(void *menu) {
     TEXTMENU * menuPtr = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu);
-    freeTextMenuAllocMem(menuPtr);
+    //freeTextMenuAllocMem(menuPtr);
 }
 
 void ResetDrawChildTextMenu(void *menu) {
     TEXTMENU * resetSelection = (TEXTMENU*)menu;
     TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
-    freeTextMenuAllocMem(resetSelection);
+    //freeTextMenuAllocMem(resetSelection);
 }
 
 void DrawLargeHDDTextMenu(u8 drive){

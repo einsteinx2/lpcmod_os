@@ -25,7 +25,7 @@ TEXTMENU* ResetMenuInit(void) {
     itemPtr->functionPtr=SlowReboot;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-#ifdef DEV_FEATURES
+#if DEV_FEATURES
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Reboot (fast)");

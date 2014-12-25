@@ -414,13 +414,13 @@ u8 ReadFromIO(u16 address)
 void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
     OBJECT_FLASH of;
     int i;
-        if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
-            memset(&of,0xFF,sizeof(of));
-            of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
-            for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
-                *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
-            }
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
+        memset(&of,0xFF,sizeof(of));
+        of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
+        for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
+            *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
         }
+    }
 }
 
 //Saves persistent settings at 0x3f000 offset on flash.
@@ -433,17 +433,19 @@ void BootFlashSaveOSSettings(void) {
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
     };
-    if(fHasHardware == SYSCON_ID_V1 || cromwell_config==CROMWELL){
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
     			
         memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-        
+ 
+/*       
         if(fHasHardware == SYSCON_ID_XX1 ||
            fHasHardware == SYSCON_ID_XX2 ||
            fHasHardware == SYSCON_ID_XXOPX ||
            fHasHardware == SYSCON_ID_XX3){
             IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 1);       //Enable flash write on SmartXX mods.
         }
+*/
         if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
             if(assert4KBErase(&of)){                //XBlast Lite V1 has 4KB-sector erase capability
                 blocksize = 4 * 1024;                       //4KB allocation
@@ -469,12 +471,14 @@ void BootFlashSaveOSSettings(void) {
             }
             free(lastBlock);
         }
+/*
         if(fHasHardware == SYSCON_ID_XX1 ||
            fHasHardware == SYSCON_ID_XX2 ||
            fHasHardware == SYSCON_ID_XXOPX ||
            fHasHardware == SYSCON_ID_XX3){
             IoOutputByte(SMARTXX_FLASH_WRITEPROTECT , 0);       //Disable flash write on SmartXX mods.
         }
+*/
     }
 }
 

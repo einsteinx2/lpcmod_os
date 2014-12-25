@@ -61,7 +61,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
             VIDEO_CURSOR_POSY=40;
             VIDEO_ATTR=0xffffffff;                        //White characters.
             if(kbType == IP_KEYPAD || kbType == HEX_KEYPAD)
-                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace,  %u", ipFieldLength);
+                printk("\n\1                       Back=Cancel   Start=Confirm   B=Backspace");
             else
                 printk("\n\1             Back=Cancel   Start=Confirm   B=Backspace   X=Space   Y=Shift");
             VIDEO_ATTR=0xffff9f00;                	  //Orangeish
@@ -174,8 +174,8 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                             if(textpos > 1){
                                 if(string[textpos - 2] != '.'){   //IP field already contains 2 digits, we're currently adding another so total length will be 3.
                                     ipFieldLength++;
-                                    if(textpos > 2){
-                                        if(string[textpos - 2] != '.'){   //IP field already contains 3 digits max digit per field. Useful only for last IP field.
+                                    if(textpos > 3){
+                                        if(string[textpos - 3] != '.'){   //IP field already contains 3 digits max digit per field. Useful only for last IP field.
                                             ipFieldLength++;
                                         }
                                     }
@@ -187,7 +187,8 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                         if((string[textpos - 1] == '.' && ipKeypad[cursorposY][cursorposX] != '.') ||   //Don't put 2 successive '.'
                            (string[textpos - 1] != '.')){                                               //Selected character is not a '.'. Let it go through.
                             stringLength = strlen(string);
-                            for(i = 0; 1 < stringLength; i++){
+                            dotCount = 0;
+                            for(i = 0; i < stringLength; i++){
                                 dotCount += (string[i] == '.');
                             }
                             if(dotCount < 3 &&  //if not in the last IP field.

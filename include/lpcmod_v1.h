@@ -93,6 +93,8 @@
 //Other revision will have to be identified here.
 #define SYSCON_ID_V1_TSOP    0x1015u     //Arbitrary value, constant used to specify to program that XBlast mod was
                                         //detected but active flash device detected is not SST49LF080A which suggest a TSOP boot
+#define SYSCON_ID_XT    0x11u		//Aladdin XT Diamond mod.
+#define SYSCON_ID_XT_TSOP 0x1011u
 
 //SmartXX chip id
 #define SYSCON_ID_XX1   0xF1u
