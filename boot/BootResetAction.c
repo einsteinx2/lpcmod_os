@@ -473,27 +473,30 @@ extern void BootResetAction ( void ) {
     BootIdeInit();
     
     //Load settings from xblast.cfg file if no settings were detected.
-    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
-    	tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
-    	returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings);
-        if(returnValue == 0){
-            memcpy(&LPCmodSettings, tempLPCmodSettings, sizeof(_LPCmodSettings));
-            //settingsPrintData(NULL);
-            I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
-            initialSetLED(LPCmodSettings.OSsettings.LEDColor);
-            //Stuff to do right after loading persistent settings from file.
-            if(fHasHardware == SYSCON_ID_V1 ||
-               fHasHardware == SYSCON_ID_V1_TSOP ||
-               fHasHardware == SYSCON_ID_XX1 ||
-               fHasHardware == SYSCON_ID_XX2 ||
-               fHasHardware == SYSCON_ID_XXOPX ||
-               fHasHardware == SYSCON_ID_XX3 ||
-               fHasHardware == SYSCON_ID_X3){
-                assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+    //But first do we have a HDD on Master?
+    if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi){
+        if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
+            tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
+            returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings);
+            if(returnValue == 0){
+                memcpy(&LPCmodSettings, tempLPCmodSettings, sizeof(_LPCmodSettings));
+                //settingsPrintData(NULL);
+                I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+                initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+                //Stuff to do right after loading persistent settings from file.
+                if(fHasHardware == SYSCON_ID_V1 ||
+                   fHasHardware == SYSCON_ID_V1_TSOP ||
+                   fHasHardware == SYSCON_ID_XX1 ||
+                   fHasHardware == SYSCON_ID_XX2 ||
+                   fHasHardware == SYSCON_ID_XXOPX ||
+                   fHasHardware == SYSCON_ID_XX3 ||
+                   fHasHardware == SYSCON_ID_X3){
+                    assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+                }
             }
+
+            free(tempLPCmodSettings);
         }
-         
-        free(tempLPCmodSettings);
     }
     
     if(mbVersion > REV1_1 && !DEV_FEATURES)

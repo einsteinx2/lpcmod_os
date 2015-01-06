@@ -394,7 +394,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
     IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02); // kill interrupt, only bit1 needs to be set
-//    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x00); // kill DMA
+    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0x00); // kill DMA
 
 
     if(BootIdeWaitNotBusy(uIoBase)) 
@@ -918,14 +918,14 @@ int BootIdeInit(void)
     tsaHarddiskInfo[1].m_bCableConductors=40;
     tsaHarddiskInfo[0].m_fDMAInit=0;            //DMA not initialized yet.
     tsaHarddiskInfo[1].m_fDMAInit=0;
-//    IoOutputByte(0xff60+0, 0x00); // stop bus mastering
+    IoOutputByte(0xff60+0, 0x00); // stop bus mastering
     IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
     //Init both master and slave
     BootIdeDriveInit(IDE_BASE1, 0);
     BootIdeDriveInit(IDE_BASE1, 1);
        
         
-    if(tsaHarddiskInfo[0].m_fDriveExists) 
+    if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi)
     {
         unsigned int uIoBase = tsaHarddiskInfo[0].m_fwPortBase;
         tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
