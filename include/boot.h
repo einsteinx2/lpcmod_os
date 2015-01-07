@@ -490,4 +490,316 @@ bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash to
 //Global for convenience.
 unsigned char *videosavepage;
 
+
+
+
+
+//Physical Memory allocation stuff
+#define PAGE_SHIFT             12L
+#define PAGE_SIZE              4096
+#define PAGE_SIZE_LARGE 0x400000
+
+#define MM_CONTIGUOUS_MEMORY_LIMIT  0x03FDF
+
+#define PAGE_NOACCESS          0x01     // winnt
+#define PAGE_READONLY          0x02     // winnt
+#define PAGE_READWRITE         0x04     // winnt
+#define PAGE_WRITECOPY         0x08     // winnt
+#define PAGE_EXECUTE           0x10     // winnt
+#define PAGE_EXECUTE_READ      0x20     // winnt
+#define PAGE_EXECUTE_READWRITE 0x40     // winnt
+#define PAGE_EXECUTE_WRITECOPY 0x80     // winnt
+#define PAGE_GUARD            0x100     // winnt
+#define PAGE_NOCACHE          0x200     // winnt
+#define PAGE_WRITECOMBINE     0x400     // winnt
+#define PAGE_VIDEO              0x0     // winnt
+#define PAGE_OLD_VIDEO        0x800
+
+//
+// Define virtual base and alternate virtual base of kernel.
+//
+#define KSEG0_BASE                  0x80000000
+
+#define MM_SYSTEM_PHYSICAL_MAP      KSEG0_BASE
+#define MM_DATABASE_PHYSICAL_PAGE   0x03FF0
+
+//
+// Define the write combine system memory aperture that's exposed by the NVIDIA
+// NV2A.  PAGE_VIDEO allocations are mapped through this aperture instead of the
+// standard system memory aperture starting at physical page zero.
+//
+#define MM_WRITE_COMBINE_APERTURE   0x40000
+
+
+//
+// Define masks for fields within the PTE.
+//
+
+#define MM_PTE_VALID_MASK           0x00000001
+#define MM_PTE_WRITE_MASK           0x00000002
+#define MM_PTE_OWNER_MASK           0x00000004
+#define MM_PTE_WRITE_THROUGH_MASK   0x00000008
+#define MM_PTE_CACHE_DISABLE_MASK   0x00000010
+#define MM_PTE_ACCESS_MASK          0x00000020
+#define MM_PTE_DIRTY_MASK           0x00000040
+#define MM_PTE_LARGE_PAGE_MASK      0x00000080
+#define MM_PTE_GLOBAL_MASK          0x00000100
+#define MM_PTE_GUARD_MASK           0x00000200
+#define MM_PTE_NEXT_ENTRY_MASK      0xFFFFFFFC
+
+//
+// Define page directory and page base addresses.
+//
+
+#define PDE_BASE                    0xc0300000
+#define PTE_BASE                    0xc0000000
+
+//
+// A Page Table Entry on an Intel 386/486 has the following definition.
+//
+typedef struct _HARDWARE_PTE {
+    unsigned long Valid : 1;
+    unsigned long Write : 1;
+    unsigned long Owner : 1;
+    unsigned long WriteThrough : 1;
+    unsigned long CacheDisable : 1;
+    unsigned long Accessed : 1;
+    unsigned long Dirty : 1;
+    unsigned long LargePage : 1;
+    unsigned long Global : 1;
+    unsigned long GuardOrEndOfAllocation : 1;   // software field
+    unsigned long PersistAllocation : 1;        // software field
+    unsigned long reserved : 1;                 // software field
+    unsigned long PageFrameNumber : 20;
+} HARDWARE_PTE, *PHARDWARE_PTE;
+
+//
+// Page table entry data structure as overloaded by the memory manager.
+//
+typedef struct _MMPTE {
+    union {
+        unsigned long Long;
+        HARDWARE_PTE Hard;
+        struct {
+            unsigned long Valid : 1;
+            unsigned long OneEntry : 1;
+            unsigned long NextEntry : 30;
+        } List;
+    };
+} MMPTE, *PMMPTE;
+
+//
+// PFN free page element.
+//
+// The low bit of PackedPfnFlink must be clear so that the overloaded
+// MMPFN.Pte.Valid is clear.
+//
+// The low bit of PackedPfnBlink must be clear so that the overloaded
+// MMPFN.Busy.Busy is clear.
+//
+typedef struct _MMPFNFREE {
+    unsigned short PackedPfnFlink;              // low bit must be clear
+    unsigned short PackedPfnBlink;              // low bit must be clear
+} MMPFNFREE, *PMMPFNFREE;
+
+//
+// PFN database element.
+//
+typedef struct _MMPFN {
+    union {
+        unsigned long Long;
+        MMPTE Pte;
+        MMPFNFREE Free;
+        struct {
+            unsigned long LockCount : 16;       // low bit must be clear
+            unsigned long Busy : 1;
+            unsigned long Reserved : 1;
+            unsigned long PteIndex : 10;
+            unsigned long BusyType : 4;
+        } Busy;
+        struct {
+            unsigned long LockCount : 16;       // low bit must be clear
+            unsigned long Busy : 1;
+            unsigned long ElementIndex : 11;
+            unsigned long BusyType : 4;
+        } FsCache;
+        struct {
+            unsigned long LockCount : 16;       // low bit must be clear
+            unsigned long Busy : 1;
+            unsigned long NumberOfUsedPtes : 11;
+            unsigned long BusyType : 4;
+        } Directory;
+    };
+} MMPFN, *PMMPFN;
+
+//++
+//
+// unsigned long
+// BYTES_TO_PAGES (
+//     IN unsigned long Size
+//     )
+//
+// Routine Description:
+//
+//     The BYTES_TO_PAGES macro takes the size in bytes and calculates the
+//     number of pages required to contain the bytes.
+//
+// Arguments:
+//
+//     Size - Size in bytes.
+//
+// Return Value:
+//
+//     Returns the number of pages required to contain the specified size.
+//
+//--
+#define BYTES_TO_PAGES(Size)  ((unsigned long)((unsigned long)(Size) >> PAGE_SHIFT) + \
+                               (((unsigned long)(Size) & (PAGE_SIZE - 1)) != 0))
+
+//++
+//PCHAR
+//MI_CONVERT_PFN_TO_PHYSICAL (
+//    IN PAGE_FRAME_NUMBER Pfn
+//    );
+//
+// Routine Description:
+//
+//    This macro converts a physical frame number to its corresponding
+//    physical address.
+//
+// Arguments
+//
+//    Pfn - Supplies the physical frame number.
+//
+// Return Value:
+//
+//    Returns the physical address for the page number.
+//
+//--
+#define MI_CONVERT_PFN_TO_PHYSICAL(Pfn)                                       \
+    ((char *)MM_SYSTEM_PHYSICAL_MAP + ((unsigned long)(Pfn) << PAGE_SHIFT))
+
+//++
+//VOID
+//MI_WRITE_PTE (
+//    IN PMMPTE PointerPte,
+//    IN MMPTE PteContents
+//    );
+//
+// Routine Description:
+//
+//    MI_WRITE_PTE fills in the specified PTE with the specified contents.
+//
+// Arguments
+//
+//    PointerPte - Supplies a PTE to fill.
+//
+//    PteContents - Supplies the contents to put in the PTE.
+//
+// Return Value:
+//
+//    None.
+//
+//--
+#define MI_WRITE_PTE(_PointerPte, _PteContents)                               \
+    (*(_PointerPte) = (_PteContents))
+
+//++
+//
+// ULONG
+// BYTE_OFFSET (
+//     IN PVOID Va
+//     )
+//
+// Routine Description:
+//
+//     The BYTE_OFFSET macro takes a virtual address and returns the byte offset
+//     of that address within the page.
+//
+// Arguments:
+//
+//     Va - Virtual address.
+//
+// Return Value:
+//
+//     Returns the byte offset portion of the virtual address.
+//
+//--
+#define BYTE_OFFSET(Va) ((unsigned long)((long)(Va) & (PAGE_SIZE - 1)))
+
+//++
+//
+// ULONG
+// BYTE_OFFSET_LARGE(
+//     IN PVOID Va
+//     )
+//
+// Routine Description:
+//
+//     The BYTE_OFFSET macro takes a virtual address and returns the byte offset
+//     of that address within the large page.
+//
+// Arguments:
+//
+//     Va - Virtual address.
+//
+// Return Value:
+//
+//     Returns the byte offset portion of the virtual address.
+//
+//--
+#define BYTE_OFFSET_LARGE(Va) ((unsigned long)((long)(Va) & (PAGE_SIZE_LARGE - 1)))
+
+//++
+//PMMPTE
+//MiGetPdeAddress (
+//    IN PVOID va
+//    );
+//
+// Routine Description:
+//
+//    MiGetPdeAddress returns the address of the PDE which maps the
+//    given virtual address.
+//
+// Arguments
+//
+//    Va - Supplies the virtual address to locate the PDE for.
+//
+// Return Value:
+//
+//    The address of the PDE.
+//
+//--
+#define MiGetPdeAddress(va) ((PMMPTE)(((((unsigned long)(va)) >> 22) << 2) + PDE_BASE))
+
+//++
+//PMMPTE
+//MiGetPteAddress (
+//    IN PVOID va
+//    );
+//
+// Routine Description:
+//
+//    MiGetPteAddress returns the address of the PTE which maps the
+//    given virtual address.
+//
+// Arguments
+//
+//    Va - Supplies the virtual address to locate the PTE for.
+//
+// Return Value:
+//
+//    The address of the PTE.
+//
+//--
+#define MiGetPteAddress(va) ((PMMPTE)(((((unsigned long)(va)) >> 12) << 2) + PTE_BASE))
+
+#define MM_PFN_NULL                 ((unsigned long)-1)
+#define MM_PACKED_PFN_NULL          ((unsigned short)0xFFFE)
+
+#define MM_PFN_DATABASE             ((PMMPFN)MI_CONVERT_PFN_TO_PHYSICAL(MM_DATABASE_PHYSICAL_PAGE))
+
+#define MI_PFN_ELEMENT(pfn)         (&MM_PFN_DATABASE[pfn])
+#define MI_PFN_NUMBER(pmmpfn)       ((unsigned long)ARRAY_ELEMENT_NUMBER(MM_PFN_DATABASE, MMPFN, pmmpfn))
+
 #endif // _Boot_H_

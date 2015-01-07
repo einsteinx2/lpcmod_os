@@ -60,8 +60,8 @@ void bootBFMBios(void *fname){
 }
 
 void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
-    u32 PhysicalRomPos = 0x02f01000;//(u32 *)KERNEL_PM_CODE;   //Position in RAM
-    u32 EntryPoint2BL;
+    u8 *shadowRomPos;
+    u32 EntryPoint2BL, PhysicalRomPos;
 
     switch(fileSize){
         case 262144:
@@ -81,19 +81,28 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
         return;
     }
 
-    memcpy((void*)PhysicalRomPos, fileBuf, fileSize);
-    if (metoobfm_detect((void *)fileBuf, SHADOW_ROM_SIZE)) {
+    shadowRomPos = (u8 *)MmAllocateContiguousMemoryEx((unsigned long)SHADOW_ROM_SIZE,
+                                          MIN_SHADOW_ROM, MAX_SHADOW_ROM,
+                                          0, PAGE_READWRITE);
+
+    memcpy(shadowRomPos, fileBuf, fileSize);
+    PhysicalRomPos = MmGetPhysicalAddress((void *)shadowRomPos);
+    //Evox M8+ is also a metoobfm BIOS.
+    if (metoobfm_detect((void *)shadowRomPos, SHADOW_ROM_SIZE)) {
         //dprintf("Metoo BFM 2bl footer detected\n");
-        EntryPoint2BL = (u32)metoobfm_prepare((void *)fileBuf, SHADOW_ROM_SIZE);
+        EntryPoint2BL = (u32)metoobfm_prepare((void *)shadowRomPos, SHADOW_ROM_SIZE);
         printk("\n              metoo BFM detected.");
-    } else if (evoxrom_detect((void *)fileBuf, SHADOW_ROM_SIZE)) {
+    //Only M8 (non plus) is EvoxRom.
+    } else if (evoxrom_detect((void *)shadowRomPos, SHADOW_ROM_SIZE)) {
         //dprintf("EvoX M8 2bl type detected\n");
-        EntryPoint2BL = (u32)evoxrom_prepare((void *)fileBuf, SHADOW_ROM_SIZE);
+        EntryPoint2BL = (u32)evoxrom_prepare((void *)shadowRomPos, SHADOW_ROM_SIZE);
         printk("\n              EvoxM8 BFM detected.");
+    //Need RC4 decrypt for all the others.
     } else {
         //dprintf("Assuming standard 2bl format\n");
         //EntryPoint2BL = std2bl_prepare((void *)fileBuf, SHADOW_ROM_SIZE, &entry);
         printk("\n              Other BFM detected. Not good.");
+        goto nobfm;
     }
 
     printk("\n              EntryPoint2BL addr = 0x%08X.    0 contains 0x%02X vs 0xCC", EntryPoint2BL, *(u8*)(EntryPoint2BL - 0x80000000));
@@ -124,6 +133,7 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
 
     printk("\n\n              ASM seq skipped. How?");
     while (1);
+nobfm:
     return;
 }
 
@@ -170,7 +180,10 @@ void *metoobfm_prepare(void *rom, unsigned long rom_size){
 
     //dprintf("Allocate 2bl mem\n");
 
-    base = (u32 *)ft->base_2bl;
+    base = (u8 *)MmAllocateContiguousMemoryEx(ft->size_2bl,
+                                            ft->base_2bl,
+                                            ft->base_2bl + ft->size_2bl - 1,
+                                            0, PAGE_READWRITE);
 
     /* Copy the 2bl to the appropriate location */
 
@@ -193,7 +206,7 @@ void *metoobfm_prepare(void *rom, unsigned long rom_size){
 
     //dprintf("Calculating 2bl entry point\n");
 
-    return (void *)(ft->loader_ofs + base + 0x80000000);
+    return (void *)(ft->loader_ofs + base);
 }
 
 //Probably replaceable by snprintf

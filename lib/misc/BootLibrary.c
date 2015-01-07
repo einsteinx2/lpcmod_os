@@ -510,3 +510,485 @@ int _strncasecmp(const char *sz1, const char *sz2, int nMax)
     return 0; // used up nMax
 }
 
+void * MmAllocateContiguousMemoryEx(unsigned int NumberOfBytes,
+                                    unsigned long LowestAcceptableAddress,
+                                    unsigned long HighestAcceptableAddress,
+                                    unsigned long Alignment,
+                                    unsigned long Protect
+                                   )
+/*++
+
+Routine Description:
+
+    This function allocates a range of physically contiguous non-cached,
+    non-paged memory.  This is accomplished by using MmAllocateContiguousMemory
+    which uses nonpaged pool virtual addresses to map the found memory chunk.
+
+    Then this function establishes another map to the same physical addresses,
+    but this alternate map is initialized as non-cached.  All references by
+    our caller will be done through this alternate map.
+
+    This routine is designed to be used by a driver's initialization
+    routine to allocate a contiguous block of noncached physical memory for
+    things like the AGP GART.
+
+Arguments:
+
+    NumberOfBytes - Supplies the number of bytes to allocate.
+
+    LowestAcceptableAddress - Supplies the lowest physical address
+                              which is valid for the allocation.  For
+                              example, if the device can only reference
+                              physical memory in the 8M to 16MB range, this
+                              value would be set to 0x800000 (8Mb).
+
+    HighestAcceptableAddress - Supplies the highest physical address
+                               which is valid for the allocation.  For
+                               example, if the device can only reference
+                               physical memory below 16MB, this
+                               value would be set to 0xFFFFFF (16Mb - 1).
+
+    Alignment - Supplies the desired page alignment for the allocation.  The
+                alignment is treated as a power of two.  The minimum alignment
+                is PAGE_SIZE.
+
+    Protect - Supplies the type of protection and cache mapping to use for the
+              allocation.
+
+Return Value:
+
+    NULL - a contiguous range could not be found to satisfy the request.
+
+    NON-NULL - Returns a pointer (virtual address in the nonpaged portion
+               of the system) to the allocated physically contiguous
+               memory.
+
+--*/
+{
+    unsigned long PhysicalAperture;
+    MMPTE TempPte;
+    unsigned long LowestAcceptablePageFrameNumber;
+    unsigned long HighestAcceptablePageFrameNumber;
+    unsigned long PfnAlignment;
+    unsigned long PfnAlignmentMask;
+    unsigned long NumberOfPages;
+    unsigned long PfnAlignmentSubtraction;
+    unsigned char OldIrql;
+    unsigned long PageFrameNumber;
+    PMMPFN PageFrame;
+    unsigned long ContiguousCandidatePagesFound;
+    unsigned long EndingPageFrameNumber;
+    unsigned long PageFrameNumberToGrab;
+
+    if(NumberOfBytes == 0)
+        return NULL;
+
+    //
+    // Determine which system memory aperature to use.  If this is a video
+    // memory request, use the write-combined memory aperture, otherwise use the
+    // standard memory aperture.
+    //
+
+    if (Protect & PAGE_OLD_VIDEO) {
+        PhysicalAperture = MM_WRITE_COMBINE_APERTURE;
+        Protect = (Protect & ~PAGE_OLD_VIDEO);
+    } else {
+        PhysicalAperture = 0;
+    }
+
+    //
+    // Convert the protect code to a PTE mask.
+    //
+
+    if (!MiMakeSystemPteProtectionMask(Protect, &TempPte)) {
+        return NULL;
+    }
+
+    //
+    // Convert the supplied physical addresses into page frame numbers.
+    //
+
+    LowestAcceptablePageFrameNumber = (unsigned long)(LowestAcceptableAddress >> PAGE_SHIFT);
+    HighestAcceptablePageFrameNumber = (unsigned long)(HighestAcceptableAddress >> PAGE_SHIFT);
+
+    if (HighestAcceptablePageFrameNumber > MM_CONTIGUOUS_MEMORY_LIMIT) {
+        HighestAcceptablePageFrameNumber = MM_CONTIGUOUS_MEMORY_LIMIT;
+    }
+
+    if (LowestAcceptablePageFrameNumber > HighestAcceptablePageFrameNumber) {
+        LowestAcceptablePageFrameNumber = HighestAcceptablePageFrameNumber;
+    }
+
+    //
+    // Compute the alignment of the allocation in terms of pages.  The alignment
+    // should be a power of two.
+    //
+
+    ASSERT((Alignment & (Alignment - 1)) == 0);
+
+    PfnAlignment = (unsigned long)(Alignment >> PAGE_SHIFT);
+
+    if (PfnAlignment == 0) {
+        PfnAlignment = 1;
+    }
+
+    //
+    // Compute the alignment mask to round a page frame number down to the
+    // nearest alignment boundary.
+    //
+
+    PfnAlignmentMask = ~(PfnAlignment - 1);
+
+    //
+    // Compute the number of pages to allocate.
+    //
+
+    NumberOfPages = BYTES_TO_PAGES(NumberOfBytes);
+
+    //
+    // Compute the number of pages to subtract from an aligned page frame number
+    // to get to the prior candidate ending page frame number.
+    //
+
+    PfnAlignmentSubtraction = ((NumberOfPages + PfnAlignment - 1) &
+        PfnAlignmentMask) - NumberOfPages + 1;
+
+
+/* Deactivated for now
+    //
+    // Now ensure that we can allocate the required number of pages.
+    //
+
+    MI_LOCK_MM(&OldIrql);
+
+    if (MmAvailablePages < NumberOfPages) {
+        MI_UNLOCK_MM(OldIrql);
+        return NULL;
+    }
+*/
+    //
+    // Search the page frame database for a range that satisfies the size and
+    // alignment requirements.
+    //
+
+    PageFrameNumber = HighestAcceptablePageFrameNumber + 1;
+
+InvalidCandidatePageFound:
+    PageFrameNumber = (PageFrameNumber & PfnAlignmentMask) -
+        PfnAlignmentSubtraction;
+    ContiguousCandidatePagesFound = 0;
+
+    while ((long)PageFrameNumber >= (long)LowestAcceptablePageFrameNumber) {
+
+        PageFrame = MI_PFN_ELEMENT(PageFrameNumber);
+
+        //
+        // If we have a page frame that's already being used for a physical
+        // mapping, then this is an invalid candidate page.
+        //
+
+        if (PageFrame->Pte.Hard.Valid != 0) {
+            goto InvalidCandidatePageFound;
+        }
+
+        //
+        // If we have a page frame that's busy and is locked for I/O, then we
+        // can't relocate the page, so this is an invalid candidate page.
+        //
+
+        if ((PageFrame->Busy.Busy != 0) && (PageFrame->Busy.LockCount != 0)) {
+            goto InvalidCandidatePageFound;
+        }
+
+        //
+        // This page can be used to help satisfy the request.  If we haven't
+        // found the required number of physical pages yet, then continue the
+        // search.
+        //
+
+        ContiguousCandidatePagesFound++;
+
+        if (ContiguousCandidatePagesFound < NumberOfPages) {
+            PageFrameNumber--;
+            continue;
+        }
+
+        //
+        // Verify that the starting page frame number is correctly aligned.
+        //
+
+        ASSERT((PageFrameNumber & (PfnAlignment - 1)) == 0);
+
+        //
+        // We found a range of physical pages of the requested size.
+        //
+
+        EndingPageFrameNumber = PageFrameNumber + NumberOfPages - 1;
+
+        //
+        // First, allocate all of the free pages in the range so that any
+        // relocations we do won't go into our target range.
+        //
+
+        for (PageFrameNumberToGrab = PageFrameNumber;
+            PageFrameNumberToGrab <= EndingPageFrameNumber;
+            PageFrameNumberToGrab++) {
+
+            PageFrame = MI_PFN_ELEMENT(PageFrameNumberToGrab);
+
+            if (PageFrame->Busy.Busy == 0) {
+
+                //
+                // Detach the page from the free list.
+                //
+/*Deactivate for now
+                MiRemovePageFromFreeList(PageFrameNumberToGrab);
+*/
+                //
+                // Convert the page frame to a physically mapped page.
+                //
+
+                TempPte.Hard.PageFrameNumber = PageFrameNumberToGrab +
+                    PhysicalAperture;
+                MI_WRITE_PTE(&PageFrame->Pte, TempPte);
+
+                //
+                // Increment the number of physically mapped pages.
+                //
+/*Deactivated for now
+                MmAllocatedPagesByUsage[MmContiguousUsage]++;
+*/
+            }
+        }
+
+        //
+        // Second, relocate any non-pinned pages in the range.  The above loop
+        // will allocate physically mapped pages and there won't be any pinned
+        // pages already existing in the range due to the above candidate page
+        // checks.
+        //
+
+        for (PageFrameNumberToGrab = PageFrameNumber;
+            PageFrameNumberToGrab <= EndingPageFrameNumber;
+            PageFrameNumberToGrab++) {
+
+            PageFrame = MI_PFN_ELEMENT(PageFrameNumberToGrab);
+
+            if (PageFrame->Pte.Hard.Valid == 0) {
+
+                //
+                // Relocate the page.
+                //
+/*Deactivate for now
+                MiRelocateBusyPage(PageFrameNumberToGrab);
+*/
+                //
+                // Convert the page frame to a physically mapped page.
+                //
+
+                TempPte.Hard.PageFrameNumber = PageFrameNumberToGrab +
+                    PhysicalAperture;
+                MI_WRITE_PTE(&PageFrame->Pte, TempPte);
+
+                //
+                // Increment the number of physically mapped pages.
+                //
+/*Deactivated for now
+                MmAllocatedPagesByUsage[MmContiguousUsage]++;
+*/
+            }
+        }
+
+        //
+        // Mark the last page of the allocation with a flag so that we
+        // can later determine the size of this allocation.
+        //
+
+        MI_PFN_ELEMENT(EndingPageFrameNumber)->Pte.Hard.GuardOrEndOfAllocation = 1;
+
+        //
+        // Write combined accesses may not check the processor's cache, so force
+        // a flush of the TLB and cache now to ensure coherency.
+        //
+        // Flush the cache for uncached allocations so that all cache lines from
+        // the page are out of the processor's caches.  The pages are likely to
+        // be shared with an external device and the external device may not
+        // snoop cache lines.
+        //
+/*Deacitvate for now
+        if (Protect & (PAGE_WRITECOMBINE | PAGE_NOCACHE)) {
+            KeFlushCurrentTbAndInvalidateAllCaches();
+        }
+*/
+//        MI_UNLOCK_MM(OldIrql);
+
+        return MI_CONVERT_PFN_TO_PHYSICAL(PageFrameNumber);
+    }
+
+//    MI_UNLOCK_MM(OldIrql);
+
+    return NULL;
+}
+
+unsigned long
+MmGetPhysicalAddress(
+    void * BaseAddress
+    )
+/*++
+
+Routine Description:
+
+    This function returns the corresponding physical address for a
+    valid virtual address.
+
+Arguments:
+
+    BaseAddress - Supplies the virtual address for which to return the
+                  physical address.
+
+Return Value:
+
+    Returns the corresponding physical address.
+
+--*/
+{
+    unsigned long PhysicalAddress;
+    PMMPTE PointerPte;
+#if DEBUG
+    unsigned long PageFrameNumber;
+    PMMPFN PageFrame;
+#endif
+
+    PointerPte = MiGetPdeAddress(BaseAddress);
+    if (PointerPte->Hard.Valid == 0) {
+        goto InvalidAddress;
+    }
+
+    if (PointerPte->Hard.LargePage == 0) {
+
+        PointerPte = MiGetPteAddress(BaseAddress);
+        if (PointerPte->Hard.Valid == 0) {
+            goto InvalidAddress;
+        }
+
+        PhysicalAddress = BYTE_OFFSET(BaseAddress);
+
+    } else {
+
+        PhysicalAddress = BYTE_OFFSET_LARGE(BaseAddress);
+    }
+
+    PhysicalAddress += (PointerPte->Hard.PageFrameNumber << PAGE_SHIFT);
+
+#if DEBUG
+    //
+    // Verify that the base address is either a physically mapped page (either a
+    // contiguous memory allocation or part of XBOXKRNL.EXE) or that it's I/O
+    // lock count is non-zero (a page that's been liked with a service like
+    // MmLockUnlockBufferPages).
+    //
+
+    PageFrameNumber = PhysicalAddress >> PAGE_SHIFT;
+
+    if (PageFrameNumber <= MM_HIGHEST_PHYSICAL_PAGE) {
+
+        PageFrame = MI_PFN_ELEMENT(PageFrameNumber);
+
+        if (PageFrame->Pte.Hard.Valid == 0) {
+            ASSERT(PageFrame->Busy.LockCount != 0);
+        }
+    }
+#endif
+
+    return PhysicalAddress;
+
+InvalidAddress:
+    printk(("\n         MmGetPhysicalAddress failed, base address was %p", BaseAddress));
+    return 0;
+}
+
+bool MiMakeSystemPteProtectionMask(
+    unsigned long Protect,
+    PMMPTE ProtoPte
+    )
+/*++
+
+Routine Description:
+
+    This routine translates the access protection code used by external APIs
+    to the PTE bit mask that implements that policy.
+
+Arguments:
+
+    Protect - Supplies the protection code (e.g., PAGE_READWRITE).
+
+    ProtoPte - Supplies a pointer to the variable that will receive
+               the PTE protection mask (e.g., MM_PTE_READWRITE).
+
+Return Value:
+
+    TRUE if the protection code was successfully decoded, else FALSE.
+
+Environment:
+
+    Kernel mode.
+
+--*/
+{
+    unsigned long Mask;
+
+    Mask = 0;
+
+    //
+    // Check for unknown protection bits.
+    //
+
+    if (Protect & ~(PAGE_NOCACHE | PAGE_WRITECOMBINE | PAGE_READWRITE |
+        PAGE_READONLY)) {
+        return false;
+    }
+
+    //
+    // Only one of the page protection attributes may be specified.
+    //
+
+    switch (Protect & (PAGE_READONLY | PAGE_READWRITE)) {
+
+        case PAGE_READONLY:
+            Mask = (MM_PTE_VALID_MASK | MM_PTE_DIRTY_MASK | MM_PTE_ACCESS_MASK);
+            break;
+
+        case PAGE_READWRITE:
+            Mask = (MM_PTE_VALID_MASK | MM_PTE_WRITE_MASK | MM_PTE_DIRTY_MASK |
+                MM_PTE_ACCESS_MASK);
+            break;
+
+        default:
+            return false;
+    }
+
+    //
+    // Only one of the cache protection attributes may be specified.
+    //
+
+    switch (Protect & (PAGE_NOCACHE | PAGE_WRITECOMBINE)) {
+
+        case 0:
+            break;
+
+        case PAGE_NOCACHE:
+            Mask |= MM_PTE_CACHE_DISABLE_MASK;
+            break;
+
+        case PAGE_WRITECOMBINE:
+            Mask |= MM_PTE_WRITE_THROUGH_MASK;
+            break;
+
+        default:
+            return false;
+    }
+
+    ProtoPte->Long = Mask;
+
+    return true;
+}
