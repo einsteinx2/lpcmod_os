@@ -96,7 +96,7 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
         printk("\n              Other BFM detected. Not good.");
     }
 
-    printk("\n              EntryPoint2BL addr = 0x%08X.    0 contains 0x%02X vs 0xCC", EntryPoint2BL, *(u8*)EntryPoint2BL);
+    printk("\n              EntryPoint2BL addr = 0x%08X.    0 contains 0x%02X vs 0xCC", EntryPoint2BL, *(u8*)(EntryPoint2BL - 0x80000000));
     printk("\n              PhysicalRomPos addr = 0x%08X.    0 contains 0x%02X vs 0x09", PhysicalRomPos, *(u8*)PhysicalRomPos);
     printk("\n\n           Press Button 'A' to continue.");
     while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
@@ -115,15 +115,15 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
         "add    %%edx,%%eax\n"
         "mov    %%cs,0x4(%%esp)\n"
         "cli\n"
-        "movw   $0xffff,(%%eax)\n"      /* Code segment size enlargement is */
-        "orb    $0xb,0x6(%%eax)\n"      /* required for 5530+ kernels */
+        "movw   $0xffff,(%%eax)\n"      // Code segment size enlargement is
+        "orb    $0xb,0x6(%%eax)\n"      // required for 5530+ kernels
         "ljmp   *(%%esp)\n"
-        : /* no output */
+        : // no output
         : "a" (EntryPoint2BL), "c" (PhysicalRomPos)
         );
 
-    printk("\n              ASM seq skipped. How?");
-    while(1);
+    printk("\n\n              ASM seq skipped. How?");
+    while (1);
     return;
 }
 

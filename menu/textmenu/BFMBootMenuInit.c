@@ -42,7 +42,7 @@ TEXTMENU* BFMBootMenuInit(void) {
     if(partition != NULL) {
         dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
         if((dcluster != -1) && (dcluster != 1)) {
-            dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "BFM");
+            dcluster = FATXFindDir(partition, dcluster, "BFM");
         }
         if((dcluster != -1) && (dcluster != 1)) {
             n = FATXListDir(partition, dcluster, &fnames[0], 4096, path);
