@@ -23,4 +23,6 @@ bool bruteForceFixEEprom(void);
 void confirmSaveToEEPROMChip(void *ignored);
 void editMACAddress(void *ignored);
 
+void restoreEEPROMFromFile(void * ignored);
+
 #endif

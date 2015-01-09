@@ -368,3 +368,7 @@ void editMACAddress(void *ignored){
         }
     }
 }
+
+void restoreEEPROMFromFile(void * ignored) {
+
+}

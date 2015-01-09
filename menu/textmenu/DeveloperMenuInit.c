@@ -53,7 +53,7 @@ TEXTMENU *DeveloperMenuInit(void) {
     itemPtr->functionPtr= settingsPrintData;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-
+/*
     //Boot BFM BIOS.
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -61,6 +61,6 @@ TEXTMENU *DeveloperMenuInit(void) {
     itemPtr->functionPtr= DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)BFMBootMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
-
+*/
     return menuPtr;
 }
