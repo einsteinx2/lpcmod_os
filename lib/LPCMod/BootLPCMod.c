@@ -144,6 +144,28 @@ void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct){
     localGPIOstruct->EN_5V = (temp & 0x01);
 }
 
+void LPCMod_WriteIO(u8 port, u8 value){
+    struct _GenPurposeIOs *localGPIOstruct;
+    u8 temp;
+
+    //We have a XBlast Mod detected or else there's a strong possibility function will return 0xff;
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP)
+        temp = ReadFromIO(XBLAST_IO);
+    else
+        temp = 0;
+
+    GenPurposeIOs.GPO3 = (port & 0x08)? (value & 0x08) : (temp & 0x80) >> 7;
+    GenPurposeIOs.GPO2 = (port & 0x04)? (value & 0x04) : (temp & 0x40) >> 6;
+    GenPurposeIOs.GPO1 = (port & 0x02)? (value & 0x02) : (temp & 0x20) >> 5;
+    GenPurposeIOs.GPO0 = (port & 0x01)? (value & 0x01) : (temp & 0x10) >> 4;
+    GenPurposeIOs.GPI1 = (temp & 0x08) >> 3;
+    GenPurposeIOs.GPI0 = (temp & 0x04) >> 2;
+    GenPurposeIOs.A19BufEn = (temp & 0x02) >> 1;
+    GenPurposeIOs.EN_5V = (temp & 0x01);
+
+    WriteToIO(XBLAST_IO, (GenPurposeIOs.GPO3 << 7) | (GenPurposeIOs.GPO2 << 6) | (GenPurposeIOs.GPO1 << 5) | (GenPurposeIOs.GPO0 << 4) | GenPurposeIOs.EN_5V);
+}
+
 void LPCMod_LCDBankString(char * string, u8 bankID){
     switch(bankID){
         case BNK512:

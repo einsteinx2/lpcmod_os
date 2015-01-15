@@ -62,5 +62,13 @@ TEXTMENU *DeveloperMenuInit(void) {
     itemPtr->functionDataPtr = (void *)BFMBootMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 */
+    //Run Script.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Run script");
+    itemPtr->functionPtr= DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)RunScriptMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
     return menuPtr;
 }
