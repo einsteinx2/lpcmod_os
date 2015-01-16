@@ -485,14 +485,15 @@ void BootFlashSaveOSSettings(void) {
 int assertOSUpdateValidInput(u8 * inputFile) {
     int result = 1;    //Start off assuming image file is not XBlast OS.
     int i;
+    char * compareString = "XBlast OS";
     
     OBJECT_FLASH of;
     
     memset(&of,0xFF,sizeof(of));
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
     
-    for(i = 0x3FE00; i < 0x3FFD8; i++) {
-        if(of.m_pbMemoryMappedStartAddress[i] != inputFile[i])
+    for(i = 0x3FFD0; i < 0x3FFD8; i++) {
+        if(compareString[i] != inputFile[i])
             return result;        //Not OS update image.
     }
     //Passed the loop asserts image is valid OS image.

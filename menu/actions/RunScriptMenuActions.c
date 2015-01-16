@@ -13,7 +13,7 @@
 #include "video.h"
 #include "lpcmod_v1.h"
 #include "memory_layout.h"
-//#include "xblastScriptEngine.h"
+#include "lib/scriptEngine/xblastScriptEngine.h"
 
 void loadRunScript(void *fname){
     int res;
@@ -31,7 +31,7 @@ void loadRunScript(void *fname){
         while (1)
             ;
     }
-
+    runScript(fileinfo.buffer, fileinfo.fileSize, NULL);   //No param for now
     free(fileinfo.buffer);
 
     return;
