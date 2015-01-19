@@ -19,7 +19,7 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 CROM_CFLAGS=$(INCLUDE)
 
 #You can override these if you wish.
-CFLAGS= -O2 -g -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct
+CFLAGS= -O2 -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct
 #CFLAGS= -Os -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct
 
 # add the option for gcc 3.3 only, again, non-overridable
@@ -286,8 +286,7 @@ crcbin:
 	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
 scriptchecker:
-	gcc -o bin/scriptChecker.o -c lib/scriptChecker/scriptChecker.c
-	gcc -o bin/scriptChecker bin/scriptChecker.o #obj/xblastScriptEngine.o
+	gcc -g -o bin/scriptChecker lib/scriptChecker/scriptChecker.c
 	
 imagecompress: obj/image-crom.bin bin/imagebld 
 	cp obj/image-crom.bin obj/image-crom.bin.tmp
