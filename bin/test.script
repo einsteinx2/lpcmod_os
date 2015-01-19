@@ -1,0 +1,14 @@
+VAR variableTest
+variableTest = 111
+%loop1
+variableTest = variableTest +1
+IF(variableTest < 115)
+     GOTO loop1
+ENDIF
+%loop2
+variableTest = variableTest - 1
+IF(variableTest == 110)
+     END
+ELSE
+    GOTO loop2
+ENDIF

@@ -110,8 +110,8 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         (dwLength % 262144) != 0 || dwLength == 0)                       //Image size is not a multiple of 256KB or is 0.
         return 3; // requested layout won't fit device - sanity check fail
     if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && currentFlashBank == BNKOS){ //Only check when on a XBlast mod. For the rest, I don't care.
-        if(assertOSUpdateValidInput(pbNewData))
-            return 4;  //Not valid XBlast OS image.
+        //if(assertOSUpdateValidInput(pbNewData))
+        //    return 4;  //Not valid XBlast OS image.
         if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
             return 5;
     }

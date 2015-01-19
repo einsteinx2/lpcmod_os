@@ -241,6 +241,7 @@ clean:
 	rm -f $(TOPDIR)/image/*.bin
 	rm -f $(TOPDIR)/bin/imagebld*
 	rm -f $(TOPDIR)/bin/crcbin*
+	rm -f $(TOPDIR)/bin/scriptChecker*
 	rm -f $(TOPDIR)/boot_vml/disk/vmlboot
 	rm -f boot_eth/ethboot
 	mkdir -p $(TOPDIR)/xbe 
@@ -283,6 +284,10 @@ crcbin:
 	gcc -o bin/crcbin.o -c lib/crcbin/crcbin.c
 	gcc -o bin/crcbin bin/crcbin.o obj/crc32.o
 	bin/crcbin image/cromwell.bin image/crcwell.bin
+	
+scriptchecker:
+	gcc -o bin/scriptChecker.o -c lib/scriptChecker/scriptChecker.c
+	gcc -o bin/scriptChecker bin/scriptChecker.o #obj/xblastScriptEngine.o
 	
 imagecompress: obj/image-crom.bin bin/imagebld 
 	cp obj/image-crom.bin obj/image-crom.bin.tmp
