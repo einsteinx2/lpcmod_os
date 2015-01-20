@@ -14,53 +14,32 @@ typedef unsigned char u8;
 typedef unsigned int u32;
 typedef unsigned short u16;
 
+#define ARGTYPE_UNKNOWN -1
+#define ARGTYPE_FUNCTION 0
+#define ARGTYPE_OPERATOR 1
+#define ARGTYPE_VARIABLE 2
+#define ARGTYPE_NUMERIC  3
+
+#define OPTYPE_EQ_EQ    0
+#define OPTYPE_NOT_EQ   1
+#define OPTYPE_GREATER  2
+#define OPTYPE_LOWER    3
+#define OPTYPE_GREATER_EQ  4
+#define OPTYPE_LOWER_EQ    5
+#define OPTYPE_EQ       6
+#define OPTYPE_PLUS     7
+#define OPTYPE_MINUS    8
+#define OPTYPE_MULT     9
+#define OPTYPE_DIVIDE   10
+
 void runScript(u8 * file, u32 fileSize, void * param);
 
-bool ifFunction(void * param1, void * op, void * param2);
-bool gpiFunction(void * port, void * ignored1, void * ignored2);
-bool gpoFunction(void * port, void * value, void * ignored);
-bool waitFunction(void * ms, void * ignored1, void * ignored2);
-bool bootFunction(void * bank, void * ignored1, void * ignored2);
-bool endFunction(void * ignored, void * ignored1, void * ignored2);
-bool fanFunction(void * value, void * ignored1, void * ignored2);
-bool ledFunction(void * value, void * ignored1, void * ignored2);
-bool lcdPrintFunction(void * line, void * text, void * ignored);
-bool lcdClearLineFunction(void * line, void * ignored1, void * ignored2);
-bool lcdResetFunction(void * ignored, void * ignored1, void * ignored2);
-bool lcdBacklightFunction(void * value, void * ignored1, void * ignored2);
-bool lcdPowerFunction(void * value, void * ignored1, void * ignored2);
-bool variableFunction(void * name, void * initValue, void * variableList);
-bool checkEndOfArgument(char * compareBuf, int position);
+
 
 
 
 #define NBFUNCTIONCALLS 18
 
-typedef struct {
-    char* functionName;
-    bool (*functionPtr) (void *, void *, void *);
-}functionCall;
-
-functionCall functionCallList[NBFUNCTIONCALLS] = {
-        { "IF", &ifFunction},
-        { "ELSE", NULL},
-        { "ENDIF", NULL},
-        { "GOTO", NULL},
-        { "GPI", &gpiFunction},
-        { "GPO", &gpoFunction},
-        { "WAIT", &waitFunction},
-        { "BOOT", &bootFunction},
-        { "END", &endFunction},
-        { "FAN", &fanFunction},
-        { "LED", &ledFunction},
-        { "LCDP", &lcdPrintFunction},
-        { "LCDC", &lcdClearLineFunction},
-        { "LCDR", &lcdResetFunction},
-        { "LCDB", &lcdBacklightFunction},
-        { "LCDP", &lcdPowerFunction},
-        { "VAR", &variableFunction},
-        { "END", NULL}
-};
 
 typedef struct variableEntry{
     struct variableEntry * previous;
@@ -88,9 +67,62 @@ typedef struct _labelList{
     labelEntry * last;
 }_labelList;
 
+typedef struct ifStatementEntry{
+    int ifPosition;
+    int elsePosition;
+    int endifPosition;
+    struct ifStatementEntry *next;
+    struct ifStatementEntry *previous;
+}ifStatementEntry;
+
+typedef struct _ifStatementList{
+    int count;
+    ifStatementEntry *first;
+    ifStatementEntry *last;
+}_ifStatementList;
+
+bool ifFunction(int param1, u8 op, int param2);
+bool gpiFunction(u8 port);
+bool gpoFunction(u8 port, u8 value);
+bool waitFunction(int ms);
+bool bootFunction(u8 bank);
+bool endFunction(void);
+bool fanFunction(u8 value);
+bool ledFunction(char * value);
+bool lcdPrintFunction(u8 line, char * text);
+bool lcdClearLineFunction(u8 line);
+bool lcdResetFunction(void);
+bool lcdBacklightFunction(u8 value);
+bool lcdPowerFunction(u8 value);
+bool variableFunction(char * name, int initValue, _variableList * variableList);
+bool checkEndOfArgument(char * compareBuf, int position);
+
+
+char * functionCallList[NBFUNCTIONCALLS] = {
+        "IF",
+        "ELSE",
+        "ENDIF",
+        "GOTO",
+        "GPI",
+        "GPO",
+        "WAIT",
+        "BOOT",
+        "END",
+        "FAN",
+        "LED",
+        "LCDP",
+        "LCDC",
+        "LCDR",
+        "LCDB",
+        "LCDP",
+        "VAR",
+        "END"
+};
+
+
 void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList);
 void addNewLabel(struct _labelList * labelList, char * compareBuf, int position);
-int decodeArgument(char * inputArg, int * outNum, _variableList * variableList);
+int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
 
 void showUsage(const char *progname);
 
@@ -141,21 +173,27 @@ void showUsage(const char *progname) {
 void runScript(u8 * file, u32 fileSize, void * param){
     bool runExecution = true; //True while not at the end of script or END command isn't read.
     bool variableAssignation;
-    int functionCallFlag;        //-1 is no functionCall. Other is representative of functionCall list index.
+    int ArgumentCalltype;        //-1 is unknown.
     bool functionCallResult;
-    int i;
-    int decodedArg[5][2];
+    int i, j;
     _labelList labelList;
     labelEntry * labelEntry;
 
     _variableList variableList;
     variableEntry * currentEntry;
 
+    _ifStatementList ifStatementList;
+    ifStatementEntry * ifEntry;
 
 
     int stringStartPtr = 0, stringStopPtr = 0, tempPtr, savedPosPtr;
     int argStartPtr[5], argEndPtr[5];
-    bool argExist[5];
+    struct{
+        bool exist;
+        u8 type;
+        int value;
+        char * text;
+    }argumentList[5];
     int nbArguments;
     bool CRdetected;
     char compareBuf[100];                     //100 character long seems acceptable
@@ -167,7 +205,9 @@ void runScript(u8 * file, u32 fileSize, void * param){
     labelList.count = 0;
     labelList.first = NULL;
     labelList.last = NULL;
-
+    ifStatementList.count = 0;
+    ifStatementList.first = NULL;
+    ifStatementList.last = NULL;
 
     //Parse for labels first
     //Put all found in labelList
@@ -199,11 +239,11 @@ void runScript(u8 * file, u32 fileSize, void * param){
 
 
         //Parse arguments of current line. Up to a max of 5.
-        argExist[0] = false;
-        argExist[1] = false;
-        argExist[2] = false;
-        argExist[3] = false;
-        argExist[4] = false;
+        argumentList[0].exist = false;
+        argumentList[1].exist = false;
+        argumentList[2].exist = false;
+        argumentList[3].exist = false;
+        argumentList[4].exist = false;
         variableAssignation = false;
         tempPtr = 0;
         nbArguments = 0;
@@ -216,7 +256,7 @@ void runScript(u8 * file, u32 fileSize, void * param){
                 }
                 //Once out, were right after the argument.
                 argEndPtr[i] = tempPtr - 1;
-                argExist[i] = true;
+                argumentList[i].exist = true;
                 nbArguments += 1;
                 //Move to start of next argument. Skip '(' too.
                 while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(') && compareBuf[tempPtr] != '\0'){
@@ -234,22 +274,26 @@ void runScript(u8 * file, u32 fileSize, void * param){
         //Argument 0 contains either a functionCall, a variable declaration or variable itself.
         //We'll start by checking if it's a functionCall.
         for(i = 0; i < 5; i++){
-            if(argExist[i]){
-                strncpy(tempBuf, compareBuf, argEndPtr[i] + 1 - argStartPtr[i]);
-                tempBuf[argEndPtr[0] + 1] = '\0';
-                decodedArg[i][0] = decodeArgument(tempBuf, &decodedArg[i][1], &variableList);
+            if(argumentList[i].exist){
+                strncpy(tempBuf, &compareBuf[argStartPtr[i]], argEndPtr[i] + 1 - argStartPtr[i]);
+                tempBuf[argEndPtr[i] + 1 - argStartPtr[i]] = '\0';
+                argumentList[i].text = NULL;
+                argumentList[i].type = decodeArgument(tempBuf, &argumentList[i].value, &argumentList[i].text, &variableList);
             }
             else
                 break;
         }
 
 
-        if(functionCallFlag){       //positive match with a functionCall
-            //functionCallResult = (functionCallList[i].functionPtr)
-        }
-        else{                       //Is variable
+        for(i = 4; i >= 0; i--){
+            if(argumentList[i].type == ARGTYPE_FUNCTION){       //positive match with a functionCall
 
+            }
+            else{                       //Is variable
+
+            }
         }
+
     } //while(stringStopPtr < fileSize)
 
 
@@ -276,104 +320,101 @@ endExecution:
     return;
 }
 
-bool ifFunction(void * param1, void * op, void * param2){
-    int * tempParam1 = (int *)param1;
-    int * tempParam2 = (int *)param2;
-    switch(*(u8 *)op){
-        case 0: //==
-            return (tempParam1 == tempParam2);
+bool ifFunction(int param1, u8 op, int param2){
+    switch(op){
+        case OPTYPE_EQ_EQ: //==
+            return (param1 == param2);
             break;
-        case 1: //!=
-            return (tempParam1 != tempParam2);
+        case OPTYPE_NOT_EQ: //!=
+            return (param1 != param2);
             break;
-        case 2: //>
-            return (tempParam1 > tempParam2);
+        case OPTYPE_GREATER: //>
+            return (param1 > param2);
             break;
-        case 3: //<
-            return (tempParam1 < tempParam2);
+        case OPTYPE_LOWER: //<
+            return (param1 < param2);
             break;
-        case 4: //>=
-            return (tempParam1 >= tempParam2);
+        case OPTYPE_GREATER_EQ: //>=
+            return (param1 >= param2);
             break;
-        case 5: //<=
-            return (tempParam1 <= tempParam2);
+        case OPTYPE_LOWER_EQ: //<=
+            return (param1 <= param2);
             break;
         default:
             break;
     }
     return false;
 }
-bool gpiFunction(void * port, void * ignored1, void * ignored2){
+bool gpiFunction(u8 port){
     return true;
 }
-bool gpoFunction(void * port, void * value, void * ignored){
-    printf("\n Set GPO port 0x%X with value 0x%X", *(u8 *)port, *(u8 *)value);
+bool gpoFunction(u8 port, u8 value){
+    printf("\n Set GPO port 0x%X with value 0x%X", port, value);
     return true;
 }
-bool waitFunction(void * ms, void * ignored1, void * ignored2){
-    printf("\n wait_ms for %u seconds", *(int *)ms);
+bool waitFunction(int ms){
+    printf("\n wait_ms for %u seconds", ms);
     return true;
 }
-bool bootFunction(void * bank, void * ignored1, void * ignored2){
-    printf("\n Boot bank: %u", *(u8 *)bank);
+bool bootFunction(u8 bank){
+    printf("\n Boot bank: %u", bank);
     return true;
 }
-bool endFunction(void * ignored, void * ignored1, void * ignored2){
+bool endFunction(void){
     printf("\n END function");
     return true;
 }
-bool fanFunction(void * value, void * ignored1, void * ignored2){
-    printf("\n Fan speed: %u", *(u8 *)value);
+bool fanFunction(u8 value){
+    printf("\n Fan speed: %u", value);
     return true;
 }
-bool ledFunction(void * value, void * ignored1, void * ignored2){
-    printf("\n LED pattern: %s", (char *)value);
+bool ledFunction(char * value){
+    printf("\n LED pattern: %s", value);
     return true;
 }
-bool lcdPrintFunction(void * line, void * text, void * ignored){
-    printf("\n LCD Print at line %u : %s", *(u8 *)line, (char *)text);
+bool lcdPrintFunction(u8 line, char * text){
+    printf("\n LCD Print at line %u : %s", line, text);
     return true;
 }
-bool lcdClearLineFunction(void * line, void * ignored1, void * ignored2){
-    printf("\n LCD clear line %u", *(u8 *)line);
+bool lcdClearLineFunction(u8 line){
+    printf("\n LCD clear line %u", line);
     return true;
 }
-bool lcdResetFunction(void * ignored, void * ignored1, void * ignored2){
+bool lcdResetFunction(void){
     printf("\n LCD reset screen");
     return true;
 }
-bool lcdBacklightFunction(void * value, void * ignored1, void * ignored2){
-    printf("\n LCD backlight value: %u", *(u8 *)value);
+bool lcdBacklightFunction(u8 value){
+    printf("\n LCD backlight value: %u", value);
     return true;
 }
-bool lcdPowerFunction(void * value, void * ignored1, void * ignored2){
-    printf("\n LCD power %s", *(u8 *)value ? "ON": "OFF");
+bool lcdPowerFunction(u8 value){
+    printf("\n LCD power %s", value ? "ON": "OFF");
     return true;
 }
 
-bool variableFunction(void * name, void * initValue, void * variableList){
-    _variableList * tempVariableList = (_variableList *)variableList;
+bool variableFunction(char * name, int initValue, _variableList * variableList){
     variableEntry * newEntry;
     int i;
     char * tempName = (char *)name;
     newEntry = (variableEntry *)malloc(sizeof(variableEntry));
 
-    if(tempVariableList->first == NULL){ //No entry in list yet
-        tempVariableList->first = newEntry;
+    if(variableList->first == NULL){ //No entry in list yet
+        variableList->first = newEntry;
         newEntry->previous = NULL;
     }
     else{
         //Check that requested variable declaration's name is not already used.
-        newEntry = tempVariableList->first;
-        for(i = 0; i < tempVariableList->count; i++){
+        newEntry = variableList->first;
+        for(i = 0; i < variableList->count; i++){
             if(!strcmp(newEntry->name, tempName)){
                 return false;
             }
             if(newEntry->next != NULL)
                 newEntry = newEntry->next;
         }
-        tempVariableList->last->next = newEntry;        //Last entry already in list gets to point to this new entry.
-        newEntry->previous = tempVariableList->last;    //New entry is now the last one.
+        variableList->last->next = newEntry;        //Last entry already in list gets to point to this new entry.
+        newEntry->previous = variableList->last;    //New entry is now the last one.
     }
     newEntry->next = NULL;
     newEntry->value = *(int *)initValue;
@@ -382,8 +423,8 @@ bool variableFunction(void * name, void * initValue, void * variableList){
         return false;
     sprintf(newEntry->name, "%s", tempName);
 
-    tempVariableList->last = newEntry;
-    tempVariableList->count += 1;
+    variableList->last = newEntry;
+    variableList->count += 1;
 
     return true;
 }
@@ -417,6 +458,53 @@ void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList){
             }
         }
         stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+    }
+}
+
+void parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList){
+    int stringStartPtr = 0, stringStopPtr = 0, stringTempPtr;
+    bool CRdetected;
+    char compareBuf[6];
+    ifStatementEntry *newEntry;
+    while(stringStopPtr < fileSize){      //We stay in file
+        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+            stringStopPtr++;        //Move on to next character in file.
+        }
+        while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+            stringStartPtr++;
+        if(file[stringStartPtr] == '#'){       //This is a comment or empty line
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+            continue;
+        }
+        stringTempPtr = 0;
+        while(file[stringStartPtr] != ' ' && file[stringStartPtr] != '(' && file[stringStartPtr] != '\r' && file[stringStartPtr] != '\n' && file[stringStartPtr] != '\0' && stringTempPtr < 6)
+            stringTempPtr += 1;
+        if(stringTempPtr >= 2){        //Detected something on this line.
+            //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
+            //Copy necessary text in compareBuf.
+            strncpy(compareBuf, &file[stringStartPtr], stringTempPtr);
+            //Manually append terminating character at the end of the string
+            compareBuf[stringTempPtr] = '\0';
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+            if(!strcmp(compareBuf, "IF")){
+                newEntry = (ifStatementEntry *)malloc(sizeof(ifStatementEntry));
+                newEntry->ifPosition = stringStopPtr;
+                newEntry->elsePosition = -1;
+                newEntry->endifPosition = -1;
+                newEntry->next = NULL;
+                newEntry->previous = NULL;
+                newEntry->previous = ifStatementList->last;     //Fill be set to NULL for first entry anyway.
+                if(ifStatementList->first == NULL){
+                    ifStatementList->first = newEntry;
+                }
+                else{
+                    ifStatementList->last->next = newEntry;
+                }
+                ifStatementList->last = newEntry;
+            }
+        }
+        else
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
     }
 }
 
@@ -486,69 +574,75 @@ bool checkEndOfArgument(char * compareBuf, int position){
 //1 is for operator
 //2 is for variable call
 //3 is for numerical value
-int decodeArgument(char * inputArg, int * outNum, _variableList * variableList){
+int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList){
     int i;
+    bool operatorDetected = false;
     variableEntry *tempVariableEntry;
 
     for(i = 0; i < NBFUNCTIONCALLS; i++){
-        if(!strcmp(inputArg, functionCallList[i].functionName)){
+        if(!strcmp(inputArg, functionCallList[i])){
             //Found a matching function
             *outNum = i;
-            return 0;
+            *string = functionCallList[i];
+            return ARGTYPE_FUNCTION;
         }
     }
 
     //Check for operators
-    if(!strcmp(inputArg, "==")){
-        *outNum = 0;
-        return 1;
+    if(!strcmp(inputArg, "==" )){
+        *outNum = OPTYPE_EQ_EQ;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "!=")){
-        *outNum = 1;
-        return 1;
+        *outNum = OPTYPE_NOT_EQ;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, ">")){
-        *outNum = 2;
-        return 1;
+        *outNum = OPTYPE_GREATER;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "<")){
-        *outNum = 3;
-        return 1;
+        *outNum = OPTYPE_LOWER;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, ">=")){
-        *outNum = 4;
-        return 1;
+        *outNum = OPTYPE_GREATER_EQ;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "<=")){
-        *outNum = 5;
-        return 1;
+        *outNum = OPTYPE_LOWER_EQ;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "=")){
-        *outNum = 6;
-        return 1;
+        *outNum = OPTYPE_EQ;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "+")){
-        *outNum = 7;
-        return 1;
+        *outNum = OPTYPE_PLUS;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "-")){
-        *outNum = 8;
-        return 1;
+        *outNum = OPTYPE_MINUS;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "*")){
-        *outNum = 9;
-        return 1;
+        *outNum = OPTYPE_MULT;
+        operatorDetected = true;
     }
     if(!strcmp(inputArg, "/")){
-        *outNum = 10;
-        return 1;
+        *outNum = OPTYPE_DIVIDE;
+        operatorDetected = true;
     }
+
+    if(operatorDetected)
+        return ARGTYPE_OPERATOR;
+
 
     tempVariableEntry = variableList->first;
     for(i = 0; i < variableList->count; i++){
         if(!strcmp(tempVariableEntry->name, inputArg)){
             *outNum = tempVariableEntry->value;
-            return 2;
+            return ARGTYPE_VARIABLE;
         }
         if(tempVariableEntry->next != NULL)
             tempVariableEntry = tempVariableEntry->next;
@@ -562,11 +656,14 @@ int decodeArgument(char * inputArg, int * outNum, _variableList * variableList){
     else
         i = 0;
 
-    if(inputArg[i] >= '0' && inputArg[i] >= '9'){
+    if(inputArg[i] >= '0' && inputArg[i] <= '9'){
         *outNum = atoi(&inputArg[i]);
-        return 3;
+        return ARGTYPE_NUMERIC;
     }
 
-    //Nothing good found. Throw error please.
-    return -1;
+    //Must be variable call.
+    *string = inputArg;
+
+
+    return ARGTYPE_UNKNOWN;
 }
