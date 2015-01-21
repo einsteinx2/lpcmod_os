@@ -100,7 +100,6 @@ bool gpiFunction(u8 port);
 bool gpoFunction(u8 port, u8 value);
 bool waitFunction(int ms);
 bool bootFunction(u8 bank);
-bool endFunction(void);
 bool fanFunction(u8 value);
 bool ledFunction(char * value);
 bool lcdPrintFunction(u8 line, char * text);
@@ -191,6 +190,8 @@ void runScript(u8 * file, u32 fileSize, void * param){
     int insideIfStatement = 0;
     int i, j;
     int functionCallResult;
+    int arithAccumulator;
+    int arithOpInLine;
     _labelList labelList;
     labelEntry * labelEntry;
 
@@ -271,6 +272,7 @@ void runScript(u8 * file, u32 fileSize, void * param){
         for(i = 0; i < 5; i++){
             if(compareBuf[tempPtr] != '\0' && tempPtr < 100){
                 argStartPtr[i] = tempPtr;
+                tempPtr +=1;
                 while(checkEndOfArgument(compareBuf, tempPtr)){       //argument parse
                     tempPtr +=1;
                 }
@@ -313,7 +315,26 @@ void runScript(u8 * file, u32 fileSize, void * param){
             			printf("\nRuntime execution error. Missing argument in IF statement!");
             			return;
             		}
+            		ifEntry = ifStatementList.first;
+            		for(j = 0; j < ifStatementList.count; j++){
+            		    if(ifEntry->ifPosition == stringStartPtr){
+            		        break;
+            		    }
+            		    else{
+            		        if(ifEntry->next != NULL)
+            		            ifEntry = ifEntry->next;
+            		    }
+            		}
             		insideIfStatement = ifFunction(argumentList[i + 1].value, argumentList[i + 2].value, argumentList[i + 3].value);	//Will be 1 if IF condition is valid.
+            		if(!insideIfStatement){ //Condition in IF statement was not met
+            		    if(ifEntry->elsePosition != -1){    //There is a ELSE associated with this IF
+            		        stringStartPtr = ifEntry->elsePosition; //Go there
+
+            		    }
+            		    else                                //If there's not ELSE associated with IF
+            		        stringStartPtr = ifEntry->endifPosition;        //Go to ENDIF
+            		    stringStopPtr = stringStartPtr;
+            		}
             		break;
             	case FUNCTION_ELSE:
             		insideIfStatement = 2;
@@ -334,11 +355,88 @@ void runScript(u8 * file, u32 fileSize, void * param){
             			printf("\nRuntime execution error. Improper variable declaration!");
 						return;
             		}
+            		break;
+            	case FUNCTION_GOTO:
+            	    if(i == 0 && argumentList[1].exist){
+            	        labelEntry = labelList.first;
+            	        for(j = 0; j < labelList.count; j++){
+            	            if(!strcmp(argumentList[1].text, labelEntry->name)){
+            	                stringStartPtr = labelEntry->stringPos;
+            	                stringStopPtr = stringStartPtr;
+            	                break;
+            	            }
+            	            else{
+            	                if(labelEntry->next != NULL){
+            	                    labelEntry = labelEntry->next;
+            	                }
+            	            }
+            	        }
+            	    }
+            	    break;
+            	case FUNCTION_GPI:
+            	    if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[2].exist){
+            	        argumentList[0].value = gpiFunction((u8)argumentList[2].value);
+            	    }
+            	    else{
+            	        printf("\nRuntime execution error. Improper GPI functionCall declaration!");
+            	    }
+            	    break;
+            	case FUNCTION_GPO:
+                    if(argumentList[1].exist && argumentList[2].exist){
+                        gpoFunction((u8)argumentList[1].value, (u8)argumentList[2].value);
+                    }
+                    else{
+                        printf("\nRuntime execution error. Improper GPO functionCall declaration!");
+                    }
+                    break;
+            	case FUNCTION_WAIT:
+
+                    break;
+            	case FUNCTION_BOOT:
+
+                    break;
+            	case FUNCTION_FAN:
+
+                    break;
+            	case FUNCTION_LED:
+
+                    break;
+            	case FUNCTION_LCDW:
+
+                    break;
+            	case FUNCTION_LCDC:
+
+                    break;
+            	case FUNCTION_LCDR:
+
+                    break;
+            	case FUNCTION_LCDB:
+
+                    break;
+            	case FUNCTION_LCDP:
+
+                    break;
+            	case FUNCTION_END:
+            	    printf("\n END function. Ending script execution gracefully.");
+            	    return;
+                    break;
+            	default:
+            	    printf("\nUnknown function call. Halting!");
+            	    return;
+            	    break;
             	}
 
             }
-            else{                       //Is variable
+            else{                       //Is not a function call
+                if(argumentList[i].type == ARGTYPE_VARIABLE){
 
+                }
+                else if(argumentList[i].type == ARGTYPE_OPERATOR){
+
+                }
+                else if(argumentList[i].type == ARGTYPE_NUMERIC){
+
+                }
             }
         }
 
@@ -364,6 +462,15 @@ endExecution:
         labelList.first = labelEntry->next;
         free(labelEntry->name);
         free(labelEntry);
+    }
+
+    //Flush ifStatement list
+    for(i = 0; i < ifStatementList.count; i++){
+        if(ifStatementList.first == NULL)
+            break;
+        ifEntry = ifStatementList.first;
+        ifStatementList.first = ifEntry->next;
+        free(ifEntry);
     }
     return;
 }
@@ -406,10 +513,6 @@ bool waitFunction(int ms){
 }
 bool bootFunction(u8 bank){
     printf("\n Boot bank: %u", bank);
-    return true;
-}
-bool endFunction(void){
-    printf("\n END function");
     return true;
 }
 bool fanFunction(u8 value){
@@ -633,14 +736,22 @@ bool checkEndOfArgument(char * compareBuf, int position){
             return false;
     }
 
+
+    if(position >= 1 && compareBuf[position] != '='){
+        if(compareBuf[position - 1] == '>'  || compareBuf[position - 1] == '<')
+            return false;
+    }
+
     //Cases where there is not space between operator and following argument
     if(position >= 1 && compareBuf[position] != ' '){
         if(compareBuf[position - 1] == '+' || compareBuf[position - 1] == '-'  || compareBuf[position - 1] == '*'  || compareBuf[position - 1] == '/')
             return false;
 
-        if(compareBuf[position - 1] == '!' || compareBuf[position - 1] == '>'  || compareBuf[position - 1] == '<')
+        if(compareBuf[position - 1] == '=' && compareBuf[position] != '=')
             return false;
     }
+
+
 
     return true;
 }
@@ -739,7 +850,10 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
     }
 
     //Must be variable call.
-    *string = inputArg;
+    i = strlen(inputArg);
+    *string = (char *)malloc(i + 1);
+    strncpy(*string, inputArg, i);
+    *(*string + i) = '\0';
 
 
     return ARGTYPE_UNKNOWN;

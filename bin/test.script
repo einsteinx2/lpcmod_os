@@ -1,4 +1,4 @@
-VAR variableTest
+VAR variableTest =10
 variableTest = 111
 %loop1
 variableTest = variableTest +1
