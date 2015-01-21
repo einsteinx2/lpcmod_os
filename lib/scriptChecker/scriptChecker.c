@@ -32,13 +32,25 @@ typedef unsigned short u16;
 #define OPTYPE_MULT     9
 #define OPTYPE_DIVIDE   10
 
-void runScript(u8 * file, u32 fileSize, void * param);
+#define FUNCTION_IF		0
+#define FUNCTION_ELSE	1
+#define FUNCTION_ENDIF  2
+#define FUNCTION_GOTO   3
+#define FUNCTION_GPI    4
+#define FUNCTION_GPO    5
+#define FUNCTION_WAIT   6
+#define FUNCTION_BOOT   7
+#define FUNCTION_FAN    8
+#define FUNCTION_LED    9
+#define FUNCTION_LCDW   10
+#define FUNCTION_LCDC   11
+#define FUNCTION_LCDR   12
+#define FUNCTION_LCDB   13
+#define FUNCTION_LCDP   14
+#define FUNCTION_VAR    15
+#define FUNCTION_END    16
 
-
-
-
-
-#define NBFUNCTIONCALLS 18
+#define NBFUNCTIONCALLS 17
 
 
 typedef struct variableEntry{
@@ -81,6 +93,8 @@ typedef struct _ifStatementList{
     ifStatementEntry *last;
 }_ifStatementList;
 
+void runScript(u8 * file, u32 fileSize, void * param);
+
 bool ifFunction(int param1, u8 op, int param2);
 bool gpiFunction(u8 port);
 bool gpoFunction(u8 port, u8 value);
@@ -107,10 +121,9 @@ char * functionCallList[NBFUNCTIONCALLS] = {
         "GPO",
         "WAIT",
         "BOOT",
-        "END",
         "FAN",
         "LED",
-        "LCDP",
+        "LCDW",
         "LCDC",
         "LCDR",
         "LCDB",
@@ -122,6 +135,7 @@ char * functionCallList[NBFUNCTIONCALLS] = {
 
 void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList);
 void addNewLabel(struct _labelList * labelList, char * compareBuf, int position);
+bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList);
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
 
 void showUsage(const char *progname);
@@ -174,8 +188,9 @@ void runScript(u8 * file, u32 fileSize, void * param){
     bool runExecution = true; //True while not at the end of script or END command isn't read.
     bool variableAssignation;
     int ArgumentCalltype;        //-1 is unknown.
-    bool functionCallResult;
+    int insideIfStatement = 0;
     int i, j;
+    int functionCallResult;
     _labelList labelList;
     labelEntry * labelEntry;
 
@@ -213,6 +228,11 @@ void runScript(u8 * file, u32 fileSize, void * param){
     //Put all found in labelList
     parseFileForLabels(file, fileSize, &labelList);
     printf("\n\nTotal labels found : %u", labelList.count);
+
+    if(!parseFileForIFStatements(file, fileSize, &ifStatementList)){
+    	printf("\n\nError in IF/ELSE/ENDIF statement logic!!!!");
+    }
+    printf("\n\nTotal IF/ELSE/ENDIF statements found : %u", ifStatementList.count);
     printf("\n\nBegin script execution");
 
     while(stringStopPtr < fileSize){      //We stay in file
@@ -287,6 +307,34 @@ void runScript(u8 * file, u32 fileSize, void * param){
 
         for(i = 4; i >= 0; i--){
             if(argumentList[i].type == ARGTYPE_FUNCTION){       //positive match with a functionCall
+            	switch(argumentList[i].value){
+            	case FUNCTION_IF:
+            		if(!argumentList[i + 1].exist || !argumentList[i + 2].exist || !argumentList[i + 3].exist){
+            			printf("\nRuntime execution error. Missing argument in IF statement!");
+            			return;
+            		}
+            		insideIfStatement = ifFunction(argumentList[i + 1].value, argumentList[i + 2].value, argumentList[i + 3].value);	//Will be 1 if IF condition is valid.
+            		break;
+            	case FUNCTION_ELSE:
+            		insideIfStatement = 2;
+            		break;
+            	case FUNCTION_ENDIF:
+            		insideIfStatement = 0;
+            		break;
+            	case FUNCTION_VAR:
+            		if(i == 0 && argumentList[1].exist){
+            			if(argumentList[3].exist){
+            				variableFunction(argumentList[1].text, argumentList[3].value, &variableList);
+            			}
+            			else{
+            				variableFunction(argumentList[1].text, 0, &variableList);
+            			}
+            		}
+            		else{
+            			printf("\nRuntime execution error. Improper variable declaration!");
+						return;
+            		}
+            	}
 
             }
             else{                       //Is variable
@@ -417,7 +465,7 @@ bool variableFunction(char * name, int initValue, _variableList * variableList){
         newEntry->previous = variableList->last;    //New entry is now the last one.
     }
     newEntry->next = NULL;
-    newEntry->value = *(int *)initValue;
+    newEntry->value = initValue;
     newEntry->name = (char *)malloc(strlen(tempName) + 1);
     if(newEntry->name == NULL)
         return false;
@@ -461,7 +509,7 @@ void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList){
     }
 }
 
-void parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList){
+bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList){
     int stringStartPtr = 0, stringStopPtr = 0, stringTempPtr;
     bool CRdetected;
     char compareBuf[6];
@@ -476,36 +524,65 @@ void parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
             continue;
         }
-        stringTempPtr = 0;
-        while(file[stringStartPtr] != ' ' && file[stringStartPtr] != '(' && file[stringStartPtr] != '\r' && file[stringStartPtr] != '\n' && file[stringStartPtr] != '\0' && stringTempPtr < 6)
+        stringTempPtr = stringStartPtr;
+        while(file[stringTempPtr] != ' ' && file[stringTempPtr] != '(' && file[stringTempPtr] != '\r' && file[stringTempPtr] != '\n' && file[stringTempPtr] != '\0' && stringTempPtr < (stringStartPtr + 6))
             stringTempPtr += 1;
         if(stringTempPtr >= 2){        //Detected something on this line.
             //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
             //Copy necessary text in compareBuf.
-            strncpy(compareBuf, &file[stringStartPtr], stringTempPtr);
+            strncpy(compareBuf, &file[stringStartPtr], stringTempPtr - stringStartPtr);
             //Manually append terminating character at the end of the string
-            compareBuf[stringTempPtr] = '\0';
+            compareBuf[stringTempPtr - stringStartPtr] = '\0';
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+
+            //Search for either IF ELSE or ENDIF strings.
             if(!strcmp(compareBuf, "IF")){
                 newEntry = (ifStatementEntry *)malloc(sizeof(ifStatementEntry));
-                newEntry->ifPosition = stringStopPtr;
-                newEntry->elsePosition = -1;
-                newEntry->endifPosition = -1;
-                newEntry->next = NULL;
-                newEntry->previous = NULL;
+                newEntry->ifPosition = stringStopPtr;	//Cursor position of line below IF statement
+                newEntry->elsePosition = -1;			//Not found yet
+                newEntry->endifPosition = -1;			//Not found yet
+                newEntry->next = NULL;					//It's the last entry
                 newEntry->previous = ifStatementList->last;     //Fill be set to NULL for first entry anyway.
-                if(ifStatementList->first == NULL){
+                if(ifStatementList->first == NULL){		//This is the first entry in the list
                     ifStatementList->first = newEntry;
                 }
                 else{
                     ifStatementList->last->next = newEntry;
                 }
+                ifStatementList->count += 1;
                 ifStatementList->last = newEntry;
+            }
+            else if(!strcmp(compareBuf, "ELSE")){
+            	if(ifStatementList->last == NULL){	//Lonesome ELSE statement that isn't linked to any IF statement
+            		return false;	//error.
+            	}
+            	newEntry = ifStatementList->last;
+            	while(newEntry->previous != NULL && newEntry->elsePosition != -1){
+            		newEntry = newEntry->previous;
+            	}
+            	if(newEntry->elsePosition == -1)		//Last sanity check
+            		newEntry->elsePosition = stringStopPtr;
+            	else
+            		return false;
+            }
+            else if(!strcmp(compareBuf, "ENDIF")){
+            	if(ifStatementList->last == NULL){	//Lonesome ELSE statement that isn't linked to any IF statement
+					return false;	//error.
+				}
+				newEntry = ifStatementList->last;
+				while(newEntry->previous != NULL && newEntry->endifPosition != -1){
+					newEntry = newEntry->previous;
+				}
+				if(newEntry->endifPosition == -1)		//Last sanity check
+					newEntry->endifPosition = stringStopPtr;
+				else
+					return false;
             }
         }
         else
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
     }
+    return true;
 }
 
 void addNewLabel(struct _labelList * labelList, char * compareBuf, int position){

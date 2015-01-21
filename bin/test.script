@@ -7,9 +7,14 @@ IF(variableTest < 115)
 ENDIF
 #comment here
 %loop2
-variableTest = variableTest- 1
-IF(variableTest == 110)
+variableTest = variableTest- 2
+IF(variableTest <= 110)
+  variableTest = variableTest + 1
+  IF(variableTest == 100)
      END
+  ELSE
+        GOTO loop2
+  ENDIF
 ELSE
     GOTO loop2
 ENDIF
