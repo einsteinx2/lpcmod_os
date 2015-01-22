@@ -2,38 +2,56 @@
  * xblastScriptEngine.c
  *
  *  Created on: Jan 14, 2015
- *      Author: cromwelldev
+ *      Author: bennydiamond
  */
 
 #include "boot.h"
 #include "xblastScriptEngine.h"
+#include "lpcmod_v1.h"
 
-bool ifFunction(void * param1, void * op, void * param2);
-bool gpiFunction(void * port, void * ignored1, void * ignored2);
-bool gpoFunction(void * port, void * value, void * ignored);
-bool waitFunction(void * ms, void * ignored1, void * ignored2);
-bool bootFunction(void * bank, void * ignored1, void * ignored2);
-bool endFunction(void * ignored, void * ignored1, void * ignored2);
-bool fanFunction(void * value, void * ignored1, void * ignored2);
-bool ledFunction(void * value, void * ignored1, void * ignored2);
-bool lcdPrintFunction(void * line, void * text, void * ignored);
-bool lcdClearLineFunction(void * line, void * ignored1, void * ignored2);
-bool lcdResetFunction(void * ignored, void * ignored1, void * ignored2);
-bool lcdBacklightFunction(void * value, void * ignored1, void * ignored2);
-bool lcdPowerFunction(void * value, void * ignored1, void * ignored2);
-bool variableFunction(void * name, void * initValue, void * variableList);
+#define ARGTYPE_UNKNOWN -1
+#define ARGTYPE_FUNCTION 0
+#define ARGTYPE_OPERATOR 1
+#define ARGTYPE_VARIABLE 2
+#define ARGTYPE_NUMERIC  3
 
-#define NBFUNCTIONCALLS 18
+#define OPTYPE_EQ_EQ    0
+#define OPTYPE_NOT_EQ   1
+#define OPTYPE_GREATER  2
+#define OPTYPE_LOWER    3
+#define OPTYPE_GREATER_EQ  4
+#define OPTYPE_LOWER_EQ    5
+#define OPTYPE_EQ       6
+#define OPTYPE_PLUS     7
+#define OPTYPE_MINUS    8
+#define OPTYPE_MULT     9
+#define OPTYPE_DIVIDE   10
 
-typedef struct {
-    char* functionName;
-    bool (*functionPtr) (void *, void *, void *);
-}functionCall;
+#define FUNCTION_IF     0
+#define FUNCTION_ELSE   1
+#define FUNCTION_ENDIF  2
+#define FUNCTION_GOTO   3
+#define FUNCTION_GPI    4
+#define FUNCTION_GPO    5
+#define FUNCTION_WAIT   6
+#define FUNCTION_BOOT   7
+#define FUNCTION_FAN    8
+#define FUNCTION_LED    9
+#define FUNCTION_LCDW   10
+#define FUNCTION_LCDC   11
+#define FUNCTION_LCDR   12
+#define FUNCTION_LCDB   13
+#define FUNCTION_LCDP   14
+#define FUNCTION_VAR    15
+#define FUNCTION_END    16
+
+#define NBFUNCTIONCALLS 17
+
 
 typedef struct variableEntry{
     struct variableEntry * previous;
     struct variableEntry * next;
-    int * value;
+    int value;
     char * name;
 }variableEntry;
 
@@ -43,58 +61,109 @@ typedef struct _variableList{
     variableEntry * last;
 }_variableList;
 
+typedef struct labelEntry{
+    struct labelEntry * previous;
+    struct labelEntry * next;
+    int stringPos;
+    char * name;
+}labelEntry;
+
+typedef struct _labelList{
+    int count;
+    labelEntry * first;
+    labelEntry * last;
+}_labelList;
+
+typedef struct ifStatementEntry{
+    int ifPosition;
+    int elsePosition;
+    int endifPosition;
+    struct ifStatementEntry *next;
+    struct ifStatementEntry *previous;
+}ifStatementEntry;
+
+typedef struct _ifStatementList{
+    int count;
+    ifStatementEntry *first;
+    ifStatementEntry *last;
+}_ifStatementList;
+
+bool stringDeclaration;
+
+bool ifFunction(int param1, u8 op, int param2);
+bool gpiFunction(u8 port);
+bool gpoFunction(u8 port, u8 value);
+bool waitFunction(int ms);
+bool bootFunction(u8 bank);
+bool fanFunction(u8 value);
+bool ledFunction(char * value);
+bool lcdPrintFunction(u8 line, char * text);
+bool lcdClearLineFunction(u8 line);
+bool lcdResetFunction(void);
+bool lcdBacklightFunction(u8 value);
+bool lcdPowerFunction(u8 value);
+bool variableFunction(char * name, int initValue, _variableList * variableList);
+bool checkEndOfArgument(char * compareBuf, int position);
+bool updateVariable(char * name, int value, _variableList * variableList);
+
+
+char * functionCallList[NBFUNCTIONCALLS] = {
+        "IF",
+        "ELSE",
+        "ENDIF",
+        "GOTO",
+        "GPI",
+        "GPO",
+        "WAIT",
+        "BOOT",
+        "FAN",
+        "LED",
+        "LCDW",
+        "LCDC",
+        "LCDR",
+        "LCDB",
+        "LCDP",
+        "VAR",
+        "END"
+};
+
+
+void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList);
+void addNewLabel(struct _labelList * labelList, char * compareBuf, int position);
+bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList);
+int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
+
 void runScript(u8 * file, u32 fileSize, void * param){
     bool runExecution = true; //True while not at the end of script or END command isn't read.
-    bool variableAssignation;
-    int functionCallFlag;        //-1 is no functionCall. Other is representative of functionCall list index.
-    bool functionCallResult;
-    int i;
-
-    typedef struct labelEntry{
-        struct labelEntry * previous;
-        struct labelEntry * next;
-        int stringPos;
-        char * name;
-    }labelEntry;
-
-    typedef struct _labelList{
-        int count;
-        labelEntry * first;
-        labelEntry * last;
-    }_labelList;
+    int insideIfStatement = 0;
+    int i, j;
+    int arithAccumulator;
+    bool accumulatorInUse;
+    int arithOpInLine;
     _labelList labelList;
-    labelEntry * newLabelEntry;
+    labelEntry * labelEntry;
 
     _variableList variableList;
     variableEntry * currentEntry;
 
-    functionCall functionCallList[NBFUNCTIONCALLS] = {
-            { "IF", &ifFunction},
-            { "ELSE", NULL},
-            { "ENDIF", NULL},
-            { "GOTO", NULL},
-            { "GPI", &gpiFunction},
-            { "GPO", &gpoFunction},
-            { "WAIT", &waitFunction},
-            { "BOOT", &bootFunction},
-            { "END", &endFunction},
-            { "FAN", &fanFunction},
-            { "LED", &ledFunction},
-            { "LCDP", &lcdPrintFunction},
-            { "LCDC", &lcdClearLineFunction},
-            { "LCDR", &lcdResetFunction},
-            { "LCDB", &lcdBacklightFunction},
-            { "LCDP", &lcdPowerFunction},
-            { "VAR", &variableFunction},
-            { "END", NULL}
-    };
+    _ifStatementList ifStatementList;
+    ifStatementEntry * ifEntry;
 
-    int stringStartPtr = 0, stringStopPtr = 0, valueStartPtr = 0, tempPtr, savedPosPtr;
-    int arg1EndPtr, arg2StartPtr, arg2EndPtr, arg3StartPtr, arg3EndPtr, arg4StartPtr, arg4EndPtr;
-    bool argExist[4];
+
+    int stringStartPtr = 0, stringStopPtr = 0, tempPtr;
+    int argStartPtr[5], argEndPtr[5];
+    struct{
+        bool exist;
+        u8 type;
+        int value;
+        char * text;
+    }argumentList[5];
+    int nbArguments;
     bool CRdetected;
     char compareBuf[100];                     //100 character long seems acceptable
     char tempBuf[50];
+
+    stringDeclaration = false;
 
     variableList.count = 0;
     variableList.first = NULL;
@@ -102,6 +171,21 @@ void runScript(u8 * file, u32 fileSize, void * param){
     labelList.count = 0;
     labelList.first = NULL;
     labelList.last = NULL;
+    ifStatementList.count = 0;
+    ifStatementList.first = NULL;
+    ifStatementList.last = NULL;
+
+    //Parse for labels first
+    //Put all found in labelList
+    parseFileForLabels(file, fileSize, &labelList);
+    //printf("\n\nTotal labels found : %u", labelList.count);
+
+    if(!parseFileForIFStatements(file, fileSize, &ifStatementList)){
+        //printf("\n\nError in IF/ELSE/ENDIF statement logic!!!!");
+        goto endExecution;
+    }
+    //printf("\n\nTotal IF/ELSE/ENDIF statements found : %u", ifStatementList.count);
+    //printf("\n\nBegin script execution");
 
     while(stringStopPtr < fileSize){      //We stay in file
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
@@ -109,14 +193,12 @@ void runScript(u8 * file, u32 fileSize, void * param){
         }
         while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
             stringStartPtr++;
-        if(file[stringStartPtr] == '#' ){       //This is a comment or empty line
+        if(file[stringStartPtr] == '#' || file[stringStartPtr] == '$'){       //This is a comment or empty line
 
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
             continue;
         }
 
-        //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
-        valueStartPtr = 0;
         CRdetected = file[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
         //Copy line in compareBuf.
         strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
@@ -126,127 +208,293 @@ void runScript(u8 * file, u32 fileSize, void * param){
         //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
 
         stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
-        if(compareBuf[0] == '%'){             //Label detected.
-            tempPtr = 1;        //Start checking after '%' character
-            while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && tempPtr < 100){
-                tempPtr += 1;
-            }
-            if(tempPtr >= 2){   //There was at least one character after the '%' so we have a label.
-                newLabelEntry = (labelEntry *)malloc(sizeof(labelEntry));
-                if(labelList.count == 0){       //First entry in list
-                    labelList.first = newLabelEntry;
-                    newLabelEntry->previous = NULL;
-                }
-                else{
-                    labelList.last->next = newLabelEntry;        //Last entry already in list gets to point to this new entry.
-                    newLabelEntry->previous = labelList.last;    //New entry is now the last one.
-                }
-                newLabelEntry->next = NULL;
-                newLabelEntry->stringPos = stringStartPtr;      //Place position of next line.
-                newLabelEntry->name = (char *)malloc(tempPtr);  //is +1 because of terminating character.
-                strncpy(newLabelEntry->name, &compareBuf[1], tempPtr - 1);
-                newLabelEntry->name[tempPtr - 1] = '\0';
 
-                labelList.last = newLabelEntry;
-                labelList.count += 1;
-            }
-        }
-        //It's not a label
-        else{
-            argExist[0] = false;
-            argExist[1] = false;
-            argExist[2] = false;
-            argExist[3] = false;
-            variableAssignation = false;
-            tempPtr = 0;
-            //compareBuf shouldn't start with ' ' characters.
-            while(compareBuf[tempPtr] != '\0' && tempPtr < 100){
-                while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && compareBuf[tempPtr] != '('){       //First argument parse
+
+        //Parse arguments of current line. Up to a max of 5.
+        argumentList[0].exist = false;
+        argumentList[1].exist = false;
+        argumentList[2].exist = false;
+        argumentList[3].exist = false;
+        argumentList[4].exist = false;
+        tempPtr = 0;
+        nbArguments = 0;
+
+        for(i = 0; i < 5; i++){
+            if(compareBuf[tempPtr] != '\0' && tempPtr < 100){
+                argStartPtr[i] = tempPtr;
+                tempPtr +=1;
+                while(checkEndOfArgument(compareBuf, tempPtr)){       //argument parse
                     tempPtr +=1;
                 }
-                //Once out, were right after the first argument of the line.
-                arg1EndPtr = tempPtr - 1;
-                argExist[0] = true;
-                //Move to start of second argument. Skip '(' too.
+                //Once out, were right after the argument.
+                argEndPtr[i] = tempPtr - 1;
+                argumentList[i].exist = true;
+                nbArguments += 1;
+                //Move to start of next argument. Skip '(' too.
                 while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(') && compareBuf[tempPtr] != '\0'){
                     tempPtr +=1;
                 }
-                //Make sure we're not at the end of the line
-                if(compareBuf[tempPtr] != '\0'){
-                    arg2StartPtr = tempPtr;
-                    while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && compareBuf[tempPtr] != '('){       //2nd argument parse
-                        tempPtr +=1;
-                    }
-                    //Once out, were right after the 2nd argument of the line.
-                    arg2EndPtr = tempPtr - 1;
-                    argExist[1] = true;
-                    //Move to start of third argument.
-                    while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(') && compareBuf[tempPtr] != '\0'){
-                        tempPtr +=1;
-                    }
-                    //Make sure we're not at the end of the line
-                    if(compareBuf[tempPtr] != '\0'){
-                        arg3StartPtr = tempPtr;
-                        while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && compareBuf[tempPtr] != '('){       //2nd argument parse
-                            tempPtr +=1;
-                        }
-                        //Once out, were right after the 3rd argument of the line.
-                        arg3EndPtr = tempPtr - 1;
-                        argExist[2] = true;
-                        //Move to start of fourth argument.
-                        while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(') && compareBuf[tempPtr] != '\0'){
-                            tempPtr +=1;
-                        }
-                        //Make sure we're not at the end of the line
-                        if(compareBuf[tempPtr] != '\0'){
-                            arg4StartPtr = tempPtr;
-                            while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && compareBuf[tempPtr] != '('){       //2nd argument parse
-                                tempPtr +=1;
+            }
+            else{
+                break;
+            }
+        }
+        //printf("\n\"%s\"", compareBuf);
+        //printf("     Line has %u argument(s)", nbArguments);
+
+        //We parsed all 5 possible arguments of a line.
+        //Argument 0 contains either a functionCall, a variable declaration or variable itself.
+        //We'll start by checking if it's a functionCall.
+        for(i = 0; i < 5; i++){
+            if(argumentList[i].exist){
+                strncpy(tempBuf, &compareBuf[argStartPtr[i]], argEndPtr[i] + 1 - argStartPtr[i]);
+                tempBuf[argEndPtr[i] + 1 - argStartPtr[i]] = '\0';
+                argumentList[i].text = NULL;
+                argumentList[i].type = decodeArgument(tempBuf, &argumentList[i].value, &argumentList[i].text, &variableList);
+            }
+            else
+                break;
+        }
+
+        //Reset for new line execution
+        arithOpInLine = -1;
+        accumulatorInUse = false;
+
+        for(i = 4; i >= 0; i--){
+            if(argumentList[i].exist){
+                if(argumentList[i].type == ARGTYPE_FUNCTION){       //positive match with a functionCall
+                    switch(argumentList[i].value){
+                    case FUNCTION_IF:
+                            if(!argumentList[i + 1].exist || !argumentList[i + 2].exist || !argumentList[i + 3].exist){
+                                    //printf("\nRuntime execution error. Missing argument in IF statement!");
+                                    goto endExecution;
                             }
-                            //Once out, were right after the 4th argument of the line.
-                            arg4EndPtr = tempPtr - 1;
-                            argExist[3] = true;
+                            ifEntry = ifStatementList.first;
+                            for(j = 0; j < ifStatementList.count; j++){
+                                if(ifEntry->ifPosition == stringStartPtr){
+                                    break;
+                                }
+                                else{
+                                    if(ifEntry->next != NULL)
+                                        ifEntry = ifEntry->next;
+                                }
+                            }
+                            insideIfStatement = ifFunction(argumentList[i + 1].value, argumentList[i + 2].value, argumentList[i + 3].value);    //Will be 1 if IF condition is valid.
+                            if(!insideIfStatement){ //Condition in IF statement was not met
+                                if(ifEntry->elsePosition != -1){    //There is a ELSE associated with this IF
+                                    stringStartPtr = ifEntry->elsePosition; //Go there
+
+                                }
+                                else                                //If there's not ELSE associated with IF
+                                    stringStartPtr = ifEntry->endifPosition;        //Go to ENDIF
+                                stringStopPtr = stringStartPtr;
+                            }
+                            break;
+                    case FUNCTION_ELSE:
+                            insideIfStatement = 2;
+                            break;
+                    case FUNCTION_ENDIF:
+                            insideIfStatement = 0;
+                            break;
+                    case FUNCTION_VAR:
+                            if(i == 0 && argumentList[1].exist){
+                                    if(argumentList[3].exist){
+                                            variableFunction(argumentList[1].text, argumentList[3].value, &variableList);
+                                            //printf("\nNew variable: %s = %u", argumentList[1].text, argumentList[3].value);
+                                    }
+                                    else{
+                                            variableFunction(argumentList[1].text, 0, &variableList);
+                                            //printf("\nNew variable: %s, no init value", argumentList[1].text);
+                                    }
+                            }
+                            else{
+                                    //printf("\nRuntime execution error. Improper variable declaration!");
+                                    goto endExecution;
+                            }
+                            break;
+                    case FUNCTION_GOTO:
+                        if(i == 0 && argumentList[1].exist){
+                            labelEntry = labelList.first;
+                            for(j = 0; j < labelList.count; j++){
+                                if(!strcmp(argumentList[1].text, labelEntry->name)){
+                                    stringStartPtr = labelEntry->stringPos;
+                                    stringStopPtr = stringStartPtr;
+                                    break;
+                                }
+                                else{
+                                    if(labelEntry->next != NULL){
+                                        labelEntry = labelEntry->next;
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    case FUNCTION_GPI:
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[3].exist){
+                            arithAccumulator = gpiFunction((u8)argumentList[3].value);
+                            accumulatorInUse = true;
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper GPI function call!");
+                        //}
+                        break;
+                    case FUNCTION_GPO:
+                        if(argumentList[1].exist && argumentList[2].exist){
+                            gpoFunction((u8)argumentList[1].value, (u8)argumentList[2].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper GPO function call!");
+                        //}
+                        break;
+                    case FUNCTION_WAIT:
+                        if(argumentList[1].exist){
+                            waitFunction(argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper WAIT function call!");
+                        //}
+                        break;
+                    case FUNCTION_BOOT:
+                        if(argumentList[1].exist){
+                            bootFunction((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper BOOT function call!");
+                        //}
+                        break;
+                    case FUNCTION_FAN:
+                        if(argumentList[1].exist){
+                            fanFunction((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper FAN function call!");
+                        //}
+                        break;
+                    case FUNCTION_LED:
+
+                        break;
+                    case FUNCTION_LCDW:
+                        if(argumentList[1].exist && argumentList[2].exist && argumentList[2].text != NULL){
+                            lcdPrintFunction((u8)argumentList[1].value, argumentList[2].text);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LCDW function call!");
+                        //}
+                        break;
+                    case FUNCTION_LCDC:
+                        if(argumentList[1].exist){
+                            lcdClearLineFunction((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LCDC function call!");
+                        //}
+                        break;
+                    case FUNCTION_LCDR:
+                        lcdResetFunction();
+                        break;
+                    case FUNCTION_LCDB:
+                        if(argumentList[1].exist){
+                            lcdBacklightFunction((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LCDB function call!");
+                        //}
+                        break;
+                    case FUNCTION_LCDP:
+                        if(argumentList[1].exist){
+                            lcdPowerFunction((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LCDP function call!");
+                        //}
+                        break;
+                    case FUNCTION_END:
+                        //printf("\nEND function. Ending script execution gracefully.");
+                        goto endExecution;
+                        break;
+                    default:
+                        //printf("\nUnknown function call. Halting!");
+                        goto endExecution;
+                        break;
+                    }
+
+                }
+                else{                       //Is not a function call
+                    if(argumentList[i].type == ARGTYPE_VARIABLE){
+                        if(i == 0){ //Assignation to variable
+                            if(accumulatorInUse && argumentList[1].type == ARGTYPE_OPERATOR && argumentList[1].value == OPTYPE_EQ){   //There's something to put in it.
+                                argumentList[0].value = arithAccumulator;
+                                //Update variable content here.
+                                if(!updateVariable(argumentList[0].text, argumentList[0].value, &variableList)){
+                                    //printf("\nRuntime execution error. Undeclared variable");
+                                    goto endExecution;
+                                }
+                                //printf("\n%s = %u", argumentList[0].text, argumentList[0].value);
+                            }
+                        }
+                        else{   //Not variable assignation.
+                            if(accumulatorInUse){
+                                switch(arithOpInLine){
+                                    case OPTYPE_PLUS:
+                                        arithAccumulator += argumentList[i].value;
+                                        break;
+                                    case OPTYPE_MINUS:
+                                        arithAccumulator = argumentList[i].value - arithAccumulator;
+                                        break;
+                                    case OPTYPE_MULT:
+                                        arithAccumulator *= argumentList[i].value;
+                                        break;
+                                    case OPTYPE_DIVIDE:
+                                        arithAccumulator = argumentList[i].value / arithAccumulator;
+                                        break;
+                                    default://Accumulator was already used but no arithmetic operator was specified
+                                            //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
+                                            //goto endExecution;
+                                        break;
+                                }
+                            }
+                            else{
+                                arithAccumulator = argumentList[i].value;
+                                accumulatorInUse = true;
+                            }
                         }
                     }
+                    else if(argumentList[i].type == ARGTYPE_OPERATOR){
+                        arithOpInLine = argumentList[i].value;
+                    }
+                    else if(argumentList[i].type == ARGTYPE_NUMERIC){
+                        if(accumulatorInUse){
+                            switch(arithOpInLine){
+                                case OPTYPE_PLUS:
+                                    arithAccumulator += argumentList[i].value;
+                                    break;
+                                case OPTYPE_MINUS:
+                                    arithAccumulator -= argumentList[i].value;
+                                    break;
+                                case OPTYPE_MULT:
+                                    arithAccumulator *= argumentList[i].value;
+                                    break;
+                                case OPTYPE_DIVIDE:
+                                    arithAccumulator /= argumentList[i].value;
+                                    break;
+                                default://Accumulator was already used but no arithmetic operator was specified
+                                        //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
+                                        //goto endExecution;
+                                    break;
+                            }
+                        }
+                        else{
+                            arithAccumulator = argumentList[i].value;
+                            accumulatorInUse = true;
+                        }
                 }
             }
-            //We parsed all 4 possible arguments of a line.
-            //Argument 1 contains either a functionCall, a variable declaration or variable itself.
-            //We'll start by checking if it's a functionCall.
-            strncpy(tempBuf, compareBuf, arg1EndPtr + 1);
-            tempBuf[arg1EndPtr + 1] = '\0';
-            functionCallFlag = -1;
-            for(i = 0; i < NBFUNCTIONCALLS; i++){
-                if(!strcmp(tempBuf, functionCallList[i].functionName)){
-                    //Found a matching function
-                    functionCallFlag = i;
-                    break;
-                }
-            }
-
-            if(argExist[1]){
-                strncpy(tempBuf, &compareBuf[arg2StartPtr], arg2EndPtr - arg2StartPtr + 1);
-                tempBuf[arg2EndPtr - arg2StartPtr + 1] = '\0';
-                if(tempBuf[0] == '='){
-                    variableAssignation = true;
-                }
-                else{
-                    //Is argument of a function call. Variable or literal.
-
-                }
-            }
-
-
-            if(functionCallFlag){       //positive match with a functionCall
-                //functionCallResult = (functionCallList[i].functionPtr)
-            }
-            else{                       //Is variable
-
-            }
+        }
         }
     } //while(stringStopPtr < fileSize)
 
 
+endExecution:
     //Flush Variable list
     for(i = 0; i < variableList.count; i++){
         if(variableList.first == NULL)
@@ -254,7 +502,6 @@ void runScript(u8 * file, u32 fileSize, void * param){
         currentEntry = variableList.first;
         variableList.first = currentEntry->next;
         free(currentEntry->name);
-        free(currentEntry->value);
         free(currentEntry);
     }
 
@@ -262,132 +509,483 @@ void runScript(u8 * file, u32 fileSize, void * param){
     for(i = 0; i < labelList.count; i++){
         if(labelList.first == NULL)
             break;
-        newLabelEntry = labelList.first;
-        labelList.first = newLabelEntry->next;
-        free(newLabelEntry->name);
-        free(newLabelEntry);
+        labelEntry = labelList.first;
+        labelList.first = labelEntry->next;
+        free(labelEntry->name);
+        free(labelEntry);
+    }
+
+    //Flush ifStatement list
+    for(i = 0; i < ifStatementList.count; i++){
+        if(ifStatementList.first == NULL)
+            break;
+        ifEntry = ifStatementList.first;
+        ifStatementList.first = ifEntry->next;
+        free(ifEntry);
     }
     return;
 }
 
-bool ifFunction(void * param1, void * op, void * param2){
-    int * tempParam1 = (int *)param1;
-    int * tempParam2 = (int *)param2;
-    switch(*(u8 *)op){
-        case 0: //==
-            return (tempParam1 == tempParam2);
+bool ifFunction(int param1, u8 op, int param2){
+    switch(op){
+        case OPTYPE_EQ_EQ: //==
+            return (param1 == param2);
             break;
-        case 1: //!=
-            return (tempParam1 != tempParam2);
+        case OPTYPE_NOT_EQ: //!=
+            return (param1 != param2);
             break;
-        case 2: //>
-            return (tempParam1 > tempParam2);
+        case OPTYPE_GREATER: //>
+            return (param1 > param2);
             break;
-        case 3: //<
-            return (tempParam1 < tempParam2);
+        case OPTYPE_LOWER: //<
+            return (param1 < param2);
             break;
-        case 4: //>=
-            return (tempParam1 >= tempParam2);
+        case OPTYPE_GREATER_EQ: //>=
+            return (param1 >= param2);
             break;
-        case 5: //<=
-            return (tempParam1 <= tempParam2);
+        case OPTYPE_LOWER_EQ: //<=
+            return (param1 <= param2);
             break;
         default:
             break;
     }
     return false;
 }
-bool gpiFunction(void * port, void * ignored1, void * ignored2){
+bool gpiFunction(u8 port){
+    //printf("\n****GPI function called, return 1");
     LPCMod_ReadIO(NULL);
-    if(*(u8 *)port == 0)
-        return GenPurposeIOs.GPI0;
-
-    return GenPurposeIOs.GPI1;
+    if(port)
+        return GenPurposeIOs.GPI1;
+    return GenPurposeIOs.GPI0;
 }
-bool gpoFunction(void * port, void * value, void * ignored){
-    LPCMod_WriteIO(*(u8 *)port, *(u8 *)value);
+bool gpoFunction(u8 port, u8 value){
+    //printf("\n****Set GPO port 0x%X with value 0x%X", port, value);
+    LPCMod_WriteIO(port, value);
     return true;
 }
-bool waitFunction(void * ms, void * ignored1, void * ignored2){
-    wait_ms(*(u32 *)ms);
+bool waitFunction(int ms){
+    wait_ms(ms);
     return true;
 }
-bool bootFunction(void * bank, void * ignored1, void * ignored2){
+bool bootFunction(u8 bank){
+    //printf("\n****Boot bank: %u", bank);
+    if(bank == BNK512 || bank == BNK256){
+        BootModBios((void *)&bank);
+    }
+    else if(bank == BNKTSOPSPLIT0 || bank == BNKTSOPSPLIT1 || BNKFULLTSOP){
+        BootOriginalBios((void *)&bank);
+    }
+    else
+        return false;
     return true;
 }
-bool endFunction(void * ignored, void * ignored1, void * ignored2){
+bool fanFunction(u8 value){
+    //printf("\n****Fan speed: %u", value);
+    if(value >=10 && value <= 100)
+        I2CSetFanSpeed(value);
     return true;
 }
-bool fanFunction(void * value, void * ignored1, void * ignored2){
-    I2CSetFanSpeed(*(u8 *)value);
+bool ledFunction(char * value){
+    //printf("\n****LED pattern: %s", value);
+    setLED(value);
     return true;
 }
-bool ledFunction(void * value, void * ignored1, void * ignored2){
-    setLED((char *)value);
-    return true;
-}
-bool lcdPrintFunction(void * line, void * text, void * ignored){
-    switch(*(u8 *)line){
+bool lcdPrintFunction(u8 line, char * text){
+    //printf("\n****LCD Print at line %u : %s", line, text);
+    switch(line){
         case 0:
-            WriteLCDLine0(0, (char *)text);
+            WriteLCDLine0(text);
             break;
         case 1:
-            WriteLCDLine1(0, (char *)text);
+            WriteLCDLine1(text);
             break;
         case 2:
-            WriteLCDLine2(0, (char *)text);
+            WriteLCDLine2(text);
             break;
         default:
-            WriteLCDLine3(0, (char *)text);
+            WriteLCDLine3(text);
             break;
     }
     return true;
 }
-bool lcdClearLineFunction(void * line, void * ignored1, void * ignored2){
-    WriteLCDClearLine(*(u8 *)line);
+bool lcdClearLineFunction(u8 line){
+    //printf("\n****LCD clear line %u", line);
+    WriteLCDClearLine(line);
     return true;
 }
-bool lcdResetFunction(void * ignored, void * ignored1, void * ignored2){
-    WriteLCDCommand(0x1);
+bool lcdResetFunction(void){
+    //printf("\n****LCD reset screen");
+    WriteLCDCommand(0x01);      //CLEAR command
     return true;
 }
-bool lcdBacklightFunction(void * value, void * ignored1, void * ignored2){
-    setLCDBacklight(*(u8 *)value);
+bool lcdBacklightFunction(u8 value){
+    //printf("\n****LCD backlight value: %u", value);
+    setLCDBacklight(value);
     return true;
 }
-bool lcdPowerFunction(void * value, void * ignored1, void * ignored2){
-    toggleEN5V(*(u8 *)value);
-    if(*(u8 *)value)
-        assertInitLCD();
+bool lcdPowerFunction(u8 value){
+    //printf("\n****LCD power %s", value ? "ON": "OFF");
+    LPCmodSettings.LCDsettings.enable5V = value? 1 : 0;
+    assertInitLCD();
     return true;
 }
 
-bool variableFunction(void * name, void * initValue, void * variableList){
-    _variableList * tempVariableList = (_variableList *)variableList;
+bool variableFunction(char * name, int initValue, _variableList * variableList){
     variableEntry * newEntry;
+    int i;
     char * tempName = (char *)name;
-    newEntry = (variableEntry *)malloc(sizeof(variableEntry));
 
-    if(tempVariableList->first == NULL){ //No entry in list yet
-        tempVariableList->first = newEntry;
+
+    if(variableList->first == NULL){ //No entry in list yet
+        newEntry = (variableEntry *)malloc(sizeof(variableEntry));
+        variableList->first = newEntry;
         newEntry->previous = NULL;
     }
     else{
-        tempVariableList->last->next = newEntry;        //Last entry already in list gets to point to this new entry.
-        newEntry->previous = tempVariableList->last;    //New entry is now the last one.
+        //Check that requested variable declaration's name is not already used.
+        newEntry = variableList->first;
+        for(i = 0; i < variableList->count; i++){
+            if(!strcmp(newEntry->name, tempName)){
+                return false;
+            }
+            if(newEntry->next != NULL)
+                newEntry = newEntry->next;
+        }
+        newEntry = (variableEntry *)malloc(sizeof(variableEntry));
+        variableList->last->next = newEntry;        //Last entry already in list gets to point to this new entry.
+        newEntry->previous = variableList->last;    //New entry is now the last one.
     }
     newEntry->next = NULL;
-    newEntry->value = (int *)malloc(sizeof(int));
-    if(newEntry->value == NULL)
-        return false;
-    *newEntry->value = *(int *)initValue;
+    newEntry->value = initValue;
     newEntry->name = (char *)malloc(strlen(tempName) + 1);
     if(newEntry->name == NULL)
         return false;
     sprintf(newEntry->name, "%s", tempName);
 
-    tempVariableList->last = newEntry;
-    tempVariableList->count += 1;
+    variableList->last = newEntry;
+    variableList->count += 1;
 
+    return true;
+}
+
+void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList){
+    int stringStartPtr = 0, stringStopPtr = 0;
+    bool CRdetected;
+    char compareBuf[100];
+    while(stringStopPtr < fileSize){      //We stay in file
+        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+            stringStopPtr++;        //Move on to next character in file.
+        }
+        while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+            stringStartPtr++;
+        if(file[stringStartPtr] == '#'){       //This is a comment or empty line
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+            continue;
+        }
+        if(file[stringStartPtr] == '$'){        //Label identifier detected
+            //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
+            CRdetected = file[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
+            //Copy line in compareBuf.
+            strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
+            //Manually append terminating character at the end of the string
+            compareBuf[stringStopPtr - CRdetected - stringStartPtr] = '\0';
+            //if(compareBuf[0] != '\0')
+            //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
+
+            if(compareBuf[0] == '$'){             //Label detected.
+                addNewLabel(labelList, compareBuf, stringStartPtr);
+            }
+        }
+        stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+    }
+}
+
+bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList){
+    int stringStartPtr = 0, stringStopPtr = 0, stringTempPtr;
+    bool CRdetected;
+    char compareBuf[6];
+    ifStatementEntry *newEntry;
+    while(stringStopPtr < fileSize){      //We stay in file
+        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+            stringStopPtr++;        //Move on to next character in file.
+        }
+        while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+            stringStartPtr++;
+        if(file[stringStartPtr] == '#'){       //This is a comment or empty line
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+            continue;
+        }
+        stringTempPtr = stringStartPtr;
+        while(file[stringTempPtr] != ' ' && file[stringTempPtr] != '(' && file[stringTempPtr] != '\r' && file[stringTempPtr] != '\n' && file[stringTempPtr] != '\0' && stringTempPtr < (stringStartPtr + 6))
+            stringTempPtr += 1;
+        if(stringTempPtr >= 2){        //Detected something on this line.
+            //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
+            //Copy necessary text in compareBuf.
+            strncpy(compareBuf, &file[stringStartPtr], stringTempPtr - stringStartPtr);
+            //Manually append terminating character at the end of the string
+            compareBuf[stringTempPtr - stringStartPtr] = '\0';
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+
+            //Search for either IF ELSE or ENDIF strings.
+            if(!strcmp(compareBuf, "IF")){
+                newEntry = (ifStatementEntry *)malloc(sizeof(ifStatementEntry));
+                newEntry->ifPosition = stringStopPtr;    //Cursor position of line below IF statement
+                newEntry->elsePosition = -1;             //Not found yet
+                newEntry->endifPosition = -1;            //Not found yet
+                newEntry->next = NULL;                   //It's the last entry
+                newEntry->previous = ifStatementList->last;     //Fill be set to NULL for first entry anyway.
+                if(ifStatementList->first == NULL){             //This is the first entry in the list
+                    ifStatementList->first = newEntry;
+                }
+                else{
+                    ifStatementList->last->next = newEntry;
+                }
+                ifStatementList->count += 1;
+                ifStatementList->last = newEntry;
+            }
+            else if(!strcmp(compareBuf, "ELSE")){
+                if(ifStatementList->last == NULL){    //Lonesome ELSE statement that isn't linked to any IF statement
+                    return false;    //error.
+                }
+                newEntry = ifStatementList->last;
+                while(newEntry->previous != NULL && newEntry->elsePosition != -1){
+                    newEntry = newEntry->previous;
+                }
+                if(newEntry->elsePosition == -1)    //Last sanity check
+                    newEntry->elsePosition = stringStopPtr;
+                else
+                    return false;
+            }
+            else if(!strcmp(compareBuf, "ENDIF")){
+                if(ifStatementList->last == NULL){    //Lonesome ELSE statement that isn't linked to any IF statement
+                    return false;    //error.
+                }
+                newEntry = ifStatementList->last;
+                while(newEntry->previous != NULL && newEntry->endifPosition != -1){
+                    newEntry = newEntry->previous;
+                }
+                if(newEntry->endifPosition == -1)    //Last sanity check
+                    newEntry->endifPosition = stringStopPtr;
+                else
+                    return false;
+            }
+        }
+        else
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+    }
+    return true;
+}
+
+void addNewLabel(struct _labelList * labelList, char * compareBuf, int position){
+    int tempPtr = 1;        //Start checking after '$' character
+    labelEntry * newLabelEntry;
+    while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && tempPtr < 100){
+        tempPtr += 1;
+    }
+    if(tempPtr >= 2){   //There was at least one character after the '$' so we have a label.
+        newLabelEntry = (labelEntry *)malloc(sizeof(labelEntry));
+        if(labelList->count == 0){       //First entry in list
+            labelList->first = newLabelEntry;
+            newLabelEntry->previous = NULL;
+        }
+        else{
+            labelList->last->next = newLabelEntry;        //Last entry already in list gets to point to this new entry.
+            newLabelEntry->previous = labelList->last;    //New entry is now the last one.
+        }
+        newLabelEntry->next = NULL;
+        newLabelEntry->stringPos = position;      //Place position of next line.
+        newLabelEntry->name = (char *)malloc(tempPtr);  //is +1 because of terminating character.
+        strncpy(newLabelEntry->name, &compareBuf[1], tempPtr - 1);
+        newLabelEntry->name[tempPtr - 1] = '\0';
+
+        labelList->last = newLabelEntry;
+        labelList->count += 1;
+        //printf("\nNew label found in script.\n  Name : %s\n  Points to : %u", newLabelEntry->name, newLabelEntry->stringPos);
+    }
+}
+
+bool checkEndOfArgument(char * compareBuf, int position){
+
+    if(position >= 1){
+        if(compareBuf[position - 1] == '\"' && !stringDeclaration){
+            stringDeclaration = true;
+            return true;
+        }
+
+        if((compareBuf[position - 1] == '\"' || compareBuf[position] == '\0') && stringDeclaration){
+            stringDeclaration = false;
+            return false;
+        }
+
+        //Still in text string
+        if(stringDeclaration)
+            return true;
+    }
+    stringDeclaration = false;
+
+    //Start by easy cases where it's clear we're at the end of an argument
+    if(compareBuf[position] == ' ')
+        return false;
+    if(compareBuf[position] == '\0')
+        return false;
+    if(compareBuf[position] == '(')
+        return false;
+    if(compareBuf[position] == '#')
+        return false;
+
+    //Cases where there is not space between operator and preceding argument
+    if(position >= 1 && compareBuf[position - 1] != ' '){
+        if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*'  || compareBuf[position] == '/')
+            return false;
+
+        if(compareBuf[position] == '!' || compareBuf[position] == '>'  || compareBuf[position] == '<')
+            return false;
+    }
+
+
+    if(position >= 1 && compareBuf[position] != '='){
+        if(compareBuf[position - 1] == '>'  || compareBuf[position - 1] == '<')
+            return false;
+    }
+
+    //Cases where there is not space between operator and following argument
+    if(position >= 1 && compareBuf[position] != ' '){
+        if(compareBuf[position - 1] == '+' || compareBuf[position - 1] == '-'  || compareBuf[position - 1] == '*'  || compareBuf[position - 1] == '/')
+            return false;
+
+        if(compareBuf[position - 1] == '=' && compareBuf[position] != '=')
+            return false;
+    }
+
+
+
+    return true;
+}
+
+//Function return indicates what type of argument this is.
+//-1 is unknown/skip
+//0 is for function call
+//1 is for operator
+//2 is for variable call
+//3 is for numerical value
+int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList){
+    int i;
+    bool operatorDetected = false;
+    variableEntry *tempVariableEntry;
+
+    for(i = 0; i < NBFUNCTIONCALLS; i++){
+        if(!strcmp(inputArg, functionCallList[i])){
+            //Found a matching function
+            *outNum = i;
+            *string = functionCallList[i];
+            return ARGTYPE_FUNCTION;
+        }
+    }
+
+    //Check for operators
+    if(!strcmp(inputArg, "==" )){
+        *outNum = OPTYPE_EQ_EQ;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "!=")){
+        *outNum = OPTYPE_NOT_EQ;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, ">")){
+        *outNum = OPTYPE_GREATER;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "<")){
+        *outNum = OPTYPE_LOWER;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, ">=")){
+        *outNum = OPTYPE_GREATER_EQ;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "<=")){
+        *outNum = OPTYPE_LOWER_EQ;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "=")){
+        *outNum = OPTYPE_EQ;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "+")){
+        *outNum = OPTYPE_PLUS;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "-")){
+        *outNum = OPTYPE_MINUS;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "*")){
+        *outNum = OPTYPE_MULT;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "/")){
+        *outNum = OPTYPE_DIVIDE;
+        operatorDetected = true;
+    }
+
+    if(operatorDetected)
+        return ARGTYPE_OPERATOR;
+
+
+    if(inputArg[0] != '\"'){
+        tempVariableEntry = variableList->first;
+        for(i = 0; i < variableList->count; i++){
+            if(!strcmp(tempVariableEntry->name, inputArg)){
+                *outNum = tempVariableEntry->value;
+                *string = tempVariableEntry->name;
+                return ARGTYPE_VARIABLE;
+            }
+            if(tempVariableEntry->next != NULL)
+                tempVariableEntry = tempVariableEntry->next;
+            else
+                break;
+        }
+
+        //Negative number?
+        if(inputArg[0] == '-')
+            i = 1;
+        else
+            i = 0;
+
+        if(inputArg[i] >= '0' && inputArg[i] <= '9'){
+            *outNum = atoi(&inputArg[i]);
+            return ARGTYPE_NUMERIC;
+        }
+        i = 0;
+    }
+    else{       //Arg starts with "\""
+        i = 2;  //Skip both leading and ending "\""
+    }
+
+    //Must be variable call.
+    i = strlen(inputArg) - i;
+    *string = (char *)malloc(i + 1);
+    strncpy(*string, inputArg[0] == '\"' ? &inputArg[1] : inputArg, i);
+    *(*string + i) = '\0';
+
+
+    return ARGTYPE_UNKNOWN;
+}
+
+bool updateVariable(char * name, int value, _variableList * variableList){
+    variableEntry * currentEntry = variableList->first;
+    int i;
+
+    for(i = 0; i < variableList->count; i++){
+        if(!strcmp(currentEntry->name, name)){
+            currentEntry->value = value;
+            break;
+        }
+        if(currentEntry->next != NULL)
+            currentEntry = currentEntry->next;
+        else{
+            return false;
+        }
+    }
     return true;
 }

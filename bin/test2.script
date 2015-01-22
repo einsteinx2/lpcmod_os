@@ -1,0 +1,23 @@
+VAR variableTest =10
+VAR GPIresult
+variableTest = 15
+$loop1
+GPIresult = GPI(0)
+variableTest = variableTest + GPIresult
+IF(variableTest < 18)
+     GOTO loop1
+ELSE
+    FAN(40)
+ENDIF
+#comment here
+$loop2
+GPIresult = GPI(1)
+GPIresult = GPIresult + 1
+variableTest = variableTest / GPIresult
+WAIT(5)
+IF(variableTest > 4)
+    GOTO loop2
+ELSE
+    LCDW(1, "Test String)
+    END
+ENDIF
