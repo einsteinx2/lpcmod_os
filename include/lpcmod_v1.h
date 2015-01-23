@@ -154,5 +154,8 @@
 #define ADR_LCDSTRING0 0xFF14C
 */
 
+#define BIOS_NETFLASH     0
+#define EEPROM_NETFLASH   1
+
 
 #endif

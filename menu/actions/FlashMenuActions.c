@@ -8,8 +8,7 @@
  ***************************************************************************/
 #include "FlashMenuActions.h"
 
-#include "include/boot.h"
-#include "include/lpcmod_v1.h"
+#include "lpcmod_v1.h"
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "boot.h"
@@ -58,7 +57,7 @@ void FlashBiosFromCD (void *cdromId) {
 #endif
 }
 
-void enableNetflash (void *whatever) {
+void enableNetflash (void *flashType) {
 #ifdef FLASH
 
     //Save current frameBuffer
@@ -73,7 +72,7 @@ void enableNetflash (void *whatever) {
     VIDEO_ATTR = 0xffc8c8c8;
     //initialiseNetwork ();
     //netFlash ();
-    etherboot();
+    etherboot(*(u8 *)flashType);
     //Restore FrameBuffer for Menu display
     //memcpy((void*)FB_START,currentFrameBuffer,FB_SIZE);
     //free(currentFrameBuffer);

@@ -11,10 +11,18 @@ variableTest = variableTest- 2
 IF(variableTest <= 110)
   variableTest = variableTest + 1
   IF(variableTest == 100)
-     END
+       GOTO loop3
   ELSE
         GOTO loop2
   ENDIF
 ELSE
     GOTO loop2
+ENDIF
+$loop3
+IF(variableTest >= 105)
+    LCDW(0, "test string, yay")
+    END
+ELSE
+    variableTest = variableTest + 1
+    GOTO loop3
 ENDIF

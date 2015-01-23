@@ -9,6 +9,8 @@
 
 #include "TextMenu.h"
 #include "EepromEditMenuActions.h"
+#include "lpcmod_v1.h"
+#include "FlashMenuActions.h"
 
 TEXTMENU* EEPROMFileRestoreMenuInit(void);
 
@@ -60,6 +62,14 @@ TEXTMENU *eepromEditMenuInit(void) {
     strcpy(itemPtr->szCaption, "Restore from file");
     itemPtr->functionPtr=DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)EEPROMFileRestoreMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Restore from network");
+    itemPtr->functionPtr= enableNetflash;
+    itemPtr->functionDataPtr= malloc(sizeof(u8));
+        *(u8 *)itemPtr->functionDataPtr= EEPROM_NETFLASH;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

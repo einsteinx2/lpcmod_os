@@ -26,6 +26,7 @@
 #define OPTYPE_MINUS    8
 #define OPTYPE_MULT     9
 #define OPTYPE_DIVIDE   10
+#define OPTYPE_MOD      11
 
 #define FUNCTION_IF     0
 #define FUNCTION_ELSE   1
@@ -134,7 +135,6 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
 
 void runScript(u8 * file, u32 fileSize, void * param){
-    bool runExecution = true; //True while not at the end of script or END command isn't read.
     int insideIfStatement = 0;
     int i, j;
     int arithAccumulator;
@@ -191,7 +191,7 @@ void runScript(u8 * file, u32 fileSize, void * param){
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
             stringStartPtr++;
         if(file[stringStartPtr] == '#' || file[stringStartPtr] == '$'){       //This is a comment or empty line
 
@@ -287,30 +287,28 @@ void runScript(u8 * file, u32 fileSize, void * param){
                                 }
                                 else                                //If there's not ELSE associated with IF
                                     stringStartPtr = ifEntry->endifPosition;        //Go to ENDIF
-                                stringStopPtr = stringStartPtr;
+                                    stringStopPtr = stringStartPtr;
                             }
                             break;
                     case FUNCTION_ELSE:
-                            insideIfStatement = 2;
+                            ifEntry = ifStatementList.first;
+                            for(j = 0; j < ifStatementList.count; j++){
+                                if(ifEntry->elsePosition == stringStartPtr){
+                                    break;
+                                }
+                                else{
+                                    if(ifEntry->next != NULL)
+                                        ifEntry = ifEntry->next;
+                                }
+                            }
+                            if(insideIfStatement){
+                                stringStartPtr = ifEntry->endifPosition;        //Go to ENDIF
+                                stringStopPtr = stringStartPtr;
+                            }
+                            insideIfStatement = 0;
                             break;
                     case FUNCTION_ENDIF:
                             insideIfStatement = 0;
-                            break;
-                    case FUNCTION_VAR:
-                            if(i == 0 && argumentList[1].exist){
-                                    if(argumentList[3].exist){
-                                            variableFunction(argumentList[1].text, argumentList[3].value, &variableList);
-                                            //printf("\nNew variable: %s = %u", argumentList[1].text, argumentList[3].value);
-                                    }
-                                    else{
-                                            variableFunction(argumentList[1].text, 0, &variableList);
-                                            //printf("\nNew variable: %s, no init value", argumentList[1].text);
-                                    }
-                            }
-                            else{
-                                    //printf("\nRuntime execution error. Improper variable declaration!");
-                                    goto endExecution;
-                            }
                             break;
                     case FUNCTION_GOTO:
                         if(i == 0 && argumentList[1].exist){
@@ -408,6 +406,22 @@ void runScript(u8 * file, u32 fileSize, void * param){
                             //printf("\nRuntime execution error. Improper LCDP function call!");
                         //}
                         break;
+                    case FUNCTION_VAR:
+                            if(i == 0 && argumentList[1].exist){
+                                    if(argumentList[3].exist){
+                                            variableFunction(argumentList[1].text, argumentList[3].value, &variableList);
+                                            //printf("\nNew variable: %s = %u", argumentList[1].text, argumentList[3].value);
+                                    }
+                                    else{
+                                            variableFunction(argumentList[1].text, 0, &variableList);
+                                            //printf("\nNew variable: %s, no init value", argumentList[1].text);
+                                    }
+                            }
+                            else{
+                                    //printf("\nRuntime execution error. Improper variable declaration!");
+                                    goto endExecution;
+                            }
+                            break;
                     case FUNCTION_END:
                         //printf("\nEND function. Ending script execution gracefully.");
                         goto endExecution;
@@ -447,6 +461,9 @@ void runScript(u8 * file, u32 fileSize, void * param){
                                     case OPTYPE_DIVIDE:
                                         arithAccumulator = argumentList[i].value / arithAccumulator;
                                         break;
+                                    case OPTYPE_MOD:
+                                        arithAccumulator = argumentList[i].value % arithAccumulator;
+                                        break;
                                     default://Accumulator was already used but no arithmetic operator was specified
                                             //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
                                             //goto endExecution;
@@ -476,6 +493,9 @@ void runScript(u8 * file, u32 fileSize, void * param){
                                     break;
                                 case OPTYPE_DIVIDE:
                                     arithAccumulator /= argumentList[i].value;
+                                    break;
+                                case OPTYPE_MOD:
+                                    arithAccumulator = argumentList[i].value % arithAccumulator;
                                     break;
                                 default://Accumulator was already used but no arithmetic operator was specified
                                         //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
@@ -676,7 +696,7 @@ void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList){
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
             stringStartPtr++;
         if(file[stringStartPtr] == '#'){       //This is a comment or empty line
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
@@ -709,7 +729,7 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while(file[stringStartPtr] == ' ' && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
             stringStartPtr++;
         if(file[stringStartPtr] == '#'){       //This is a comment or empty line
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
@@ -925,6 +945,10 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
     }
     if(!strcmp(inputArg, "/")){
         *outNum = OPTYPE_DIVIDE;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "%")){
+        *outNum = OPTYPE_MOD;
         operatorDetected = true;
     }
 

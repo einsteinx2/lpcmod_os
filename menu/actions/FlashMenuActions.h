@@ -15,7 +15,7 @@ void FlashBiosFromHDDOS(void *fname);
 void FlashBiosFromHDD(void *fname);
 void FlashBiosFromCD(void *cdromId);
 
-void enableNetflash(void *whatever);
+void enableNetflash(void *flashType);
 void enableWebupdate(void *whatever);
 
 void switchBank(char bank);

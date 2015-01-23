@@ -1,0 +1,14 @@
+	VAR variableTest =10
+$loop1
+IF(variableTest == 10)
+	variableTest = variableTest + 1
+ELSE
+	END
+ENDIF
+$loop2
+IF(variableTest == 10)
+	END
+ELSE
+	variableTest = variableTest - 1
+	GOTO loop2
+ENDIF

@@ -142,7 +142,8 @@ TEXTMENU* BankSelectInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
        sprintf(itemPtr->szCaption,"Net Flash");
     itemPtr->functionPtr= enableNetflash;
-    itemPtr->functionDataPtr= NULL;
+    itemPtr->functionDataPtr= malloc(sizeof(u8));
+        *(u8 *)itemPtr->functionDataPtr= BIOS_NETFLASH;
     TextMenuAddItem(menuPtr, itemPtr);
 #if DEV_FEATURES
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

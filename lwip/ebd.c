@@ -128,7 +128,7 @@ ebd_init (struct netif *netif) {
 }
 
 int
-run_lwip (void) {
+run_lwip (unsigned char flashType) {
     struct ip_addr ipaddr, netmask, gw;
     struct netif netif;
     bool first = 1;

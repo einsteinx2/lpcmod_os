@@ -222,12 +222,12 @@ void eth_disable(void)
 /*
  * Find out what our boot parameters are
  */
-int eth_load_configuration(struct dev *dev __unused)
+int eth_load_configuration(struct dev *dev __unused, unsigned char flashType)
 {
 	int server_found;
-	extern int run_lwip(void);
+	extern int run_lwip(unsigned char flashType);
 
-	run_lwip();
+	run_lwip(flashType);
 #if 0
 	/* Find a server to get BOOTP reply from */
 #ifdef	RARP_NOT_BOOTP

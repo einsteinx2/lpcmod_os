@@ -190,7 +190,7 @@ void DrawLargeHDDTextMenu(u8 drive){
 }
 
 #ifdef ETHERBOOT 
-extern int etherboot(void);
+extern int etherboot(unsigned char flashType);
 void BootFromEtherboot(void *data) {
     busyLED();
     initialiseNetwork();

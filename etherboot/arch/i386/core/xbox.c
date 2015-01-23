@@ -38,7 +38,7 @@ unsigned long virt_offset = 0;
 struct pci_driver* pci_drivers = &forcedeth_driver;
 struct pci_driver* pci_drivers_end = &forcedeth_driver + 1;
 
-int etherboot(void)
+int etherboot(unsigned char flashType)
 {
 	struct dev* dev = &nic.dev;
 	//print_config();
@@ -48,7 +48,7 @@ int etherboot(void)
 	}
 	else 
 	{
-		if (eth_load_configuration(dev) != 0)
+		if (eth_load_configuration(dev, flashType) != 0)
 		{
 			printk("eth_load_configuration failed\n");
 		}
