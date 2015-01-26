@@ -364,7 +364,8 @@ typedef struct _OSsettings {
     u8    bootTimeout;
     u8    LEDColor;
     u8    TSOPcontrol;        //variable contains the following settings: bit0=active
-    u8    reserved1[12];
+    u8    TSOPhide;           //Hide boot from TSOP option in icon menu when set.
+    u8    reserved1[11];
     char    biosName0[21];        //512KB bank name. 20 characters max to properly display on LCD.
     char    biosName1[21];        //256KB bank name
     char    biosName2[21];        //Reserved for future use.

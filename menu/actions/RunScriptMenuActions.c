@@ -31,7 +31,7 @@ void loadRunScript(void *fname){
         while (1)
             ;
     }
-    runScript(fileinfo.buffer, fileinfo.fileSize, NULL);   //No param for now
+    runScript(fileinfo.buffer, fileinfo.fileSize, 0, NULL);   //No param for now
     free(fileinfo.buffer);
 
     return;

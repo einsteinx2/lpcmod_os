@@ -28,12 +28,14 @@ typedef struct ICON {
     char *szCaption;
     void (*functionPtr) (void *);
     void *functionDataPtr;
+    bool dataPtrAlloc;
     struct ICON *previousIcon;
     struct ICON *nextIcon;
 } ICON;
 
 
 extern ICON *selectedIcon;
+extern ICON *firstIcon;
 
 //If this is set, the menu item was chosen automatically, due to timeout
 extern int timedOut;
@@ -43,5 +45,7 @@ void AddIcon(ICON *newIcon);
 
 //This draws and handles input for the main menu
 bool IconMenu(void);
+
+void freeIconMenuAllocMem(void);
 
 #endif

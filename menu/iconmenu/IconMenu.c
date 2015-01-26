@@ -90,12 +90,16 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
                 break;
             case BNKFULLTSOP:
             case BNKTSOPSPLIT0:
-                firstVisibleIcon = firstIcon->nextIcon;
-                selectedIcon = firstIcon->nextIcon->nextIcon;
+                if(!LPCmodSettings.OSsettings.TSOPhide){
+                    firstVisibleIcon = firstIcon->nextIcon;
+                    selectedIcon = firstIcon->nextIcon->nextIcon;
+                }
                 break;
             case BNKTSOPSPLIT1:
-                firstVisibleIcon = firstIcon->nextIcon->nextIcon;
-                selectedIcon = firstIcon->nextIcon->nextIcon->nextIcon;
+                if(!LPCmodSettings.OSsettings.TSOPhide){
+                    firstVisibleIcon = firstIcon->nextIcon->nextIcon;
+                    selectedIcon = firstIcon->nextIcon->nextIcon->nextIcon;
+                }
                 break;
         }
     }
@@ -349,3 +353,26 @@ bool IconMenu(void) {
     return 1;   //Always return 1 to stay in while loop in BootResetAction.
 }
 
+
+void freeIconMenuAllocMem(void){
+    ICON *currentIcon = firstIcon;
+
+    //Go too last icon in list
+    while(currentIcon->nextIcon != NULL){
+        currentIcon = currentIcon->nextIcon;
+    }
+    //While were not back at the first icon
+    while(currentIcon->previousIcon != NULL){
+        if(currentIcon->dataPtrAlloc){
+            free(currentIcon->functionDataPtr);
+        }
+        currentIcon = currentIcon->previousIcon;
+        free(currentIcon->nextIcon);
+    }
+
+    //Last icon free
+    if(currentIcon->dataPtrAlloc){
+        free(currentIcon->functionDataPtr);
+    }
+    free(currentIcon);
+}

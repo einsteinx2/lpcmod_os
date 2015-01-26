@@ -53,6 +53,13 @@ typedef unsigned short u16;
 
 #define NBFUNCTIONCALLS 17
 
+#define BNKFULLTSOP   0x00u
+#define BNKTSOPSPLIT0 0x10u
+#define BNKTSOPSPLIT1 0x18u
+#define BNK512  0x84u
+#define BNK256  0x86u
+#define BNKOS  0x87u
+
 
 typedef struct variableEntry{
     struct variableEntry * previous;
@@ -96,7 +103,7 @@ typedef struct _ifStatementList{
 
 bool stringDeclaration;
 
-void runScript(u8 * file, u32 fileSize, void * param);
+void runScript(u8 * file, u32 fileSize, int paramCount, int * param);
 
 bool ifFunction(int param1, u8 op, int param2);
 bool gpiFunction(u8 port);
@@ -174,7 +181,7 @@ int main (int argc, const char * argv[])
     fileSize = fread(buffer, sizeof(u8), fileSize, pFile);
 
     fclose(pFile);
-    runScript(buffer, fileSize, NULL);
+    runScript(buffer, fileSize, 0, NULL);
 
     free(buffer);
 
@@ -187,7 +194,7 @@ void showUsage(const char *progname) {
     printf("%s 'input file'\n",progname);
 }
 
-void runScript(u8 * file, u32 fileSize, void * param){
+void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     int insideIfStatement = 0;
     int i, j;
     int arithAccumulator;
@@ -221,6 +228,18 @@ void runScript(u8 * file, u32 fileSize, void * param){
     variableList.count = 0;
     variableList.first = NULL;
     variableList.last = NULL;
+    //Add parameters passed in runScript function call as variables.
+    for(i = 0; i < paramCount; i++){
+        sprintf(tempBuf, "_param%u", i);
+        variableFunction(tempBuf, param[i], &variableList);
+    }
+    variableFunction("BNK512", BNK512, &variableList);
+    variableFunction("BNK256", BNK256, &variableList);
+    variableFunction("BNKOS", BNKOS, &variableList);
+    variableFunction("BNKFULLTSOP", BNKFULLTSOP, &variableList);
+    variableFunction("BNKTSOPSPLIT0", BNKTSOPSPLIT0, &variableList);
+    variableFunction("BNKTSOPSPLIT1", BNKTSOPSPLIT1, &variableList);
+
     labelList.count = 0;
     labelList.first = NULL;
     labelList.last = NULL;

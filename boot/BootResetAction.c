@@ -201,6 +201,7 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
        LPCmodSettings.OSsettings.LEDColor == 0xFF ||
        LPCmodSettings.OSsettings.TSOPcontrol > 0x01 ||
+       LPCmodSettings.OSsettings.TSOPhide > 0x01 ||
        LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
        LPCmodSettings.OSsettings.useDHCP == 0xFF ||
        LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||

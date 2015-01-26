@@ -8,6 +8,7 @@
  ***************************************************************************/
 #include "ModchipMenuActions.h"
 #include "TextMenu.h"
+#include "IconMenu.h"
 #include "lpcmod_v1.h"
 #include "boot.h"
 #include "LEDMenuActions.h"
@@ -186,7 +187,8 @@ void editBIOSName(void *bankID){
 
 //The two functions below requires that the menu items be in that order:
 //Quickboot bank->Alternative Bank->TSOP Control->TSOP Split
-void toggleTSOPControl(void * itemPtr){
+void toggleTSOPcontrol(void * itemPtr){
+    ICON *currentIcon = firstIcon;
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     if(LPCmodSettings.OSsettings.TSOPcontrol){            //If already active
         LPCmodSettings.OSsettings.TSOPcontrol = 0x00;    //turn OFF.
@@ -205,4 +207,25 @@ void toggleTSOPControl(void * itemPtr){
         LPCmodSettings.OSsettings.TSOPcontrol = 0x01;    //Make sure to toggle only bit1.
     }
     sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
+    //Redraw Icon menu
+    freeIconMenuAllocMem();
+    IconMenuInit();
+    while(currentIcon->nextIcon!= NULL){
+        currentIcon = currentIcon->nextIcon;
+    }
+    selectedIcon = currentIcon; //Reselect Advanced Settings icon
+}
+
+void toggleTSOPhide(void * itemPtr){
+    ICON *currentIcon = firstIcon;
+    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
+    (LPCmodSettings.OSsettings.TSOPhide) = (LPCmodSettings.OSsettings.TSOPhide)? 0 : 1;
+    sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPhide)? "Yes" : "No");
+    //Redraw Icon menu
+    freeIconMenuAllocMem();
+    IconMenuInit();
+    while(currentIcon->nextIcon!= NULL){
+        currentIcon = currentIcon->nextIcon;
+    }
+    selectedIcon = currentIcon; //Reselect Advanced Settings icon
 }

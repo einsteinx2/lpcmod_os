@@ -134,7 +134,7 @@ void addNewLabel(struct _labelList * labelList, char * compareBuf, int position)
 bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList);
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
 
-void runScript(u8 * file, u32 fileSize, void * param){
+void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     int insideIfStatement = 0;
     int i, j;
     int arithAccumulator;
@@ -168,6 +168,18 @@ void runScript(u8 * file, u32 fileSize, void * param){
     variableList.count = 0;
     variableList.first = NULL;
     variableList.last = NULL;
+    //Add parameters passed in runScript function call as variables.
+    for(i = 0; i < paramCount; i++){
+        sprintf(tempBuf, "_param%u", i);
+        variableFunction(tempBuf, param[i], &variableList);
+    }
+    variableFunction("BNK512", BNK512, &variableList);
+    variableFunction("BNK256", BNK256, &variableList);
+    variableFunction("BNKOS", BNKOS, &variableList);
+    variableFunction("BNKFULLTSOP", BNKFULLTSOP, &variableList);
+    variableFunction("BNKTSOPSPLIT0", BNKTSOPSPLIT0, &variableList);
+    variableFunction("BNKTSOPSPLIT1", BNKTSOPSPLIT1, &variableList);
+
     labelList.count = 0;
     labelList.first = NULL;
     labelList.last = NULL;
@@ -589,10 +601,10 @@ bool waitFunction(int ms){
 }
 bool bootFunction(u8 bank){
     //printf("\n****Boot bank: %u", bank);
-    if(bank == BNK512 || bank == BNK256){
+    if(bank == BNK512 || bank == BNK256 || bank == BNKOS){
         BootModBios((void *)&bank);
     }
-    else if(bank == BNKTSOPSPLIT0 || bank == BNKTSOPSPLIT1 || BNKFULLTSOP){
+    else if(bank == BNKTSOPSPLIT0 || bank == BNKTSOPSPLIT1 || bank == BNKFULLTSOP){
         BootOriginalBios((void *)&bank);
     }
     else

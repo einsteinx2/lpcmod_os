@@ -11,6 +11,7 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
 	"fanspeed=",
 	"boottimeout=",
 	"tsopcontrol=",
+	"tsophide=",
 	"enablenetwork=",
 	"usedhcp=",
 	"enable5v=",
@@ -60,6 +61,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->OSsettings.bootTimeout = BOOT_TIMEWAIT;
     LPCmodSettings->OSsettings.LEDColor = LED_GREEN;    //Set for next boot
     LPCmodSettings->OSsettings.TSOPcontrol = 0;
+    LPCmodSettings->OSsettings.TSOPhide = 0;
     LPCmodSettings->OSsettings.enableNetwork = 1;
     LPCmodSettings->OSsettings.useDHCP = 1;
     LPCmodSettings->OSsettings.staticIP[0] = 192;
@@ -211,7 +213,7 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
 }
 
 void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
-    settingsPtrArray[0] =
+        settingsPtrArray[0] =
         &(tempLPCmodSettings->OSsettings.Quickboot);
         settingsPtrArray[1] =
         &(tempLPCmodSettings->OSsettings.fanSpeed);
@@ -220,24 +222,26 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
         settingsPtrArray[3] =
         &(tempLPCmodSettings->OSsettings.TSOPcontrol);
         settingsPtrArray[4] =
-        &(tempLPCmodSettings->OSsettings.enableNetwork);
+        &(tempLPCmodSettings->OSsettings.TSOPhide);
         settingsPtrArray[5] =
-        &(tempLPCmodSettings->OSsettings.useDHCP);
+        &(tempLPCmodSettings->OSsettings.enableNetwork);
         settingsPtrArray[6] =
-        &(tempLPCmodSettings->LCDsettings.enable5V);
+        &(tempLPCmodSettings->OSsettings.useDHCP);
         settingsPtrArray[7] =
-        &(tempLPCmodSettings->LCDsettings.nbLines);
+        &(tempLPCmodSettings->LCDsettings.enable5V);
         settingsPtrArray[8] =
-        &(tempLPCmodSettings->LCDsettings.lineLength);
+        &(tempLPCmodSettings->LCDsettings.nbLines);
         settingsPtrArray[9] =
-        &(tempLPCmodSettings->LCDsettings.backlight);
+        &(tempLPCmodSettings->LCDsettings.lineLength);
         settingsPtrArray[10] =
-        &(tempLPCmodSettings->LCDsettings.contrast);
+        &(tempLPCmodSettings->LCDsettings.backlight);
         settingsPtrArray[11] =
-        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
+        &(tempLPCmodSettings->LCDsettings.contrast);
         settingsPtrArray[12] =
-        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
         settingsPtrArray[13] =
+        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        settingsPtrArray[14] =
         &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
         
 
@@ -347,7 +351,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                 valueStartPtr++;
                                 if(i < IPTEXTPARAMGROUP){       //Numerical value parse
                                     if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9'){
-                                        *settingsPtrArray[i] = (u8)atoi(&compareBuf[valueStartPtr]);
+                                        *settingsPtrArray[i] = (u8)atoi(&compareBuf[valueStartPtr])? 1 : 0;
                                     }
                                     else if(!strncmp(&compareBuf[valueStartPtr], "Y", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "y", 1) ||

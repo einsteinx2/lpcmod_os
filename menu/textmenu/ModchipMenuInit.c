@@ -97,19 +97,31 @@ if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP) &&
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Control Xbox TSOP : ");
     sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
-    itemPtr->functionPtr= toggleTSOPControl;
+    itemPtr->functionPtr= toggleTSOPcontrol;
     itemPtr->functionDataPtr= itemPtr;
-    itemPtr->functionLeftPtr=toggleTSOPControl;
+    itemPtr->functionLeftPtr=toggleTSOPcontrol;
     itemPtr->functionLeftDataPtr = itemPtr;
-    itemPtr->functionRightPtr=toggleTSOPControl;
+    itemPtr->functionRightPtr=toggleTSOPcontrol;
     itemPtr->functionRightDataPtr = itemPtr;
     TextMenuAddItem(menuPtr, itemPtr);
     
 }
 
+itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption,"Hide TSOP boot icon : ");
+    sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPhide)? "Yes" : "No");
+    itemPtr->functionPtr= toggleTSOPhide;
+    itemPtr->functionDataPtr= itemPtr;
+    itemPtr->functionLeftPtr=toggleTSOPhide;
+    itemPtr->functionLeftDataPtr = itemPtr;
+    itemPtr->functionRightPtr=toggleTSOPhide;
+    itemPtr->functionRightDataPtr = itemPtr;
+    TextMenuAddItem(menuPtr, itemPtr);
+
 /*
  *
- * If you change order of the 3 entries above, make sure to modify functions of these entries in ModchipMenuActions.c
+ * If you change order of the 4 entries above, make sure to modify functions of these entries in ModchipMenuActions.c
  *
  */
 
