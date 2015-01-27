@@ -1,5 +1,5 @@
 subdir +=  cdrom
 subdir +=  fatx
-subdir +=  grub
+#subdir +=  grub
 
 include $(TOPDIR)/Rules.make

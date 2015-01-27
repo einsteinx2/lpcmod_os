@@ -82,7 +82,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
             iconPtr->dataPtrAlloc = true;
         AddIcon(iconPtr);
     }
-    if(LPCmodSettings.OSsettings.TSOPhide){
+    if(!LPCmodSettings.OSsettings.TSOPhide){
         if(((fHasHardware == SYSCON_ID_V1) || (fHasHardware == SYSCON_ID_V1_TSOP)) &&
             LPCmodSettings.OSsettings.TSOPcontrol){
                 iconPtr = (ICON *)malloc(sizeof(ICON));

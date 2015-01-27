@@ -210,7 +210,11 @@ bool IconMenu(void) {
     VIDEO_CURSOR_POSX=((252+nModeDependentOffset)<<2);
     VIDEO_CURSOR_POSY=nTempCursorY-100;
 
-    if(LPCmodSettings.OSsettings.bootTimeout == 0 || cromwell_config==XROMWELL)
+    if(LPCmodSettings.OSsettings.bootTimeout == 0 || cromwell_config==XROMWELL ||
+            //No countdown if activeBank is set to a TSOP bank and TSOP boot icon are hidden.
+       (LPCmodSettings.OSsettings.TSOPhide && (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0 ||
+                                               LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1 ||
+                                               LPCmodSettings.OSsettings.activeBank == BNKFULLTSOP)))
         temp = 0;                                    //Disable boot timeout
     else
         varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;
@@ -357,7 +361,7 @@ bool IconMenu(void) {
 void freeIconMenuAllocMem(void){
     ICON *currentIcon = firstIcon;
 
-    //Go too last icon in list
+    //Go to last icon in list
     while(currentIcon->nextIcon != NULL){
         currentIcon = currentIcon->nextIcon;
     }
@@ -370,9 +374,10 @@ void freeIconMenuAllocMem(void){
         free(currentIcon->nextIcon);
     }
 
-    //Last icon free
+    //Last icon free(back to firstIcon)
     if(currentIcon->dataPtrAlloc){
         free(currentIcon->functionDataPtr);
     }
     free(currentIcon);
+    currentIcon = NULL;
 }

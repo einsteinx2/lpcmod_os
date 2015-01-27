@@ -185,8 +185,8 @@ void editBIOSName(void *bankID){
 }
 
 
-//The two functions below requires that the menu items be in that order:
-//Quickboot bank->Alternative Bank->TSOP Control->TSOP Split
+//The function below requires that the menu items be in that order:
+//Quickboot bank->Alternative Bank->TSOP Control
 void toggleTSOPcontrol(void * itemPtr){
     ICON *currentIcon = firstIcon;
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
@@ -219,8 +219,8 @@ void toggleTSOPcontrol(void * itemPtr){
 void toggleTSOPhide(void * itemPtr){
     ICON *currentIcon = firstIcon;
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    (LPCmodSettings.OSsettings.TSOPhide) = (LPCmodSettings.OSsettings.TSOPhide)? 0 : 1;
-    sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPhide)? "Yes" : "No");
+    LPCmodSettings.OSsettings.TSOPhide = LPCmodSettings.OSsettings.TSOPhide? 0 : 1;
+    sprintf(tempItemPtr->szParameter,"%s", LPCmodSettings.OSsettings.TSOPhide? "Yes" : "No");
     //Redraw Icon menu
     freeIconMenuAllocMem();
     IconMenuInit();
