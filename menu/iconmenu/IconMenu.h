@@ -47,5 +47,6 @@ void AddIcon(ICON *newIcon);
 bool IconMenu(void);
 
 void freeIconMenuAllocMem(void);
+void repositionIconPtrs(void);
 
 #endif

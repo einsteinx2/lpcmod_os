@@ -53,8 +53,8 @@ void             tcp_tmr     (void);  /* Must be called every
            TCP_TMR_INTERVAL
            ms. (Typically 250 ms). */
 /* Application program's interface: */
-struct tcp_pcb * tcp_new     (void);
-struct tcp_pcb * tcp_alloc   (u8_t prio);
+struct tcp_pcb * tcp_new     (unsigned char flashType);
+struct tcp_pcb * tcp_alloc   (u8_t prio, unsigned char flashType);
 
 void             tcp_arg     (struct tcp_pcb *pcb, void *arg);
 void             tcp_accept  (struct tcp_pcb *pcb,
@@ -310,6 +310,9 @@ struct tcp_pcb {
   
   /* KEEPALIVE counter */
   u8_t keep_cnt;
+
+  /*http_accept function behavior selector flag*/
+  unsigned char flashType;
 };
 
 struct tcp_pcb_listen {  
@@ -333,6 +336,10 @@ struct tcp_pcb_listen {
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected. */
   err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
+
+  /*http_accept function behavior selector flag*/
+  //unsigned char flashType;
+
 #endif /* LWIP_CALLBACK_API */
 };
 

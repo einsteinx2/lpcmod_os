@@ -188,17 +188,17 @@ void editBIOSName(void *bankID){
 //The function below requires that the menu items be in that order:
 //Quickboot bank->Alternative Bank->TSOP Control
 void toggleTSOPcontrol(void * itemPtr){
-    ICON *currentIcon = firstIcon;
+
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     if(LPCmodSettings.OSsettings.TSOPcontrol){            //If already active
         LPCmodSettings.OSsettings.TSOPcontrol = 0x00;    //turn OFF.
         if(LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT0 ||
-           LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT1){    //If altBank setting was set to TSOP bank 1,2 or 3.
+           LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT1){    //If altBank setting was set to TSOP bank 0 or 1.
             LPCmodSettings.OSsettings.altBank = BNKFULLTSOP;    //Single TSOP bank so make sure altBank is properly set.
             sprintf(tempItemPtr->previousMenuItem->szParameter,"TSOP");
         }
         if(LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0 ||
-           LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1){    //If activeBank setting was set to TSOP bank 1,2 or 3.
+           LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1){    //If activeBank setting was set to TSOP bank 0 or 1.
             LPCmodSettings.OSsettings.activeBank = BNKFULLTSOP;    //Single TSOP bank so make sure activeBank is properly set.
             sprintf(tempItemPtr->previousMenuItem->previousMenuItem->szParameter,"TSOP");
         }
@@ -207,25 +207,21 @@ void toggleTSOPcontrol(void * itemPtr){
         LPCmodSettings.OSsettings.TSOPcontrol = 0x01;    //Make sure to toggle only bit1.
     }
     sprintf(tempItemPtr->szParameter,"%s", (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
-    //Redraw Icon menu
-    freeIconMenuAllocMem();
-    IconMenuInit();
-    while(currentIcon->nextIcon!= NULL){
-        currentIcon = currentIcon->nextIcon;
+    //No need to redraw icons if TSOP icons are already hidden.
+    if(!LPCmodSettings.OSsettings.TSOPhide){
+        //Redraw Icon menu
+        freeIconMenuAllocMem();
+        IconMenuInit();
+        repositionIconPtrs();
     }
-    selectedIcon = currentIcon; //Reselect Advanced Settings icon
 }
 
 void toggleTSOPhide(void * itemPtr){
-    ICON *currentIcon = firstIcon;
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     LPCmodSettings.OSsettings.TSOPhide = LPCmodSettings.OSsettings.TSOPhide? 0 : 1;
     sprintf(tempItemPtr->szParameter,"%s", LPCmodSettings.OSsettings.TSOPhide? "Yes" : "No");
     //Redraw Icon menu
     freeIconMenuAllocMem();
     IconMenuInit();
-    while(currentIcon->nextIcon!= NULL){
-        currentIcon = currentIcon->nextIcon;
-    }
-    selectedIcon = currentIcon; //Reselect Advanced Settings icon
+    repositionIconPtrs();
 }

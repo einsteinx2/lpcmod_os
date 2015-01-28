@@ -107,7 +107,21 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         busyLED();
         //printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
         memcpy (fileBuf, hs->bios_start, hs->bios_len);
-        netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
+        switch(pcb->flashType){
+            case EEPROM_NETFLASH:
+                //Flash eeprom routine here.
+                //Debug stuff for now
+                displayEditEEPROMBuffer(NULL);
+                netFlashOver = 1;
+                break;
+            case BIOS_NETFLASH:
+                netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
+                break;
+            default:
+                while(1);       //Just hang there.
+                break;
+        }
+
   }
 
   if (hs->postdata)
@@ -421,11 +435,11 @@ http_accept(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 /*-----------------------------------------------------------------------------------*/
 void
-httpd_init(void)
+httpd_init(unsigned char flashType)
 {
   struct tcp_pcb *pcb;
 
-  pcb = tcp_new();
+  pcb = tcp_new(flashType);
   tcp_bind(pcb, IP_ADDR_ANY, 80);
   pcb = tcp_listen(pcb);
   tcp_accept(pcb, http_accept);

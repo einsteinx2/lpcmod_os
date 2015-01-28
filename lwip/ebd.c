@@ -178,7 +178,7 @@ run_lwip (unsigned char flashType) {
 
     netif_set_default (&netif);
 
-    httpd_init ();
+    httpd_init(flashType);
     int divisor = 0;
     while (!netFlashOver) {
         if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {

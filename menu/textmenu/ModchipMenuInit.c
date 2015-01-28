@@ -173,16 +173,6 @@ itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
-
-    if(fHasHardware == SYSCON_ID_V1 && DEV_FEATURES){
-        //GPIO CONFIG MENU
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption, "GPIO config behavior");
-        itemPtr->functionPtr=DrawChildTextMenu;
-        //itemPtr->functionDataPtr = (void *)GPIOConfigMenuInit();
-        TextMenuAddItem(menuPtr, itemPtr);  
-    }
     
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));

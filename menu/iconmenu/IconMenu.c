@@ -380,4 +380,25 @@ void freeIconMenuAllocMem(void){
     }
     free(currentIcon);
     currentIcon = NULL;
+    firstIcon = NULL;
+    firstVisibleIcon = NULL;
+    lastVisibleIcon = NULL;
+}
+
+void repositionIconPtrs(void){
+    lastVisibleIcon = firstIcon;
+    //Move up to last Icon (Advanced Settings).
+    while(lastVisibleIcon->nextIcon!= NULL){
+        lastVisibleIcon = lastVisibleIcon->nextIcon;
+    }
+    //Set First visible Icon 2 icons aways from last's.
+    if(lastVisibleIcon->previousIcon != NULL){
+        firstVisibleIcon = lastVisibleIcon->previousIcon;
+        if(lastVisibleIcon->previousIcon->previousIcon != NULL){
+            firstVisibleIcon = lastVisibleIcon->previousIcon->previousIcon;
+        }
+    }
+    else
+        firstVisibleIcon = firstIcon;
+    selectedIcon = lastVisibleIcon; //Reselect Advanced Settings icon
 }

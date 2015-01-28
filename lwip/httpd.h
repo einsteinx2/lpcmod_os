@@ -32,6 +32,6 @@
 #ifndef __HTTPD_H__
 #define __HTTPD_H__
 
-void httpd_init(void);
+void httpd_init(unsigned char flashType);
 
 #endif /* __HTTPD_H__ */

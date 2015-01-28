@@ -912,7 +912,7 @@ tcp_kill_timewait(void)
 
 
 struct tcp_pcb *
-tcp_alloc(u8_t prio)
+tcp_alloc(u8_t prio, unsigned char flashType)
 {
   struct tcp_pcb *pcb;
   u32_t iss;
@@ -959,6 +959,7 @@ tcp_alloc(u8_t prio)
     /* Init KEEPALIVE timer */
     pcb->keepalive = TCP_KEEPDEFAULT;
     pcb->keep_cnt = 0;
+    pcb->flashType = flashType;
   }
   return pcb;
 }
@@ -972,9 +973,9 @@ tcp_alloc(u8_t prio)
  */
 
 struct tcp_pcb *
-tcp_new(void)
+tcp_new(unsigned char flashType)
 {
-  return tcp_alloc(TCP_PRIO_NORMAL);
+  return tcp_alloc(TCP_PRIO_NORMAL, flashType);
 }
 
 /*
