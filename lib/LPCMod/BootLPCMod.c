@@ -12,6 +12,7 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
 	"boottimeout=",
 	"tsopcontrol=",
 	"tsophide=",
+	"runbootscript=",
 	"enablenetwork=",
 	"usedhcp=",
 	"enable5v=",
@@ -62,6 +63,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->OSsettings.LEDColor = LED_GREEN;    //Set for next boot
     LPCmodSettings->OSsettings.TSOPcontrol = 0;
     LPCmodSettings->OSsettings.TSOPhide = 0;
+    LPCmodSettings->OSsettings.runBootScript = 0;
     LPCmodSettings->OSsettings.enableNetwork = 1;
     LPCmodSettings->OSsettings.useDHCP = 1;
     LPCmodSettings->OSsettings.staticIP[0] = 192;
@@ -224,24 +226,26 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
         settingsPtrArray[4] =
         &(tempLPCmodSettings->OSsettings.TSOPhide);
         settingsPtrArray[5] =
-        &(tempLPCmodSettings->OSsettings.enableNetwork);
+        &(tempLPCmodSettings->OSsettings.runBootScript);
         settingsPtrArray[6] =
-        &(tempLPCmodSettings->OSsettings.useDHCP);
+        &(tempLPCmodSettings->OSsettings.enableNetwork);
         settingsPtrArray[7] =
-        &(tempLPCmodSettings->LCDsettings.enable5V);
+        &(tempLPCmodSettings->OSsettings.useDHCP);
         settingsPtrArray[8] =
-        &(tempLPCmodSettings->LCDsettings.nbLines);
+        &(tempLPCmodSettings->LCDsettings.enable5V);
         settingsPtrArray[9] =
-        &(tempLPCmodSettings->LCDsettings.lineLength);
+        &(tempLPCmodSettings->LCDsettings.nbLines);
         settingsPtrArray[10] =
-        &(tempLPCmodSettings->LCDsettings.backlight);
+        &(tempLPCmodSettings->LCDsettings.lineLength);
         settingsPtrArray[11] =
-        &(tempLPCmodSettings->LCDsettings.contrast);
+        &(tempLPCmodSettings->LCDsettings.backlight);
         settingsPtrArray[12] =
-        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
+        &(tempLPCmodSettings->LCDsettings.contrast);
         settingsPtrArray[13] =
-        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
         settingsPtrArray[14] =
+        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        settingsPtrArray[15] =
         &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
         
 

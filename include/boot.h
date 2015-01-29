@@ -365,7 +365,8 @@ typedef struct _OSsettings {
     u8    LEDColor;
     u8    TSOPcontrol;        //variable contains the following settings: bit0=active
     u8    TSOPhide;           //Hide boot from TSOP option in icon menu when set.
-    u8    reserved1[11];
+    u8    runBootScript;      //Will execute script at BIOS bank boot.
+    u8    reserved1[10];
     char    biosName0[21];        //512KB bank name. 20 characters max to properly display on LCD.
     char    biosName1[21];        //256KB bank name
     char    biosName2[21];        //Reserved for future use.
@@ -412,7 +413,12 @@ typedef struct _LPCmodSettings {
 
 _LPCmodSettings LPCmodSettings;
 
+typedef struct _scriptEntry {
+    u16 ScripMagicNumber;       //Must be set to 0xFAF* , * is script number, starting at 1.
+    u16 nextEntryPosition;      //Relative position from 0x3f00 in flash. 0 means no other saved script in flash.
+}__attribute__((packed))_scriptEntry;                //For a total of 4 bytes
 
+_scriptEntry *scriptEntryList;
 
 typedef struct _xLCD {
     int DisplayType;

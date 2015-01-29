@@ -92,7 +92,6 @@ conn_err(void *arg, err_t err)
 }
 /*-----------------------------------------------------------------------------------*/
 static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
-  int res;
   tcp_arg(pcb, NULL);
   tcp_sent(pcb, NULL);
   tcp_recv(pcb, NULL);
@@ -441,7 +440,7 @@ httpd_init(unsigned char flashType)
 
   pcb = tcp_new(flashType);
   tcp_bind(pcb, IP_ADDR_ANY, 80);
-  pcb = tcp_listen(pcb);
+  pcb = tcp_listen(pcb, flashType);
   tcp_accept(pcb, http_accept);
   //printk("httpd_init");
   //cromwellSuccess();

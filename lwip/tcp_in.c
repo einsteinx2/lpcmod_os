@@ -420,7 +420,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       tcphdr->dest, tcphdr->src);
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %u -> %u.\n", tcphdr->src, tcphdr->dest));
-    npcb = tcp_alloc(pcb->prio, 0);
+    npcb = tcp_alloc(pcb->prio, pcb->flashType);
     /* If a new PCB could not be created (probably due to lack of memory),
        we don't do anything, but rely on the sender will retransmit the
        SYN at a time when we have more memory available. */

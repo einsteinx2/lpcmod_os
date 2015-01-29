@@ -82,7 +82,7 @@ err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
             u16_t port, err_t (* connected)(void *arg,
                     struct tcp_pcb *tpcb,
                     err_t err));
-struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb);
+struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb, unsigned char flashType);
 void             tcp_abort   (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
 err_t            tcp_write   (struct tcp_pcb *pcb, const void *dataptr, u16_t len,
@@ -338,7 +338,7 @@ struct tcp_pcb_listen {
   err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
 
   /*http_accept function behavior selector flag*/
-  //unsigned char flashType;
+  unsigned char flashType;
 
 #endif /* LWIP_CALLBACK_API */
 };

@@ -399,7 +399,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  */
 
 struct tcp_pcb *
-tcp_listen(struct tcp_pcb *pcb)
+tcp_listen(struct tcp_pcb *pcb, unsigned char flashType)
 {
   struct tcp_pcb_listen *lpcb;
 
@@ -422,6 +422,7 @@ tcp_listen(struct tcp_pcb *pcb)
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
+  lpcb->flashType = flashType;
 #endif /* LWIP_CALLBACK_API */
   TCP_REG(&tcp_listen_pcbs.listen_pcbs, lpcb);
   return (struct tcp_pcb *)lpcb;
