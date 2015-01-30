@@ -807,7 +807,7 @@ int CalculateDrivePassword(int driveId, unsigned char *key) {
          tsaHarddiskInfo[driveId].s_length);
 
     //Failed to generate a key
-    if (nVersionHashing==0) return 1;
+    if (nVersionHashing==0 || nVersionHashing == 13) return 1;
 
     memcpy(key,&baMagic[2],20);
     return 0;

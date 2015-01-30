@@ -21,7 +21,7 @@ extern char *xblastcfgstrings[NBTXTPARAMS];
 unsigned char *settingsPtrArray[IPTEXTPARAMGROUP];
 unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP];
 char *textSettingsPtrArray[SPECIALPARAMGROUP - TEXTPARAMGROUP];
-unsigned char *specialCasePtrArray[4];
+unsigned char *specialCasePtrArray[NBTXTPARAMS - SPECIALPARAMGROUP];
 
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 

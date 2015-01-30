@@ -66,6 +66,16 @@ static char http_file1[] =
 static char http_file2[] = 
 #include "webContent/fail.html.h"
 ;
+
+static char http_file5[] =
+#include "webContent/mainEEPROM.html.h"
+;
+static char http_file6[] =
+#include "webContent/okEEPROM.html.h"
+;
+static char http_file7[] =
+#include "webContent/failEEPROM.html.h"
+;
 static char http_file404[] = "HTTP/1.1 404 NOT FOUND\nContent-Type: text/html\nContent-Length: 11\n\nHello 404!\n";
 static char http_file500[] = "HTTP/1.1 500 Internal Server Error\nContent-Type: text/html\nContent-Length: 11\n\nError 500!\n";
 
@@ -73,12 +83,15 @@ struct http_file {
 	int len;
 	char *data;
 };
-static struct http_file http_files[5]={
+static struct http_file http_files[8]={
     {sizeof (http_file0) - 1, http_file0},       /* 0 */
     {sizeof (http_file1) - 1, http_file1},       /* 1 */
     {sizeof (http_file2) - 1, http_file2},       /* 2 */
     {sizeof (http_file404) - 1, http_file404},   /* 3 */
     {sizeof (http_file500) - 1, http_file500},   /* 4 */
+    {sizeof (http_file0) - 1, http_file5},       /* 5 */
+    {sizeof (http_file1) - 1, http_file6},       /* 6 */
+    {sizeof (http_file2) - 1, http_file7}        /* 7 */
 };
 
 /*-----------------------------------------------------------------------------------*/
@@ -97,24 +110,21 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
   tcp_recv(pcb, NULL);
   u8 * fileBuf;
 
-  fileBuf = (u8 *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
-  memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
-
   if (hs->bios_start) {
         extern void ClearScreen (void);
         ClearScreen ();
         busyLED();
         //printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
-        memcpy (fileBuf, hs->bios_start, hs->bios_len);
         switch(pcb->flashType){
             case EEPROM_NETFLASH:
-                //Flash eeprom routine here.
-                //Debug stuff for now
-                displayEditEEPROMBuffer(NULL);
-                netFlashOver = 1;
+                netFlashOver = updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
                 break;
             case BIOS_NETFLASH:
+                fileBuf = (u8 *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
+                memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
+                memcpy (fileBuf, hs->bios_start, hs->bios_len);
                 netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
+                free(fileBuf);
                 break;
             default:
                 while(1);       //Just hang there.
@@ -126,7 +136,6 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
   if (hs->postdata)
       free (hs->postdata);
 
-  free(fileBuf);
   mem_free(hs);
   tcp_close(pcb);
 }
@@ -213,8 +222,8 @@ handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 			if (fno > 2) {
 				fno = 3; /* 404 */
 			}
-			hs->file = http_files[fno].data;
-			hs->left = http_files[fno].len;
+			hs->file = http_files[fno + (pcb->flashType * 5)].data;
+			hs->left = http_files[fno + (pcb->flashType * 5)].len;
 		} else if (strncmp (hs->lineBuf, "POST /", 5) == 0) {
 			hs->ispost = 1;
 			hs->file = http_files[4].data;
@@ -261,7 +270,7 @@ char * xstrstr(const char * s1, const char * s2)
 }
 
 static int
-handle_post(struct http_state *hs)
+handle_post(struct http_state *hs, unsigned char flashType)
 {
 	int i, ncnt = 0, blen, len;
 	char *start, *end;
@@ -317,9 +326,10 @@ handle_post(struct http_state *hs)
 	len = end - start;
 
 
-	if (len != 256*1024 && len != 512*1024 && len != 1024*1024) {
-		hs->file = http_files[2].data;
-		hs->left = http_files[2].len;
+	if ((flashType == BIOS_NETFLASH && (len != 256*1024 && len != 512*1024 && len != 1024*1024)) ||
+	    (flashType == EEPROM_NETFLASH && len != 256)) {
+		hs->file = http_files[2 + (flashType * 5)].data;
+		hs->left = http_files[2 + (flashType * 5)].len;
 		printk ("Illegal size, NOT flashing\n");
 		return 0;
 	}
@@ -327,10 +337,9 @@ handle_post(struct http_state *hs)
 	hs->bios_start = start;
 	hs->bios_len = len;
 
-	hs->file = http_files[1].data;
-	hs->left = http_files[1].len;
-/*
-*/
+	hs->file = http_files[1 + (flashType * 5)].data;
+	hs->left = http_files[1 + (flashType * 5)].len;
+
 	return 1;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -371,7 +380,7 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 			  } else {
 				  hs->postdata[hs->postpos++] = c;
 				  if (hs->postpos == hs->postlen) {
-					  handle_post (hs);
+					  handle_post(hs, pcb->flashType);
 					  send_data(pcb, hs);
 					  tcp_poll(pcb, http_poll, 4);
 					  printk("\n  http_recv");
@@ -447,4 +456,3 @@ httpd_init(unsigned char flashType)
   //downloadingLED();
 }
 /*-----------------------------------------------------------------------------------*/
-

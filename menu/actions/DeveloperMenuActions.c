@@ -215,8 +215,8 @@ void settingsPrintData(void * ignored){
             printk("\n           %s%s", xblastcfgstrings[i],  textSettingsPtrArray[i-TEXTPARAMGROUP]);
         else{
             switch(i){
-                case 27:
-                case 28:
+                case (SPECIALPARAMGROUP):
+                case (SPECIALPARAMGROUP + 1):
                     switch(*specialCasePtrArray[i - SPECIALPARAMGROUP]){
                         case BNK512:
                             sprintf(specialCasesBuf, "BNK512");
@@ -239,7 +239,7 @@ void settingsPrintData(void * ignored){
                     }
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
-                case 29:
+                case (SPECIALPARAMGROUP + 2):
                     switch(*specialCasePtrArray[i - SPECIALPARAMGROUP]){
                         case LED_OFF:
                             sprintf(specialCasesBuf, "LED_OFF");
@@ -262,7 +262,7 @@ void settingsPrintData(void * ignored){
                     }
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
-                case 30:
+                case (SPECIALPARAMGROUP + 3):
                     if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == HD44780)
                         printk("\n           %s%s", xblastcfgstrings[i], "HD44780");
                     else if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == KS0073)

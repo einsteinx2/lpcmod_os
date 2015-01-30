@@ -184,40 +184,12 @@ void changeDVDRegion(u8 value){
 
 int getGameRegionValue(void){
     int result = -1;
-    u8 baKeyHash[20];
-    u8 baDataHashConfirm[20];
     u8 baEepromDataLocalCopy[0x30];
-    struct rc4_key RC4_key;
     int version = 0;
-    int counter;
     u32 gameRegion=0;
 
-    for (counter=9;counter<13;counter++)
-    {
-           memset(&RC4_key,0,sizeof(rc4_key));
-           memcpy(&baEepromDataLocalCopy[0], &eeprom, 0x30);
+    version = decryptEEPROMData((u8 *)&eeprom, baEepromDataLocalCopy);
 
-                   // Calculate the Key-Hash
-        HMAC_hdd_calculation(counter, baKeyHash, &baEepromDataLocalCopy[0], 20, NULL);
-
-        //initialize RC4 key
-        rc4_prepare_key(baKeyHash, 20, &RC4_key);
-
-        //decrypt data (from eeprom) with generated key
-        rc4_crypt(&baEepromDataLocalCopy[20],28,&RC4_key);        //Whole crypted block
-        //rc4_crypt(&baEepromDataLocalCopy[28],20,&RC4_key);        //"real" data
-
-        // Calculate the Confirm-Hash
-        HMAC_hdd_calculation(counter, baDataHashConfirm, &baEepromDataLocalCopy[20], 8, &baEepromDataLocalCopy[28], 20, NULL);
-
-        if (!memcmp(baEepromDataLocalCopy,baDataHashConfirm,0x14)) {
-            // Confirm Hash is correct
-            // Copy actual Xbox Version to Return Value
-            version=counter;
-            // exits the loop
-            break;
-        }
-    }
     if(version == 13)
         result = XBE_INVALID;
     else {
@@ -244,34 +216,11 @@ int setGameRegionValue(u8 value){
     int counter;
     u32 gameRegion = value;
 
-    for (counter=9;counter<13;counter++)
-    {
-        memset(&RC4_key,0,sizeof(rc4_key));
-        memcpy(&baEepromDataLocalCopy[0], &eeprom, 0x30);
+    version = decryptEEPROMData((u8 *)&eeprom, baEepromDataLocalCopy);
 
-        // Calculate the Key-Hash
-        HMAC_hdd_calculation(counter, baKeyHash, &baEepromDataLocalCopy[0], 20, NULL);
-
-        //initialize RC4 key
-        rc4_prepare_key(baKeyHash, 20, &RC4_key);
-
-          //decrypt data (from eeprom) with generated key
-        rc4_crypt(&baEepromDataLocalCopy[20],28,&RC4_key);        //Whole crypted block
-        //rc4_crypt(&baEepromDataLocalCopy[28],20,&RC4_key);        //"real" data
-
-        // Calculate the Confirm-Hash
-        HMAC_hdd_calculation(counter, baDataHashConfirm, &baEepromDataLocalCopy[20], 8, &baEepromDataLocalCopy[28], 20, NULL);
-
-        if (!memcmp(baEepromDataLocalCopy,baDataHashConfirm,0x14)) {
-            // Confirm Hash is correct
-            // Copy actual Xbox Version to Return Value
-            version=counter;
-            // exits the loop
-            break;
-        }
-    }
     if (version == 13) return (-1);    //error, let's not do something stupid here. Leave with dignity.
     //else we know the version
+    memset(&RC4_key,0,sizeof(rc4_key));
     memcpy(&baEepromDataLocalCopy[28+16],&gameRegion,4);
 
     // Calculate the Confirm-Hash

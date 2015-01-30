@@ -164,41 +164,10 @@ u32 BootHddKeyGenerateEepromKeyData(
         
 ) {
 
-    u8 baKeyHash[20];
-    u8 baDataHashConfirm[20];
-    u8 baEepromDataLocalCopy[0x30];
-    struct rc4_key RC4_key;
-           int version = 0; 
-           int counter;
+   u8 baEepromDataLocalCopy[0x30];
+   int version = 0;
         
-    // Static Version change not included yet
-        
-    for (counter=9;counter<13;counter++)
-    {
-            memset(&RC4_key,0,sizeof(rc4_key));
-        memcpy(&baEepromDataLocalCopy[0], pbEeprom_data, 0x30);
-                
-                // Calculate the Key-Hash
-        HMAC_hdd_calculation(counter, baKeyHash, &baEepromDataLocalCopy[0], 20, NULL);
-
-        //initialize RC4 key
-        rc4_prepare_key(baKeyHash, 20, &RC4_key);
-
-            //decrypt data (from eeprom) with generated key
-        rc4_crypt(&baEepromDataLocalCopy[20],8,&RC4_key);        //confounder of some kind?
-        rc4_crypt(&baEepromDataLocalCopy[28],20,&RC4_key);        //"real" data
-                
-                // Calculate the Confirm-Hash
-        HMAC_hdd_calculation(counter, baDataHashConfirm, &baEepromDataLocalCopy[20], 8, &baEepromDataLocalCopy[28], 20, NULL);
-        
-        if (!memcmp(baEepromDataLocalCopy,baDataHashConfirm,0x14)) {
-            // Confirm Hash is correct  
-            // Copy actual Xbox Version to Return Value
-            version=counter;
-            // exits the loop
-            break;
-        }
-    }
+    version = decryptEEPROMData(pbEeprom_data, baEepromDataLocalCopy);
     
     //copy out HDKey
     memcpy(pbResult,&baEepromDataLocalCopy[28],16);

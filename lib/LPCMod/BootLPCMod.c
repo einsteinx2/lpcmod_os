@@ -383,8 +383,8 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                 }
                                 else{
                                     switch(i){
-                                        case 27:
-                                        case 28:
+                                        case (SPECIALPARAMGROUP):
+                                        case (SPECIALPARAMGROUP + 1):
                                             if(!strcmp(&compareBuf[valueStartPtr], "BNK512"))
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNK256"))
@@ -396,7 +396,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNKFULLTSOP"))
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
                                             break;
-                                        case 29:
+                                        case (SPECIALPARAMGROUP + 2):
                                             if(!strncmp(&compareBuf[valueStartPtr], "Of", 2) || !strncmp(&compareBuf[valueStartPtr], "of", 2))    //LED_OFF
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
                                             else if(!strncmp(&compareBuf[valueStartPtr], "G", 1) || !strncmp(&compareBuf[valueStartPtr], "g", 1))    //LED_GREEN
@@ -408,7 +408,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                             if(!strncmp(&compareBuf[valueStartPtr], "C", 1) || !strncmp(&compareBuf[valueStartPtr], "c", 1))    //LED_CYCLE
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
                                             break;
-                                        case 30:
+                                        case (SPECIALPARAMGROUP + 3):
                                             if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = HD44780 ;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))

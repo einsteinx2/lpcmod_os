@@ -8,6 +8,7 @@
  ***************************************************************************/
 #include "EepromEditMenuActions.h"
 #include "ToolsMenuActions.h"
+#include "BootFATX.h"
 #include "lpcmod_v1.h"
 
 void displayEditEEPROMBuffer(void *ignored){
@@ -182,26 +183,26 @@ void LastResortRecovery(void *ignored){
     sprintf(revString, "    Overwriting with %s EEPROM image. OK?", xbox_mb_rev[mbVersion]);
     if(ConfirmDialog(revString, 1))             //Second warning for user to assert if Xbox revision detection is right.
         return;
-        switch(mbVersion){
-            //TODO: Validate if all DevKits and DebugKits are 1.0!
-            case DEVKIT:
-            case DEBUGKIT:
-            case REV1_0:
-                memcpy(editeeprom, EEPROMimg10, sizeof(EEPROMDATA));
-                break;
-            case REV1_1:
-                memcpy(editeeprom, EEPROMimg11, sizeof(EEPROMDATA));
-                break;
-            case REV1_2:
-                memcpy(editeeprom, EEPROMimg12, sizeof(EEPROMDATA));
-                break;
-            case REV1_4:
-                memcpy(editeeprom, EEPROMimg14, sizeof(EEPROMDATA));
-                break;
-            case REV1_6:
-                memcpy(editeeprom, EEPROMimg16, sizeof(EEPROMDATA));
-                break;
-        }
+    switch(mbVersion){
+        //TODO: Validate if all DevKits and DebugKits are 1.0!
+        case DEVKIT:
+        case DEBUGKIT:
+        case REV1_0:
+            memcpy(editeeprom, EEPROMimg10, sizeof(EEPROMDATA));
+            break;
+        case REV1_1:
+            memcpy(editeeprom, EEPROMimg11, sizeof(EEPROMDATA));
+            break;
+        case REV1_2:
+            memcpy(editeeprom, EEPROMimg12, sizeof(EEPROMDATA));
+            break;
+        case REV1_4:
+            memcpy(editeeprom, EEPROMimg14, sizeof(EEPROMDATA));
+            break;
+        case REV1_6:
+            memcpy(editeeprom, EEPROMimg16, sizeof(EEPROMDATA));
+            break;
+    }
 }
 
 void bruteForceFixDisplayresult(void *ignored){
@@ -268,7 +269,7 @@ void confirmSaveToEEPROMChip(void *ignored){
         if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
             if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
                     if(UnlockHDD(nIndexDrive, 0))                                             //0 is for silent
-                        unlockConfirm[nIndexDrive] = 1;                                   //Everything went well, we<ll relock after eeprom write.
+                        unlockConfirm[nIndexDrive] = 1;                                   //Everything went well, we'll relock after eeprom write.
                     else{
                         unlockConfirm[0] = 255;       //error
                         unlockConfirm[1] = 255;       //error
@@ -369,6 +370,72 @@ void editMACAddress(void *ignored){
     }
 }
 
-void restoreEEPROMFromFile(void * ignored) {
+void restoreEEPROMFromFile(void *fname) {
+    int res;
+    FATXFILEINFO fileinfo;
+    FATXPartition *partition;
 
+    partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
+
+    res = LoadFATXFile(partition, fname, &fileinfo);
+    ToolHeader("Load EEPROM image from HDD");
+    if(res){
+        updateEEPROMEditBufferFromInputBuffer(fileinfo.buffer, fileinfo.fileSize);
+        free(fileinfo.buffer);
+    }
+    else{
+            printk("\n\n           Error!\n           File read error.");
+    }
+    ToolFooter();
+}
+
+int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size){
+    int res = 0, version, tempVersion;
+    u8 unusedBuffer[0x30];
+
+    if(size != 256){
+        res = -3;
+    }
+    else{
+        version = decryptEEPROMData((u8 *)&eeprom, unusedBuffer);
+        tempVersion = decryptEEPROMData(buffer, unusedBuffer);
+        if(version >= 9 && version < 13){   //Current content in eeprom is valid.
+            //Let's check if load eeprom image is of same version.
+            if(tempVersion >= 9 && tempVersion < 13){
+                //Need user confirmation if versions are not equal.
+                if((version == tempVersion) || !ConfirmDialog("     EEPROM version mismatch. Continue anyway?", 1)){
+                    memcpy(editeeprom, buffer, size);
+                    res = 1;
+                }
+                else{
+                    res = -2;   //Aborted by user.
+                }
+            }
+            else{
+                res = -1;   //loaded EEPROM image is not valid
+            }
+        }
+        else{       //Content of EEPROM chip is not valid, let's go ahead and skip version matching.
+            if(tempVersion >= 9 && tempVersion < 13){       //Still, we won't accept an invalid input image.
+                memcpy(editeeprom, buffer, size);
+                res = 1;
+            }
+            else
+                res = -1;   //loaded EEPROM image is not valid
+        }
+    }
+
+    if(res > 0){
+        printk("\n\n           Success!.\n           EEPROM image successfully loaded to modified EEPROM buffer.");
+    }
+    else{
+        printk("\n\n           Error!");
+        if(res == -1)
+            printk("\n           Invalid EEPROM image file.");
+        else if(res == -2)
+            printk("\n           Aborted by user.");
+        else if(res == -3)
+            printk ("\n          EEPROM image file size wrong.");
+    }
+    return res;
 }
