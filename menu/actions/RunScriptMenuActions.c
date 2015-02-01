@@ -7,6 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "RunScriptMenuActions.h"
+#include "ToolsMenuActions.h"
 #include "boot.h"
 #include "BootIde.h"
 #include "BootFATX.h"
@@ -33,6 +34,8 @@ void loadRunScript(void *fname){
     }
     runScript(fileinfo.buffer, fileinfo.fileSize, 0, NULL);   //No param for now
     free(fileinfo.buffer);
+
+    ToolFooter();
 
     return;
 }

@@ -46,7 +46,7 @@
 //#define X3_DISPLAY_E       0x04     //Same as others
 
 #define CENTERSTRING        1
-#define JUSTIFYLEFT            0
+#define JUSTIFYLEFT         0
 
 
 void BootLCDInit(void);

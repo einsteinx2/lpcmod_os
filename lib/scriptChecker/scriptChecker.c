@@ -303,7 +303,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                 argumentList[i].exist = true;
                 nbArguments += 1;
                 //Move to start of next argument. Skip '(' too.
-                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(') && compareBuf[tempPtr] != '\0'){
+                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',') && compareBuf[tempPtr] != '\0'){
                     tempPtr +=1;
                 }
             }
@@ -889,6 +889,10 @@ bool checkEndOfArgument(char * compareBuf, int position){
     if(compareBuf[position] == '(')
         return false;
     if(compareBuf[position] == '#')
+        return false;
+    if(compareBuf[position] == ')')
+        return false;
+    if(compareBuf[position] == ',')
         return false;
 
     //Cases where there is not space between operator and preceding argument

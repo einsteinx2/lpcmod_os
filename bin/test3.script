@@ -1,14 +1,53 @@
-	VAR variableTest =10
+#Example script. It's a simple text file, indentation for code readability is supported.
+#Comments are also supported but I wouldn't advise putting comments lines with codes
+
+#Variable creation and init value(facultative)
+VAR variableTest =100
+
+VAR lcdPrintLine
+
+#Just to show reading GPI pins
+VAR inputPindummy
+#Read GPI 1 and set variable. Possible values are 0 and 1
+inputPindummy = GPI(1)
+
+#label to jump to using GOTO statement. Must start with $sign
 $loop1
-IF(variableTest == 10)
-	variableTest = variableTest + 1
-ELSE
-	END
+
+#condition check on variables and numeric constant. Can be ==, !=, >, <, >=, <=
+IF(variableTest >= 10)
+	#Arithmetic operations can be +, -, *, /, %(modulo)
+	variableTest = variableTest / 2
+	#unconditionnal jump to label loop, do not put $ here
+	GOTO loop1
 ENDIF
+
+#Set fan to 50%
+FAN(50)
+
+#Set GPO 0 to 0 (0 volts)
+GPO(0, 0)
+
+lcdPrintLine = 0
+
 $loop2
-IF(variableTest == 10)
+#Reset LCD screen
+LCDR
+
+#Write text string on LCD. Line to print on is decided by the "lcdPrintLine" variable. String cannot be bigger than 20 characters.
+LCDW(lcdPrintLine, "test string1")
+
+#wait 1000ms
+WAIT(1000)
+
+IF(variableTest >= 1000)
+	#Boot 512kb BIOS bank
+	BOOT(BNK512)
+	#Script termination, kinda pointless here since it'll boot the BIOS bank before getting here.
 	END
 ELSE
-	variableTest = variableTest - 1
+	variableTest = variableTest + 11
+	#lcdPrintLine will vary from 0 to 3, the possible addressable lines on the LCD
+	lcdPrintLine = variableTest % 4
 	GOTO loop2
 ENDIF

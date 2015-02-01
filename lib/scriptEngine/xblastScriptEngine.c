@@ -243,7 +243,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                 argumentList[i].exist = true;
                 nbArguments += 1;
                 //Move to start of next argument. Skip '(' too.
-                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(') && compareBuf[tempPtr] != '\0'){
+                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',') && compareBuf[tempPtr] != '\0'){
                     tempPtr +=1;
                 }
             }
@@ -527,6 +527,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
 
 
 endExecution:
+//printk("\n     endExecution reached");
     //Flush Variable list
     for(i = 0; i < variableList.count; i++){
         if(variableList.first == NULL)
@@ -559,6 +560,7 @@ endExecution:
 }
 
 bool ifFunction(int param1, u8 op, int param2){
+	//printk("\n     if function called : %u %u %u",param1, op, param2);
     switch(op){
         case OPTYPE_EQ_EQ: //==
             return (param1 == param2);
@@ -597,10 +599,12 @@ bool gpoFunction(u8 port, u8 value){
 }
 bool waitFunction(int ms){
     wait_ms(ms);
+    //printk("\n     wait function called : %ums",ms);
     return true;
 }
 bool bootFunction(u8 bank){
     //printf("\n****Boot bank: %u", bank);
+	//printk("\n     boot function called : %u",bank);
     if(bank == BNK512 || bank == BNK256 || bank == BNKOS){
         BootModBios((void *)&bank);
     }
@@ -613,49 +617,56 @@ bool bootFunction(u8 bank){
 }
 bool fanFunction(u8 value){
     //printf("\n****Fan speed: %u", value);
+	//printk("\n     fan function called : %u\%",value);
     if(value >=10 && value <= 100)
         I2CSetFanSpeed(value);
     return true;
 }
 bool ledFunction(char * value){
+	//printk("\n     LED function called : %s", value);
     //printf("\n****LED pattern: %s", value);
     setLED(value);
     return true;
 }
 bool lcdPrintFunction(u8 line, char * text){
     //printf("\n****LCD Print at line %u : %s", line, text);
+	//printk("\n     lcdPrint function called : %s",text);
     switch(line){
         case 0:
-            WriteLCDLine0(text);
+            WriteLCDLine0(0, text);	//0 for justify text on left
             break;
         case 1:
-            WriteLCDLine1(text);
+            WriteLCDLine1(0, text);
             break;
         case 2:
-            WriteLCDLine2(text);
+            WriteLCDLine2(0, text);
             break;
         default:
-            WriteLCDLine3(text);
+            WriteLCDLine3(0, text);
             break;
     }
     return true;
 }
 bool lcdClearLineFunction(u8 line){
+	//printk("\n     lcdClearLine function called : %u",line);
     //printf("\n****LCD clear line %u", line);
     WriteLCDClearLine(line);
     return true;
 }
 bool lcdResetFunction(void){
     //printf("\n****LCD reset screen");
+	//printk("\n     lcdReset function called");
     WriteLCDCommand(0x01);      //CLEAR command
     return true;
 }
 bool lcdBacklightFunction(u8 value){
+	//printk("\n     lcdBacklight function called : %u\%",value);
     //printf("\n****LCD backlight value: %u", value);
     setLCDBacklight(value);
     return true;
 }
 bool lcdPowerFunction(u8 value){
+	//printk("\n     lcdPower function called : %u",value);
     //printf("\n****LCD power %s", value ? "ON": "OFF");
     LPCmodSettings.LCDsettings.enable5V = value? 1 : 0;
     assertInitLCD();
@@ -667,6 +678,7 @@ bool variableFunction(char * name, int initValue, _variableList * variableList){
     int i;
     char * tempName = (char *)name;
 
+    //printk("\n     variable function called : %s = %u",name, initValue);
 
     if(variableList->first == NULL){ //No entry in list yet
         newEntry = (variableEntry *)malloc(sizeof(variableEntry));
@@ -863,6 +875,8 @@ bool checkEndOfArgument(char * compareBuf, int position){
     if(compareBuf[position] == '(')
         return false;
     if(compareBuf[position] == '#')
+        return false;
+    if(compareBuf[position] == ')')
         return false;
 
     //Cases where there is not space between operator and preceding argument
