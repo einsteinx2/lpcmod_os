@@ -387,6 +387,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsaHarddiskInfo[nIndexDrive].m_securitySettings = 0;
     tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = 0;
     tsaHarddiskInfo[nIndexDrive].m_bIORDY = 0;
+    tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = 0;
 
 //Why disable DMA?
 

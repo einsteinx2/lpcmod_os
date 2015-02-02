@@ -12,6 +12,7 @@
 #include "TextMenu.h"
 #include "HDDMenuActions.h"
 
+TEXTMENU *HDDOperationsMenuInit(void * drive);
 TEXTMENU *LargeHDDMenuInit(void * drive);
 
 TEXTMENU *HDDMenuInit(void) {
@@ -26,116 +27,154 @@ TEXTMENU *HDDMenuInit(void) {
     for (i=0; i<2; ++i) {
         if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
             //If it's not ATAPI, it must be IDE
-            if((tsaHarddiskInfo[i].m_securitySettings &0x0001)==0x0001) {	//Drive Security feature supported.
-                //This drive is locked - produce an unlock menu
-                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002) {
-                    sprintf(itemPtr->szCaption,"Unlock HDD : ");
-                }
-                else {
-                    sprintf(itemPtr->szCaption,"Lock HDD : ");
-                }
-                itemPtr->szParameter[50] = i;
-                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                itemPtr->functionPtr= AssertLockUnlock;
-                itemPtr->functionDataPtr = itemPtr;
-                TextMenuAddItem(menuPtr, itemPtr);
-            }
-    
-            //Add a 'display password' menu
+            //Add menu entry for corresponding HDD
             itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
             memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Display HDD password : ");
-            sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-            itemPtr->functionPtr= DisplayHDDPassword;
-            itemPtr->functionDataPtr = malloc(sizeof(int));
-                *(int*)itemPtr->functionDataPtr = i;
+            sprintf(itemPtr->szCaption, "%s",i ? "Slave":"Master");
+            sprintf(itemPtr->szParameter, "%s"," HDD");
+            itemPtr->functionPtr= (void *)HDDOperationsMenuInit;
+            itemPtr->functionDataPtr = malloc(sizeof(u8));
+                *(u8*)itemPtr->functionDataPtr = i;
             itemPtr->functionDataPtrMemAlloc = true;
             TextMenuAddItem(menuPtr, itemPtr);
-
-            //Add a 'display HDD info' menu
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"Display HDD info : ");
-            sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-            itemPtr->functionPtr= DisplayHDDInfo;
-            itemPtr->functionDataPtr = malloc(sizeof(int));
-                *(int*)itemPtr->functionDataPtr = i;
-            itemPtr->functionDataPtrMemAlloc = true;
-            TextMenuAddItem(menuPtr, itemPtr);
-            if(tsaHarddiskInfo[i].m_fHasMbr != -1){     //MBR contains standard basic partition entries.
-                //FORMAT C: drive
-                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"Format C drive : ");
-                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                itemPtr->functionPtr= FormatDriveC;
-                itemPtr->functionDataPtr = malloc(sizeof(int));
-                    *(int*)itemPtr->functionDataPtr = i;
-                itemPtr->functionDataPtrMemAlloc = true;
-                TextMenuAddItem(menuPtr, itemPtr);
-
-                //FORMAT E: drive
-                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"Format E drive : ");
-                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                itemPtr->functionPtr= FormatDriveE;
-                itemPtr->functionDataPtr = malloc(sizeof(int));
-                    *(int*)itemPtr->functionDataPtr = i;
-                itemPtr->functionDataPtrMemAlloc = true;
-                TextMenuAddItem(menuPtr, itemPtr);
-
-                //FORMAT X:, Y: and Z: drives.
-                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"Format cache drives : ");
-                sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                itemPtr->functionPtr= FormatCacheDrives;
-                itemPtr->functionDataPtr = malloc(sizeof(int));
-                    *(int*)itemPtr->functionDataPtr = i;
-                itemPtr->functionDataPtrMemAlloc = true;
-                TextMenuAddItem(menuPtr, itemPtr);
-
-                //If there's enough sectors to make F and/or G drive(s).
-                if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
-                    //Format Larger drives option menu.
-                    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption,"Large HDD format : ");
-                    sprintf(itemPtr->szParameter, "%s",i ? "slave":"master");
-                    itemPtr->functionPtr= (void *)LargeHDDMenuInit;
-                    itemPtr->functionDataPtr = malloc(sizeof(u8));
-                        *(u8 *)itemPtr->functionDataPtr = i;
-                    itemPtr->functionDataPtrMemAlloc = true;
-                    TextMenuAddItem(menuPtr, itemPtr);
-                }
-            }
-            else{
-                //Print message.
-                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"Unsupported partition scheme...");
-                itemPtr->functionPtr= NULL;
-                itemPtr->functionDataPtr = NULL;
-                itemPtr->noSelect = NOSELECTERROR;
-                TextMenuAddItem(menuPtr, itemPtr);
-
-                //Print message.
-                itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"XBlast OS will not format this HDD!");
-                itemPtr->functionPtr= NULL;
-                itemPtr->functionDataPtr = NULL;
-                itemPtr->noSelect = NOSELECTERROR;
-                TextMenuAddItem(menuPtr, itemPtr);
-            }
         }
     }
 
     return menuPtr;
 }
+
+
+TEXTMENU *HDDOperationsMenuInit(void * drive){
+    TEXTMENUITEM *itemPtr;
+    TEXTMENU *menuPtr;
+    int i=0, nDriveIndex = 1;
+
+    nDriveIndex = *(u8 *) drive;
+
+    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
+    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    sprintf(menuPtr->szCaption, "%s HDD", nDriveIndex ? "Slave":"Master");
+
+
+    if((tsaHarddiskInfo[nDriveIndex].m_securitySettings &0x0001)==0x0001) {       //Drive Security feature supported.
+        //This drive is locked - produce an unlock menu
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        if((tsaHarddiskInfo[nDriveIndex].m_securitySettings &0x0002)==0x0002) {
+            sprintf(itemPtr->szCaption,"Unlock HDD");
+        }
+        else {
+            sprintf(itemPtr->szCaption,"Lock HDD");
+        }
+        itemPtr->szParameter[50] = nDriveIndex;
+        itemPtr->functionPtr= AssertLockUnlock;
+        itemPtr->functionDataPtr = itemPtr;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
+
+    //Add a 'display password' menu
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Display HDD password");
+    itemPtr->functionPtr= DisplayHDDPassword;
+    itemPtr->functionDataPtr = malloc(sizeof(int));
+        *(int*)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtrMemAlloc = true;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Add a 'display HDD info' menu
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Display HDD info");
+    itemPtr->functionPtr= DisplayHDDInfo;
+    itemPtr->functionDataPtr = malloc(sizeof(int));
+        *(int*)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtrMemAlloc = true;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    if(DEV_FEATURES){
+        if(tsaHarddiskInfo[i].m_fHasSMARTcapabilities){
+            //S.M.A.R.T. menu
+            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption,"S.M.A.R.T. menu");
+            itemPtr->functionPtr= DisplayHDDInfo;
+            itemPtr->functionDataPtr = malloc(sizeof(int));
+                *(int*)itemPtr->functionDataPtr = nDriveIndex;
+            itemPtr->functionDataPtrMemAlloc = true;
+            TextMenuAddItem(menuPtr, itemPtr);
+        }
+    }
+
+    if(tsaHarddiskInfo[i].m_fHasMbr != -1){     //MBR contains standard basic partition entries.
+        //FORMAT C: drive
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"Format C drive");
+        itemPtr->functionPtr= FormatDriveC;
+        itemPtr->functionDataPtr = malloc(sizeof(int));
+            *(int*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtrMemAlloc = true;
+        TextMenuAddItem(menuPtr, itemPtr);
+
+        //FORMAT E: drive
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"Format E drive");
+        itemPtr->functionPtr= FormatDriveE;
+        itemPtr->functionDataPtr = malloc(sizeof(int));
+            *(int*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtrMemAlloc = true;
+        TextMenuAddItem(menuPtr, itemPtr);
+
+        //FORMAT X:, Y: and Z: drives.
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"Format cache drives");
+        itemPtr->functionPtr= FormatCacheDrives;
+        itemPtr->functionDataPtr = malloc(sizeof(int));
+            *(int*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtrMemAlloc = true;
+        TextMenuAddItem(menuPtr, itemPtr);
+
+        //If there's enough sectors to make F and/or G drive(s).
+        if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
+            //Format Larger drives option menu.
+            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption,"Large HDD format");
+            itemPtr->functionPtr= (void *)LargeHDDMenuInit;
+            itemPtr->functionDataPtr = malloc(sizeof(u8));
+                *(u8 *)itemPtr->functionDataPtr = nDriveIndex;
+            itemPtr->functionDataPtrMemAlloc = true;
+            TextMenuAddItem(menuPtr, itemPtr);
+        }
+    }
+    else{
+        //Print message.
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"Unsupported partition scheme...");
+        itemPtr->functionPtr= NULL;
+        itemPtr->functionDataPtr = NULL;
+        itemPtr->noSelect = NOSELECTERROR;
+        TextMenuAddItem(menuPtr, itemPtr);
+
+        //Print message.
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"XBlast OS will not format this HDD!");
+        itemPtr->functionPtr= NULL;
+        itemPtr->functionDataPtr = NULL;
+        itemPtr->noSelect = NOSELECTERROR;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
+
+    ResetDrawChildTextMenu(menuPtr);
+
+    return menuPtr;
+}
+
 
 TEXTMENU *LargeHDDMenuInit(void * drive) {
     TEXTMENUITEM *itemPtr;
@@ -149,7 +188,7 @@ TEXTMENU *LargeHDDMenuInit(void * drive) {
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
-    sprintf(menuPtr->szCaption, "Large HDD format options : %s", nDriveIndex ? "slave":"master");
+    sprintf(menuPtr->szCaption, "Large HDD format options : %s", nDriveIndex ? "Slave":"Master");
 
     //No entry in this menu will have a configurable parameter.
     //Set first character to NULL to indicate no string is to be shown.
