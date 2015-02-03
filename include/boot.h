@@ -120,7 +120,9 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
     unsigned short m_masterPassSupport;
     unsigned char m_maxBlockTransfer;  //Max number of blocks allowed in a single transfer.
     unsigned short m_minPIOcycle;
-    unsigned char m_fHasSMARTcapabilities;
+    bool m_fHasSMARTcapabilities;
+    bool m_fSMARTEnabled;
+    unsigned char m_SMARTFeaturesSupported;
 } tsHarddiskInfo;
 
 /////////////////////////////////

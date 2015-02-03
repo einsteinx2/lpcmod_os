@@ -33,3 +33,5 @@ void HDDMenuFooter(void);
 void DisplayHDDInfo(void *driveId);
 
 void FormatDriveFG(void *driveId);
+
+void AssertSMARTEnableDisable(void *itemPtr);

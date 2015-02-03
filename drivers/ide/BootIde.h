@@ -25,6 +25,8 @@ typedef enum {
     IDE_CMD_SET_PARAMS = 0x91,
     IDE_CMD_STANDBY_IMMEDIATE = 0x94, /* 2 byte command- also send
                                          IDE_CMD_STANDBY_IMMEDIATE2 */
+
+    IDE_CMD_SMART = 0xB0,
     IDE_CMD_WRITE_MULTIPLE = 0xC5,
     IDE_CMD_READ_MULTIPLE = 0xC4,
     IDE_CMD_SET_MULTIPLE_MODE = 0xC6,
@@ -73,5 +75,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size);
 int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, unsigned char *password);
 int CalculateDrivePassword(int driveId, unsigned char *key);
 bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master_password);
+
+bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 
 #endif

@@ -15,8 +15,7 @@ void AssertLockUnlock(void *itemPtr){
     int nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    if(!(strncmp(tempItemPtr->szParameter, "master", 6)))    //If string szParameter contains is "master" 
-        nIndexDrive = 0;                                //It means we need to change the master lock status.
+    nIndexDrive = tempItemPtr->szParameter[50];
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
         UnlockHDD(nIndexDrive, 1);                                        //1 is for verbose
@@ -25,10 +24,10 @@ void AssertLockUnlock(void *itemPtr){
         LockHDD(nIndexDrive, 1);                                                 //1 is for verbose
     }
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
-        sprintf(tempItemPtr->szCaption, "%s", "Lock HDD : ");
+        sprintf(tempItemPtr->szCaption, "%s", "Lock HDD");
     }
     else{
-        sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD : ");
+        sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD");
     }
 }
 
@@ -358,4 +357,26 @@ void FormatDriveFG(void *driveId) {
             }
         }
     }
+}
+
+void AssertSMARTEnableDisable(void *itemPtr){
+    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
+    int nIndexDrive = 1;                                //Toggle master by default.
+
+    //Not that cool to do but I don't want to change the function call in textmenu.c...
+    nIndexDrive = tempItemPtr->szParameter[50];
+
+    if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled) {       //Drive is already locked
+        driveToggleSMARTFeature(nIndexDrive, 0xD9);          //0xD9 is subcommand for disabling SMART.
+    }
+    else {
+        driveToggleSMARTFeature(nIndexDrive, 0xD8);          //0xD8 is subcommand for disabling SMART.                                        //1 is for verbose
+    }
+    if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled) {
+        sprintf(tempItemPtr->szCaption, "%s", "Disable");
+    }
+    else{
+        sprintf(tempItemPtr->szCaption, "%s", "Enable");
+    }
+    sprintf(tempItemPtr->szParameter, " S.M.A.R.T.");
 }

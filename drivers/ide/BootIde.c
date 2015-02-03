@@ -387,7 +387,9 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsaHarddiskInfo[nIndexDrive].m_securitySettings = 0;
     tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = 0;
     tsaHarddiskInfo[nIndexDrive].m_bIORDY = 0;
-    tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = 0;
+    tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = false;
+    tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled = false;
+    tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported = 0;
 
 //Why disable DMA?
 
@@ -689,6 +691,16 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
             // report on the MBR-ness of the drive contents
         tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+
+            //Check if drive support S.M.A.R.T.
+        tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = drive_info[82] & 0x0001;
+        if(tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities){
+            //Is S.M.A.R.T. enabled?
+            tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled = drive_info[85] & 0x0001;
+            //Bit0 : Support Error Logging.
+            //Bit1 : Support S.M.A.R.T. Self-tests.
+            tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported = drive_info[84] & 0x0003;
+        }
 /*
         if(FATXCheckMBR(nIndexDrive)) {
 #ifndef SILENT_MODE
@@ -1728,3 +1740,47 @@ int BootIdeSetPIOMode(u8 nIndexDrive, u16 cycleTime){
     return 0;                   //No error.
 }
 */
+
+//Send SMART commands. Specify input command by smart_cmd.
+//Return true if error.
+bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd){
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+    u8 buffer[512];
+    u16 *ptr = (u16 *)buffer;
+
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
+    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
+    BootIdeWaitNotBusy(uIoBase);
+
+    tsicp.m_wCylinder = 0xC240; //Necessary for SMART Disable Operations subcommand (0xD9).
+    IoOutputByte(IDE_REG_FEATURE(uIoBase), smart_cmd); // set SMART operation subcmd
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
+        return true;
+
+    BootIdeWaitNotBusy(uIoBase);
+
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {     //Check back our change
+        //printk(" Drive %d: Not detected\n");
+        return 1;
+    }
+
+    BootIdeWaitDataReady(uIoBase);
+
+    if(BootIdeReadData(uIoBase, buffer, IDE_SECTOR_SIZE))
+    {
+        //printk("  %d: Drive not detected\n", nIndexDrive);
+        return 1;
+    }
+
+    //check if it worked.
+    tsaHarddiskInfo[nDriveIndex].m_fHasSMARTcapabilities = ptr[82] & 0x0001;
+    if(tsaHarddiskInfo[nDriveIndex].m_fHasSMARTcapabilities){
+        //Is S.M.A.R.T. enabled?
+        tsaHarddiskInfo[nDriveIndex].m_fSMARTEnabled = ptr[85] & 0x0001;
+        //Bit0 : Support Error Logging.
+        //Bit1 : Support S.M.A.R.T. Self-tests.
+        tsaHarddiskInfo[nDriveIndex].m_SMARTFeaturesSupported = ptr[84] & 0x0003;
+    }
+    return false;
+}
