@@ -12,10 +12,10 @@
 
 void AssertLockUnlock(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    int nIndexDrive = 1;                                //Toggle master by default.
+    u8 nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    nIndexDrive = tempItemPtr->szParameter[50];
+    nIndexDrive = (u8)tempItemPtr->szParameter[50];
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
         UnlockHDD(nIndexDrive, 1);                                        //1 is for verbose
@@ -24,10 +24,10 @@ void AssertLockUnlock(void *itemPtr){
         LockHDD(nIndexDrive, 1);                                                 //1 is for verbose
     }
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
-        sprintf(tempItemPtr->szCaption, "%s", "Lock HDD");
+        sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD");
     }
     else{
-        sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD");
+        sprintf(tempItemPtr->szCaption, "%s", "Lock HDD");
     }
 }
 
@@ -165,7 +165,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
 
 
 void DisplayHDDPassword(void *driveId) {
-    int nIndexDrive = *(int *)driveId;
+    u8 nIndexDrive = *(u8 *)driveId;
     u8 password[20];
     int i;
     
@@ -195,7 +195,7 @@ void DisplayHDDPassword(void *driveId) {
 }
 
 void FormatCacheDrives(void *driveId){
-    int nIndexDrive = *(int *)driveId;
+    u8 nIndexDrive = *(u8 *)driveId;
 
     if(ConfirmDialog("             Confirm format cache drives?", 1))
         return;                                 //Cancel operation.
@@ -206,7 +206,7 @@ void FormatCacheDrives(void *driveId){
 }
 
 void FormatDriveC(void *driveId){
-    int nIndexDrive = *(int *)driveId;
+    u8 nIndexDrive = *(u8 *)driveId;
 
     if(ConfirmDialog("                  Confirm format C: drive?", 1))
         return;                                 //Cancel operation.
@@ -217,7 +217,7 @@ void FormatDriveC(void *driveId){
 }
 
 void FormatDriveE(void *driveId){
-    int nIndexDrive = *(int *)driveId;
+    u8 nIndexDrive = *(u8 *)driveId;
 
     if(ConfirmDialog("                  Confirm format E: drive?", 1))
         return;                                 //Cancel operation.
@@ -242,7 +242,7 @@ void HDDMenuHeader(char *title) {
 }
 
 void DisplayHDDInfo(void *driveId) {
-    int nIndexDrive = *(int *)driveId;
+    u8 nIndexDrive = *(u8 *)driveId;
     u8 MBRBuffer[512];
     u8 i;
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
@@ -361,7 +361,7 @@ void FormatDriveFG(void *driveId) {
 
 void AssertSMARTEnableDisable(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    int nIndexDrive = 1;                                //Toggle master by default.
+    u8 nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
     nIndexDrive = tempItemPtr->szParameter[50];

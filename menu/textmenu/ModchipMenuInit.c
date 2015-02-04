@@ -185,11 +185,13 @@ else{
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Reboot from Modchip");
+    itemPtr->noSelect = NOSELECTERROR;
     TextMenuAddItem(menuPtr, itemPtr);
     
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"to edit these settings.");
+    itemPtr->noSelect = NOSELECTERROR;
     TextMenuAddItem(menuPtr, itemPtr);
 }
 
