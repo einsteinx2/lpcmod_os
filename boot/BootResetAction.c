@@ -58,6 +58,9 @@ extern void BootResetAction ( void ) {
     u8 EjectButtonPressed=0;
     A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
 
+    //Set to NULL as it's not used yet.
+    gobalGenericPtr = NULL;
+
 
     //Length of array is set depending on how many revision can be uniquely identified.
     //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h

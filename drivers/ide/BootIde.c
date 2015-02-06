@@ -518,7 +518,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             if((drive_info[128]&0x0004)==0x0004) //Drive in locked status
             { 
                 unsigned char password[20];
-                if (CalculateDrivePassword(nIndexDrive,password)) {
+                if (CalculateDrivePassword(nIndexDrive,password, (unsigned char *)&eeprom)) {
                     printk("\n\n\n\n\n\n\n          Unable to calculate drive password - eeprom corrupt?%s", repetitiveString1);
                         return 1;
                 }
@@ -800,14 +800,17 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
     return 0;
 }
 
-int CalculateDrivePassword(int driveId, unsigned char *key) {
+int CalculateDrivePassword(int driveId, unsigned char *key, unsigned char *eepromPtr) {
 
     u8 baMagic[0x200], baKeyFromEEPROM[0x10], baEeprom[0x30];
     int nVersionHashing=0;
     //Ick - forward decl. Should remove this. 
     u32 BootHddKeyGenerateEepromKeyData(u8 *eeprom_data,u8 *HDKey);
     
-    memcpy(baEeprom, &eeprom, 0x30); // first 0x30 bytes from EEPROM image we picked up earlier
+    if(eepromPtr == NULL || key == NULL)
+        return 1;
+
+    memcpy(baEeprom, eepromPtr, 0x30); // first 0x30 bytes from EEPROM image we picked up earlier
 
     memset(&baKeyFromEEPROM,0x00,0x10);
     nVersionHashing = BootHddKeyGenerateEepromKeyData( baEeprom, baKeyFromEEPROM);
@@ -1753,7 +1756,7 @@ bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd){
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
     BootIdeWaitNotBusy(uIoBase);
 
-    tsicp.m_wCylinder = 0xC240; //Necessary for SMART Disable Operations subcommand (0xD9).
+    tsicp.m_wCylinder = 0xC240; //Necessary for SMART subcommands.
     IoOutputByte(IDE_REG_FEATURE(uIoBase), smart_cmd); // set SMART operation subcmd
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
         return true;

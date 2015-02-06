@@ -54,13 +54,13 @@ void restoreEEPromFromFlash(void *whatever){
         if(ConfirmDialog("       Restore backed up EEProm content?", 1))
             return;
         if((lockPreference&1) == 1){       //Master is locked.
-    	    if(!UnlockHDD(0,0)){		     //Silently unlock master.
+    	    if(!UnlockHDD(0,0, (unsigned char *)&eeprom)){		     //Silently unlock master.
     	        ToolHeader("ERROR: Could not unlock master HDD");
     	    	goto failed;
     	    }
         }
         if((lockPreference&2) == 2){       //Slave is locked.
-            if(!UnlockHDD(1,0)){              //Silently unlock slave.
+            if(!UnlockHDD(1,0, (unsigned char *)&eeprom)){              //Silently unlock slave.
                 ToolHeader("ERROR: Could not unlock slave HDD");
                 goto failed;
             }
@@ -68,7 +68,7 @@ void restoreEEPromFromFlash(void *whatever){
         memcpy(&eeprom,&(LPCmodSettings.bakeeprom),sizeof(EEPROMDATA));
         ToolHeader("Restored back up to Xbox");
         if((lockPreference&1) == 1){       //Master was initiallylocked.
-    	    LockHDD(0,0);		     //Silently lock master.
+    	    LockHDD(0,0, (unsigned char *)&eeprom);		     //Silently lock master.
         }
         if((lockPreference&2) == 2){       //Slave was initially locked.
             LockHDD(1,0);              //Silently lock slave.

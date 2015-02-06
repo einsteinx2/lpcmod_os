@@ -9,6 +9,7 @@
 #include "HDDMenuActions.h"
 #include "boot.h"
 #include "TextMenu.h"
+#include "lpcmod_v1.h"
 
 void AssertLockUnlock(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
@@ -18,29 +19,63 @@ void AssertLockUnlock(void *itemPtr){
     nIndexDrive = (u8)tempItemPtr->szParameter[50];
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-        UnlockHDD(nIndexDrive, 1);                                        //1 is for verbose
+        UnlockHDD(nIndexDrive, 1, (unsigned char *)&eeprom);                      //1 is for verbose
     }
     else {
-        LockHDD(nIndexDrive, 1);                                                 //1 is for verbose
+        LockHDD(nIndexDrive, 1, (unsigned char *)&eeprom);                        //1 is for verbose
     }
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
-        sprintf(tempItemPtr->szCaption, "%s", "Unlock HDD");
+        sprintf(tempItemPtr->szCaption, "Unlock HDD");
     }
     else{
-        sprintf(tempItemPtr->szCaption, "%s", "Lock HDD");
+        sprintf(tempItemPtr->szCaption, "Lock HDD");
     }
 }
 
-bool LockHDD(int nIndexDrive, bool verbose) {
+void AssertLockUnlockFromNetwork(void *itemPtr){
+    TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
+    u8 nIndexDrive = 1;                                //Toggle master by default.
+    char temp = HDDLOCK_NETFLASH;
+    unsigned char *eepromPtr;
+
+    //Not that cool to do but I don't want to change the function call in textmenu.c...
+    nIndexDrive = (u8)tempItemPtr->szParameter[50];
+
+    enableNetflash((void *)&temp);
+    if(gobalGenericPtr == NULL)
+        return;
+    eepromPtr = (unsigned char *)gobalGenericPtr;
+
+    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
+        UnlockHDD(nIndexDrive, 1, eepromPtr);
+    }
+    else {
+        LockHDD(nIndexDrive, 1, eepromPtr);
+    }
+    free(gobalGenericPtr);
+    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
+        sprintf(tempItemPtr->szCaption, "Unlock");
+    }
+    else{
+        sprintf(tempItemPtr->szCaption, "Lock");
+    }
+}
+
+bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     u8 password[20];
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     int i;
+
+    if(eepromPtr == NULL){
+        printk("\n\n\n\n\n");
+        goto endExec;
+    }
 
     if(verbose){
         if (ConfirmDialog("                      Confirm Lock HDD?", 1)) return false;
     }
     
-    if (CalculateDrivePassword(nIndexDrive,password)) {
+    if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
         printk("           Unable to calculate drive password - eeprom corrupt?");
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
         return false;
@@ -62,6 +97,7 @@ bool LockHDD(int nIndexDrive, bool verbose) {
         dots();
     }
     if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_SET_PASSWORD, password)) {
+endExec:
         printk("\n           Locking drive failed");
         cromwellError();
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
@@ -77,10 +113,16 @@ bool LockHDD(int nIndexDrive, bool verbose) {
     return true;
 }
 
-bool UnlockHDD(int nIndexDrive, bool verbose) {
+bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     u8 password[20];
     bool result = false; //Start assuming not good.
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
+
+    if(eepromPtr == NULL){
+        printk("\n\n\n\n\n           Security disable failed!");
+        goto endExec;
+    }
+
     if(tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0010){            //Unlock attempt counter expired
         printk("\n\n\n\n\n           \2Drive is now locked out.\n           \2Reboot system to reset HDD unlock capabilities.\n\n");
         printk("           \2Press Button A to continue");
@@ -90,7 +132,8 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
     if(verbose){
         if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
     }
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004){
+    //Do not try Master password unlock if eeprom pointer isn't pointing to internal eeprom image.
+    if((eepromPtr == (unsigned char *)&eeprom) && ((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)){
         printk("\n\n           Something's wrong with the drive!\n           Jumping to Master Password Unlock sequence.");
         if(!masterPasswordUnlockSequence(nIndexDrive)){
             result = false;
@@ -98,7 +141,7 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
         }
     }
     else{
-        if (CalculateDrivePassword(nIndexDrive,password)) {
+        if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
             printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
             if(!masterPasswordUnlockSequence(nIndexDrive)){
                 result = false;
@@ -123,6 +166,8 @@ bool UnlockHDD(int nIndexDrive, bool verbose) {
     }
     if(verbose && result)
         printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+
+endExec:
     if(verbose){
         printk("           \2Press Button A to continue");
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
@@ -138,7 +183,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             "TEAMASSEMBLY",
             "XBOXSCENE",
             "Seagate                         ",
-            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD"
+            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
     };
     printk("\n           Trying Master Password unlock.");
     for(i = 0; i < 4; i++){
@@ -148,9 +193,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             }
             else{
                 printk("\n           Unlock Using Master Password %s successful.", MasterPasswordList[i]);
-                result = true;
-                i = 4;
-                break;
+                return true;
             }
         }
         else{
@@ -171,7 +214,7 @@ void DisplayHDDPassword(void *driveId) {
     
     printk("\n\n\n\n\n           Calculating password");
     dots();
-    if (CalculateDrivePassword(nIndexDrive,password)) {
+    if (CalculateDrivePassword(nIndexDrive,password, (unsigned char *)&eeprom)) {
         cromwellError();
         wait_ms(2000);
         return;
@@ -179,7 +222,7 @@ void DisplayHDDPassword(void *driveId) {
     
     cromwellSuccess();
 
-    printk("           The normal password (user password) for this drive is as follows:\n\n");
+    printk("           The normal password (user password) for this Xbox/Drive combination is as follows:\n\n");
     printk("                              ");
     VIDEO_ATTR=0xffef37;
     for (i=0; i<20; i++) {

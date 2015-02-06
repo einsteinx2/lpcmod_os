@@ -17,8 +17,9 @@
 #define F_NOG 0x80
 
 void AssertLockUnlock(void *driveId);
-bool LockHDD(int nIndexDrive, bool verbose);
-bool UnlockHDD(int nIndexDrive, bool verbose);
+void AssertLockUnlockFromNetwork(void *itemPtr);
+bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr);
+bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr);
 bool masterPasswordUnlockSequence(int nIndexDrive);
 
 void DisplayHDDPassword(void *driveId);

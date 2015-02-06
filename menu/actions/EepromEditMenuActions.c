@@ -268,7 +268,7 @@ void confirmSaveToEEPROMChip(void *ignored){
     for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
         if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
             if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
-                    if(UnlockHDD(nIndexDrive, 0))                                             //0 is for silent
+                    if(UnlockHDD(nIndexDrive, 0, (unsigned char *)&eeprom))                                             //0 is for silent
                         unlockConfirm[nIndexDrive] = 1;                                   //Everything went well, we'll relock after eeprom write.
                     else{
                         unlockConfirm[0] = 255;       //error
@@ -288,7 +288,7 @@ void confirmSaveToEEPROMChip(void *ignored){
         memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));
         for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
             if(unlockConfirm[nIndexDrive] == 1){
-                LockHDD(nIndexDrive, 0);                                //0 is for silent mode.
+                LockHDD(nIndexDrive, 0, (unsigned char *)&eeprom);                                //0 is for silent mode.
             }
         }
         SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.

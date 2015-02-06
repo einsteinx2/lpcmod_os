@@ -70,6 +70,7 @@ TEXTMENU *eepromEditMenuInit(void) {
     itemPtr->functionPtr= enableNetflash;
     itemPtr->functionDataPtr= malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr= EEPROM_NETFLASH;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

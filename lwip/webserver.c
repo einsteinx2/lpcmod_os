@@ -116,15 +116,20 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         busyLED();
         //printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
         switch(pcb->flashType){
-            case EEPROM_NETFLASH:
-                netFlashOver = updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
-                break;
             case BIOS_NETFLASH:
                 fileBuf = (u8 *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
                 memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
                 memcpy (fileBuf, hs->bios_start, hs->bios_len);
                 netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
                 free(fileBuf);
+                break;
+            case EEPROM_NETFLASH:
+                netFlashOver = updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
+                break;
+            case HDDLOCK_NETFLASH:
+                gobalGenericPtr = (void *)malloc(hs->bios_len);
+                memcpy(gobalGenericPtr, hs->bios_start, hs->bios_len);
+                netFlashOver = 1;
                 break;
             default:
                 while(1);       //Just hang there.
@@ -327,7 +332,7 @@ handle_post(struct http_state *hs, unsigned char flashType)
 
 
 	if ((flashType == BIOS_NETFLASH && (len != 256*1024 && len != 512*1024 && len != 1024*1024)) ||
-	    (flashType == EEPROM_NETFLASH && len != 256)) {
+	    ((flashType == EEPROM_NETFLASH || flashType == HDDLOCK_NETFLASH) && len != 256)) {
 		hs->file = http_files[2 + (flashType * 5)].data;
 		hs->left = http_files[2 + (flashType * 5)].len;
 		printk ("Illegal size, NOT flashing\n");

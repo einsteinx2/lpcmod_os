@@ -156,6 +156,8 @@
 
 #define BIOS_NETFLASH     0
 #define EEPROM_NETFLASH   1
+#define HDDLOCK_NETFLASH   2
+
 
 
 #endif
