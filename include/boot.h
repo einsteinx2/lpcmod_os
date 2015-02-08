@@ -499,7 +499,7 @@ bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash to
 
 //Global for convenience.
 unsigned char *videosavepage;
-void * gobalGenericPtr;
+//void * gobalGenericPtr;
 
 
 

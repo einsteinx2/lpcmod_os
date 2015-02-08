@@ -42,9 +42,9 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
     nIndexDrive = (u8)tempItemPtr->szParameter[50];
 
     enableNetflash((void *)&temp);
-    if(gobalGenericPtr == NULL)
+    //if(gobalGenericPtr == NULL)
         return;
-    eepromPtr = (unsigned char *)gobalGenericPtr;
+    //eepromPtr = (unsigned char *)gobalGenericPtr;
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
         UnlockHDD(nIndexDrive, 1, eepromPtr);
@@ -52,7 +52,7 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
     else {
         LockHDD(nIndexDrive, 1, eepromPtr);
     }
-    free(gobalGenericPtr);
+    //free(gobalGenericPtr);
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
         sprintf(tempItemPtr->szCaption, "Unlock");
     }
@@ -183,7 +183,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             "TEAMASSEMBLY",
             "XBOXSCENE",
             "Seagate                         ",
-            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
+            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW\0"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
     };
     printk("\n           Trying Master Password unlock.");
     for(i = 0; i < 4; i++){
@@ -369,7 +369,7 @@ void FormatDriveFG(void *driveId) {
             return;
             break;
     }
-    gstart = SECTOR_EXTEND + fsize + 1;
+    gstart = SECTOR_EXTEND + fsize;
     gsize = nExtendSectors - fsize;
     if(gsize >= LBASIZE_1024GB)
         gsize = LBASIZE_1024GB - 1;

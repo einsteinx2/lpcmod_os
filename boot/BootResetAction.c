@@ -59,7 +59,7 @@ extern void BootResetAction ( void ) {
     A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
 
     //Set to NULL as it's not used yet.
-    gobalGenericPtr = NULL;
+    //gobalGenericPtr = NULL;
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
