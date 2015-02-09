@@ -78,7 +78,7 @@ void incrementActiveBank(void * itemStr) {
 
 void decrementAltBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.altBank){
-        case BNK512:
+        case BNKOS:
             if(LPCmodSettings.OSsettings.TSOPcontrol){        //TSOP is split
                 LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT1;
                 sprintf(itemStr,"TSOP bank1");
@@ -87,6 +87,10 @@ void decrementAltBank(void * itemStr) {
                 LPCmodSettings.OSsettings.altBank = BNKFULLTSOP;
                 sprintf(itemStr,"TSOP");
             }
+            break;
+        case BNK512:
+            LPCmodSettings.OSsettings.altBank = BNKOS;
+            sprintf(itemStr,"XBlast OS");
             break;
         case BNK256:
             LPCmodSettings.OSsettings.altBank = BNK512;
@@ -109,12 +113,15 @@ void decrementAltBank(void * itemStr) {
 
 void incrementAltBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.altBank){
+        case BNKOS:
+            LPCmodSettings.OSsettings.altBank = BNK512;
+            sprintf(itemStr,"512KB");
+            break;
         case BNK512:
             LPCmodSettings.OSsettings.altBank = BNK256;
             sprintf(itemStr,"256KB");
             break;
         case BNK256:
-
             if(LPCmodSettings.OSsettings.TSOPcontrol){
                 sprintf(itemStr,"TSOP bank0");
                 LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT0;
@@ -126,8 +133,8 @@ void incrementAltBank(void * itemStr) {
             break;
         case BNKTSOPSPLIT1:
         case BNKFULLTSOP:
-            LPCmodSettings.OSsettings.altBank = BNK512;
-            sprintf(itemStr,"512KB");
+            LPCmodSettings.OSsettings.altBank = BNKOS;
+            sprintf(itemStr,"XBlast OS");
             break;
         case BNKTSOPSPLIT0:
             LPCmodSettings.OSsettings.altBank = BNKTSOPSPLIT1;

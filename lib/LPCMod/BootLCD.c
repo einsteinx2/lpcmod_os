@@ -5,9 +5,8 @@
 #include "BootLPCMod.h"
 
 void BootLCDInit(void){
-    xLCD.enable = 0;    //Set it unintialized for now.
-    xLCD.LineSize = HDD4780_DEFAULT_LINELGTH;    //Default for common 4 lines LCDs
-    xLCD.TimingCMD = 1500;                        //Arbitrary but safe.
+    xLCD.enable = 0;            //Set it unintialized for now.
+    xLCD.TimingCMD = 1500;      //Arbitrary but safe.
     xLCD.TimingData = 90;
     BootLCDSwitchType();
 
@@ -27,6 +26,8 @@ void BootLCDInit(void){
 }
 
 void BootLCDSwitchType(void){
+    xLCD.LineSize = LPCmodSettings.LCDsettings.lineLength;    //Defaults to 4 lines LCDs
+    xLCD.nbLines = LPCmodSettings.LCDsettings.nbLines;        //Defaults to 20 chars/line
     switch(LPCmodSettings.LCDsettings.lcdType){
         case KS0073:
             xLCD.Line1Start = 0x00;
@@ -34,13 +35,28 @@ void BootLCDSwitchType(void){
             xLCD.Line3Start = 0x40;
             xLCD.Line4Start = 0x60;
             break;
-        default:
-            xLCD.Line1Start = 0x00;    //HD44780 by default
-            xLCD.Line2Start = 0x40;    //Check the datasheet if you don't believe me.
-            xLCD.Line3Start = 0x14;
-            xLCD.Line4Start = 0x54;
-            break;
-    }
+        default:                                //HD44780 by default
+            switch(LPCmodSettings.LCDsettings.nbLines){
+                case 1:
+                    xLCD.Line1Start = 0x00;    //Single line
+                    xLCD.Line2Start = 0xFF;
+                    xLCD.Line3Start = 0xFF;
+                    xLCD.Line4Start = 0xFF;
+                    break;
+                case 2:
+                    xLCD.Line1Start = 0x00;    //16x2, 2 Lines
+                    xLCD.Line2Start = xLCD.Line1Start + LPCmodSettings.LCDsettings.lineLength;
+                    xLCD.Line3Start = 0xFF;
+                    xLCD.Line4Start = 0xFF;
+                    break;
+                default:                       //20x4
+                    xLCD.Line1Start = 0x00;    //4 lines
+                    xLCD.Line2Start = 0x40;
+                    xLCD.Line3Start = xLCD.Line1Start + LPCmodSettings.LCDsettings.lineLength;
+                    xLCD.Line4Start = xLCD.Line2Start + LPCmodSettings.LCDsettings.lineLength;
+                    break;
+            }
+        }
 }
 
 void toggleEN5V(u8 value){
@@ -104,7 +120,7 @@ void WriteLCDInit(void){
         WriteToIO(X3_DISP_O_DIR_DAT, 0xFF);
         WriteToIO(X3_DISP_O_DIR_CMD, 0x07);
     }
-    //It's been at least 15ms since boot.
+    //It's been at least ~15ms since boot.
     //Start of init, with delay
     xLCD.WriteIO(0x33,0,4100);    //Use a single call to write twice function set 0b0011 with 4.1ms delay
 
@@ -257,7 +273,7 @@ void WriteLCDLine1(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
 
-    if(xLCD.enable != 1)
+    if(xLCD.enable != 1 || xLCD.nbLines <= 1)
         return;
 
     if(centered){
@@ -281,7 +297,7 @@ void WriteLCDLine2(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
 
-    if(xLCD.enable != 1)
+    if(xLCD.enable != 1 || xLCD.nbLines <= 2)
         return;
 
     if(centered){
@@ -303,6 +319,9 @@ void WriteLCDLine2(bool centered, char *lineText){
 void WriteLCDLine3(bool centered, char *lineText){
     int i;
     char LineBuffer[LPCmodSettings.LCDsettings.lineLength + 1];    //For the escape character at the end.
+
+    if(xLCD.enable != 1 || xLCD.nbLines <= 2)
+        return;
 
     if(centered){
         //Play with the string to center it on the LCD unit.
@@ -333,9 +352,9 @@ void WriteLCDCenterString(char * StringOut, char * stringIn){
     if (stringIn[0]=='\2') {
         strncpy(StringOut,&stringIn[1],xLCD.LineSize - 1);        //We skipped the first character.
     } else {
-        strncpy(StringOut,stringIn,xLCD.LineSize);    //Line length is 20 characters
+        strncpy(StringOut,stringIn,xLCD.LineSize);    //Line length is variable
     }
-    StringOut[xLCD.LineSize] = 0;            //Escape character at the end(21st character) that's for sure
+    StringOut[xLCD.LineSize] = 0;            //Escape character at the end that's for sure
     i = strlen(StringOut);
     //String length is shorter than what can be displayed on a single line of the LCD unit.
     if (i < xLCD.LineSize) {
@@ -361,9 +380,9 @@ void WriteLCDFitString(char * StringOut, char * stringIn){
     if (stringIn[0]=='\2') {
         strncpy(StringOut,&stringIn[1],xLCD.LineSize - 1);        //We skipped the first character.
     } else {
-        strncpy(StringOut,stringIn,xLCD.LineSize);    //Line length is 20 characters
+        strncpy(StringOut,stringIn,xLCD.LineSize);    //Line length is variable
     }
-    StringOut[xLCD.LineSize] = 0;            //Escape character at the end(21st character) that's for sure
+    StringOut[xLCD.LineSize] = 0;            //Escape character at the end that's for sure
     i = strlen(StringOut);
     //String length is shorter than what can be displayed on a single line of the LCD unit.
     if (i < xLCD.LineSize) {
@@ -409,7 +428,7 @@ void WriteLCDClearLine(u8 line) {
     if(xLCD.enable != 1)
         return;
         
-    memset(empty,0x20,xLCD.LineSize);
+    memset(empty,' ',xLCD.LineSize);
 
     //Call the proper function for the desired line.
     (*WriteLineFctPtr[line])(JUSTIFYLEFT, empty);

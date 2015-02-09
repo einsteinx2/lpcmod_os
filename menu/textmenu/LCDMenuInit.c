@@ -49,6 +49,26 @@ TEXTMENU *LCDMenuInit(void) {
 
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption,"Number of lines : ");
+    sprintf(itemPtr->szParameter, "%u", LPCmodSettings.LCDsettings.nbLines);
+    itemPtr->functionLeftPtr=LCDDecreaseNbLines;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=LCDIncreaseNbLines;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption,"Line's length : ");
+    sprintf(itemPtr->szParameter, "%u", LPCmodSettings.LCDsettings.lineLength);
+    itemPtr->functionLeftPtr=LCDDecreaseLineLength;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=LCDIncreaseLineLength;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Backlight : ");
     sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.LCDsettings.backlight);
     itemPtr->functionPtr= NULL;

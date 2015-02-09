@@ -59,7 +59,7 @@ extern void BootResetAction ( void ) {
     A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
 
     //Set to NULL as it's not used yet.
-    gobalGenericPtr = NULL;
+    //gobalGenericPtr = NULL;
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
@@ -282,7 +282,7 @@ extern void BootResetAction ( void ) {
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
-            if(EjectButtonPressed){              //Xbox was started from eject button.
+            if(EjectButtonPressed && LPCmodSettings.OSsettings.altBank != BNKOS){              //Xbox was started from eject button and eject button quick boot is enabled.
                 if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP){
                     switchBootBank(LPCmodSettings.OSsettings.altBank);
               	}

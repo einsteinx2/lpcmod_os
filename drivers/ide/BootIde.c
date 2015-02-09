@@ -671,26 +671,10 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     //If drive is a hard disk, see what type of partitioning it has.
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
 
-        unsigned char ba[512];
-        int nError;
-
-        if((nError=BootIdeReadSector(nIndexDrive, ba, 3, 0, 512))) 
-        {
-            //printk("  -  Unable to read FATX sector");
-        } else {
-            if( (ba[0]=='B') && (ba[1]=='R') && (ba[2]=='F') && (ba[3]=='R') ) 
-            {
-                tsaHarddiskInfo[nIndexDrive].m_enumDriveType=EDT_XBOXFS;
-#ifndef SILENT_MODE
-                printk(" - FATX", nIndexDrive);
-            } else {
-                printk(" - No FATX", nIndexDrive);
-#endif
-            }
-        }
-
+        if(FATXCheckFATXMagic(nIndexDrive)){
             // report on the MBR-ness of the drive contents
-        tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+            tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+        }
 
             //Check if drive support S.M.A.R.T.
         tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = drive_info[82] & 0x0001;
@@ -1756,7 +1740,7 @@ bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd){
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
     BootIdeWaitNotBusy(uIoBase);
 
-    tsicp.m_wCylinder = 0xC240; //Necessary for SMART subcommands.
+    tsicp.m_wCylinder = 0xC24F; //Necessary for SMART subcommands.
     IoOutputByte(IDE_REG_FEATURE(uIoBase), smart_cmd); // set SMART operation subcmd
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
         return true;

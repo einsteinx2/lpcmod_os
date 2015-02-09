@@ -427,6 +427,7 @@ typedef struct _xLCD {
     int DisplayType;
     int enable;
     int    LineSize;
+    int    nbLines;
     int    TimingCMD;
     int    TimingData;
 
@@ -499,7 +500,7 @@ bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash to
 
 //Global for convenience.
 unsigned char *videosavepage;
-void * gobalGenericPtr;
+//void * gobalGenericPtr;
 
 
 

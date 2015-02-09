@@ -258,6 +258,7 @@ bool bruteForceFixEEprom(void){
 
 void confirmSaveToEEPROMChip(void *ignored){
     u8 nIndexDrive, unlockConfirm[2];
+    bool cancelChanges = false;
 
     if(ConfirmDialog("          Save modified EEPROM to chip?", 1))
             return;
@@ -284,7 +285,10 @@ void confirmSaveToEEPROMChip(void *ignored){
             unlockConfirm[nIndexDrive] = 0;       //Won't relock as no HDD was detected on that port.
         }
     }
-    if(unlockConfirm[0] != 255 && unlockConfirm[1] != 255){      //No reported error
+    if(unlockConfirm[0] == 255 && unlockConfirm[1] == 255){      //error in unlocking one of 2 drives.
+        cancelChanges = ConfirmDialog("        Drive(s) still locked! Continue anyway?", 1);
+    }
+    if(!cancelChanges){
         memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));
         for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
             if(unlockConfirm[nIndexDrive] == 1){

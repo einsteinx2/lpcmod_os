@@ -125,3 +125,43 @@ void editCustomString3(void *whatever){
 //        xLCD.ClearLine(line);
 //    }
 }
+
+void LCDDecreaseNbLines(void * itemStr){
+    if(LPCmodSettings.LCDsettings.nbLines > 1)
+        LPCmodSettings.LCDsettings.nbLines = LPCmodSettings.LCDsettings.nbLines >> 1;
+    else
+        LPCmodSettings.LCDsettings.nbLines = 1;
+
+    BootLCDSwitchType();
+    sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);
+}
+
+void LCDIncreaseNbLines(void * itemStr){
+    if(LPCmodSettings.LCDsettings.nbLines == 0)
+        LPCmodSettings.LCDsettings.nbLines = 1;
+    else
+        LPCmodSettings.LCDsettings.nbLines = LPCmodSettings.LCDsettings.nbLines << 1;
+
+    BootLCDSwitchType();
+    sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);
+}
+
+void LCDDecreaseLineLength(void * itemStr){
+    if(LPCmodSettings.LCDsettings.lineLength < 20)
+        LPCmodSettings.LCDsettings.lineLength += 1;
+    else
+        LPCmodSettings.LCDsettings.lineLength = 20;
+
+    BootLCDSwitchType();
+    sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.lineLength);
+}
+
+void LCDIncreaseLineLength(void * itemStr){
+    if(LPCmodSettings.LCDsettings.lineLength > 8)
+        LPCmodSettings.LCDsettings.lineLength -= 1;
+    else
+        LPCmodSettings.LCDsettings.lineLength = 8;
+
+    BootLCDSwitchType();
+    sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);
+}

@@ -42,9 +42,9 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
     nIndexDrive = (u8)tempItemPtr->szParameter[50];
 
     enableNetflash((void *)&temp);
-    if(gobalGenericPtr == NULL)
+    //if(gobalGenericPtr == NULL)
         return;
-    eepromPtr = (unsigned char *)gobalGenericPtr;
+    //eepromPtr = (unsigned char *)gobalGenericPtr;
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
         UnlockHDD(nIndexDrive, 1, eepromPtr);
@@ -52,7 +52,7 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
     else {
         LockHDD(nIndexDrive, 1, eepromPtr);
     }
-    free(gobalGenericPtr);
+    //free(gobalGenericPtr);
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
         sprintf(tempItemPtr->szCaption, "Unlock");
     }
@@ -140,9 +140,12 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
             verbose = true;
         }
     }
+    //We can try to go on with normal unlock procedure.
     else{
+        //Password calculation error.
         if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
             printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
+            //Go to Master password unlock.
             if(!masterPasswordUnlockSequence(nIndexDrive)){
                 result = false;
                 verbose = true;
@@ -152,7 +155,9 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
             }
         }
         else{
+            //Password calculation was successful.
             if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
+                //Calculated password is not the correct one for this drive.
                 printk("\n           Security disable failed!");
                 if(!masterPasswordUnlockSequence(nIndexDrive)){
                     result = false;
@@ -164,8 +169,15 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
             }
         }
     }
-    if(verbose && result)
-        printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+    if(result){
+        //Unlock successful, read if there's a MBR, only if FATX formatted drive.
+        if(FATXCheckFATXMagic(nIndexDrive)){
+            // report on the MBR-ness of the drive contents
+            tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+        }
+        if(verbose)
+            printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+    }
 
 endExec:
     if(verbose){
@@ -413,7 +425,7 @@ void AssertSMARTEnableDisable(void *itemPtr){
         driveToggleSMARTFeature(nIndexDrive, 0xD9);          //0xD9 is subcommand for disabling SMART.
     }
     else {
-        driveToggleSMARTFeature(nIndexDrive, 0xD8);          //0xD8 is subcommand for disabling SMART.                                        //1 is for verbose
+        driveToggleSMARTFeature(nIndexDrive, 0xD8);          //0xD8 is subcommand for enabling SMART.
     }
     if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled) {
         sprintf(tempItemPtr->szCaption, "%s", "Disable");

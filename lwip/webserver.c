@@ -127,8 +127,8 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 netFlashOver = updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
                 break;
             case HDDLOCK_NETFLASH:
-                gobalGenericPtr = (void *)malloc(hs->bios_len);
-                memcpy(gobalGenericPtr, hs->bios_start, hs->bios_len);
+                //gobalGenericPtr = (void *)malloc(hs->bios_len);
+                //memcpy(gobalGenericPtr, hs->bios_start, hs->bios_len);
                 netFlashOver = 1;
                 break;
             default:

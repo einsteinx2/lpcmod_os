@@ -938,6 +938,20 @@ int FATXCheckMBR(u8 driveId){
     return 1;
 }
 
+int FATXCheckFATXMagic(u8 driveId){
+    u8 ba[512];
+    if(BootIdeReadSector(driveId, &ba[0], 0x03, 0, 512)) {
+        printk("\n\n\n           FATXCheckFATXMagic : Unable to read MBR sector\n");
+        return 0;
+    }
+    if((ba[0]=='B') && (ba[1]=='R') && (ba[2]=='F') && (ba[3]=='R')){
+        tsaHarddiskInfo[driveId].m_enumDriveType=EDT_XBOXFS;
+    }
+    //Everything went fine.
+    return 1;
+}
+
+
 void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table){
     u8 *sourceTable = (u8 *)p_table;
     if(BootIdeWriteSector(driveId,sourceTable, 0, DEFAULT_WRITE_RETRY)){    //Write on sector 0

@@ -76,12 +76,14 @@ if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
         strcpy(itemPtr->szParameter,"512KB");
     else if (LPCmodSettings.OSsettings.altBank == BNK256)
         strcpy(itemPtr->szParameter,"256KB");
-    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0)
+    else if (LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT0)
         strcpy(itemPtr->szParameter,"TSOP bank0");            //Show this string if TSOP is split.
-    else if (LPCmodSettings.OSsettings.activeBank == BNKFULLTSOP)
+    else if (LPCmodSettings.OSsettings.altBank == BNKFULLTSOP)
         strcpy(itemPtr->szParameter,"TSOP");                //TSOP is not split.
-    else if (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1)
+    else if (LPCmodSettings.OSsettings.altBank == BNKTSOPSPLIT1)
         strcpy(itemPtr->szParameter,"TSOP bank1");
+    else if (LPCmodSettings.OSsettings.altBank == BNKOS)
+        strcpy(itemPtr->szParameter,"XBlast OS");
     itemPtr->functionPtr=incrementAltBank;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=incrementAltBank;

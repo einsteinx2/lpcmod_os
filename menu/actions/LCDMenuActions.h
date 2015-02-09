@@ -23,4 +23,9 @@ void editCustomString1(void *whatever);
 void editCustomString2(void *whatever);
 void editCustomString3(void *whatever);
 
+void LCDDecreaseNbLines(void * itemStr);
+void LCDIncreaseNbLines(void * itemStr);
+void LCDDecreaseLineLength(void * itemStr);
+void LCDIncreaseLineLength(void * itemStr);
+
 #endif

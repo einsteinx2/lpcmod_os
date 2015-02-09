@@ -55,7 +55,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 
     LPCmodSettings->OSsettings.migrateSetttings = 0;
     LPCmodSettings->OSsettings.activeBank = BNK512;
-    LPCmodSettings->OSsettings.altBank = BNK256;
+    LPCmodSettings->OSsettings.altBank = BNKOS;
     LPCmodSettings->OSsettings.Quickboot = 0;
     LPCmodSettings->OSsettings.selectedMenuItem = 0;
     LPCmodSettings->OSsettings.fanSpeed = DEFAULT_FANSPEED;
