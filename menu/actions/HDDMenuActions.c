@@ -195,7 +195,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             "TEAMASSEMBLY",
             "XBOXSCENE",
             "Seagate                         ",
-            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
+            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW\0"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
     };
     printk("\n           Trying Master Password unlock.");
     for(i = 0; i < 4; i++){
@@ -381,7 +381,7 @@ void FormatDriveFG(void *driveId) {
             return;
             break;
     }
-    gstart = SECTOR_EXTEND + fsize + 1;
+    gstart = SECTOR_EXTEND + fsize;
     gsize = nExtendSectors - fsize;
     if(gsize >= LBASIZE_1024GB)
         gsize = LBASIZE_1024GB - 1;
