@@ -1784,6 +1784,7 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
     BootIdeWaitNotBusy(uIoBase);
 
     tsicp.m_wCylinder = 0xC24F; //Necessary for SMART subcommands.
+    tsicp.m_bSector = 0x1;      //Summary SMART error log
     IoOutputByte(IDE_REG_FEATURE(uIoBase), 0xDA); // 0xDA = SMART RETURN STATUS subcommand.
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
         return -1;
