@@ -147,20 +147,20 @@ void LCDIncreaseNbLines(void * itemStr){
 }
 
 void LCDDecreaseLineLength(void * itemStr){
-    if(LPCmodSettings.LCDsettings.lineLength < 20)
-        LPCmodSettings.LCDsettings.lineLength += 1;
+    if(LPCmodSettings.LCDsettings.lineLength > 8)
+        LPCmodSettings.LCDsettings.lineLength -= 1;
     else
-        LPCmodSettings.LCDsettings.lineLength = 20;
+        LPCmodSettings.LCDsettings.lineLength = 8;
 
     BootLCDSwitchType();
     sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.lineLength);
 }
 
 void LCDIncreaseLineLength(void * itemStr){
-    if(LPCmodSettings.LCDsettings.lineLength > 8)
-        LPCmodSettings.LCDsettings.lineLength -= 1;
+    if(LPCmodSettings.LCDsettings.lineLength < 20)
+        LPCmodSettings.LCDsettings.lineLength += 1;
     else
-        LPCmodSettings.LCDsettings.lineLength = 8;
+        LPCmodSettings.LCDsettings.lineLength = 20;
 
     BootLCDSwitchType();
     sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);

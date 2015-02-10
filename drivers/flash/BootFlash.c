@@ -415,9 +415,9 @@ void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
     OBJECT_FLASH of;
     int i;
     if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
-        memset(&of,0xFF,sizeof(of));
+        //memset(&of,0xFF,sizeof(of));
         of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
-        for (i = 0; i < 0x300; i++){        //Length of reserved flash space for persistent setting data.
+        for (i = 0; i < sizeof(_LPCmodSettings); i++){        //Length of reserved flash space for persistent setting data.
             *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
         }
     }
