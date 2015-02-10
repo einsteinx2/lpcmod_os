@@ -77,5 +77,6 @@ int CalculateDrivePassword(int driveId, unsigned char *key, unsigned char *eepro
 bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master_password);
 
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
+int driveSMARTRETURNSTATUS(int nDriveIndex);
 
 #endif

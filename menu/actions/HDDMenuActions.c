@@ -435,3 +435,28 @@ void AssertSMARTEnableDisable(void *itemPtr){
     }
     sprintf(tempItemPtr->szParameter, " S.M.A.R.T.");
 }
+
+void CheckSMARTRETURNSTATUS(void * drive){
+
+    u8 nIndexDrive = 1;                                //Toggle master by default.
+    int pollReturn;
+
+    nIndexDrive = *(u8 *)drive;
+    HDDMenuHeader("Read S.M.A.R.T. status");
+
+    if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled) {
+        pollReturn = driveSMARTRETURNSTATUS(nIndexDrive);
+        printk("\n\1           S.M.A.R.T. return ");
+        if(pollReturn == 0)
+            printk("drive is fine!");
+        else if(pollReturn == 1)
+            printk("drive exceeded threshold!\n\1           Please test drive!");
+        else
+            printk("unknown S.M.A.R.T. status...");
+    }
+    else{
+        printk("\n\1           S.M.A.R.T. not enabled.\n\1           Please enable S.M.A.R.T. to use this feature.");
+    }
+
+    HDDMenuFooter();
+}

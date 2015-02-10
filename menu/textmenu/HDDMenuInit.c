@@ -191,7 +191,7 @@ TEXTMENU *HDDSMARTOperationsMenuInit(void * drive) {
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     sprintf(menuPtr->szCaption, "S.M.A.R.T. menu : %s", nDriveIndex ? "Slave":"Master");
 
-    //This drive is locked - produce an unlock menu
+    //SMART Enable/Disable
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     if(tsaHarddiskInfo[nDriveIndex].m_fSMARTEnabled) {
@@ -204,6 +204,16 @@ TEXTMENU *HDDSMARTOperationsMenuInit(void * drive) {
     itemPtr->szParameter[50] = nDriveIndex;
     itemPtr->functionPtr= AssertSMARTEnableDisable;
     itemPtr->functionDataPtr = itemPtr;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //SMART Enable/Disable
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Read S.M.A.R.T. status");
+    itemPtr->functionPtr= AssertSMARTEnableDisable;
+    itemPtr->functionDataPtr = malloc(sizeof(u8));
+        *(u8 *)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
     ResetDrawChildTextMenu(menuPtr);

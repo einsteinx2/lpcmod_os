@@ -36,3 +36,4 @@ void DisplayHDDInfo(void *driveId);
 void FormatDriveFG(void *driveId);
 
 void AssertSMARTEnableDisable(void *itemPtr);
+void CheckSMARTRETURNSTATUS(void * drive);

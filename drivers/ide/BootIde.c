@@ -1771,3 +1771,43 @@ bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd){
     }
     return false;
 }
+
+int driveSMARTRETURNSTATUS(int nDriveIndex){
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+    int result = -1;    //Start assuming error.
+    u16 w;
+    u8 error;
+
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
+    IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
+    BootIdeWaitNotBusy(uIoBase);
+
+    tsicp.m_wCylinder = 0xC24F; //Necessary for SMART subcommands.
+    IoOutputByte(IDE_REG_FEATURE(uIoBase), 0xDA); // 0xDA = SMART RETURN STATUS subcommand.
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
+        return -1;
+
+    BootIdeWaitNotBusy(uIoBase);
+
+    wait_smalldelay();
+
+    w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
+    w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;
+
+    error=IoInputByte(IDE_REG_STATUS(uIoBase));
+    if(error&1) { // error
+        return -1;
+    }
+
+    if(w == 0xC24F)     //Everything is fine
+        result = 0;
+    else if(w == 0x2CF4)        //Threshold exceeded condition.
+        result = 1;
+    else{
+        printk("\n       Weird SMART status : %04X", w);
+        result = -1;            //wtf
+    }
+
+    return result;
+}
