@@ -133,16 +133,20 @@ void LCDDecreaseNbLines(void * itemStr){
         LPCmodSettings.LCDsettings.nbLines = 1;
 
     BootLCDSwitchType();
+    initialLCDPrint();
     sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);
 }
 
 void LCDIncreaseNbLines(void * itemStr){
     if(LPCmodSettings.LCDsettings.nbLines == 0)
         LPCmodSettings.LCDsettings.nbLines = 1;
-    else
+    else if(LPCmodSettings.LCDsettings.nbLines < 4)
         LPCmodSettings.LCDsettings.nbLines = LPCmodSettings.LCDsettings.nbLines << 1;
+    else
+    	LPCmodSettings.LCDsettings.nbLines = 4;
 
     BootLCDSwitchType();
+    initialLCDPrint();
     sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);
 }
 
@@ -153,6 +157,7 @@ void LCDDecreaseLineLength(void * itemStr){
         LPCmodSettings.LCDsettings.lineLength = 8;
 
     BootLCDSwitchType();
+    initialLCDPrint();
     sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.lineLength);
 }
 
@@ -163,5 +168,6 @@ void LCDIncreaseLineLength(void * itemStr){
         LPCmodSettings.LCDsettings.lineLength = 20;
 
     BootLCDSwitchType();
-    sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.nbLines);
+    initialLCDPrint();
+    sprintf(itemStr,"%u", LPCmodSettings.LCDsettings.lineLength);
 }

@@ -210,7 +210,7 @@ TEXTMENU *HDDSMARTOperationsMenuInit(void * drive) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Read S.M.A.R.T. status");
-    itemPtr->functionPtr= AssertSMARTEnableDisable;
+    itemPtr->functionPtr= CheckSMARTRETURNSTATUS;
     itemPtr->functionDataPtr = malloc(sizeof(u8));
         *(u8 *)itemPtr->functionDataPtr = nDriveIndex;
     itemPtr->functionDataPtrMemAlloc = true;

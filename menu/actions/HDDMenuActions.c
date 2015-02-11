@@ -446,7 +446,7 @@ void CheckSMARTRETURNSTATUS(void * drive){
 
     if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled) {
         pollReturn = driveSMARTRETURNSTATUS(nIndexDrive);
-        printk("\n\1           S.M.A.R.T. return ");
+        printk("\n\n\n\1          S.M.A.R.T. return ");
         if(pollReturn == 0)
             printk("drive is fine!");
         else if(pollReturn == 1)

@@ -40,9 +40,7 @@ void TextMenuAddItem(TEXTMENU *menu, TEXTMENUITEM *newMenuItem) {
 
 void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUITEM *selectedItem) {
     TEXTMENUITEM *item=NULL;
-    int menucount;
-    int i;
-    char titleLine[xLCD.LineSize + 1];
+    int menucount;    
     
     VIDEO_CURSOR_POSX=75;
     VIDEO_CURSOR_POSY=45;
@@ -110,39 +108,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         item=item->nextMenuItem;
     }
     VIDEO_ATTR=0xffffff;
-    if(xLCD.enable == 1){
-        if(LPCmodSettings.LCDsettings.customTextBoot == 0){
-            bool colon=false;
-            xLCD.PrintLine1(JUSTIFYLEFT, menu->szCaption);
-            titleLine[xLCD.LineSize] = 0;                    //End of line character.
-            memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
-            for(i = 0; i < strlen(selectedItem->szCaption); i++){
-                if(selectedItem->szCaption[i] == ':' && i >= 7){	       //Quick fix to display F: and G: drive strings in their entirety
-                    if( i < xLCD.LineSize)                                     //as they would be cut off by this logic on the LCD.
-                        titleLine[i] = selectedItem->szCaption[i];             //Copy characters as long as we're under 20 characters or no ':' was encountered.
-                    colon = true;
-                    break;                                                     //Leave the for-loop as no other character will be printed on this line.
-                }
-                else{
-                    if( i < xLCD.LineSize)
-                        titleLine[i] = selectedItem->szCaption[i];             //Print out the ':' character anyway.
-                }
-            }
-            xLCD.PrintLine2(JUSTIFYLEFT, titleLine);
-            if(colon) {
-                memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
-                u8 nbChars = strlen(selectedItem->szParameter);        //Number of character in string
-                for (i = 0; i < nbChars; i++){                //Justify text to the right of the screen.
-                    titleLine[xLCD.LineSize - nbChars + i] = selectedItem->szParameter[i];
-                }
-                xLCD.PrintLine3(JUSTIFYLEFT, titleLine);
-                colon = false;
-            }
-            else{
-                xLCD.ClearLine(3);
-            }
-        }
-    }
+    textMenuLCDPrint(menu, selectedItem);
 }
 
 void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
@@ -342,3 +308,41 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
     }
 }
 
+void textMenuLCDPrint(TEXTMENU *menu, TEXTMENUITEM *selectedItem){
+    int i;
+    char titleLine[xLCD.LineSize + 1];
+
+    if(xLCD.enable == 1){
+        if(LPCmodSettings.LCDsettings.customTextBoot == 0){
+            bool colon=false;
+            xLCD.PrintLine1(JUSTIFYLEFT, menu->szCaption);
+            titleLine[xLCD.LineSize] = 0;                    //End of line character.
+            memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
+            for(i = 0; i < strlen(selectedItem->szCaption); i++){
+                if(selectedItem->szCaption[i] == ':' && i >= 7){	       //Quick fix to display F: and G: drive strings in their entirety
+                    if( i < xLCD.LineSize)                                     //as they would be cut off by this logic on the LCD.
+                        titleLine[i] = selectedItem->szCaption[i];             //Copy characters as long as we're under 20 characters or no ':' was encountered.
+                    colon = true;
+                    break;                                                     //Leave the for-loop as no other character will be printed on this line.
+                }
+                else{
+                    if( i < xLCD.LineSize)
+                        titleLine[i] = selectedItem->szCaption[i];             //Print out the ':' character anyway.
+                }
+            }
+            xLCD.PrintLine2(JUSTIFYLEFT, titleLine);
+            if(colon) {
+                memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
+                u8 nbChars = strlen(selectedItem->szParameter);        //Number of character in string
+                for (i = 0; i < nbChars; i++){                //Justify text to the right of the screen.
+                    titleLine[xLCD.LineSize - nbChars + i] = selectedItem->szParameter[i];
+                }
+                xLCD.PrintLine3(JUSTIFYLEFT, titleLine);
+                colon = false;
+            }
+            else{
+                xLCD.ClearLine(3);
+            }
+        }
+    }
+}
