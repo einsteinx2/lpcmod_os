@@ -115,7 +115,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                     }
                 }
             }
-            if(xLCD.enable == 1){
+            if(xLCD.enable == 1 && xLCD.LineOwner[line] != SCRIPT_OWNER){
                 (*Printline[line])(JUSTIFYLEFT, string);
             }
             refresh = false;

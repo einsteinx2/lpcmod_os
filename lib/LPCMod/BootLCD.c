@@ -8,6 +8,11 @@ void BootLCDInit(void){
     xLCD.enable = 0;            //Set it unintialized for now.
     xLCD.TimingCMD = 1500;      //Arbitrary but safe.
     xLCD.TimingData = 90;
+
+    BootLCDUpdateLinesOwnership(0, 0);
+    BootLCDUpdateLinesOwnership(1, 0);
+    BootLCDUpdateLinesOwnership(2, 0);
+    BootLCDUpdateLinesOwnership(3, 0);
     BootLCDSwitchType();
 
     //Function pointers included in struct for easier access throughout the program.
@@ -444,5 +449,21 @@ void initialLCDPrint(void){
     else{
         xLCD.Command(DISP_CLEAR);
         xLCD.PrintLine0(CENTERSTRING, "XBlast mod V1");
+    }
+}
+
+void BootLCDUpdateLinesOwnership(u8 line, u8 fromScript){
+    char customStringsFirstCharacterArray[4] = {LPCmodSettings.LCDsettings.customString0[0], LPCmodSettings.LCDsettings.customString1[0], LPCmodSettings.LCDsettings.customString2[0], LPCmodSettings.LCDsettings.customString3[0]};
+
+    if (fromScript == SCRIPT_OWNER){
+        xLCD.LineOwner[line] = SCRIPT_OWNER;
+        return;
+    }
+
+    if(xLCD.LineOwner[line] != SCRIPT_OWNER){
+        if(LPCmodSettings.LCDsettings.customTextBoot && customStringsFirstCharacterArray[line] != '\0')
+            xLCD.LineOwner[line] = CUSTOM_OWNER;
+        else
+            xLCD.LineOwner[line] = SYSTEM_OWNER;
     }
 }

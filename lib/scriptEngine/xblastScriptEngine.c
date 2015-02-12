@@ -8,6 +8,7 @@
 #include "boot.h"
 #include "xblastScriptEngine.h"
 #include "lpcmod_v1.h"
+#include "lib/LPCMod/BootLCD.h"
 
 #define ARGTYPE_UNKNOWN -1
 #define ARGTYPE_FUNCTION 0
@@ -27,6 +28,8 @@
 #define OPTYPE_MULT     9
 #define OPTYPE_DIVIDE   10
 #define OPTYPE_MOD      11
+#define OPTYPE_SHIFTUP  12
+#define OPTYPE_SHIFTDOWN   13
 
 #define FUNCTION_IF     0
 #define FUNCTION_ELSE   1
@@ -44,9 +47,11 @@
 #define FUNCTION_LCDB   13
 #define FUNCTION_LCDP   14
 #define FUNCTION_VAR    15
-#define FUNCTION_END    16
+#define FUNCTION_SPIR   16
+#define FUNCTION_SPIW   17
+#define FUNCTION_END    18
 
-#define NBFUNCTIONCALLS 17
+#define NBFUNCTIONCALLS 19
 
 
 typedef struct variableEntry{
@@ -103,6 +108,8 @@ bool lcdClearLineFunction(u8 line);
 bool lcdResetFunction(void);
 bool lcdBacklightFunction(u8 value);
 bool lcdPowerFunction(u8 value);
+u8 SPIRead(void);
+bool SPIWrite(u8 data);
 bool variableFunction(char * name, int initValue, _variableList * variableList);
 bool checkEndOfArgument(char * compareBuf, int position);
 bool updateVariable(char * name, int value, _variableList * variableList);
@@ -125,6 +132,8 @@ char * functionCallList[NBFUNCTIONCALLS] = {
         "LCDB",
         "LCDP",
         "VAR",
+        "SPIR",
+        "SPIW",
         "END"
 };
 
@@ -357,7 +366,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_WAIT:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             waitFunction(argumentList[1].value);
                         }
                         //else{
@@ -365,7 +374,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_BOOT:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             bootFunction((u8)argumentList[1].value);
                         }
                         //else{
@@ -373,7 +382,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_FAN:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             fanFunction((u8)argumentList[1].value);
                         }
                         //else{
@@ -392,7 +401,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_LCDC:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             lcdClearLineFunction((u8)argumentList[1].value);
                         }
                         //else{
@@ -403,7 +412,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         lcdResetFunction();
                         break;
                     case FUNCTION_LCDB:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             lcdBacklightFunction((u8)argumentList[1].value);
                         }
                         //else{
@@ -411,7 +420,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_LCDP:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             lcdPowerFunction((u8)argumentList[1].value);
                         }
                         //else{
@@ -434,6 +443,20 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                     goto endExecution;
                             }
                             break;
+                    case FUNCTION_SPIR:
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist){
+                            arithAccumulator = SPIRead();
+                            accumulatorInUse = true;
+                        }
+                        break;
+                    case FUNCTION_SPIW:
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
+                            SPIWrite((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LCDP function call!");
+                        //}
+                        break;
                     case FUNCTION_END:
                         //printf("\nEND function. Ending script execution gracefully.");
                         goto endExecution;
@@ -476,6 +499,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                     case OPTYPE_MOD:
                                         arithAccumulator = argumentList[i].value % arithAccumulator;
                                         break;
+                                    case OPTYPE_SHIFTUP:
+                                        arithAccumulator = argumentList[i].value << arithAccumulator;
+                                        break;
+                                    case OPTYPE_SHIFTDOWN:
+                                        arithAccumulator = argumentList[i].value >> arithAccumulator;
+                                        break;
                                     default://Accumulator was already used but no arithmetic operator was specified
                                             //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
                                             //goto endExecution;
@@ -508,6 +537,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                     break;
                                 case OPTYPE_MOD:
                                     arithAccumulator = argumentList[i].value % arithAccumulator;
+                                    break;
+                                case OPTYPE_SHIFTUP:
+                                    arithAccumulator = argumentList[i].value << arithAccumulator;
+                                    break;
+                                case OPTYPE_SHIFTDOWN:
+                                    arithAccumulator = argumentList[i].value >> arithAccumulator;
                                     break;
                                 default://Accumulator was already used but no arithmetic operator was specified
                                         //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
@@ -631,6 +666,10 @@ bool ledFunction(char * value){
 bool lcdPrintFunction(u8 line, char * text){
     //printf("\n****LCD Print at line %u : %s", line, text);
 	//printk("\n     lcdPrint function called : %s",text);
+    if(line > (xLCD.nbLines - 1))
+        return false;
+
+    BootLCDUpdateLinesOwnership(line, SCRIPT_OWNER);
     switch(line){
         case 0:
             WriteLCDLine0(0, text);	//0 for justify text on left
@@ -650,6 +689,9 @@ bool lcdPrintFunction(u8 line, char * text){
 bool lcdClearLineFunction(u8 line){
 	//printk("\n     lcdClearLine function called : %u",line);
     //printf("\n****LCD clear line %u", line);
+    if(line > (xLCD.nbLines - 1))
+        return false;
+
     WriteLCDClearLine(line);
     return true;
 }
@@ -670,6 +712,32 @@ bool lcdPowerFunction(u8 value){
     //printf("\n****LCD power %s", value ? "ON": "OFF");
     LPCmodSettings.LCDsettings.enable5V = value? 1 : 0;
     assertInitLCD();
+    return true;
+}
+
+u8 SPIRead(void){
+    u8 i, result = 0;
+    for(i = 0; i < 8; i++){
+        result = result << 1;
+        LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
+        wait_us(10);
+        LPCMod_WriteIO(0x2, 1);
+        LPCMod_ReadIO(NULL);
+        result = GenPurposeIOs.GPI1;
+        wait_us(10);    //This will need to be verified.
+    }
+    return result;
+}
+bool SPIWrite(u8 data){
+    u8 i;
+    for(i = 0; i < 8; i++){
+        LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
+        LPCMod_WriteIO(0x1, data&0x1);
+        wait_us(10);
+        LPCMod_WriteIO(0x2, 1);
+        wait_us(10);
+        data = data >> 1;
+    }
     return true;
 }
 
@@ -975,6 +1043,14 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
     }
     if(!strcmp(inputArg, "%")){
         *outNum = OPTYPE_MOD;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, "<<")){
+        *outNum = OPTYPE_SHIFTUP;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, ">>")){
+        *outNum = OPTYPE_SHIFTDOWN;
         operatorDetected = true;
     }
 

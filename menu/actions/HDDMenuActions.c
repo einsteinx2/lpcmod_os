@@ -455,7 +455,7 @@ void CheckSMARTRETURNSTATUS(void * drive){
             printk("unknown S.M.A.R.T. status...");
     }
     else{
-        printk("\n\1           S.M.A.R.T. not enabled.\n\1           Please enable S.M.A.R.T. to use this feature.");
+        printk("\n\1          S.M.A.R.T. not enabled.\n\1          Please enable S.M.A.R.T. to use this feature.");
     }
 
     HDDMenuFooter();

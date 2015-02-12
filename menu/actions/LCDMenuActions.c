@@ -79,7 +79,8 @@ void editCustomString0(void *whatever){
         line = 0;
     }
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
-    if(LPCmodSettings.LCDsettings.customTextBoot){
+    BootLCDUpdateLinesOwnership(0, 0);
+    if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[0] != SCRIPT_OWNER){
         xLCD.PrintLine0(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString0);
     }
 //    else{
@@ -93,7 +94,8 @@ void editCustomString1(void *whatever){
         line = 1;
     }
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString1, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
-    if(LPCmodSettings.LCDsettings.customTextBoot){
+    BootLCDUpdateLinesOwnership(1, 0);
+    if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[1] != SCRIPT_OWNER){
         xLCD.PrintLine1(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString1);
     }
 //    else{
@@ -107,7 +109,8 @@ void editCustomString2(void *whatever){
         line = 2;
     }
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString2, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
-    if(LPCmodSettings.LCDsettings.customTextBoot){
+    BootLCDUpdateLinesOwnership(2, 0);
+    if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[2] != SCRIPT_OWNER){
         xLCD.PrintLine2(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString2);
     }
 //    else{
@@ -118,7 +121,8 @@ void editCustomString2(void *whatever){
 void editCustomString3(void *whatever){
     u8 line = 3;
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
-    if(LPCmodSettings.LCDsettings.customTextBoot){
+    BootLCDUpdateLinesOwnership(3, 0);
+    if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[3] != SCRIPT_OWNER){
         xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
     }
 //    else{

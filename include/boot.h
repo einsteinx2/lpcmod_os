@@ -436,6 +436,8 @@ typedef struct _xLCD {
     u8    Line3Start;
     u8    Line4Start;
 
+    u8  LineOwner[4];
+
     void    (*Init)(void);
     void    (*Command)(u8 value);
     void    (*Data)(u8 value);

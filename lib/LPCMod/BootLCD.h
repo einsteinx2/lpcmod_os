@@ -48,9 +48,16 @@
 #define CENTERSTRING        1
 #define JUSTIFYLEFT         0
 
+//Who owns the right to print onto the line
+//Priority is as numerically represented (Script is more important than custom which is more important than system)
+#define SYSTEM_OWNER    0       //System, base
+#define CUSTOM_OWNER    1       //Custom string
+#define SCRIPT_OWNER    2       //Script engine
+
 
 void BootLCDInit(void);
 void BootLCDSwitchType(void);
+void BootLCDUpdateLinesOwnership(u8 line, u8 fromScript);
 
 void toggleEN5V(u8 value);
 void setLCDContrast(u8 value);
