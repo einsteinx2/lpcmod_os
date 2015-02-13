@@ -232,7 +232,7 @@ bool IconMenu(void) {
     //Initial LCD string print.
     if(xLCD.enable == 1){
         if(LPCmodSettings.LCDsettings.customTextBoot == 0){
-            xLCD.PrintLine1(CENTERSTRING, selectedIcon->szCaption);
+            xLCD.PrintLine[1](CENTERSTRING, selectedIcon->szCaption);
             xLCD.ClearLine(2);
             xLCD.ClearLine(3);
         }
@@ -319,7 +319,7 @@ bool IconMenu(void) {
                         }
                         else{                                                             //Display booting bank,
                             LPCMod_LCDBankString(bankString, selectedIcon->bankID);
-                            xLCD.PrintLine1(CENTERSTRING, bankString);
+                            xLCD.PrintLine[1](CENTERSTRING, bankString);
                         }
                         xLCD.ClearLine(2); //Clear countdown line on screen since countdown is over and we're about to boot.
                     }
@@ -339,10 +339,10 @@ bool IconMenu(void) {
             if(xLCD.enable == 1){
                 if(LPCmodSettings.LCDsettings.customTextBoot == 0){
                     LPCMod_LCDBankString(bankString, selectedIcon->bankID);
-                    xLCD.PrintLine1(CENTERSTRING, bankString);
+                    xLCD.PrintLine[1](CENTERSTRING, bankString);
                     if(temp != 0) {
                         sprintf(timeoutString, "Auto boot in %ds", iconTimeRemain);
-                        xLCD.PrintLine2(CENTERSTRING, timeoutString);
+                        xLCD.PrintLine[2](CENTERSTRING, timeoutString);
                     }
                     else {
                         xLCD.ClearLine(2);

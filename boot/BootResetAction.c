@@ -216,7 +216,9 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.LCDsettings.contrast > 100 ||
        LPCmodSettings.LCDsettings.displayMsgBoot > 1 ||
        LPCmodSettings.LCDsettings.customTextBoot > 1 ||
-       LPCmodSettings.LCDsettings.displayBIOSNameBoot > 1){
+       LPCmodSettings.LCDsettings.displayBIOSNameBoot > 1 ||
+       (LPCmodSettings.firstScript.ScripMagicNumber&0xFFF0) != 0xFAF0 ||
+       LPCmodSettings.firstScript.nextEntryPosition > (0x3FDFC - 0x3F000 - sizeof(_LPCmodSettings) - sizeof(_scriptEntry))){
             fFirstBoot = true;
             initialLPCModOSBoot(&LPCmodSettings);                //No settings for LPCMod were present in flash.
             //OS sometimes lock on after a fresh flash. Disabling to see if that's causing it.(probably)

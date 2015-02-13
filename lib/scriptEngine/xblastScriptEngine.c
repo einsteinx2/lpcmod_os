@@ -670,20 +670,8 @@ bool lcdPrintFunction(u8 line, char * text){
         return false;
 
     BootLCDUpdateLinesOwnership(line, SCRIPT_OWNER);
-    switch(line){
-        case 0:
-            WriteLCDLine0(0, text);	//0 for justify text on left
-            break;
-        case 1:
-            WriteLCDLine1(0, text);
-            break;
-        case 2:
-            WriteLCDLine2(0, text);
-            break;
-        default:
-            WriteLCDLine3(0, text);
-            break;
-    }
+    xLCD.PrintLine[line](0, text);      //0 for justify text on left
+
     return true;
 }
 bool lcdClearLineFunction(u8 line){
@@ -918,6 +906,7 @@ void addNewLabel(struct _labelList * labelList, char * compareBuf, int position)
 
 bool checkEndOfArgument(char * compareBuf, int position){
 
+    //For string declaration, which must be in " "
     if(position >= 1){
         if(compareBuf[position - 1] == '\"' && !stringDeclaration){
             stringDeclaration = true;
@@ -946,32 +935,46 @@ bool checkEndOfArgument(char * compareBuf, int position){
         return false;
     if(compareBuf[position] == ')')
         return false;
+    if(compareBuf[position] == ',')
+        return false;
 
-    //Cases where there is not space between operator and preceding argument
-    if(position >= 1 && compareBuf[position - 1] != ' '){
+    //Single character operators.
         if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*'  || compareBuf[position] == '/')
             return false;
 
-        if(compareBuf[position] == '!' || compareBuf[position] == '>'  || compareBuf[position] == '<')
+    //Cases where there is not space between operator and preceding argument
+    if(position >= 1){
+        if(compareBuf[position] == '!')
+            return false;
+        if(compareBuf[position] == '>' && compareBuf[position - 1] != '>')
+            return false;
+        if(compareBuf[position] == '<' && compareBuf[position - 1] != '<')
+            return false;
+        if(compareBuf[position] == '=' && compareBuf[position - 1] != '=' && compareBuf[position - 1] != '!' && compareBuf[position - 1] != '>' && compareBuf[position - 1] != '<')
             return false;
     }
 
 
-    if(position >= 1 && compareBuf[position] != '='){
-        if(compareBuf[position - 1] == '>'  || compareBuf[position - 1] == '<')
+    if(position >= 2){
+        if((compareBuf[position - 2] == '>' && compareBuf[position - 1] == '>')  || (compareBuf[position - 2] == '<' && compareBuf[position - 1] == '<'))
             return false;
     }
 
     //Cases where there is not space between operator and following argument
-    if(position >= 1 && compareBuf[position] != ' '){
+    if(position >= 1){
         if(compareBuf[position - 1] == '+' || compareBuf[position - 1] == '-'  || compareBuf[position - 1] == '*'  || compareBuf[position - 1] == '/')
             return false;
 
         if(compareBuf[position - 1] == '=' && compareBuf[position] != '=')
             return false;
+
+        if(compareBuf[position - 1] == '>' && compareBuf[position] != '=' && compareBuf[position] != '>')
+            return false;
+
+        if(compareBuf[position - 1] == '<' && compareBuf[position] != '=' && compareBuf[position] != '<')
+            return false;
+
     }
-
-
 
     return true;
 }

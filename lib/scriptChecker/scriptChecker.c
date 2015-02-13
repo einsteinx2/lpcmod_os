@@ -32,6 +32,8 @@ typedef unsigned short u16;
 #define OPTYPE_MULT     9
 #define OPTYPE_DIVIDE   10
 #define OPTYPE_MOD      11
+#define OPTYPE_SHIFTUP      12
+#define OPTYPE_SHIFTDOWN      13
 
 #define FUNCTION_IF     0
 #define FUNCTION_ELSE   1
@@ -49,9 +51,11 @@ typedef unsigned short u16;
 #define FUNCTION_LCDB   13
 #define FUNCTION_LCDP   14
 #define FUNCTION_VAR    15
-#define FUNCTION_END    16
+#define FUNCTION_SPIR   16
+#define FUNCTION_SPIW   17
+#define FUNCTION_END    18
 
-#define NBFUNCTIONCALLS 17
+#define NBFUNCTIONCALLS 19
 
 #define BNKFULLTSOP   0x00u
 #define BNKTSOPSPLIT0 0x10u
@@ -117,6 +121,8 @@ bool lcdClearLineFunction(u8 line);
 bool lcdResetFunction(void);
 bool lcdBacklightFunction(u8 value);
 bool lcdPowerFunction(u8 value);
+u8 SPIRead(void);
+bool SPIWrite(u8 data);
 bool variableFunction(char * name, int initValue, _variableList * variableList);
 bool checkEndOfArgument(char * compareBuf, int position);
 bool updateVariable(char * name, int value, _variableList * variableList);
@@ -139,6 +145,8 @@ char * functionCallList[NBFUNCTIONCALLS] = {
         "LCDB",
         "LCDP",
         "VAR",
+        "SPIR",
+        "SPIW",
         "END"
 };
 
@@ -147,6 +155,8 @@ void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList);
 void addNewLabel(struct _labelList * labelList, char * compareBuf, int position);
 bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList);
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
+
+int trimScript(u8 * file, u32 fileSize);
 
 void showUsage(const char *progname);
 
@@ -223,6 +233,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     char compareBuf[100];                     //100 character long seems acceptable
     char tempBuf[50];
 
+    fileSize = trimScript(file, fileSize);
     stringDeclaration = false;
 
     variableList.count = 0;
@@ -303,7 +314,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                 argumentList[i].exist = true;
                 nbArguments += 1;
                 //Move to start of next argument. Skip '(' too.
-                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',') && compareBuf[tempPtr] != '\0'){
+                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',' || compareBuf[tempPtr] == ')') && compareBuf[tempPtr] != '\0'){
                     tempPtr +=1;
                 }
             }
@@ -417,7 +428,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         }
                         break;
                     case FUNCTION_WAIT:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             waitFunction(argumentList[1].value);
                         }
                         else{
@@ -425,7 +436,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         }
                         break;
                     case FUNCTION_BOOT:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             bootFunction((u8)argumentList[1].value);
                         }
                         else{
@@ -433,7 +444,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         }
                         break;
                     case FUNCTION_FAN:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             fanFunction((u8)argumentList[1].value);
                         }
                         else{
@@ -452,7 +463,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         }
                         break;
                     case FUNCTION_LCDC:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             lcdClearLineFunction((u8)argumentList[1].value);
                         }
                         else{
@@ -463,7 +474,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         lcdResetFunction();
                         break;
                     case FUNCTION_LCDB:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             lcdBacklightFunction((u8)argumentList[1].value);
                         }
                         else{
@@ -471,7 +482,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         }
                         break;
                     case FUNCTION_LCDP:
-                        if(argumentList[1].exist){
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
                             lcdPowerFunction((u8)argumentList[1].value);
                         }
                         else{
@@ -493,6 +504,20 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                             //printf("\nRuntime execution error. Improper variable declaration!");
                             goto endExecution;
                         }
+                        break;
+                    case FUNCTION_SPIR:
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist){
+                            arithAccumulator = SPIRead();
+                            accumulatorInUse = true;
+                        }
+                        break;
+                    case FUNCTION_SPIW:
+                        if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
+                            SPIWrite((u8)argumentList[1].value);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LCDP function call!");
+                        //}
                         break;
                     case FUNCTION_END:
                         printf("\nEND function. Ending script execution gracefully.");
@@ -536,6 +561,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                     case OPTYPE_MOD:
                                         arithAccumulator = argumentList[i].value % arithAccumulator;
                                         break;
+                                    case OPTYPE_SHIFTUP:
+                                        arithAccumulator = argumentList[i].value << arithAccumulator;
+                                        break;
+                                    case OPTYPE_SHIFTDOWN:
+                                        arithAccumulator = argumentList[i].value >> arithAccumulator;
+                                        break;
                                     default://Accumulator was already used but no arithmetic operator was specified
                                             //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
                                             //goto endExecution;
@@ -569,6 +600,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                 case OPTYPE_MOD:
                                     arithAccumulator = argumentList[i].value % arithAccumulator;
                                     break;
+                                case OPTYPE_SHIFTUP:
+                                    arithAccumulator = argumentList[i].value << arithAccumulator;
+                                    break;
+                                case OPTYPE_SHIFTDOWN:
+                                    arithAccumulator = argumentList[i].value >> arithAccumulator;
+                                    break;
                                 default://Accumulator was already used but no arithmetic operator was specified
                                         //printf("\nRuntime execution error. Error in arithmetic operation syntax.");
                                         //goto endExecution;
@@ -587,6 +624,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
 
 
 endExecution:
+    //Flush Variable list
     //Flush Variable list
     for(i = 0; i < variableList.count; i++){
         if(variableList.first == NULL)
@@ -619,6 +657,7 @@ endExecution:
 }
 
 bool ifFunction(int param1, u8 op, int param2){
+	//printk("\n     if function called : %u %u %u",param1, op, param2);
     switch(op){
         case OPTYPE_EQ_EQ: //==
             return (param1 == param2);
@@ -688,10 +727,21 @@ bool lcdPowerFunction(u8 value){
     return true;
 }
 
+u8 SPIRead(void){
+    printf("\n****SPI read");
+    return 1;
+}
+
+bool SPIWrite(u8 data){
+    printf("\n****SPI write: %02X", data);
+    return true;
+}
+
 bool variableFunction(char * name, int initValue, _variableList * variableList){
     variableEntry * newEntry;
     int i;
     char * tempName = (char *)name;
+
 
 
     if(variableList->first == NULL){ //No entry in list yet
@@ -864,6 +914,7 @@ void addNewLabel(struct _labelList * labelList, char * compareBuf, int position)
 
 bool checkEndOfArgument(char * compareBuf, int position){
 
+    //For string declaration, which must be in " "
     if(position >= 1){
         if(compareBuf[position - 1] == '\"' && !stringDeclaration){
             stringDeclaration = true;
@@ -895,31 +946,47 @@ bool checkEndOfArgument(char * compareBuf, int position){
     if(compareBuf[position] == ',')
         return false;
 
-    //Cases where there is not space between operator and preceding argument
-    if(position >= 1 && compareBuf[position - 1] != ' '){
-        if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*'  || compareBuf[position] == '/')
-            return false;
+    //Single character operators.
+    if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*'  || compareBuf[position] == '/')
+        return false;
 
-        if(compareBuf[position] == '!' || compareBuf[position] == '>'  || compareBuf[position] == '<')
+    //Cases where there is not space between operator and preceding argument
+    if(position >= 1){
+        if(compareBuf[position] == '!')
+            return false;
+        if(compareBuf[position] == '>' && compareBuf[position - 1] != '>')
+            return false;
+        if(compareBuf[position] == '<' && compareBuf[position - 1] != '<')
+            return false;
+        if(compareBuf[position] == '=' && compareBuf[position - 1] != '=' && compareBuf[position - 1] != '!' && compareBuf[position - 1] != '>' && compareBuf[position - 1] != '<')
             return false;
     }
 
 
-    if(position >= 1 && compareBuf[position] != '='){
-        if(compareBuf[position - 1] == '>'  || compareBuf[position - 1] == '<')
+    if(position >= 2){
+        if((compareBuf[position - 2] == '>' && compareBuf[position - 1] == '>')  || (compareBuf[position - 2] == '<' && compareBuf[position - 1] == '<'))
             return false;
     }
 
     //Cases where there is not space between operator and following argument
-    if(position >= 1 && compareBuf[position] != ' '){
+    if(position >= 1){
         if(compareBuf[position - 1] == '+' || compareBuf[position - 1] == '-'  || compareBuf[position - 1] == '*'  || compareBuf[position - 1] == '/')
             return false;
 
         if(compareBuf[position - 1] == '=' && compareBuf[position] != '=')
             return false;
+
+        if(compareBuf[position - 1] == '>' && compareBuf[position] != '=' && compareBuf[position] != '>')
+            return false;
+
+        if(compareBuf[position - 1] == '<' && compareBuf[position] != '=' && compareBuf[position] != '<')
+            return false;
+
     }
 
-
+    if(position == 3)
+        if(compareBuf[position - 3] == 'V' && compareBuf[position - 2] == 'A' && compareBuf[position - 1] == 'R')
+            return false;
 
     return true;
 }
@@ -993,6 +1060,14 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
         *outNum = OPTYPE_MOD;
         operatorDetected = true;
     }
+    if(!strcmp(inputArg, "<<")){
+        *outNum = OPTYPE_SHIFTUP;
+        operatorDetected = true;
+    }
+    if(!strcmp(inputArg, ">>")){
+        *outNum = OPTYPE_SHIFTDOWN;
+        operatorDetected = true;
+    }
 
     if(operatorDetected)
         return ARGTYPE_OPERATOR;
@@ -1054,4 +1129,94 @@ bool updateVariable(char * name, int value, _variableList * variableList){
         }
     }
     return true;
+}
+
+int trimScript(u8 * file, u32 fileSize){
+    int newSize = 0, stringStartPtr = 0, stringStopPtr = 0;
+    bool CRdetected;
+
+    int linePtr, tempPtr;
+
+    typedef struct segment{
+        char lineBuf[100];
+        struct segment *nextSegment;
+    } segment;
+
+    segment *firstSegment = NULL;
+    segment *currentSegment = NULL;
+
+
+    while(stringStopPtr < fileSize){      //We stay in file
+        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+            stringStopPtr++;        //Move on to next character in file.
+        }
+        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+            stringStartPtr++;
+        if(file[stringStartPtr] == '#' || stringStartPtr == stringStopPtr){       //This is a comment or empty line
+
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+            continue;
+        }
+
+        CRdetected = file[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
+        linePtr = stringStartPtr;
+
+        //We now have a complete line, that is not a comment, without leading space or tab and Carriage return character marked if present.
+        //We need to remove all space characters
+        if(firstSegment != NULL){
+            currentSegment->nextSegment = (segment *)malloc(sizeof(segment));
+            currentSegment = currentSegment->nextSegment;
+            currentSegment->nextSegment = NULL;
+        }
+        else{
+            firstSegment = (segment *)malloc(sizeof(segment));
+            firstSegment->nextSegment = NULL;
+            currentSegment = firstSegment;
+        }
+        tempPtr = 0;
+
+        while(linePtr < (stringStopPtr - CRdetected) && file[linePtr] != '#'){
+            if(file[linePtr] != ' '){
+                currentSegment->lineBuf[tempPtr] = file[linePtr];
+                tempPtr += 1;
+            }
+            linePtr += 1;
+        }
+        currentSegment->lineBuf[tempPtr] = '\n';
+        stringStartPtr = ++stringStopPtr;
+
+    }
+    tempPtr = 0;
+    while(currentSegment->lineBuf[tempPtr] != '\n')
+        tempPtr += 1;
+    currentSegment->lineBuf[tempPtr] = '\0';
+    //Whole file has been read
+    currentSegment = firstSegment;
+    do{
+        tempPtr = 0;
+        while(currentSegment->lineBuf[tempPtr] != '\n' && currentSegment->lineBuf[tempPtr] != '\0'){
+            tempPtr += 1;
+        }
+        newSize += (tempPtr + 1);
+        currentSegment = currentSegment->nextSegment;
+    }while(currentSegment != NULL);
+
+    //we know the new size of the buffer.
+    free(file);
+    file = (u8*)malloc(newSize);
+
+    currentSegment = firstSegment;
+    tempPtr = 0;
+    do{
+        linePtr = 0;
+        while(currentSegment->lineBuf[linePtr] != '\n' && currentSegment->lineBuf[linePtr] != '\0'){
+            file[tempPtr] = currentSegment->lineBuf[linePtr];
+            linePtr += 1;
+            tempPtr += 1;
+        }
+        file[tempPtr] = currentSegment->lineBuf[linePtr];
+        tempPtr += 1;
+        currentSegment = currentSegment->nextSegment;
+    }while(currentSegment != NULL);
+    return newSize;
 }

@@ -42,7 +42,6 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
     char ipFieldLength, dotCount;     //Assume IP string is properly constructed.
     char limitFieldString[4] = {0, 0, 0, 0};    //To check if user enters a number bigger than 255 in IP Keypad.
     //Array of function pointers to let "line" value decide which function needs to be called.
-    void (*Printline[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
     char oldString[20];
     sprintf(oldString, "%s", string);	//Copy input string in case user cancels.
     textpos = strlen(string);           //Place cursor at end of entering string.
@@ -116,7 +115,7 @@ void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
                 }
             }
             if(xLCD.enable == 1 && xLCD.LineOwner[line] != SCRIPT_OWNER){
-                (*Printline[line])(JUSTIFYLEFT, string);
+                xLCD.PrintLine[line](JUSTIFYLEFT, string);
             }
             refresh = false;
         }

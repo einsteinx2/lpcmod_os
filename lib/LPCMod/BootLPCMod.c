@@ -12,6 +12,7 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
 	"boottimeout=",
 	"tsopcontrol=",
 	"tsophide=",
+	"runbankscript=",
 	"runbootscript=",
 	"enablenetwork=",
 	"usedhcp=",
@@ -63,6 +64,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->OSsettings.LEDColor = LED_GREEN;    //Set for next boot
     LPCmodSettings->OSsettings.TSOPcontrol = 0;
     LPCmodSettings->OSsettings.TSOPhide = 0;
+    LPCmodSettings->OSsettings.runBankScript = 0;
     LPCmodSettings->OSsettings.runBootScript = 0;
     LPCmodSettings->OSsettings.enableNetwork = 1;
     LPCmodSettings->OSsettings.useDHCP = 1;
@@ -115,6 +117,9 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
         LPCmodSettings->LCDsettings.customString2[i] = 0;
         LPCmodSettings->LCDsettings.customString3[i] = 0;
     }
+
+    LPCmodSettings->firstScript.ScripMagicNumber = 0xFAF0;
+    LPCmodSettings->firstScript.nextEntryPosition = 0;
 }
 
 //Probes CPLD for chip revision and return a single byte ID.
@@ -226,26 +231,28 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
         settingsPtrArray[4] =
         &(tempLPCmodSettings->OSsettings.TSOPhide);
         settingsPtrArray[5] =
-        &(tempLPCmodSettings->OSsettings.runBootScript);
+        &(tempLPCmodSettings->OSsettings.runBankScript);
         settingsPtrArray[6] =
-        &(tempLPCmodSettings->OSsettings.enableNetwork);
+        &(tempLPCmodSettings->OSsettings.runBootScript);
         settingsPtrArray[7] =
-        &(tempLPCmodSettings->OSsettings.useDHCP);
+        &(tempLPCmodSettings->OSsettings.enableNetwork);
         settingsPtrArray[8] =
-        &(tempLPCmodSettings->LCDsettings.enable5V);
+        &(tempLPCmodSettings->OSsettings.useDHCP);
         settingsPtrArray[9] =
-        &(tempLPCmodSettings->LCDsettings.nbLines);
+        &(tempLPCmodSettings->LCDsettings.enable5V);
         settingsPtrArray[10] =
-        &(tempLPCmodSettings->LCDsettings.lineLength);
+        &(tempLPCmodSettings->LCDsettings.nbLines);
         settingsPtrArray[11] =
-        &(tempLPCmodSettings->LCDsettings.backlight);
+        &(tempLPCmodSettings->LCDsettings.lineLength);
         settingsPtrArray[12] =
-        &(tempLPCmodSettings->LCDsettings.contrast);
+        &(tempLPCmodSettings->LCDsettings.backlight);
         settingsPtrArray[13] =
-        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
+        &(tempLPCmodSettings->LCDsettings.contrast);
         settingsPtrArray[14] =
-        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
         settingsPtrArray[15] =
+        &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        settingsPtrArray[16] =
         &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
         
 

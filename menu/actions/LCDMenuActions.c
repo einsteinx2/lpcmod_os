@@ -81,7 +81,7 @@ void editCustomString0(void *whatever){
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString0, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     BootLCDUpdateLinesOwnership(0, 0);
     if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[0] != SCRIPT_OWNER){
-        xLCD.PrintLine0(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString0);
+        xLCD.PrintLine[0](JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString0);
     }
 //    else{
 //        xLCD.ClearLine(line);
@@ -96,7 +96,7 @@ void editCustomString1(void *whatever){
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString1, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     BootLCDUpdateLinesOwnership(1, 0);
     if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[1] != SCRIPT_OWNER){
-        xLCD.PrintLine1(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString1);
+        xLCD.PrintLine[1](JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString1);
     }
 //    else{
 //        xLCD.ClearLine(line);
@@ -111,7 +111,7 @@ void editCustomString2(void *whatever){
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString2, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     BootLCDUpdateLinesOwnership(2, 0);
     if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[2] != SCRIPT_OWNER){
-        xLCD.PrintLine2(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString2);
+        xLCD.PrintLine[2](JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString2);
     }
 //    else{
 //        xLCD.ClearLine(line);
@@ -123,7 +123,7 @@ void editCustomString3(void *whatever){
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     BootLCDUpdateLinesOwnership(3, 0);
     if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[3] != SCRIPT_OWNER){
-        xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
+        xLCD.PrintLine[3](JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
     }
 //    else{
 //        xLCD.ClearLine(line);

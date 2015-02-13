@@ -315,7 +315,7 @@ void textMenuLCDPrint(TEXTMENU *menu, TEXTMENUITEM *selectedItem){
     if(xLCD.enable == 1){
         if(LPCmodSettings.LCDsettings.customTextBoot == 0){
             bool colon=false;
-            xLCD.PrintLine1(JUSTIFYLEFT, menu->szCaption);
+            xLCD.PrintLine[1](JUSTIFYLEFT, menu->szCaption);
             titleLine[xLCD.LineSize] = 0;                    //End of line character.
             memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
             for(i = 0; i < strlen(selectedItem->szCaption); i++){
@@ -330,14 +330,14 @@ void textMenuLCDPrint(TEXTMENU *menu, TEXTMENUITEM *selectedItem){
                         titleLine[i] = selectedItem->szCaption[i];             //Print out the ':' character anyway.
                 }
             }
-            xLCD.PrintLine2(JUSTIFYLEFT, titleLine);
+            xLCD.PrintLine[2](JUSTIFYLEFT, titleLine);
             if(colon) {
                 memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
                 u8 nbChars = strlen(selectedItem->szParameter);        //Number of character in string
                 for (i = 0; i < nbChars; i++){                //Justify text to the right of the screen.
                     titleLine[xLCD.LineSize - nbChars + i] = selectedItem->szParameter[i];
                 }
-                xLCD.PrintLine3(JUSTIFYLEFT, titleLine);
+                xLCD.PrintLine[3](JUSTIFYLEFT, titleLine);
                 colon = false;
             }
             else{

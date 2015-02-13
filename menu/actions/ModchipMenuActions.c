@@ -188,7 +188,7 @@ void editBIOSName(void *bankID){
             break;
     }
     if(LPCmodSettings.LCDsettings.customTextBoot)
-        xLCD.PrintLine3(JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);    
+        xLCD.PrintLine[3](JUSTIFYLEFT,LPCmodSettings.LCDsettings.customString3);
 }
 
 

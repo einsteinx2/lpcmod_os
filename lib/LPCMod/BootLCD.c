@@ -23,10 +23,10 @@ void BootLCDInit(void){
         xLCD.WriteIO = X3WriteLCDIO;
     else
         xLCD.WriteIO = WriteLCDIO;
-    xLCD.PrintLine0 = WriteLCDLine0;
-    xLCD.PrintLine1 = WriteLCDLine1;
-    xLCD.PrintLine2 = WriteLCDLine2;
-    xLCD.PrintLine3 = WriteLCDLine3;
+    xLCD.PrintLine[0] = WriteLCDLine0;
+    xLCD.PrintLine[1] = WriteLCDLine1;
+    xLCD.PrintLine[2] = WriteLCDLine2;
+    xLCD.PrintLine[3] = WriteLCDLine3;
     xLCD.ClearLine = WriteLCDClearLine;
 }
 
@@ -425,9 +425,6 @@ void WriteLCDSetPos(u8 pos, u8 line) {
 }
 
 void WriteLCDClearLine(u8 line) {
-    //Array of function pointers to let "line" value decide which function needs to be called.
-    void (*WriteLineFctPtr[4])(bool centered, char *lineText) = {(xLCD.PrintLine0), (xLCD.PrintLine1), (xLCD.PrintLine2), (xLCD.PrintLine3)};
-
     char empty[xLCD.LineSize];
     
     if(xLCD.enable != 1)
@@ -436,19 +433,19 @@ void WriteLCDClearLine(u8 line) {
     memset(empty,' ',xLCD.LineSize);
 
     //Call the proper function for the desired line.
-    (*WriteLineFctPtr[line])(JUSTIFYLEFT, empty);
+    xLCD.PrintLine[line](JUSTIFYLEFT, empty);
 }
 
 void initialLCDPrint(void){
     if(LPCmodSettings.LCDsettings.customTextBoot == 1){
-        xLCD.PrintLine0(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString0);
-        xLCD.PrintLine1(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString1);
-        xLCD.PrintLine2(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString2);
-        xLCD.PrintLine3(JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString3);
+        xLCD.PrintLine[0](JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString0);
+        xLCD.PrintLine[1](JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString1);
+        xLCD.PrintLine[2](JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString2);
+        xLCD.PrintLine[3](JUSTIFYLEFT, LPCmodSettings.LCDsettings.customString3);
     }
     else{
         xLCD.Command(DISP_CLEAR);
-        xLCD.PrintLine0(CENTERSTRING, "XBlast mod V1");
+        xLCD.PrintLine[0](CENTERSTRING, "XBlast mod V1");
     }
 }
 

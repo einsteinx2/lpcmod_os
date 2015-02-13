@@ -2,12 +2,12 @@
 #Comments are also supported but I wouldn't advise putting comments lines with codes
 
 #Variable creation and init value(facultative)
-VAR variableTest =100
+VARvariableTest =100
 
-VAR lcdPrintLine
+VARlcdPrintLine
 
 #Just to show reading GPI pins
-VAR inputPindummy
+VARinputPindummy
 #Read GPI 1 and set variable. Possible values are 0 and 1
 inputPindummy = GPI(1)
 

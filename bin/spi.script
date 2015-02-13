@@ -1,0 +1,11 @@
+VARtest
+test = 170
+test = test >> 1
+SPIW        (test)
+IF       (test > 55)
+test = test + 1
+ENDIF
+IF      (test != 56)
+test =      SPIR()
+ENDIF
+SPIW     (test)
