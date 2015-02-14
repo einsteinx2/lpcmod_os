@@ -691,7 +691,7 @@ bool gpoFunction(u8 port, u8 value){
     return true;
 }
 bool waitFunction(int ms){
-    printf("\n****wait_ms for %u seconds", ms);
+    printf("\n****wait_ms for %u milliseconds", ms);
     return true;
 }
 bool bootFunction(u8 bank){
@@ -947,7 +947,7 @@ bool checkEndOfArgument(char * compareBuf, int position){
         return false;
 
     //Single character operators.
-    if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*'  || compareBuf[position] == '/')
+    if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*' || compareBuf[position] == '/' || compareBuf[position] == '%')
         return false;
 
     //Cases where there is not space between operator and preceding argument
@@ -970,7 +970,7 @@ bool checkEndOfArgument(char * compareBuf, int position){
 
     //Cases where there is not space between operator and following argument
     if(position >= 1){
-        if(compareBuf[position - 1] == '+' || compareBuf[position - 1] == '-'  || compareBuf[position - 1] == '*'  || compareBuf[position - 1] == '/')
+        if(compareBuf[position - 1] == '+' || compareBuf[position - 1] == '-'  || compareBuf[position - 1] == '*' || compareBuf[position - 1] == '/' || compareBuf[position - 1] == '%')
             return false;
 
         if(compareBuf[position - 1] == '=' && compareBuf[position] != '=')
@@ -986,6 +986,9 @@ bool checkEndOfArgument(char * compareBuf, int position){
 
     if(position == 3)
         if(compareBuf[position - 3] == 'V' && compareBuf[position - 2] == 'A' && compareBuf[position - 1] == 'R')
+            return false;
+    if(position == 4)
+        if(compareBuf[position - 4] == 'G' && compareBuf[position - 3] == 'O' && compareBuf[position - 2] == 'T' && compareBuf[position - 1] == 'O')
             return false;
 
     return true;
@@ -1086,7 +1089,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
             else
                 break;
         }
-
+/*
         //Negative number?
         if(inputArg[0] == '-')
             i = 1;
@@ -1096,6 +1099,11 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
         if(inputArg[i] >= '0' && inputArg[i] <= '9'){
             *outNum = atoi(&inputArg[i]);
             return ARGTYPE_NUMERIC;
+        }
+*/
+        if((inputArg[0] >= '0' && inputArg[0] <= '9') || (inputArg[0] == '0' && inputArg[1] == 'x') || (inputArg[0] == '-')){
+			*outNum = strtol(inputArg, NULL, 0);
+			return ARGTYPE_NUMERIC;
         }
         i = 0;
     }

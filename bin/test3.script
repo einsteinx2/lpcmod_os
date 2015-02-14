@@ -40,7 +40,7 @@ LCDW(lcdPrintLine, "test string1")
 #wait 1000ms
 WAIT(1000)
 
-IF(variableTest >= 1000)
+IF(variableTest >= 200)
 	#Boot 512kb BIOS bank
 	BOOT(BNK512)
 	#Script termination, kinda pointless here since it'll boot the BIOS bank before getting here.

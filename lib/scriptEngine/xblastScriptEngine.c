@@ -252,7 +252,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                 argumentList[i].exist = true;
                 nbArguments += 1;
                 //Move to start of next argument. Skip '(' too.
-                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',') && compareBuf[tempPtr] != '\0'){
+                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',' || compareBuf[tempPtr] == ')') && compareBuf[tempPtr] != '\0'){
                     tempPtr +=1;
                 }
             }
@@ -434,8 +434,8 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                             //printf("\nNew variable: %s = %u", argumentList[1].text, argumentList[3].value);
                                     }
                                     else{
-                                            variableFunction(argumentList[1].text, 0, &variableList);
-                                            //printf("\nNew variable: %s, no init value", argumentList[1].text);
+                                        variableFunction(argumentList[1].text, 0, &variableList);
+                                        //printf("\nNew variable: %s, no init value", argumentList[1].text);
                                     }
                             }
                             else{
@@ -716,6 +716,7 @@ u8 SPIRead(void){
     }
     return result;
 }
+
 bool SPIWrite(u8 data){
     u8 i;
     for(i = 0; i < 8; i++){
@@ -939,8 +940,8 @@ bool checkEndOfArgument(char * compareBuf, int position){
         return false;
 
     //Single character operators.
-        if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*'  || compareBuf[position] == '/')
-            return false;
+    if(compareBuf[position] == '+' || compareBuf[position] == '-'  || compareBuf[position] == '*' || compareBuf[position] == '/' || compareBuf[position] == '%')
+        return false;
 
     //Cases where there is not space between operator and preceding argument
     if(position >= 1){
@@ -975,6 +976,13 @@ bool checkEndOfArgument(char * compareBuf, int position){
             return false;
 
     }
+
+    if(position == 3)
+        if(compareBuf[position - 3] == 'V' && compareBuf[position - 2] == 'A' && compareBuf[position - 1] == 'R')
+            return false;
+    if(position == 4)
+        if(compareBuf[position - 4] == 'G' && compareBuf[position - 3] == 'O' && compareBuf[position - 2] == 'T' && compareBuf[position - 1] == 'O')
+            return false;
 
     return true;
 }
@@ -1074,7 +1082,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
             else
                 break;
         }
-
+/*
         //Negative number?
         if(inputArg[0] == '-')
             i = 1;
@@ -1084,6 +1092,11 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
         if(inputArg[i] >= '0' && inputArg[i] <= '9'){
             *outNum = atoi(&inputArg[i]);
             return ARGTYPE_NUMERIC;
+        }
+*/
+        if((inputArg[0] >= '0' && inputArg[0] <= '9') || (inputArg[0] == '0' && inputArg[1] == 'x') || (inputArg[0] == '-')){
+			*outNum = strtol(inputArg, NULL, 0);
+			return ARGTYPE_NUMERIC;
         }
         i = 0;
     }
@@ -1117,4 +1130,126 @@ bool updateVariable(char * name, int value, _variableList * variableList){
         }
     }
     return true;
+}
+
+int trimScript(u8 ** file, u32 fileSize){
+    int newSize = 0, stringStartPtr = 0, stringStopPtr = 0;
+    bool CRdetected;
+    bool insideTextString;
+
+    int linePtr, tempPtr;
+
+    //Linked list of individual lines of text without space,
+    //terminating with either new line character or terminating character for last line.
+    typedef struct segment{
+        char lineBuf[100];
+        struct segment *nextSegment;
+    } segment;
+
+    segment *firstSegment = NULL;
+    segment *currentSegment = NULL;
+
+
+    while(stringStopPtr < fileSize){      //We stay in file
+        while((*file)[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+            stringStopPtr++;        //Move on to next character in file.
+        }
+        while(((*file)[stringStartPtr] == ' ' || (*file)[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+            stringStartPtr++;
+        if((*file)[stringStartPtr] == '#' || stringStartPtr == stringStopPtr){       //This is a comment or empty line
+
+            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
+            continue;
+        }
+
+        CRdetected = (*file)[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
+        linePtr = stringStartPtr;
+
+        //We now have a complete line, that is not a comment, without leading space or tab and Carriage return character marked if present.
+        //We need to remove all space characters
+
+        //If first element of list is already present
+        if(firstSegment != NULL){
+            currentSegment->nextSegment = (segment *)malloc(sizeof(segment));
+            //Move on the the next (empty) element
+            currentSegment = currentSegment->nextSegment;
+            currentSegment->nextSegment = NULL;
+        }
+        else{
+        	//Create first element and point to it.
+            firstSegment = (segment *)malloc(sizeof(segment));
+            firstSegment->nextSegment = NULL;
+            currentSegment = firstSegment;
+        }
+
+        //It's a new line
+        tempPtr = 0;
+        insideTextString = false;
+        //While we don't hit end of line or comment identifier
+        while(linePtr < (stringStopPtr - CRdetected) && (*file)[linePtr] != '#'){
+        	if((*file)[linePtr] == '\"')
+        		insideTextString = !insideTextString;
+            if((*file)[linePtr] != ' ' || insideTextString){
+            	//Copy into list element character by character as long as it's not a space.
+                currentSegment->lineBuf[tempPtr] = (*file)[linePtr];
+                tempPtr += 1;
+            }
+            linePtr += 1;
+        }
+        //Append at end of new line
+        currentSegment->lineBuf[tempPtr] = '\n';
+        //Move on to new line in the original buffer.
+        stringStartPtr = ++stringStopPtr;
+
+    }
+
+    //All lines of the files have been copied in linked list
+    tempPtr = 0;
+    //currentSegment points to last line
+    while(currentSegment->lineBuf[tempPtr] != '\n')
+        tempPtr += 1;
+    //We replace new line character by terminating.
+    currentSegment->lineBuf[tempPtr] = '\0';
+    //Move back to start of list
+    currentSegment = firstSegment;
+    //Count required bytes for new buffer by counting every character of every element in the list
+    while(currentSegment != NULL){
+        tempPtr = 0;
+        while(currentSegment->lineBuf[tempPtr] != '\n' && currentSegment->lineBuf[tempPtr] != '\0'){
+            tempPtr += 1;
+        }
+        newSize += (tempPtr + 1);
+        currentSegment = currentSegment->nextSegment;
+    }
+
+    //we know the new size of the buffer.
+    free(*file);
+    *file = (u8*)malloc(newSize);
+
+    //Move back to the start of the list.
+    currentSegment = firstSegment;
+    tempPtr = 0;
+    //Copy every line of every element of the list in the new buffer.
+    while(currentSegment != NULL){
+        linePtr = 0;
+        while(currentSegment->lineBuf[linePtr] != '\n' && currentSegment->lineBuf[linePtr] != '\0'){
+            (*file)[tempPtr] = currentSegment->lineBuf[linePtr];
+            linePtr += 1;
+            tempPtr += 1;
+        }
+        (*file)[tempPtr] = currentSegment->lineBuf[linePtr];
+        tempPtr += 1;
+        currentSegment = currentSegment->nextSegment;
+    }
+
+    //Just to get in the loop
+    currentSegment = firstSegment;
+    //Delete malloc list elements
+    while(currentSegment != NULL){
+    	firstSegment = currentSegment;
+    	currentSegment = currentSegment->nextSegment;
+    	free(firstSegment);
+    }
+
+    return newSize;
 }

@@ -314,6 +314,7 @@ int _strncasecmp(const char *sz1, const char *sz2, int nMax);
 char * strcpy(char *sz, const char *szc);
 char * _strncpy (char * dest, const char * src, size_t n);
 void chrreplace(char *string, char search, char ch);
+long strtol (const char *nptr, char **ptr, int base);
 
 #define printf printk
 #define sleep wait_ms
