@@ -156,7 +156,7 @@ void addNewLabel(struct _labelList * labelList, char * compareBuf, int position)
 bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList);
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
 
-int trimScript(u8 * file, u32 fileSize);
+int trimScript(u8 ** file, u32 fileSize);
 
 void showUsage(const char *progname);
 
@@ -192,8 +192,6 @@ int main (int argc, const char * argv[])
 
     fclose(pFile);
     runScript(buffer, fileSize, 0, NULL);
-
-    free(buffer);
 
 	return EXIT_SUCCESS;
 }
@@ -233,7 +231,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     char compareBuf[100];                     //100 character long seems acceptable
     char tempBuf[50];
 
-    fileSize = trimScript(file, fileSize);
+    fileSize = trimScript(&file, fileSize);
     stringDeclaration = false;
 
     variableList.count = 0;
@@ -653,6 +651,8 @@ endExecution:
         ifStatementList.first = ifEntry->next;
         free(ifEntry);
     }
+
+    free(file);
     return;
 }
 
@@ -1131,12 +1131,15 @@ bool updateVariable(char * name, int value, _variableList * variableList){
     return true;
 }
 
-int trimScript(u8 * file, u32 fileSize){
+int trimScript(u8 ** file, u32 fileSize){
     int newSize = 0, stringStartPtr = 0, stringStopPtr = 0;
     bool CRdetected;
+    bool insideTextString;
 
     int linePtr, tempPtr;
 
+    //Linked list of individual lines of text without space,
+    //terminating with either new line character or terminating character for last line.
     typedef struct segment{
         char lineBuf[100];
         struct segment *nextSegment;
@@ -1147,76 +1150,105 @@ int trimScript(u8 * file, u32 fileSize){
 
 
     while(stringStopPtr < fileSize){      //We stay in file
-        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+        while((*file)[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
+        while(((*file)[stringStartPtr] == ' ' || (*file)[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
             stringStartPtr++;
-        if(file[stringStartPtr] == '#' || stringStartPtr == stringStopPtr){       //This is a comment or empty line
+        if((*file)[stringStartPtr] == '#' || stringStartPtr == stringStopPtr){       //This is a comment or empty line
 
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
             continue;
         }
 
-        CRdetected = file[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
+        CRdetected = (*file)[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
         linePtr = stringStartPtr;
 
         //We now have a complete line, that is not a comment, without leading space or tab and Carriage return character marked if present.
         //We need to remove all space characters
+
+        //If first element of list is already present
         if(firstSegment != NULL){
             currentSegment->nextSegment = (segment *)malloc(sizeof(segment));
+            //Move on the the next (empty) element
             currentSegment = currentSegment->nextSegment;
             currentSegment->nextSegment = NULL;
         }
         else{
+        	//Create first element and point to it.
             firstSegment = (segment *)malloc(sizeof(segment));
             firstSegment->nextSegment = NULL;
             currentSegment = firstSegment;
         }
-        tempPtr = 0;
 
-        while(linePtr < (stringStopPtr - CRdetected) && file[linePtr] != '#'){
-            if(file[linePtr] != ' '){
-                currentSegment->lineBuf[tempPtr] = file[linePtr];
+        //It's a new line
+        tempPtr = 0;
+        insideTextString = false;
+        //While we don't hit end of line or comment identifier
+        while(linePtr < (stringStopPtr - CRdetected) && (*file)[linePtr] != '#'){
+        	if((*file)[linePtr] == '\"')
+        		insideTextString = !insideTextString;
+            if((*file)[linePtr] != ' ' || insideTextString){
+            	//Copy into list element character by character as long as it's not a space.
+                currentSegment->lineBuf[tempPtr] = (*file)[linePtr];
                 tempPtr += 1;
             }
             linePtr += 1;
         }
+        //Append at end of new line
         currentSegment->lineBuf[tempPtr] = '\n';
+        //Move on to new line in the original buffer.
         stringStartPtr = ++stringStopPtr;
 
     }
+
+    //All lines of the files have been copied in linked list
     tempPtr = 0;
+    //currentSegment points to last line
     while(currentSegment->lineBuf[tempPtr] != '\n')
         tempPtr += 1;
+    //We replace new line character by terminating.
     currentSegment->lineBuf[tempPtr] = '\0';
-    //Whole file has been read
+    //Move back to start of list
     currentSegment = firstSegment;
-    do{
+    //Count required bytes for new buffer by counting every character of every element in the list
+    while(currentSegment != NULL){
         tempPtr = 0;
         while(currentSegment->lineBuf[tempPtr] != '\n' && currentSegment->lineBuf[tempPtr] != '\0'){
             tempPtr += 1;
         }
         newSize += (tempPtr + 1);
         currentSegment = currentSegment->nextSegment;
-    }while(currentSegment != NULL);
+    }
 
     //we know the new size of the buffer.
-    free(file);
-    file = (u8*)malloc(newSize);
+    free(*file);
+    *file = (u8*)malloc(newSize);
 
+    //Move back to the start of the list.
     currentSegment = firstSegment;
     tempPtr = 0;
-    do{
+    //Copy every line of every element of the list in the new buffer.
+    while(currentSegment != NULL){
         linePtr = 0;
         while(currentSegment->lineBuf[linePtr] != '\n' && currentSegment->lineBuf[linePtr] != '\0'){
-            file[tempPtr] = currentSegment->lineBuf[linePtr];
+            (*file)[tempPtr] = currentSegment->lineBuf[linePtr];
             linePtr += 1;
             tempPtr += 1;
         }
-        file[tempPtr] = currentSegment->lineBuf[linePtr];
+        (*file)[tempPtr] = currentSegment->lineBuf[linePtr];
         tempPtr += 1;
         currentSegment = currentSegment->nextSegment;
-    }while(currentSegment != NULL);
+    }
+
+    //Just to get in the loop
+    currentSegment = firstSegment;
+    //Delete malloc list elements
+    while(currentSegment != NULL){
+    	firstSegment = currentSegment;
+    	currentSegment = currentSegment->nextSegment;
+    	free(firstSegment);
+    }
+
     return newSize;
 }
