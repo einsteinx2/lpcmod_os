@@ -227,7 +227,6 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         char * text;
     }argumentList[5];
     int nbArguments;
-    bool CRdetected;
     char compareBuf[100];                     //100 character long seems acceptable
     char tempBuf[50];
 
@@ -272,19 +271,16 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
-            stringStartPtr++;
-        if(file[stringStartPtr] == '#' || file[stringStartPtr] == '$'){       //This is a comment or empty line
 
+        if(file[stringStartPtr] == '$'){       //This is a label line
             stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
             continue;
         }
 
-        CRdetected = file[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
         //Copy line in compareBuf.
-        strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
+        strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - stringStartPtr);
         //Manually append terminating character at the end of the string
-        compareBuf[stringStopPtr - CRdetected - stringStartPtr] = '\0';
+        compareBuf[stringStopPtr - stringStartPtr] = '\0';
         //if(compareBuf[0] != '\0')
         //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
 
@@ -312,7 +308,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                 argumentList[i].exist = true;
                 nbArguments += 1;
                 //Move to start of next argument. Skip '(' too.
-                while((compareBuf[tempPtr] == ' ' || compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',' || compareBuf[tempPtr] == ')') && compareBuf[tempPtr] != '\0'){
+                while((compareBuf[tempPtr] == '(' || compareBuf[tempPtr] == ',' || compareBuf[tempPtr] == ')') && compareBuf[tempPtr] != '\0'){
                     tempPtr +=1;
                 }
             }
@@ -778,25 +774,17 @@ bool variableFunction(char * name, int initValue, _variableList * variableList){
 
 void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList){
     int stringStartPtr = 0, stringStopPtr = 0;
-    bool CRdetected;
     char compareBuf[100];
     while(stringStopPtr < fileSize){      //We stay in file
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
-            stringStartPtr++;
-        if(file[stringStartPtr] == '#'){       //This is a comment or empty line
-            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
-            continue;
-        }
         if(file[stringStartPtr] == '$'){        //Label identifier detected
             //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
-            CRdetected = file[stringStopPtr - 1] == '\r' ? 1 : 0;    //Dos formatted line?
             //Copy line in compareBuf.
-            strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - CRdetected - stringStartPtr);
+            strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - stringStartPtr);
             //Manually append terminating character at the end of the string
-            compareBuf[stringStopPtr - CRdetected - stringStartPtr] = '\0';
+            compareBuf[stringStopPtr - stringStartPtr] = '\0';
             //if(compareBuf[0] != '\0')
             //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
 
@@ -810,21 +798,14 @@ void parseFileForLabels(u8 * file, u32 fileSize, _labelList * labelList){
 
 bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStatementList){
     int stringStartPtr = 0, stringStopPtr = 0, stringTempPtr;
-    bool CRdetected;
     char compareBuf[6];
     ifStatementEntry *newEntry;
     while(stringStopPtr < fileSize){      //We stay in file
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
         }
-        while((file[stringStartPtr] == ' ' || file[stringStartPtr] == '\t') && stringStartPtr < stringStopPtr)      //Skip leading spaces for indentation;
-            stringStartPtr++;
-        if(file[stringStartPtr] == '#'){       //This is a comment or empty line
-            stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
-            continue;
-        }
         stringTempPtr = stringStartPtr;
-        while(file[stringTempPtr] != ' ' && file[stringTempPtr] != '(' && file[stringTempPtr] != '\r' && file[stringTempPtr] != '\n' && file[stringTempPtr] != '\0' && stringTempPtr < (stringStartPtr + 6))
+        while(file[stringTempPtr] != '(' && file[stringTempPtr] != '\n' && file[stringTempPtr] != '\0' && stringTempPtr < (stringStartPtr + 6))
             stringTempPtr += 1;
         if(stringTempPtr >= 2){        //Detected something on this line.
             //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
@@ -887,7 +868,7 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
 void addNewLabel(struct _labelList * labelList, char * compareBuf, int position){
     int tempPtr = 1;        //Start checking after '$' character
     labelEntry * newLabelEntry;
-    while(compareBuf[tempPtr] != ' ' && compareBuf[tempPtr] != '\0' && tempPtr < 100){
+    while(compareBuf[tempPtr] != '\0' && tempPtr < 100){
         tempPtr += 1;
     }
     if(tempPtr >= 2){   //There was at least one character after the '$' so we have a label.
@@ -933,8 +914,6 @@ bool checkEndOfArgument(char * compareBuf, int position){
     stringDeclaration = false;
 
     //Start by easy cases where it's clear we're at the end of an argument
-    if(compareBuf[position] == ' ')
-        return false;
     if(compareBuf[position] == '\0')
         return false;
     if(compareBuf[position] == '(')

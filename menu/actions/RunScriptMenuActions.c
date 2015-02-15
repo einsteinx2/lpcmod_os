@@ -32,6 +32,7 @@ void loadRunScript(void *fname){
         while (1)
             ;
     }
+    fileinfo.fileSize = trimScript(&(fileinfo.buffer), fileinfo.fileSize);
     runScript(fileinfo.buffer, fileinfo.fileSize, 0, NULL);   //No param for now
     free(fileinfo.buffer);
 
