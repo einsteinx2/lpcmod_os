@@ -1,0 +1,98 @@
+#Example script. It's a simple text file, indentation for code readability is supported.
+#Comments are also supported but I wouldn't advise putting comments lines with codes
+
+VAR padButton = 0
+VAR lcdLineLength = 0
+VAR lcdBacklight = 0
+
+LCDR()
+
+$loopLine0
+IF(lcdLineLength < 19)
+    lcdLineLength = lcdLineLength + 1
+    LCDW(0, "This is a script to", lcdLineLength)
+    WAIT(300)
+    GOTO loopLine0
+ENDIF
+
+lcdLineLength = 0
+$loopLine1
+IF(lcdLineLength < 20)
+    lcdLineLength = lcdLineLength + 1
+    LCDW(1, "show off cool things", lcdLineLength)
+    WAIT(300)
+    GOTO loopLine1
+ENDIF
+
+lcdLineLength = 0
+$loopLine2
+IF(lcdLineLength < 15)
+    lcdLineLength = lcdLineLength + 1
+    LCDW(2, "you can do with", lcdLineLength)
+    WAIT(300)
+    GOTO loopLine2
+ENDIF
+
+lcdLineLength = 0
+$loopLine3
+IF(lcdLineLength < 20)
+    lcdLineLength = lcdLineLength + 1
+    LCDW(3, "XBlast script engine", lcdLineLength)
+    WAIT(300)
+    GOTO loopLine3
+ENDIF
+
+WAIT(2000)
+LCDR()
+
+lcdLineLength = 0
+$loopLine4
+IF(lcdLineLength < 17)
+    lcdLineLength = lcdLineLength + 1
+    LCDW(0, "You can also read", lcdLineLength)
+    WAIT(300)
+    GOTO loopLine4
+ENDIF
+
+lcdLineLength = 0
+$loopLine5
+IF(lcdLineLength < 18)
+    lcdLineLength = lcdLineLength + 1
+    LCDW(1, "controller buttons", lcdLineLength)
+    WAIT(300)
+    GOTO loopLine5
+ENDIF
+
+WAIT(500)
+
+LCDW(3, "Press A to continue")
+
+LED("rrrg")
+
+lcdLineLength = 0
+
+$buttonLoop
+padButton = XPAD()
+IF(padButton != xpadA)
+	IF(lcdLineLength == 0)
+		IF(lcdBacklight < 100)
+			lcdBacklight = lcdBacklight + 1
+		ELSE
+			lcdLineLength = 1
+		ENDIF
+	ELSE
+		IF(lcdBacklight > 0)
+			lcdBacklight = lcdBacklight - 1
+		ELSE
+			lcdLineLength = 0
+		ENDIF
+	ENDIF
+	LCDB(lcdBacklight)
+	WAIT(10)
+		
+	GOTO buttonLoop
+ENDIF
+
+LED("gggg")
+
+END

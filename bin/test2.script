@@ -18,6 +18,6 @@ WAIT(5)
 IF(variableTest > 4)
     GOTO loop2
 ELSE
-    LCDW(1, "Test String)
+    LCDW(1, "Test String", 20)
     END
 ENDIF

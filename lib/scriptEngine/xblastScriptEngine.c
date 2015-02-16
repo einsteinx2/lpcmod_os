@@ -10,6 +10,15 @@
 #include "lpcmod_v1.h"
 #include "lib/LPCMod/BootLCD.h"
 
+
+#define ARGTYPE_UNKNOWN -1
+#define ARGTYPE_FUNCTION 0
+#define ARGTYPE_OPERATOR 1
+#define ARGTYPE_VARIABLE 2
+#define ARGTYPE_NUMERIC  3
+
+#define OPTYPE_EQ_EQ    0
+#define OPTYPE_NOT_EQ   1
 #define ARGTYPE_UNKNOWN -1
 #define ARGTYPE_FUNCTION 0
 #define ARGTYPE_OPERATOR 1
@@ -49,7 +58,8 @@
 #define FUNCTION_VAR    15
 #define FUNCTION_SPIR   16
 #define FUNCTION_SPIW   17
-#define FUNCTION_END    18
+#define FUNCTION_XPAD   18
+#define FUNCTION_END    19
 
 #define NBFUNCTIONCALLS 19
 
@@ -59,6 +69,7 @@ typedef struct variableEntry{
     struct variableEntry * next;
     int value;
     char * name;
+    bool readOnly;
 }variableEntry;
 
 typedef struct _variableList{
@@ -84,6 +95,7 @@ typedef struct ifStatementEntry{
     int ifPosition;
     int elsePosition;
     int endifPosition;
+    bool validAssertion;
     struct ifStatementEntry *next;
     struct ifStatementEntry *previous;
 }ifStatementEntry;
@@ -103,14 +115,15 @@ bool waitFunction(int ms);
 bool bootFunction(u8 bank);
 bool fanFunction(u8 value);
 bool ledFunction(char * value);
-bool lcdPrintFunction(u8 line, char * text);
+bool lcdPrintFunction(u8 line, char * text, u8 stringLength);
 bool lcdClearLineFunction(u8 line);
 bool lcdResetFunction(void);
 bool lcdBacklightFunction(u8 value);
 bool lcdPowerFunction(u8 value);
 u8 SPIRead(void);
 bool SPIWrite(u8 data);
-bool variableFunction(char * name, int initValue, _variableList * variableList);
+u8 XPADRead(void);
+bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly);
 bool checkEndOfArgument(char * compareBuf, int position);
 bool updateVariable(char * name, int value, _variableList * variableList);
 
@@ -134,6 +147,7 @@ char * functionCallList[NBFUNCTIONCALLS] = {
         "VAR",
         "SPIR",
         "SPIW",
+        "XPAD",
         "END"
 };
 
@@ -144,7 +158,6 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList);
 
 void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
-    int insideIfStatement = 0;
     int i, j;
     int arithAccumulator;
     bool accumulatorInUse;
@@ -179,14 +192,22 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     //Add parameters passed in runScript function call as variables.
     for(i = 0; i < paramCount; i++){
         sprintf(tempBuf, "_param%u", i);
-        variableFunction(tempBuf, param[i], &variableList);
+        variableFunction(tempBuf, param[i], &variableList, false);
     }
-    variableFunction("BNK512", BNK512, &variableList);
-    variableFunction("BNK256", BNK256, &variableList);
-    variableFunction("BNKOS", BNKOS, &variableList);
-    variableFunction("BNKFULLTSOP", BNKFULLTSOP, &variableList);
-    variableFunction("BNKTSOPSPLIT0", BNKTSOPSPLIT0, &variableList);
-    variableFunction("BNKTSOPSPLIT1", BNKTSOPSPLIT1, &variableList);
+    variableFunction("BNK512", BNK512, &variableList, true);
+    variableFunction("BNK256", BNK256, &variableList, true);
+    variableFunction("BNKOS", BNKOS, &variableList, true);
+    variableFunction("BNKFULLTSOP", BNKFULLTSOP, &variableList, true);
+    variableFunction("BNKTSOPSPLIT0", BNKTSOPSPLIT0, &variableList, true);
+    variableFunction("BNKTSOPSPLIT1", BNKTSOPSPLIT1, &variableList, true);
+
+    variableFunction("xpadA", TRIGGER_XPAD_KEY_A + 1, &variableList, true);
+    variableFunction("xpadB", TRIGGER_XPAD_KEY_B + 1, &variableList, true);
+    variableFunction("xpadX", TRIGGER_XPAD_KEY_X + 1, &variableList, true);
+    variableFunction("xpadY", TRIGGER_XPAD_KEY_Y + 1, &variableList, true);
+    variableFunction("xpadBl", TRIGGER_XPAD_KEY_BLACK + 1, &variableList, true);
+    variableFunction("xpadW", TRIGGER_XPAD_KEY_WHITE + 1, &variableList, true);
+
 
     labelList.count = 0;
     labelList.first = NULL;
@@ -296,8 +317,8 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                         ifEntry = ifEntry->next;
                                 }
                             }
-                            insideIfStatement = ifFunction(argumentList[i + 1].value, argumentList[i + 2].value, argumentList[i + 3].value);    //Will be 1 if IF condition is valid.
-                            if(!insideIfStatement){ //Condition in IF statement was not met
+                            ifEntry->validAssertion = ifFunction(argumentList[i + 1].value, argumentList[i + 2].value, argumentList[i + 3].value);    //Will be 1 if IF condition is valid.
+                            if(!ifEntry->validAssertion){ //Condition in IF statement was not met
                                 if(ifEntry->elsePosition != -1){    //There is a ELSE associated with this IF
                                     stringStartPtr = ifEntry->elsePosition; //Go there
 
@@ -306,6 +327,8 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                     stringStartPtr = ifEntry->endifPosition;        //Go to ENDIF
                                     stringStopPtr = stringStartPtr;
                             }
+
+
                             break;
                     case FUNCTION_ELSE:
                             ifEntry = ifStatementList.first;
@@ -318,14 +341,22 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                                         ifEntry = ifEntry->next;
                                 }
                             }
-                            if(insideIfStatement){
+                            if(ifEntry->validAssertion){
                                 stringStartPtr = ifEntry->endifPosition;        //Go to ENDIF
                                 stringStopPtr = stringStartPtr;
                             }
-                            insideIfStatement = 0;
                             break;
                     case FUNCTION_ENDIF:
-                            insideIfStatement = 0;
+                            for(j = 0; j < ifStatementList.count; j++){
+                                if(ifEntry->endifPosition == stringStartPtr){
+                                    break;
+                                }
+                                else{
+                                    if(ifEntry->next != NULL)
+                                        ifEntry = ifEntry->next;
+                                }
+                            }
+                            ifEntry->validAssertion = false;
                             break;
                     case FUNCTION_GOTO:
                         if(i == 0 && argumentList[1].exist){
@@ -386,11 +417,19 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_LED:
-
+                        if(argumentList[1].exist && argumentList[1].text != NULL){
+                            ledFunction(argumentList[1].text);
+                        }
+                        //else{
+                            //printf("\nRuntime execution error. Improper LED function call!");
+                        //}
                         break;
                     case FUNCTION_LCDW:
                         if(argumentList[1].exist && argumentList[2].exist && argumentList[2].text != NULL){
-                            lcdPrintFunction((u8)argumentList[1].value, argumentList[2].text);
+                            if(argumentList[3].exist && (argumentList[3].type == ARGTYPE_VARIABLE || argumentList[3].type == ARGTYPE_NUMERIC))
+                                lcdPrintFunction((u8)argumentList[1].value, argumentList[2].text, argumentList[3].value);
+                            else
+                                lcdPrintFunction((u8)argumentList[1].value, argumentList[2].text, xLCD.LineSize);
                         }
                         //else{
                             //printf("\nRuntime execution error. Improper LCDW function call!");
@@ -426,11 +465,11 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                     case FUNCTION_VAR:
                             if(i == 0 && argumentList[1].exist){
                                     if(argumentList[3].exist){
-                                            variableFunction(argumentList[1].text, argumentList[3].value, &variableList);
+                                variableFunction(argumentList[1].text, argumentList[3].value, &variableList, false);
                                             //printf("\nNew variable: %s = %u", argumentList[1].text, argumentList[3].value);
                                     }
                                     else{
-                                        variableFunction(argumentList[1].text, 0, &variableList);
+                                variableFunction(argumentList[1].text, 0, &variableList, false);
                                         //printf("\nNew variable: %s, no init value", argumentList[1].text);
                                     }
                             }
@@ -452,6 +491,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //else{
                             //printf("\nRuntime execution error. Improper LCDP function call!");
                         //}
+                        break;
+                    case FUNCTION_XPAD:
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist){
+                            arithAccumulator = XPADRead();
+                            accumulatorInUse = true;
+                        }
                         break;
                     case FUNCTION_END:
                         //printf("\nEND function. Ending script execution gracefully.");
@@ -659,14 +704,25 @@ bool ledFunction(char * value){
     setLED(value);
     return true;
 }
-bool lcdPrintFunction(u8 line, char * text){
+bool lcdPrintFunction(u8 line, char * text, u8 stringLength){
     //printf("\n****LCD Print at line %u : %s", line, text);
 	//printk("\n     lcdPrint function called : %s",text);
+    char tempString[41];
+    u8 inputStringLength;
     if(line > (xLCD.nbLines - 1))
         return false;
 
+    if(stringLength < xLCD.LineSize){
+        inputStringLength = strlen(text);
+        if(inputStringLength < stringLength)
+            stringLength = inputStringLength;
+
+        strncpy(tempString, text, stringLength);
+        tempString[stringLength] = '\0';
+    }
+
     BootLCDUpdateLinesOwnership(line, SCRIPT_OWNER);
-    xLCD.PrintLine[line](0, text);      //0 for justify text on left
+    xLCD.PrintLine[line](0, tempString);      //0 for justify text on left
 
     return true;
 }
@@ -726,7 +782,17 @@ bool SPIWrite(u8 data){
     return true;
 }
 
-bool variableFunction(char * name, int initValue, _variableList * variableList){
+u8 XPADRead(void){
+    //printf("\n****Controller Pad read");
+    int i;
+    for(i = TRIGGER_XPAD_KEY_A; i <= TRIGGER_XPAD_KEY_WHITE; i++){
+        if(XPAD_current[0].keys[i] == 0)
+            return (i +1);      //+1 to keep 0 value for no button pressed.
+    }
+    return 0;
+}
+
+bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly){
     variableEntry * newEntry;
     int i;
     char * tempName = (char *)name;
@@ -758,6 +824,7 @@ bool variableFunction(char * name, int initValue, _variableList * variableList){
     if(newEntry->name == NULL)
         return false;
     sprintf(newEntry->name, "%s", tempName);
+    newEntry->readOnly = readOnly;
 
     variableList->last = newEntry;
     variableList->count += 1;
@@ -814,6 +881,7 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
                 newEntry->ifPosition = stringStopPtr;    //Cursor position of line below IF statement
                 newEntry->elsePosition = -1;             //Not found yet
                 newEntry->endifPosition = -1;            //Not found yet
+                newEntry->validAssertion = false;        //Only useful for runtime
                 newEntry->next = NULL;                   //It's the last entry
                 newEntry->previous = ifStatementList->last;     //Fill be set to NULL for first entry anyway.
                 if(ifStatementList->first == NULL){             //This is the first entry in the list
@@ -1099,7 +1167,8 @@ bool updateVariable(char * name, int value, _variableList * variableList){
 
     for(i = 0; i < variableList->count; i++){
         if(!strcmp(currentEntry->name, name)){
-            currentEntry->value = value;
+            if(!(currentEntry->readOnly))
+                currentEntry->value = value;
             break;
         }
         if(currentEntry->next != NULL)

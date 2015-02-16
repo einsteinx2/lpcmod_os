@@ -5,6 +5,7 @@
 VARvariableTest =100
 
 VARlcdPrintLine
+VARlcdLineLength
 
 #Just to show reading GPI pins
 VARinputPindummy
@@ -29,13 +30,14 @@ FAN(50)
 GPO(0, 0)
 
 lcdPrintLine = 0
+lcdLineLength = 20
 
 $loop2
 #Reset LCD screen
 LCDR
 
 #Write text string on LCD. Line to print on is decided by the "lcdPrintLine" variable. String cannot be bigger than 20 characters.
-LCDW(lcdPrintLine, "test string1")
+LCDW(lcdPrintLine, "test string1", lcdLineLength)
 
 #wait 1000ms
 WAIT(1000)
@@ -49,5 +51,6 @@ ELSE
 	variableTest = variableTest + 11
 	#lcdPrintLine will vary from 0 to 3, the possible addressable lines on the LCD
 	lcdPrintLine = variableTest % 4
+	lcdLineLength = variableTest % 20
 	GOTO loop2
 ENDIF

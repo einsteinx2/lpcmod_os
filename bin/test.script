@@ -20,7 +20,7 @@ ELSE
 ENDIF
 $loop3
 IF(variableTest >= 105)
-    LCDW(0, "test string, yay")
+    LCDW(0, "test string, yay", 20)
     END
 ELSE
     variableTest = variableTest + 1
