@@ -11,7 +11,7 @@ $loopLine0
 IF(lcdLineLength < 19)
     lcdLineLength = lcdLineLength + 1
     LCDW(0, "This is a script to", lcdLineLength)
-    WAIT(300)
+    WAIT(100)
     GOTO loopLine0
 ENDIF
 
@@ -20,7 +20,7 @@ $loopLine1
 IF(lcdLineLength < 20)
     lcdLineLength = lcdLineLength + 1
     LCDW(1, "show off cool things", lcdLineLength)
-    WAIT(300)
+    WAIT(100)
     GOTO loopLine1
 ENDIF
 
@@ -29,7 +29,7 @@ $loopLine2
 IF(lcdLineLength < 15)
     lcdLineLength = lcdLineLength + 1
     LCDW(2, "you can do with", lcdLineLength)
-    WAIT(300)
+    WAIT(100)
     GOTO loopLine2
 ENDIF
 
@@ -38,11 +38,11 @@ $loopLine3
 IF(lcdLineLength < 20)
     lcdLineLength = lcdLineLength + 1
     LCDW(3, "XBlast script engine", lcdLineLength)
-    WAIT(300)
+    WAIT(100)
     GOTO loopLine3
 ENDIF
 
-WAIT(2000)
+WAIT(5000)
 LCDR()
 
 lcdLineLength = 0
@@ -50,7 +50,7 @@ $loopLine4
 IF(lcdLineLength < 17)
     lcdLineLength = lcdLineLength + 1
     LCDW(0, "You can also read", lcdLineLength)
-    WAIT(300)
+    WAIT(100)
     GOTO loopLine4
 ENDIF
 
@@ -59,7 +59,7 @@ $loopLine5
 IF(lcdLineLength < 18)
     lcdLineLength = lcdLineLength + 1
     LCDW(1, "controller buttons", lcdLineLength)
-    WAIT(300)
+    WAIT(100)
     GOTO loopLine5
 ENDIF
 
@@ -88,11 +88,24 @@ IF(padButton != xpadA)
 		ENDIF
 	ENDIF
 	LCDB(lcdBacklight)
-	WAIT(10)
+	WAIT(20)
 		
 	GOTO buttonLoop
 ENDIF
 
 LED("gggg")
+LCDB(100)
 
+$buttonLoop2
+padButton = XPAD()
+IF(padButton != xpadY)
+#	IF(lcdLineLength == 0)
+#		lcdLineLength = 1
+		SPIW(0xaa)
+#	ELSE
+#		lcdLineLength = 0
+#		SPIW(0x55)
+#	ENDIF
+	GOTO buttonLoop2
+ENDIF
 END

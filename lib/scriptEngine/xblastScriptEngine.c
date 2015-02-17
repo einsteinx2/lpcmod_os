@@ -61,7 +61,7 @@
 #define FUNCTION_XPAD   18
 #define FUNCTION_END    19
 
-#define NBFUNCTIONCALLS 19
+#define NBFUNCTIONCALLS 20
 
 
 typedef struct variableEntry{
@@ -706,8 +706,8 @@ bool ledFunction(char * value){
 }
 bool lcdPrintFunction(u8 line, char * text, u8 stringLength){
     //printf("\n****LCD Print at line %u : %s", line, text);
-	//printk("\n     lcdPrint function called : %s",text);
-    char tempString[41];
+    //printk("\n     lcdPrint function called : %s",text);
+    char tempString[xLCD.LineSize + 1];
     u8 inputStringLength;
     if(line > (xLCD.nbLines - 1))
         return false;
@@ -719,6 +719,10 @@ bool lcdPrintFunction(u8 line, char * text, u8 stringLength){
 
         strncpy(tempString, text, stringLength);
         tempString[stringLength] = '\0';
+    }
+    else{
+    	strncpy(tempString, text, xLCD.LineSize);
+    	tempString[xLCD.LineSize] = '\0';
     }
 
     BootLCDUpdateLinesOwnership(line, SCRIPT_OWNER);
@@ -760,11 +764,11 @@ u8 SPIRead(void){
     for(i = 0; i < 8; i++){
         result = result << 1;
         LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-        wait_us(10);
-        LPCMod_WriteIO(0x2, 1);
+        //wait_us(1);
+        LPCMod_WriteIO(0x2, 0x2);
         LPCMod_ReadIO(NULL);
-        result = GenPurposeIOs.GPI1;
-        wait_us(10);    //This will need to be verified.
+        result |= GenPurposeIOs.GPI1 << i;
+        //wait_us(1);    //This will need to be verified.
     }
     return result;
 }
@@ -772,13 +776,14 @@ u8 SPIRead(void){
 bool SPIWrite(u8 data){
     u8 i;
     for(i = 0; i < 8; i++){
-        LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-        LPCMod_WriteIO(0x1, data&0x1);
-        wait_us(10);
-        LPCMod_WriteIO(0x2, 1);
-        wait_us(10);
+        //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
+        LPCMod_WriteIO(0x3, data&0x1);
+        //wait_us(1);
+        LPCMod_WriteIO(0x2, 0x2);
+        //wait_us(1);
         data = data >> 1;
     }
+    LPCMod_WriteIO(0x3, 0);
     return true;
 }
 
@@ -786,7 +791,7 @@ u8 XPADRead(void){
     //printf("\n****Controller Pad read");
     int i;
     for(i = TRIGGER_XPAD_KEY_A; i <= TRIGGER_XPAD_KEY_WHITE; i++){
-        if(XPAD_current[0].keys[i] == 0)
+        if(XPAD_current[0].keys[i])
             return (i +1);      //+1 to keep 0 value for no button pressed.
     }
     return 0;

@@ -163,9 +163,9 @@ void LPCMod_WriteIO(u8 port, u8 value){
     else
         temp = 0;
 
-    GenPurposeIOs.GPO3 = (port & 0x08)? (value & 0x08) : (temp & 0x80) >> 7;
-    GenPurposeIOs.GPO2 = (port & 0x04)? (value & 0x04) : (temp & 0x40) >> 6;
-    GenPurposeIOs.GPO1 = (port & 0x02)? (value & 0x02) : (temp & 0x20) >> 5;
+    GenPurposeIOs.GPO3 = (port & 0x08)? (value & 0x08) >> 3: (temp & 0x80) >> 7;
+    GenPurposeIOs.GPO2 = (port & 0x04)? (value & 0x04) >> 2: (temp & 0x40) >> 6;
+    GenPurposeIOs.GPO1 = (port & 0x02)? (value & 0x02) >> 1 : (temp & 0x20) >> 5;
     GenPurposeIOs.GPO0 = (port & 0x01)? (value & 0x01) : (temp & 0x10) >> 4;
     GenPurposeIOs.GPI1 = (temp & 0x08) >> 3;
     GenPurposeIOs.GPI0 = (temp & 0x04) >> 2;
