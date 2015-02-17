@@ -17,6 +17,18 @@ TEXTMENU *ModchipMenuInit(void) {
 if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption,"Enable Boot script : ");
+    sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+    itemPtr->functionPtr= toggleRunBootScript;
+    itemPtr->functionDataPtr= itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggleRunBootScript;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggleRunBootScript;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Idle timeout : ");
     sprintf(itemPtr->szParameter, "%ds", LPCmodSettings.OSsettings.bootTimeout);
     itemPtr->functionPtr= NULL;

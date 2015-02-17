@@ -11,6 +11,14 @@
 #include "lib/LPCMod/BootLCD.h"
 
 
+
+#define ARGTYPE_UNKNOWN -1
+#define ARGTYPE_FUNCTION 0
+#define ARGTYPE_OPERATOR 1
+#define ARGTYPE_VARIABLE 2
+#define ARGTYPE_NUMERIC  3
+#define ARGTYPE_STRING   4
+
 #define ARGTYPE_UNKNOWN -1
 #define ARGTYPE_FUNCTION 0
 #define ARGTYPE_OPERATOR 1
@@ -184,6 +192,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     char compareBuf[100];                     //100 character long seems acceptable
     char tempBuf[50];
 
+    for(i = 0; i < 5; i++){
+        argumentList[i].exist = false;
+        argumentList[i].text = NULL;
+        argumentList[i].type = ARGTYPE_UNKNOWN;
+        argumentList[i].value = 0;
+    }
     stringDeclaration = false;
 
     variableList.count = 0;
@@ -249,11 +263,13 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
 
 
         //Parse arguments of current line. Up to a max of 5.
-        argumentList[0].exist = false;
-        argumentList[1].exist = false;
-        argumentList[2].exist = false;
-        argumentList[3].exist = false;
-        argumentList[4].exist = false;
+        for(i = 0; i < 5; i++){
+            argumentList[i].exist = false;
+            if(argumentList[i].type == ARGTYPE_STRING){ //ARGTYPE_STRING indicates there has been a malloc
+                free(argumentList[i].text);
+                argumentList[i].text = NULL;
+            }
+        }
         tempPtr = 0;
         nbArguments = 0;
 
@@ -632,6 +648,7 @@ endExecution:
         ifStatementList.first = ifEntry->next;
         free(ifEntry);
     }
+
     return;
 }
 
@@ -1045,6 +1062,7 @@ bool checkEndOfArgument(char * compareBuf, int position){
 //1 is for operator
 //2 is for variable call
 //3 is for numerical value
+//4 for string or
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList){
     int i;
     bool operatorDetected = false;
@@ -1146,6 +1164,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
             return ARGTYPE_NUMERIC;
         }
 */
+        //Is it a number?
         if((inputArg[0] >= '0' && inputArg[0] <= '9') || (inputArg[0] == '0' && inputArg[1] == 'x') || (inputArg[0] == '-')){
 			*outNum = strtol(inputArg, NULL, 0);
 			return ARGTYPE_NUMERIC;
@@ -1162,8 +1181,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
     strncpy(*string, inputArg[0] == '\"' ? &inputArg[1] : inputArg, i);
     *(*string + i) = '\0';
 
-
-    return ARGTYPE_UNKNOWN;
+    return ARGTYPE_STRING;
 }
 
 bool updateVariable(char * name, int value, _variableList * variableList){

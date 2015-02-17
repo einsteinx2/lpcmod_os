@@ -462,11 +462,16 @@ void BootFlashSaveOSSettings(void) {
 
             memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
 
-            if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
+            if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(_LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
                 if(fHasHardware == SYSCON_ID_X3)	//Extra warning for X3 user.
     		    if(ConfirmDialog("           Are you on the same flash bank?", 1))
     		        return;
-                memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(LPCmodSettings));    //Copy settings at the start of the 4KB block.
+                memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(_LPCmodSettings));    //Copy settings at the start of the 4KB block.
+                if(scriptSavingPtr != NULL){    //There's a script to save
+                    memcpy(&(lastBlock[blocksize-(4*1024) + sizeof(_LPCmodSettings)]), scriptSavingPtr, LPCmodSettings.firstScript.nextEntryPosition - 1 - sizeof(_LPCmodSettings));
+                    free(scriptSavingPtr);
+                    scriptSavingPtr = NULL;
+                }
                 BootFlashSettings(lastBlock,(0x40000 - blocksize),blocksize);            //Even if bank is bigger than 256KB, we only save on first 256KB part.
             }
             free(lastBlock);
@@ -540,4 +545,29 @@ bool assert4KBErase(OBJECT_FLASH *pof){
             break;
     }
     return false;
+}
+
+int fetchBootScriptFromFlash(u8 ** buffer){
+    int bufferSize = 0;
+    OBJECT_FLASH of;
+    u8 * lastBlock;
+
+    // A bit hacky, but easier to maintain.
+    const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
+        #include "flashtypes.h"
+    };
+    if(LPCmodSettings.firstScript.ScripMagicNumber == 0xFAF1){  //No need to dig in further if no script was saved there.
+        if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
+
+            memset(&of,0xFF,sizeof(of));
+            of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+
+            if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
+                bufferSize = LPCmodSettings.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
+                *buffer = (u8 *)malloc(bufferSize);
+                memcpy(*buffer,(const u8*)&(of.m_pbMemoryMappedStartAddress[0x3f000 + sizeof(_LPCmodSettings)]), bufferSize);
+            }
+        }
+    }
+    return bufferSize;
 }

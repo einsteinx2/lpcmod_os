@@ -19,6 +19,7 @@ typedef unsigned short u16;
 #define ARGTYPE_OPERATOR 1
 #define ARGTYPE_VARIABLE 2
 #define ARGTYPE_NUMERIC  3
+#define ARGTYPE_STRING   4
 
 #define OPTYPE_EQ_EQ    0
 #define OPTYPE_NOT_EQ   1
@@ -203,9 +204,12 @@ int main (int argc, const char * argv[])
     fileSize = fread(buffer, sizeof(u8), fileSize, pFile);
 
     fclose(pFile);
+    fileSize = trimScript(&buffer, fileSize);
     runScript(buffer, fileSize, 0, NULL);
 
-	return EXIT_SUCCESS;
+    free(buffer);
+
+    return EXIT_SUCCESS;
 }
 
 
@@ -242,7 +246,12 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     char compareBuf[100];                     //100 character long seems acceptable
     char tempBuf[50];
 
-    fileSize = trimScript(&file, fileSize);
+    for(i = 0; i < 5; i++){
+        argumentList[i].exist = false;
+        argumentList[i].text = NULL;
+        argumentList[i].type = ARGTYPE_UNKNOWN;
+        argumentList[i].value = 0;
+    }
     stringDeclaration = false;
 /*
     pFile = fopen("out.txt","wb");
@@ -316,11 +325,13 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
 
 
         //Parse arguments of current line. Up to a max of 5.
-        argumentList[0].exist = false;
-        argumentList[1].exist = false;
-        argumentList[2].exist = false;
-        argumentList[3].exist = false;
-        argumentList[4].exist = false;
+        for(i = 0; i < 5; i++){
+            argumentList[i].exist = false;
+            if(argumentList[i].type == ARGTYPE_STRING){ //ARGTYPE_STRING indicates there has been a malloc
+                free(argumentList[i].text);
+                argumentList[i].text = NULL;
+            }
+        }
         tempPtr = 0;
         nbArguments = 0;
 
@@ -492,7 +503,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         }
                         break;
                     case FUNCTION_LCDW:
-                        if(argumentList[1].exist && argumentList[2].exist && argumentList[2].text != NULL){
+                        if(argumentList[1].exist && argumentList[2].exist && argumentList[2].text != NULL && argumentList[2].type == ARGTYPE_STRING){
                             if(argumentList[3].exist && (argumentList[3].type == ARGTYPE_VARIABLE || argumentList[3].type == ARGTYPE_NUMERIC))
                                 lcdPrintFunction((u8)argumentList[1].value, argumentList[2].text, argumentList[3].value);
                             else
@@ -700,7 +711,6 @@ endExecution:
         free(ifEntry);
     }
 
-    free(file);
     return;
 }
 
@@ -1048,6 +1058,7 @@ bool checkEndOfArgument(char * compareBuf, int position){
 //1 is for operator
 //2 is for variable call
 //3 is for numerical value
+//4 for string or
 int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList * variableList){
     int i;
     bool operatorDetected = false;
@@ -1123,7 +1134,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
     if(operatorDetected)
         return ARGTYPE_OPERATOR;
 
-
+    //Not a literal string. Can be a variable or number(dec, octal or hex)
     if(inputArg[0] != '\"'){
         tempVariableEntry = variableList->first;
         for(i = 0; i < variableList->count; i++){
@@ -1135,7 +1146,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
             if(tempVariableEntry->next != NULL)
                 tempVariableEntry = tempVariableEntry->next;
             else
-                break;
+                break;  //No variable by that name
         }
 /*
         //Negative number?
@@ -1149,6 +1160,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
             return ARGTYPE_NUMERIC;
         }
 */
+        //Is it a number?
         if((inputArg[0] >= '0' && inputArg[0] <= '9') || (inputArg[0] == '0' && inputArg[1] == 'x') || (inputArg[0] == '-')){
 			*outNum = strtol(inputArg, NULL, 0);
 			return ARGTYPE_NUMERIC;
@@ -1159,14 +1171,13 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
         i = 2;  //Skip both leading and ending "\""
     }
 
-    //Must be variable call.
-    i = strlen(inputArg) - i;
+    //Must be string or variable declaration
+    i = strlen(inputArg) - i;   //Do not count both "\""
     *string = (char *)malloc(i + 1);
     strncpy(*string, inputArg[0] == '\"' ? &inputArg[1] : inputArg, i);
     *(*string + i) = '\0';
 
-
-    return ARGTYPE_UNKNOWN;
+    return ARGTYPE_STRING;
 }
 
 bool updateVariable(char * name, int value, _variableList * variableList){

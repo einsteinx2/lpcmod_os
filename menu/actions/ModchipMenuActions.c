@@ -163,6 +163,11 @@ void toggleQuickboot(void * itemStr){
     sprintf(itemStr,"%s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
 }
 
+void toggleRunBootScript(void * itemStr){
+    (LPCmodSettings.OSsettings.runBootScript) = (LPCmodSettings.OSsettings.runBootScript)? 0 : 1;
+    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+}
+
 void resetSettings(void *whatever){
     if(ConfirmDialog("        Confirm reset XBlast OS settings?", 1))
         return;

@@ -89,3 +89,5 @@ int assertOSUpdateValidInput(u8 * inputFile);
 bool assert4KBErase(OBJECT_FLASH *pof);
 
 void mirrorImage(u8 *pbNewData, u32 dwLength, OBJECT_FLASH* of);
+
+int fetchBootScriptFromFlash(u8 ** buffer);

@@ -9,6 +9,7 @@
 
 #include "TextMenu.h"
 #include "DeveloperMenuActions.h"
+#include "RunScriptMenuActions.h"
 #include "lpcmod_v1.h"
 
 TEXTMENU *DeveloperMenuInit(void) {
@@ -68,6 +69,21 @@ TEXTMENU *DeveloperMenuInit(void) {
     strcpy(itemPtr->szCaption, "Run script");
     itemPtr->functionPtr= DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)RunScriptMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Save script to flash.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Save script to flash");
+    itemPtr->functionPtr= DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)SaveScriptMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Load script from flash.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Load script from flash");
+    itemPtr->functionPtr= loadScriptFromFlash;
     TextMenuAddItem(menuPtr, itemPtr);
 
     return menuPtr;

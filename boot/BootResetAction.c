@@ -24,6 +24,7 @@
 #include "memory_layout.h"
 #include "lpcmod_v1.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "lib/scriptEngine/xblastScriptEngine.h"
 //#include "lib/LPCMod/BootLCD.h"
 
 JPEG jpegBackdrop;
@@ -49,6 +50,8 @@ extern void BootResetAction ( void ) {
     int nTempCursorX, nTempCursorY;
     int n, nx, i, returnValue = 255;
     char modName[30] = "Unsupported modchip!";
+    u8 * bootScriptBuffer;
+    int bootScriptSize;
     _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH of;
     // A bit hacky, but easier to maintain.
@@ -60,6 +63,7 @@ extern void BootResetAction ( void ) {
 
     //Set to NULL as it's not used yet.
     //gobalGenericPtr = NULL;
+    scriptSavingPtr = NULL;
 
 
     //Length of array is set depending on how many revision can be uniquely identified.
@@ -283,6 +287,14 @@ extern void BootResetAction ( void ) {
     BootStartUSB();
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
+        if(LPCmodSettings.OSsettings.runBootScript){
+            bootScriptSize = fetchBootScriptFromFlash(&bootScriptBuffer);
+            if(bootScriptSize > 0){
+                i = BNKOS;
+                runScript(bootScriptBuffer, bootScriptSize, 1, &i);
+                free(bootScriptBuffer);
+            }
+        }
         if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
             if(EjectButtonPressed && LPCmodSettings.OSsettings.altBank != BNKOS){              //Xbox was started from eject button and eject button quick boot is enabled.
                 if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP){
