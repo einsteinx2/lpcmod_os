@@ -1,10 +1,15 @@
-#Example script. It's a simple text file, indentation for code readability is supported.
-#Comments are also supported but I wouldn't advise putting comments lines with codes
-
 VAR padButton = 0
 VAR lcdLineLength = 0
 VAR lcdBacklight = 0
 
+VAR spiRowCount = 0
+VAR spiTemp
+
+#These are used as constants. Just to make it easier to edit LED matrix pattern scroll.
+VAR spiFirstPattern = 0xAA
+VAR spiSecondPattern = 0x55
+
+#Reset LCD
 LCDR()
 
 $loopLine0
@@ -42,6 +47,7 @@ IF(lcdLineLength < 20)
     GOTO loopLine3
 ENDIF
 
+#Wait 5 seconds or so. Stalls execution.
 WAIT(5000)
 LCDR()
 
@@ -94,6 +100,8 @@ IF(padButton != xpadA)
 ENDIF
 
 LED("gggg")
+
+#Full backlighting
 LCDB(100)
 LCDR()
 
@@ -101,44 +109,64 @@ LCDW(0, "SPI read/write")
 LCDW(1, "is also supported!")
 
 #AS1107 chip interface
-#set normal operation
-SPIW(0x0A)
-SPIW(0x07)
+#just run the clock a little. Probably not necessary.
+GPO(4, 4)
+SPIW(0x00)
 
-#set intensity to 8/16
+#set normal operation
+GPO(4, 0)
 SPIW(0x0C)
 SPIW(0x01)
+GPO(4, 4)
 
-#set dots to display in checker style
-SPIW(0x01)
-SPIW(0xAA)
-
-SPIW(0x02)
-SPIW(0x55)
-
-SPIW(0x03)
-SPIW(0xAA)
-
-SPIW(0x04)
-SPIW(0x55)
-
-SPIW(0x05)
-SPIW(0xAA)
-
-SPIW(0x06)
-SPIW(0x55)
-
-SPIW(0x07)
-SPIW(0xAA)
-
+#set intensity to 8/16
+GPO(4, 0)
+SPIW(0x0A)
 SPIW(0x08)
-SPIW(0x55)
+GPO(4, 4)
+
+#set scan limit to full range
+GPO(4, 0)
+SPIW(0x0B)
+SPIW(0x07)
+GPO(4, 4)
+
+
 
 #infinte loop until you press B
 LCDW(3, "Press B to continue")
-$buttonLoop2
+
+$spiLoop0
 padButton = XPAD()
 IF(padButton != xpadB)
-	GOTO buttonLoop2
+
+	#set dots to display in checker style
+	GPO(4, 0)
+	SPIW(spiRowCount)
+	SPIW(spiTemp)
+	GPO(4, 4)
+
+	IF(spiRowCount > 7)
+		spiRowCount = 0
+	ELSE
+		spiRowCount =  spiRowCount + 1
+	ENDIF
+	
+	IF(spiTemp == spiFirstPattern)
+		spiTemp = spiSecondPattern
+	ELSE
+		spiTemp = spiFirstPattern
+	ENDIF
+
+	WAIT(10)
+
+	GOTO spiLoop0
 ENDIF
+
+#turn off
+GPO(4, 0)
+SPIW(0x0C)
+SPIW(0x00)
+GPO(4, 4)
+
 END

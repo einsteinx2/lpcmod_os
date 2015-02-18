@@ -791,14 +791,13 @@ u8 SPIRead(void){
 }
 
 bool SPIWrite(u8 data){
-    u8 i;
-    for(i = 0; i < 8; i++){
+    char i;
+    for(i = 7; i >= 0; i--){
         //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-        LPCMod_WriteIO(0x3, data&0x1);
+        LPCMod_WriteIO(0x3, (data >> i)&0x01);
         //wait_us(1);
         LPCMod_WriteIO(0x2, 0x2);
         //wait_us(1);
-        data = data >> 1;
     }
     LPCMod_WriteIO(0x3, 0);
     return true;
