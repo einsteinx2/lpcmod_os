@@ -234,7 +234,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     ifStatementEntry * ifEntry;
 
 
-    int stringStartPtr = 0, stringStopPtr = 0, tempPtr;
+    int stringStartPtr = 0, stringStopPtr = 0, tempPtr, tempCounter;
     int argStartPtr[5], argEndPtr[5];
     struct{
         bool exist;
@@ -243,7 +243,8 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         char * text;
     }argumentList[5];
     int nbArguments;
-    char compareBuf[100];                     //100 character long seems acceptable
+#define MAXINSTRUCTIONLENGTH 100
+    char compareBuf[MAXINSTRUCTIONLENGTH];                     //100 character long seems acceptable
     char tempBuf[50];
 
     for(i = 0; i < 5; i++){
@@ -305,8 +306,10 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
     printf("\n\nBegin script execution");
 
     while(stringStopPtr < fileSize){      //We stay in file
-        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize){        //While we don't hit a new line and still in file
+        tempCounter = 0;
+        while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize && tempCounter < 100){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.
+            tempCounter += 1;           //Just a small precaution in case file is not well formatted.
         }
 
         if(file[stringStartPtr] == '$'){       //This is a label line
@@ -314,10 +317,15 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
             continue;
         }
 
+        tempCounter = stringStopPtr - stringStartPtr;
+        if(tempCounter >= MAXINSTRUCTIONLENGTH){
         //Copy line in compareBuf.
-        strncpy(compareBuf, &file[stringStartPtr], stringStopPtr - stringStartPtr);
+            goto endExecution;
+        }
         //Manually append terminating character at the end of the string
-        compareBuf[stringStopPtr - stringStartPtr] = '\0';
+        strncpy(compareBuf, &file[stringStartPtr], tempCounter);
+        //Manually append terminating character at the end of the string
+        compareBuf[tempCounter] = '\0';
         //if(compareBuf[0] != '\0')
         //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
 
@@ -334,7 +342,17 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         }
         tempPtr = 0;
         nbArguments = 0;
-
+/*
+        //Emergency escape. Right after the last possible malloc have been freed.
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
+           risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
+           risefall_xpad_STATE(XPAD_STATE_START)&&
+           XPAD_current[0].keys[4]){        //black button
+            if(!ConfirmDialog("        Force quit script execution?"), 1)
+                goto endExecution;
+        }
+*/
+        //Parse arguments of current line. Up to a max of 5.
         for(i = 0; i < 5; i++){
             if(compareBuf[tempPtr] != '\0' && tempPtr < 100){
                 argStartPtr[i] = tempPtr;
