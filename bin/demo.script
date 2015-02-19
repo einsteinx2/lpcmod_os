@@ -131,7 +131,11 @@ SPIW(0x0B)
 SPIW(0x07)
 GPO(4, 4)
 
-
+$depressLoop
+padButton = XPAD()
+IF(padButton == xpadA)
+	GOTO depressLoop
+ENDIF
 
 #infinte loop until you press B
 LCDW(3, "Press B to continue")
