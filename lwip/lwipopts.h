@@ -157,7 +157,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- UDP options ---------- */
 #define LWIP_UDP                1
-#define UDP_TTL                 255
+#define UDP_TTL                 64      //previously 255
 
 
 /* ---------- Statistics options ---------- */
