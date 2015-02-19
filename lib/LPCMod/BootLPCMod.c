@@ -1,4 +1,5 @@
 #include "boot.h"
+#include "video.h"
 #include "VideoInitialization.h"
 #include "BootLPCMod.h"
 #include "lpcmod_v1.h"
@@ -453,9 +454,7 @@ FATXFILEINFO fileinfo;
     char tempString[22];
     u32 cursorpos, totalbytes = 0;
     int dcluster, i;
-    const char *path="\\XBlast\\";
     const char *cfgFileName = "\\XBlast\\xblast.cfg";
-
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
 
@@ -500,5 +499,33 @@ FATXFILEINFO fileinfo;
     }
 
     ToolFooter();
+    return 0;
+}
+
+int LPCMod_ReadJPGFromHDD(void){
+    FATXFILEINFO fileinfo;
+    FATXPartition *partition;
+    int res = false;
+    int dcluster;
+    const char *jpgFilename = "\\XBlast\\backdrop.jpg";
+
+    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+    if(partition != NULL){
+        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
+        if((dcluster != -1) && (dcluster != 1)) {
+            res = FATXFindFile(partition, (char *)jpgFilename, FATX_ROOT_FAT_CLUSTER, &fileinfo);
+        }
+        if(res && fileinfo.fileSize){        //File exist
+            free(jpegBackdrop.pData);
+            BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop);
+        }
+        else{
+            return -1;
+        }
+        CloseFATXPartition(partition);
+    }
+    else
+        return -1;
+
     return 0;
 }

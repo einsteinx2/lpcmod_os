@@ -17,7 +17,6 @@ int sprintf(char * buf, const char *fmt, ...);
 #include  "boot.h"
 #include "video.h"
 #include "memory_layout.h"
-//#include "string.h"
 #include "fontx16.h"  // brings in font struct
 #include <stdarg.h>
 #include "decode-jpg.h"
@@ -83,13 +82,13 @@ void BootVideoJpegBlitBlend(
     u32 dw;
 
     m_rgbaTransparent|=0xff000000;
-    m_rgbaTransparent&=0xffc0c0c0;
+    m_rgbaTransparent&=0xff80c080;      //Loosen tolerance from 0xffc0c0c0
 
     while(y--) {
 
         for(n=0;n<x;n++) {
             
-            dw = ((*((u32 *)pFront))|0xff000000)&0xffc0c0c0;
+            dw = ((*((u32 *)pFront))|0xff000000)&0xff80c080;      //Loosen tolerance from 0xffc0c0c0
 
             if(dw!=m_rgbaTransparent) {
                 pDst[2]=((pFront[0]*nTransAsByte)+(pBack[0]*nBackTransAsByte))>>8;
@@ -273,6 +272,7 @@ void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
                         ((pbJpegBitmapAdjustedDatum[n1+2]))|
                         ((pbJpegBitmapAdjustedDatum[n1+1])<<8)|
                         ((pbJpegBitmapAdjustedDatum[n1])<<16)
+                        //XXX: could be pdw[n] = 0xff000000|0x012F53; for static color
                     ;
                     n1+=pJpeg->bpp;
                 }

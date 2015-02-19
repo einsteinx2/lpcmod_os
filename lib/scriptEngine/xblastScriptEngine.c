@@ -285,9 +285,8 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
            risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
            risefall_xpad_STATE(XPAD_STATE_START)&&
-           XPAD_current[0].keys[4]){        //black button
-            if(!ConfirmDialog("        Force quit script execution?"), 1)
-                goto endExecution;
+           XPAD_current[0].keys[5]){        //white button
+            goto endExecution;
         }
 
         //Parse arguments of current line. Up to a max of 5.

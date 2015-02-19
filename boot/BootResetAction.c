@@ -25,7 +25,6 @@
 #include "lpcmod_v1.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/scriptEngine/xblastScriptEngine.h"
-//#include "lib/LPCMod/BootLCD.h"
 
 JPEG jpegBackdrop;
 
@@ -38,6 +37,87 @@ volatile CURRENT_VIDEO_MODE_DETAILS vmode;
 
 void ClearScreen (void) {
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+}
+
+void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
+    //Length of array is set depending on how many revision can be uniquely identified.
+    //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
+    const char *xbox_mb_rev[8] = {
+        "DevKit",
+        "DebugKit",
+        "1.0",
+        "1.1",
+        "1.2/1.3",
+        "1.4/1.5",
+        "1.6/1.6b",
+        "Unknown"
+    };
+
+    VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
+    VIDEO_CURSOR_POSY=vmode.ymargin;
+
+    printk("\n\n");
+    if (cromwell_config==XROMWELL) {
+        printk("           \2XBlast OS (XBE) v" VERSION "\n\n\2");
+    } else if (cromwell_config==CROMWELL) {
+        printk("           \2XBlast OS (ROM) v" VERSION "\n\n\2");
+    }
+
+    VIDEO_ATTR=0xff00ff00;
+
+    VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
+    VIDEO_CURSOR_POSY=vmode.ymargin+64;
+
+
+    VIDEO_ATTR=0xff00ff00;
+#if DEV_FEATURES
+    printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("           THIS IS A WIP BUILD, flash manID= %x  devID= %x\n", of->m_bManufacturerId, of->m_bDeviceId);
+#else
+    printk("           Modchip: %s\n",modName);
+#endif
+    VIDEO_ATTR=0xff00ff00;
+
+
+   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
+   if (xbox_ram > 64) {
+        VIDEO_ATTR=0xff00ff00;
+   } else {
+        VIDEO_ATTR=0xffffa20f;
+   }
+   printk("  RAM: %dMiB\n", xbox_ram);
+
+    VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
+#ifndef SILENT_MODE
+    // capture title area
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("           Encoder: ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%s  ", VideoEncoderName());
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("Cable: ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%s  ", AvCableName());
+
+    if (I2CGetTemperature(&n, &nx)) {
+        VIDEO_ATTR=0xffc8c8c8;
+        printk("CPU Temp: ");
+        VIDEO_ATTR=0xffc8c800;
+        printk("%doC  ", n);
+        VIDEO_ATTR=0xffc8c8c8;
+        printk("M/b Temp: ");
+        VIDEO_ATTR=0xffc8c800;
+        printk("%doC  ", nx);
+    }
+
+    printk("\n");
+    nTempCursorX=VIDEO_CURSOR_POSX;
+    nTempCursorY=VIDEO_CURSOR_POSY;
+#endif
+
+    VIDEO_ATTR=0xffffffff;
+
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -58,6 +138,7 @@ extern void BootResetAction ( void ) {
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
     };
+
     u8 EjectButtonPressed=0;
     A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
 
@@ -65,22 +146,8 @@ extern void BootResetAction ( void ) {
     //gobalGenericPtr = NULL;
     scriptSavingPtr = NULL;
 
-
-    //Length of array is set depending on how many revision can be uniquely identified.
-    //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
-    const char *xbox_mb_rev[8] = {
-        "DevKit",
-        "DebugKit",
-        "1.0",
-        "1.1",
-        "1.2/1.3",
-        "1.4/1.5",
-        "1.6/1.6b",
-        "Unknown"
-    };
-    
     of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
-
+    
     xF70ELPCRegister = 0x03;       //Assume no control over the banks but we are booting from bank3
     x00FFLPCRegister = ReadFromIO(XODUS_CONTROL);       //Read A15 and D0 states.
                                                         //Should return 0x04 on normal boot, 0x08 on TSOP recovery.
@@ -285,6 +352,8 @@ extern void BootResetAction ( void ) {
     printk("           BOOT: start USB init\n");
 #endif
     BootStartUSB();
+
+    mbVersion = I2CGetXboxMBRev();
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         if(LPCmodSettings.OSsettings.runBootScript){
@@ -356,107 +425,9 @@ extern void BootResetAction ( void ) {
         );
     }
     // paint the backdrop
-#ifndef DEBUG_MODE
-    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-#endif
+    ClearScreen();
 
-    /* Here, the interrupts are Switched on now */
-//    BootPciInterruptEnable();
-        /* We allow interrupts */
-//    nInteruptable = 1;
-
-    //I2CTransmitWord(0x10, 0x1901); // no reset on eject
-         
-    VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
-    VIDEO_CURSOR_POSY=vmode.ymargin;
-
-
-//Do not activate this for now. Will probably never work...
-/*
-    //Now that we have something to display.
-    if(fHasHardware == SYSCON_ID_V1){
-    //Check which flash chip is detected by system.
-        BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
-        if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
-            if(TSOPRecoveryMode){        //We wanted to reboot in TSOP recovery but it failed...
-                TSOPRecoveryReboot(NULL);       //retry
-                TSOPRecoveryMode = 0;           //We'll come back here if user do not want to retry.
-                WriteToIO(XODUS_CONTROL, 0x00); //Make sure A15 is not grounded
-            }
-        }
-        else {  //SST49LF080A flash chip was NOT detected.
-            fHasHardware = SYSCON_ID_V1_TSOP;
-            WriteToIO(XODUS_CONTROL, 0x00); //Make sure A15 is not grounded.
-        }
-    }
-*/
-
-    printk("\n\n");
-    if (cromwell_config==XROMWELL) {
-        printk("           \2XBlast OS (XBE) v" VERSION "\n\n\2");
-    } else if (cromwell_config==CROMWELL) {
-        printk("           \2XBlast OS (ROM) v" VERSION "\n\n\2");
-    }
-
-    VIDEO_ATTR=0xff00ff00;
-
-    VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
-    VIDEO_CURSOR_POSY=vmode.ymargin+64;
-
-
-    VIDEO_ATTR=0xff00ff00;
-#if DEV_FEATURES
-    //TODO: Remove debug string print.
-    printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
-    VIDEO_ATTR=0xffc8c8c8;
-    printk("           THIS IS A WIP BUILD, flash manID= %x  devID= %x\n", of.m_bManufacturerId, of.m_bDeviceId);
-#else
-    printk("           Modchip: %s\n",modName);
-#endif
-    VIDEO_ATTR=0xff00ff00;
-    
-
-   mbVersion = I2CGetXboxMBRev();
-
-   printk("           Xbox revision: %s ", xbox_mb_rev[mbVersion]);
-   if (xbox_ram > 64) {
-        VIDEO_ATTR=0xff00ff00;
-   } else {
-        VIDEO_ATTR=0xffffa20f;
-   }
-   printk("  RAM: %dMiB\n", xbox_ram);
-   
-    VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
-#ifndef SILENT_MODE
-    // capture title area
-    VIDEO_ATTR=0xffc8c8c8;
-    printk("           Encoder: ");
-    VIDEO_ATTR=0xffc8c800;
-    printk("%s  ", VideoEncoderName());
-    VIDEO_ATTR=0xffc8c8c8;
-    printk("Cable: ");
-    VIDEO_ATTR=0xffc8c800;
-    printk("%s  ", AvCableName());
-        
-    if (I2CGetTemperature(&n, &nx)) {
-        VIDEO_ATTR=0xffc8c8c8;
-        printk("CPU Temp: ");
-        VIDEO_ATTR=0xffc8c800;
-        printk("%doC  ", n);
-        VIDEO_ATTR=0xffc8c8c8;
-        printk("M/b Temp: ");
-        VIDEO_ATTR=0xffc8c800;
-        printk("%doC  ", nx);
-    }
-
-    printk("\n");
-    nTempCursorX=VIDEO_CURSOR_POSX;
-    nTempCursorY=VIDEO_CURSOR_POSY;
-#endif
-
-    VIDEO_ATTR=0xffffffff;
-
-    //busyLED();
+    printMainMenuHeader(&of, modName, fHasHardware);
 
     // set Ethernet MAC address from EEPROM
     {
@@ -478,11 +449,7 @@ extern void BootResetAction ( void ) {
 #ifndef SILENT_MODE
     printk("           Ready\n");
 #endif
-    // reuse BIOS status area
 
-#ifndef DEBUG_MODE
-//    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-#endif
     VIDEO_CURSOR_POSX=nTempCursorX;
     VIDEO_CURSOR_POSY=nTempCursorY;
     VIDEO_CURSOR_POSX=0;
@@ -514,6 +481,12 @@ extern void BootResetAction ( void ) {
             }
 
             free(tempLPCmodSettings);
+
+            //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
+            if(!LPCMod_ReadJPGFromHDD()){
+                ClearScreen();
+                printMainMenuHeader(&of, modName, fHasHardware);
+            }
         }
     }
     
@@ -521,7 +494,6 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
 
     printk("\n\n\n\n");
-//printk("\n\n\n\n\n           firstBoot=%u", fFirstBoot);  
 
     nTempCursorMbrX=VIDEO_CURSOR_POSX;
     nTempCursorMbrY=VIDEO_CURSOR_POSY;
@@ -576,7 +548,6 @@ extern void BootResetAction ( void ) {
     
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
-    //inputLED();
     while(IconMenu())
         IconMenuInit();
     //Good practice.
