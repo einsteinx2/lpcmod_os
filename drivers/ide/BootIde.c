@@ -406,18 +406,18 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //printk_debug("  Drive %d: Not Ready\n", nIndexDrive);
             return 1;
     }
-    if(nIndexDrive) printk("\n      BootIdeWaitNotBusy");
+    //if(nIndexDrive) printk("\n      BootIdeWaitNotBusy");
 
     
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {
-    	if(nIndexDrive) printk("\n      IDE_CMD_IDENTIFY");
+    	//if(nIndexDrive) printk("\n      IDE_CMD_IDENTIFY");
         BootIdeIssueAtaCommand(uIoBase, ATAPI_SOFT_RESET, &tsicp);
         if (BootIdeIssueAtaCommand(uIoBase,IDE_CMD_PACKET_IDENTIFY,&tsicp)) {
             //printk(" Drive %d: Not detected\n");
             return 1;
         }
         tsaHarddiskInfo[nIndexDrive].m_fAtapi=true;
-        if(nIndexDrive) printk("\n      m_fAtapi=true");
+        //if(nIndexDrive) printk("\n      m_fAtapi=true");
     } 
     else tsaHarddiskInfo[nIndexDrive].m_fAtapi=false;
         
@@ -428,7 +428,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //printk("  %d: Drive not detected\n", nIndexDrive);
         return 1;
     }  
-    if(nIndexDrive) printk("\n      BootIdeReadData");
+    //if(nIndexDrive) printk("\n      BootIdeReadData");
 
     drive_info = (unsigned short*)baBuffer;
     tsaHarddiskInfo[nIndexDrive].m_wCountHeads = drive_info[3];
@@ -464,7 +464,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     }
 
     tsaHarddiskInfo[nIndexDrive].m_fDriveExists = 1;
-    if(nIndexDrive) printk("\n      m_fDriveExists = 1");
+    //if(nIndexDrive) printk("\n      m_fDriveExists = 1");
 
     if (tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
      // CDROM/DVD

@@ -204,7 +204,17 @@ int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLi
 }
 
 bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg, int size) {
-	u8 *tempPtr;
+    u8 *tempPtr;
+    int i;
+
+    debugSPIPrint("JPEG Image Decode. Input data is...");
+    for(i = 0; i < size; i++){
+        if((i % 16) == 0){
+            debugSPIPrint("\n");
+        }
+        debugSPIPrint("0x%02X", pbaJpegFileImage[i]);
+    }
+    debugSPIPrint("\n\n\n\n");
     njInit();
     if (njDecode(pbaJpegFileImage, size)) {
 	printk("Error decode picture\n");

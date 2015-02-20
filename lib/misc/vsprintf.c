@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <string.h>
+#include "config.h"
 
 /* haha, don't need ctype.c */
 #define isdigit(c)    ((c) >= '0' && (c) <= '9')
@@ -357,4 +358,29 @@ int sprintf(char * buf, const char *fmt, ...)
     i=vsprintf(buf,fmt,args);
     va_end(args);
     return i;
+}
+
+void debugSPIPrint(const char * buffer, ...){
+#if DEV_FEATURES
+    char buf[200];
+    unsigned char pos;
+    char i;
+    va_list args;
+
+    va_start(args, buffer);
+    i=vsprintf(buf,buffer,args);
+    va_end(args);
+
+    for(pos = 0; pos < 200; pos++){
+        LPCMod_WriteIO(0x4, 0x0);   //Drop /CS
+        for(i = 7; i >= 0; i--){
+            //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
+            LPCMod_WriteIO(0x3, (buf[pos] >> i)&0x01);
+            //wait_us(1);
+            LPCMod_WriteIO(0x2, 0x2);
+            //wait_us(1);
+        }
+        LPCMod_WriteIO(0x7, 0x4);   //Raise /CS
+    }
+#endif
 }

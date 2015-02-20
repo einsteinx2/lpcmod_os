@@ -1,7 +1,7 @@
 ////////////////////// compile-time options ////////////////////////////////
 
 //XBlast OS version number
-#define VERSION "0.2 (beta)"
+#define VERSION "0.21 (beta)"
 
 // selects between the supported video modes, see boot.h for enum listing those available
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600
