@@ -16,10 +16,6 @@ TEXTMENU *ToolsMenuInit(void) {
     TEXTMENU *menuPtr;
     int i=0;
 
-    //No entry in this menu will have a configurable parameter.
-    //Set first character to NULL to indicate no string is to be shown.
-    itemPtr->szParameter[0]=0;
-
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Tools");
@@ -117,6 +113,17 @@ TEXTMENU *ToolsMenuInit(void) {
     itemPtr->functionPtr= loadXBlastcfg;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    if(DEV_FEATURES){
+        if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
+			itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+			memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+			strcpy(itemPtr->szCaption, "XBlast scripts");
+			itemPtr->functionPtr= DrawChildTextMenu;
+			itemPtr->functionDataPtr = (void *)XBlastScriptMenuInit();
+			TextMenuAddItem(menuPtr, itemPtr);
+        }
+    }
 
     if(DEV_FEATURES){
         //Developers tools

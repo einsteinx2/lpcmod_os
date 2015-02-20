@@ -6,7 +6,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include "RunScriptMenuActions.h"
+#include <XBlastScriptMenuActions.h>
 #include "ToolsMenuActions.h"
 #include "boot.h"
 #include "BootIde.h"
@@ -81,4 +81,9 @@ void loadScriptFromFlash(void * ignored){
     ToolFooter();
 
     return;
+}
+
+void toggleRunBootScript(void * itemStr){
+    (LPCmodSettings.OSsettings.runBootScript) = (LPCmodSettings.OSsettings.runBootScript)? 0 : 1;
+    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
 }

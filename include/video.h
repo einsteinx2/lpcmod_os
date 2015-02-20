@@ -31,7 +31,8 @@ void BootVideoJpegBlitBlend(
 
 bool BootVideoJpegUnpackAsRgb(
     u8 *pbaJpegFileImage,
-    JPEG * pJpeg
+    JPEG * pJpeg,
+	int size
 );
 
 void BootVideoEnableOutput(u8 bAvPack);

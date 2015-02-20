@@ -19,7 +19,6 @@ int sprintf(char * buf, const char *fmt, ...);
 #include "memory_layout.h"
 #include "fontx16.h"  // brings in font struct
 #include <stdarg.h>
-#include "decode-jpg.h"
 #define WIDTH_SPACE_PIXELS 5
 
 // returns number of x pixels taken up by ascii character bCharacter
@@ -204,29 +203,20 @@ int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLi
     return uiWidth;
 }
 
-bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg) {
-  
-    struct jpeg_decdata *decdata;
-    int size, width, height, depth;
-  
-    decdata = (struct jpeg_decdata *)malloc(sizeof(struct jpeg_decdata));
-    memset(decdata, 0x0, sizeof(struct jpeg_decdata));
+bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg, int size) {
+	u8 *tempPtr;
+    njInit();
+    if (njDecode(pbaJpegFileImage, size)) {
+	printk("Error decode picture\n");
+		return true;
+	}
+    tempPtr = (u8 *)njGetImage();
+    pJpeg->pData = malloc(njGetImageSize());
+    memcpy(pJpeg->pData, tempPtr, njGetImageSize());
 
-    jpeg_get_size(pbaJpegFileImage, &width, &height, &depth);
-    size = ((width + 15) & ~15) * ((height + 15) & ~15) * (depth >> 3);
-
-    pJpeg->pData = (unsigned char *)malloc(size);
-    memset(pJpeg->pData, 0x0, size);
-
-    pJpeg->width = ((width + 15) & ~15);
-    pJpeg->height = ((height +15) & ~ 15);
-    pJpeg->bpp = depth >> 3;
-
-    if((jpeg_decode(pbaJpegFileImage, pJpeg->pData, 
-        ((width + 15) & ~15), ((height + 15) & ~15), depth, decdata)) != 0) {
-        printk("Error decode picture\n");
-        //while(1);
-    }
+    pJpeg->width = njGetWidth();
+    pJpeg->height = njGetHeight();
+    pJpeg->bpp = njGetDepth();
     
     pJpeg->pBackdrop = BootVideoGetPointerToEffectiveJpegTopLeft(pJpeg);
     /*
@@ -241,8 +231,7 @@ bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg) {
         pJpeg->height
     ); while(1);
     */
-
-    free(decdata);
+    njDone();
   
     return false;
 }

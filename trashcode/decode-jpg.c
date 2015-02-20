@@ -5,9 +5,9 @@
  *                  
  */
 
+#include <trashcode/decode-jpg.h>
 #include "boot.h"
 
-#include "decode-jpg.h"
 
 #define ISHIFT 11
 

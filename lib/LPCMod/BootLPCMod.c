@@ -7,7 +7,7 @@
 #include "BootFATX.h"
 
 char *xblastcfgstrings[NBTXTPARAMS] = {
-        //Contains either numerical or boolean values.
+	//Contains either numerical or boolean values.
 	"quickboot=",
 	"fanspeed=",
 	"boottimeout=",
@@ -27,27 +27,27 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
 	"displaybiosnameboot=",
 
 	//Contains IP text strings.
-        "staticip=",
-        "staticgateway=",
-        "staticmask=",
-        "staticdns1=",
-        "staticdns2=",
+	"staticip=",
+	"staticgateway=",
+	"staticmask=",
+	"staticdns1=",
+	"staticdns2=",
 
-        //Contains text strings.
-        "512kbname=",
-        "256kbname=",
-        "tsop0name=",
-        "tsop1name=",
+	//Contains text strings.
+	"512kbname=",
+	"256kbname=",
+	"tsop0name=",
+	"tsop1name=",
 	"customstring0=",
 	"customstring1=",
 	"customstring2=",
 	"customstring3=",
 
 	//Special case.
-        "activebank=",
-        "altbank=",
+	"activebank=",
+	"altbank=",
 	"ledcolor=",
-        "lcdtype="
+	"lcdtype="
 };
 
 
@@ -403,6 +403,8 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNKFULLTSOP"))
                                                 *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
+                                            else if(!strcmp(&compareBuf[valueStartPtr], "BNKOS"))
+                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKOS;
                                             break;
                                         case (SPECIALPARAMGROUP + 2):
                                             if(!strncmp(&compareBuf[valueStartPtr], "Of", 2) || !strncmp(&compareBuf[valueStartPtr], "of", 2))    //LED_OFF
@@ -517,7 +519,8 @@ int LPCMod_ReadJPGFromHDD(void){
         }
         if(res && fileinfo.fileSize){        //File exist
             free(jpegBackdrop.pData);
-            BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop);
+            BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop, fileinfo.fileSize);
+            free(fileinfo.buffer);
         }
         else{
             return -1;

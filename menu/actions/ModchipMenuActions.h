@@ -21,7 +21,6 @@ void decrementbootTimeout(void * itemStr);
 void incrementbootTimeout(void * itemStr);
 
 void toggleQuickboot(void * itemStr);
-void toggleRunBootScript(void * itemStr);
 
 void resetSettings(void *whatever);
 

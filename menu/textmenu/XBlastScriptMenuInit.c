@@ -1,9 +1,61 @@
+#include "XBlastScriptMenuActions.h"
 #include "boot.h"
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "memory_layout.h"
 #include "BootFATX.h"
-#include "RunScriptMenuActions.h"
+#include "lpcmod_v1.h"
+
+TEXTMENU* RunScriptMenuInit(void);
+TEXTMENU* SaveScriptMenuInit(void);
+
+
+TEXTMENU* XBlastScriptMenuInit(void) {
+    TEXTMENUITEM *itemPtr;
+    TEXTMENU *menuPtr;
+
+    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
+    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    strcpy(menuPtr->szCaption, "XBlast scripts");
+
+    //Run Script.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Run script");
+    itemPtr->functionPtr= DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)RunScriptMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Save script to flash.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Save script to flash");
+    itemPtr->functionPtr= DrawChildTextMenu;
+    itemPtr->functionDataPtr = (void *)SaveScriptMenuInit();
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Load script from flash.
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Run script from flash");
+    itemPtr->functionPtr= loadScriptFromFlash;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption,"Enable Boot script : ");
+	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+	itemPtr->functionPtr= toggleRunBootScript;
+	itemPtr->functionDataPtr= itemPtr->szParameter;
+	itemPtr->functionLeftPtr=toggleRunBootScript;
+	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+	itemPtr->functionRightPtr=toggleRunBootScript;
+	itemPtr->functionRightDataPtr = itemPtr->szParameter;
+	TextMenuAddItem(menuPtr, itemPtr);
+
+    return menuPtr;
+
+}
 
 TEXTMENU* RunScriptMenuInit(void) {
     TEXTMENUITEM *itemPtr;

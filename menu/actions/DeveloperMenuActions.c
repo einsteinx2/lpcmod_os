@@ -233,6 +233,9 @@ void settingsPrintData(void * ignored){
                         case BNKFULLTSOP:
                             sprintf(specialCasesBuf, "BNKFULLTSOP");
                             break;
+                        case BNKOS:
+                            sprintf(specialCasesBuf, "BNKOS");
+                            break;
                         default:
                             sprintf(specialCasesBuf, "Error!");
                             break;

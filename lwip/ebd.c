@@ -144,23 +144,12 @@ run_lwip (unsigned char flashType) {
     printk ("\n\n            TCP/IP initialized.\n");
     netFlashOver = false;
 
-    /*	IP4_ADDR(&gw, 192,168,99,1);
-     IP4_ADDR(&ipaddr, 192,168,99,2);
-     IP4_ADDR(&netmask, 255,255,255,0);
-     */
+    IP4_ADDR(&gw, 0,0,0,0);
+    IP4_ADDR(&ipaddr, 0,0,0,0);
+    IP4_ADDR(&netmask, 0,0,0,0);
+
     //These will be overwritten by DHCP anyway if need be.
-    IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
-             LPCmodSettings.OSsettings.staticGateway[1],
-             LPCmodSettings.OSsettings.staticGateway[2],
-             LPCmodSettings.OSsettings.staticGateway[3]);
-    IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
-             LPCmodSettings.OSsettings.staticIP[1],
-             LPCmodSettings.OSsettings.staticIP[2],
-             LPCmodSettings.OSsettings.staticIP[3]);
-    IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
-             LPCmodSettings.OSsettings.staticMask[1],
-             LPCmodSettings.OSsettings.staticMask[2],
-             LPCmodSettings.OSsettings.staticMask[3]);
+
 
     netif_add (&netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
     if (LPCmodSettings.OSsettings.useDHCP){
@@ -169,6 +158,18 @@ run_lwip (unsigned char flashType) {
     else {
         //Not necessary, but polite.
         dhcp_stop (&netif);
+        IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
+                 LPCmodSettings.OSsettings.staticGateway[1],
+                 LPCmodSettings.OSsettings.staticGateway[2],
+                 LPCmodSettings.OSsettings.staticGateway[3]);
+        IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
+                 LPCmodSettings.OSsettings.staticIP[1],
+                 LPCmodSettings.OSsettings.staticIP[2],
+                 LPCmodSettings.OSsettings.staticIP[3]);
+        IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
+                 LPCmodSettings.OSsettings.staticMask[1],
+                 LPCmodSettings.OSsettings.staticMask[2],
+                 LPCmodSettings.OSsettings.staticMask[3]);
         netif_set_addr(&netif, &ipaddr, &netmask, &gw);
         //netif_set_ipaddr (&netif, &ipaddr);
         //netif_set_netmask (&netif, &netmask);

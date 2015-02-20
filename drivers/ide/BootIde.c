@@ -406,16 +406,18 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //printk_debug("  Drive %d: Not Ready\n", nIndexDrive);
             return 1;
     }
-
+    if(nIndexDrive) printk("\n      BootIdeWaitNotBusy");
 
     
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {
+    	if(nIndexDrive) printk("\n      IDE_CMD_IDENTIFY");
         BootIdeIssueAtaCommand(uIoBase, ATAPI_SOFT_RESET, &tsicp);
         if (BootIdeIssueAtaCommand(uIoBase,IDE_CMD_PACKET_IDENTIFY,&tsicp)) {
             //printk(" Drive %d: Not detected\n");
             return 1;
         }
         tsaHarddiskInfo[nIndexDrive].m_fAtapi=true;
+        if(nIndexDrive) printk("\n      m_fAtapi=true");
     } 
     else tsaHarddiskInfo[nIndexDrive].m_fAtapi=false;
         
@@ -426,7 +428,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //printk("  %d: Drive not detected\n", nIndexDrive);
         return 1;
     }  
-    
+    if(nIndexDrive) printk("\n      BootIdeReadData");
 
     drive_info = (unsigned short*)baBuffer;
     tsaHarddiskInfo[nIndexDrive].m_wCountHeads = drive_info[3];
@@ -462,6 +464,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     }
 
     tsaHarddiskInfo[nIndexDrive].m_fDriveExists = 1;
+    if(nIndexDrive) printk("\n      m_fDriveExists = 1");
 
     if (tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
      // CDROM/DVD
@@ -498,7 +501,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     } 
         
         
-    if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).CoolingEquipment
+    if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).
         unsigned long ulDriveCapacity1024=((tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal /1000)*512)/1000;
         
 #ifndef SILENT_MODE
@@ -921,9 +924,9 @@ int BootIdeInit(void)
     IoOutputByte(0xff60+0, 0x00); // stop bus mastering
     IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
     //Init both master and slave
+
     BootIdeDriveInit(IDE_BASE1, 0);
     BootIdeDriveInit(IDE_BASE1, 1);
-       
         
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi)
     {

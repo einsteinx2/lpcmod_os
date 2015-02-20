@@ -1251,7 +1251,7 @@ static err_t dhcp_create_request(struct netif *netif)
   dhcp->msg_out->xid = htonl(dhcp->xid);
   dhcp->msg_out->secs = 0;
   dhcp->msg_out->flags = 0;
-  dhcp->msg_out->ciaddr = 0;    //was = netif->ip_addr.addr;
+  dhcp->msg_out->ciaddr = netif->ip_addr.addr;
   dhcp->msg_out->yiaddr = 0;
   dhcp->msg_out->siaddr = 0;
   dhcp->msg_out->giaddr = 0;

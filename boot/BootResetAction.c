@@ -394,13 +394,12 @@ extern void BootResetAction ( void ) {
                     switchBootBank(LPCmodSettings.OSsettings.activeBank);
               	}
                 else{
-                    //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     //If booting from TSOP, use of the XODUS_CONTROL register is fine.
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
                         switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
                     else{
                         switchBootBank(LPCmodSettings.OSsettings.activeBank);    // switch to original bios but modchip listen to LPC commands.
-                                                                                                           // Lock flash bank control with OSBNKCTRLBIT.
+																			     // Lock flash bank control with OSBNKCTRLBIT.
                     }
                 }
                 I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
@@ -419,9 +418,11 @@ extern void BootResetAction ( void ) {
 
     { // decode and malloc backdrop bitmap
         extern int _start_backdrop;
+        extern int _end_backdrop;
         BootVideoJpegUnpackAsRgb(
             (u8 *)&_start_backdrop,
-            &jpegBackdrop
+            &jpegBackdrop,
+			_end_backdrop - _start_backdrop
         );
     }
     // paint the backdrop
@@ -450,16 +451,22 @@ extern void BootResetAction ( void ) {
     printk("           Ready\n");
 #endif
 
-    VIDEO_CURSOR_POSX=nTempCursorX;
-    VIDEO_CURSOR_POSY=nTempCursorY;
-    VIDEO_CURSOR_POSX=0;
-    VIDEO_CURSOR_POSY=0;
+
 
     BootIdeInit();
     
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi){
+    	if(DEV_FEATURES){
+			//TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
+			//XXX: Not working properly right now, display garbage...
+			if(!LPCMod_ReadJPGFromHDD()){
+				ClearScreen();
+				printMainMenuHeader(&of, modName, fHasHardware);
+			}
+    	}
+
         if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
             tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
             returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings);
@@ -481,15 +488,14 @@ extern void BootResetAction ( void ) {
             }
 
             free(tempLPCmodSettings);
-
-            //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
-            if(!LPCMod_ReadJPGFromHDD()){
-                ClearScreen();
-                printMainMenuHeader(&of, modName, fHasHardware);
-            }
         }
     }
     
+    VIDEO_CURSOR_POSX=nTempCursorX;
+    VIDEO_CURSOR_POSY=nTempCursorY;
+    VIDEO_CURSOR_POSX=0;
+    VIDEO_CURSOR_POSY=0;
+
     if(mbVersion > REV1_1 && !DEV_FEATURES)
        LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
 

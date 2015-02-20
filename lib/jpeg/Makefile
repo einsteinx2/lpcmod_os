@@ -1,4 +1,4 @@
 
-O_TARGET := decode-jpg.o
+O_TARGET := nanojpeg.o #decode-jpg.o
 
 include $(TOPDIR)/Rules.make
