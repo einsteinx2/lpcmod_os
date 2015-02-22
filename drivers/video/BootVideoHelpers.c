@@ -95,12 +95,12 @@ void BootVideoJpegBlitBlend(
                 pDst[0]=((pFront[2]*nTransAsByte)+(pBack[2]*nBackTransAsByte))>>8;
             }
             pDst+=4;
-            pFront+=pJpeg->bpp;
-            pBack+=pJpeg->bpp;
+            pFront+=3;
+            pBack+=3;
         }
-        pBack+=(pJpeg->width*pJpeg->bpp) -(x * pJpeg->bpp);
+        pBack+=(pJpeg->iconCount*ICON_WIDTH*3) -(x * 3);
         pDst+=(dst_width * 4) - (x * 4);
-        pFront+=(pJpeg->width*pJpeg->bpp) -(x * pJpeg->bpp);
+        pFront+=(pJpeg->iconCount*ICON_WIDTH*3) -(x * 3);
     }
 }
 
@@ -203,52 +203,61 @@ int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLi
     return uiWidth;
 }
 
-bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg, int size) {
-    u8 *tempPtr;
+bool BootVideoInitJPEGBackdropBuffer(JPEG * pJpeg){
     int i;
+    
+    pJpeg->pBackdrop = malloc(3 * 1024 * (832 - ICON_HEIGHT)); //1024x768x24bpp
+    if(pJpeg->pBackdrop == NULL)
+    	return false;
+    
+    //Blue-ish background you've all grew so found of!
+    for(i = 0; i < 3 * 1024 * (832 - ICON_HEIGHT); i += 3){
+        *(pJpeg->pBackdrop + i) = 0x01;
+        *(pJpeg->pBackdrop + i + 1) = 0x2F;
+        *(pJpeg->pBackdrop + i + 2) = 0x53;
+    }
+        
+    return true;
+}
+
+bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg, int size) {
+    int i;
+    u8 *tempPtr;
+/*
+    char temp[200];
 
     debugSPIPrint("JPEG Image Decode. Input data is...");
-    for(i = 0; i < size; i++){
-        if((i % 16) == 0){
-            debugSPIPrint("\n");
+    for(i = 0; i < 64; i++){
+    if(i % 16){
+        sprintf(temp, "0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X", pbaJpegFileImage[i], pbaJpegFileImage[i+1], pbaJpegFileImage[i+2], pbaJpegFileImage[i+3], pbaJpegFileImage[i+4], pbaJpegFileImage[i+5], pbaJpegFileImage[i+6], pbaJpegFileImage[i+7], pbaJpegFileImage[i+8], pbaJpegFileImage[i+9], pbaJpegFileImage[i+10], pbaJpegFileImage[i+11], pbaJpegFileImage[i+12], pbaJpegFileImage[i+13], pbaJpegFileImage[i+14], pbaJpegFileImage[i+15]);
+        debugSPIPrint(temp);
         }
-        debugSPIPrint("0x%02X", pbaJpegFileImage[i]);
     }
     debugSPIPrint("\n\n\n\n");
+*/
     njInit();
     if (njDecode(pbaJpegFileImage, size)) {
 	printk("Error decode picture\n");
-		return true;
-	}
+	return true;
+    }
     tempPtr = (u8 *)njGetImage();
-    pJpeg->pData = malloc(njGetImageSize());
-    memcpy(pJpeg->pData, tempPtr, njGetImageSize());
-
-    pJpeg->width = njGetWidth();
-    pJpeg->height = njGetHeight();
-    pJpeg->bpp = njGetDepth();
+    if(njGetWidth() % ICON_WIDTH)
+        return true;
     
-    pJpeg->pBackdrop = BootVideoGetPointerToEffectiveJpegTopLeft(pJpeg);
-    /*
-    BootVideoJpegBlitBlend(
-        (u8 *)FB_START,
-        640,
-        pJpeg,
-        pJpeg->pData,
-        0,
-        pJpeg->pData,
-        pJpeg->width,
-        pJpeg->height
-    ); while(1);
-    */
+    if(njGetHeight() == ICON_HEIGHT){
+    	if(pJpeg->pData != NULL)
+    	    free(pJpeg->pData);
+    	pJpeg->pData = malloc(3 * njGetWidth() * njGetHeight());
+    	pJpeg->iconCount = njGetWidth() / ICON_WIDTH;
+        memcpy(pJpeg->pData, tempPtr, 3*njGetWidth()*njGetHeight());
+    }
+    else if(njGetHeight() == 768 && njGetImageSize() == (3 * 1024 * 768)){
+	memcpy(pJpeg->pBackdrop, tempPtr, 3*1024*768);
+    }
+
     njDone();
   
     return false;
-}
-
-u8 * BootVideoGetPointerToEffectiveJpegTopLeft(JPEG * pJpeg)
-{
-    return ((u8 *)(pJpeg->pData + pJpeg->width * ICON_HEIGHT * pJpeg->bpp));
 }
 
 void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
@@ -261,7 +270,7 @@ void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
     {
         if(pJpeg->pData!=NULL) {
             volatile u32 *pdw=((u32 *)FB_START)+vmode.width*nStartLine;
-            int n1=pJpeg->bpp * pJpeg->width * nStartLine;
+            int n1=3 * 1024 * nStartLine;
             u8 *pbJpegBitmapAdjustedDatum=pJpeg->pBackdrop;
 
             while(nStartLine++<nEndLine) {
@@ -273,9 +282,9 @@ void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
                         ((pbJpegBitmapAdjustedDatum[n1])<<16)
                         //XXX: could be pdw[n] = 0xff000000|0x012F53; for static color
                     ;
-                    n1+=pJpeg->bpp;
+                    n1+=3;
                 }
-                n1+=pJpeg->bpp * (pJpeg->width - vmode.width);
+                n1+=3 * (1024 - vmode.width);
                 pdw+=vmode.width; // adding u32 footprints
             }
         }

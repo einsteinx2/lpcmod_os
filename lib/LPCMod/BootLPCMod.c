@@ -176,6 +176,14 @@ void LPCMod_WriteIO(u8 port, u8 value){
     WriteToIO(XBLAST_IO, (GenPurposeIOs.GPO3 << 7) | (GenPurposeIOs.GPO2 << 6) | (GenPurposeIOs.GPO1 << 5) | (GenPurposeIOs.GPO0 << 4) | GenPurposeIOs.EN_5V);
 }
 
+void LPCMod_FastWriteIO(u8 port, u8 value){
+    GenPurposeIOs.GPO3 = (port & 0x08)? (value & 0x08) >> 3: GenPurposeIOs.GPO3;
+    GenPurposeIOs.GPO2 = (port & 0x04)? (value & 0x04) >> 2: GenPurposeIOs.GPO2;
+    GenPurposeIOs.GPO1 = (port & 0x02)? (value & 0x02) >> 1: GenPurposeIOs.GPO1;
+    GenPurposeIOs.GPO0 = (port & 0x01)? (value & 0x01) : GenPurposeIOs.GPO0;
+    WriteToIO(XBLAST_IO, (GenPurposeIOs.GPO3 << 7) | (GenPurposeIOs.GPO2 << 6) | (GenPurposeIOs.GPO1 << 5) | (GenPurposeIOs.GPO0 << 4) | GenPurposeIOs.EN_5V);
+}
+
 void LPCMod_LCDBankString(char * string, u8 bankID){
     switch(bankID){
         case BNK512:
@@ -504,12 +512,12 @@ FATXFILEINFO fileinfo;
     return 0;
 }
 
-int LPCMod_ReadJPGFromHDD(void){
+int LPCMod_ReadJPGFromHDD(const char *jpgFilename){
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
     int res = false;
     int dcluster;
-    const char *jpgFilename = "\\XBlast\\backdrop.jpg";
+    
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
     if(partition != NULL){
@@ -517,14 +525,17 @@ int LPCMod_ReadJPGFromHDD(void){
         if((dcluster != -1) && (dcluster != 1)) {
             res = FATXFindFile(partition, (char *)jpgFilename, FATX_ROOT_FAT_CLUSTER, &fileinfo);
         }
-        if(res && fileinfo.fileSize){        //File exist
-            free(jpegBackdrop.pData);
-            BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop, fileinfo.fileSize);
-            free(fileinfo.buffer);
-        }
-        else{
-            return -1;
-        }
+        if(LoadFATXFile(partition, (char *)jpgFilename, &fileinfo)){
+		if(res && fileinfo.fileSize){        //File exist and is loaded.
+		    BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop, fileinfo.fileSize);
+		    free(fileinfo.buffer);
+		}
+		else{
+		    return -1;
+		}
+	}
+	else
+	    return -1;
         CloseFATXPartition(partition);
     }
     else
@@ -532,3 +543,5 @@ int LPCMod_ReadJPGFromHDD(void){
 
     return 0;
 }
+
+

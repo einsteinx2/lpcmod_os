@@ -22,9 +22,12 @@ volatile boolean process_it;
 void setup (void)
 {
   Serial.begin (115200);   // print on terminal
-
+  Serial.println("XBlast SPI debugger");
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
+  
+  SPI.setDataMode(SPI_MODE0);
+  SPI.setBitOrder(MSBFIRST);
   
   // turn on SPI in slave mode
   SPCR |= _BV(SPE);
@@ -47,7 +50,7 @@ byte c = SPDR;  // grab byte from SPI Data Register
   // add to buffer if room
   if (pos < sizeof buf)
     {
-    buf [pos++] = Bit_Reverse(c);  //SPI is MSB first and UART is LSB first
+    buf [pos++] = c;  //SPI is MSB first and UART is LSB first
     
     if (c == '\n' || c == '\0' || pos == sizeof buf)
       process_it = true;

@@ -126,9 +126,9 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
             (u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(140*(iconcount+1))) * 4),
             vmode.width, // dest bytes per line
             &jpegBackdrop, // source jpeg object
-            (u8 *)(jpegBackdrop.pData+(iconPtr->iconSlot * jpegBackdrop.bpp)),
+            (u8 *)(jpegBackdrop.pData+(iconPtr->iconSlot * 3)),
             0xff00ff|(((u32)opaqueness)<<24),
-            (u8 *)(jpegBackdrop.pBackdrop + ((jpegBackdrop.width * (nYOffset-74)) + nXOffset+(140*(iconcount+1))) * jpegBackdrop.bpp),
+            (u8 *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(140*(iconcount+1))) * 3),
             ICON_WIDTH, ICON_HEIGHT
         );
         lastVisibleIcon = iconPtr;
@@ -143,9 +143,9 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
             (u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(50)) * 4),
             vmode.width, // dest bytes per line
             &jpegBackdrop, // source jpeg object
-            (u8 *)(jpegBackdrop.pData+(ICON_WIDTH*5 * jpegBackdrop.bpp)),
+            (u8 *)(jpegBackdrop.pData),
             0xff00ff|(((u32)opaqueness)<<24),
-            (u8 *)(jpegBackdrop.pBackdrop + ((jpegBackdrop.width * (nYOffset-74)) + nXOffset+(50)) * jpegBackdrop.bpp),
+            (u8 *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(50)) * 3),
             ICON_WIDTH, ICON_HEIGHT
         );
     }
@@ -158,9 +158,9 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
             (u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(510)) * 4),
             vmode.width, // dest bytes per line
             &jpegBackdrop, // source jpeg object
-            (u8 *)(jpegBackdrop.pData+(ICON_WIDTH*6 * jpegBackdrop.bpp)),
+            (u8 *)(jpegBackdrop.pData+(ICON_WIDTH * 3)),
             0xff00ff|(((u32)opaqueness)<<24),
-            (u8 *)(jpegBackdrop.pBackdrop + ((jpegBackdrop.width * (nYOffset-74)) + nXOffset+(510)) * jpegBackdrop.bpp),
+            (u8 *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(510)) * 3),
             ICON_WIDTH, ICON_HEIGHT
         );
     }

@@ -28,10 +28,13 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 u16 LPCMod_HW_rev(void);
 
 void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct);
+void LPCMod_WriteIO(u8 port, u8 value);
+void LPCMod_FastWriteIO(u8 port, u8 value);
 
 void LPCMod_LCDBankString(char * string, u8 bankID);
 
 int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr);
 int LPCMod_SaveCFGToHDD(void);
+
 
 #endif // _BootLPCMod_H_

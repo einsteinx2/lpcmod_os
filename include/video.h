@@ -7,9 +7,7 @@
 typedef struct {
     u8 * pData;
     u8 * pBackdrop;
-    int width;
-    int height;
-    int bpp;
+    u8 iconCount;
 } JPEG;
 
 int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLineDestination, RGBA rgbaOpaqueness, const char * szString);
