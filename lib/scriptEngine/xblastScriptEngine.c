@@ -716,10 +716,10 @@ bool bootFunction(u8 bank){
     //printf("\n****Boot bank: %u", bank);
 	//printk("\n     boot function called : %u",bank);
     if(bank == BNK512 || bank == BNK256 || bank == BNKOS){
-        BootModBios((void *)&bank);
+        BootModBios(bank);
     }
     else if(bank == BNKTSOPSPLIT0 || bank == BNKTSOPSPLIT1 || bank == BNKFULLTSOP){
-        BootOriginalBios((void *)&bank);
+        BootOriginalBios(bank);
     }
     else
         return false;
@@ -796,9 +796,9 @@ u8 SPIRead(void){
     u8 i, result = 0;
     for(i = 0; i < 8; i++){
         result = result << 1;
-        LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
+        LPCMod_FastWriteIO(0x2, 0);     //Reset CLK to 0
         //wait_us(1);
-        LPCMod_WriteIO(0x2, 0x2);
+        LPCMod_FastWriteIO(0x2, 0x2);
         LPCMod_ReadIO(NULL);
         result |= GenPurposeIOs.GPI1 << i;
         //wait_us(1);    //This will need to be verified.
@@ -810,12 +810,12 @@ bool SPIWrite(u8 data){
     char i;
     for(i = 7; i >= 0; i--){
         //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-        LPCMod_WriteIO(0x3, (data >> i)&0x01);
+        LPCMod_FastWriteIO(0x3, (data >> i)&0x01);
         //wait_us(1);
-        LPCMod_WriteIO(0x2, 0x2);
+        LPCMod_FastWriteIO(0x2, 0x2);
         //wait_us(1);
     }
-    LPCMod_WriteIO(0x3, 0);
+    LPCMod_FastWriteIO(0x3, 0);
     return true;
 }
 

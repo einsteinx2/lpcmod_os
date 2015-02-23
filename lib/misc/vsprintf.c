@@ -360,36 +360,31 @@ int sprintf(char * buf, const char *fmt, ...)
     return i;
 }
 
-void debugSPIPrint(const char * buffer){
-#if DEV_FEATURES
+void printTextSPI(char * buffer, ...){
     unsigned char pos;
     char i;
     int stringLength;
-    LPCMod_FastWriteIO(0x2, 0);
+    char tempBuf[200];
 
+    va_list args;
+    LPCMod_FastWriteIO(0x2, 0); //CLK to '0'
+    va_start(args, buffer);
+    vsprintf(tempBuf,buffer,args);
 
-    stringLength = strlen(buffer);
+    stringLength = strlen(tempBuf);
     if(stringLength > 200)
         stringLength = 200;
 
-    for(pos = 0; pos < stringLength; pos++){
+    //Will send null terminating character at the end.
+    for(pos = 0; pos <= stringLength; pos++){
+        LPCMod_FastWriteIO(0x4, 0); // /CS to '0'
         for(i = 7; i >= 0; i--){
-            //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-            LPCMod_FastWriteIO(0x3, (buffer[pos] >> i)&0x01);
+            LPCMod_FastWriteIO(0x3, (tempBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
             //wait_us(1);
-            LPCMod_FastWriteIO(0x2, 0x2);
+            LPCMod_FastWriteIO(0x2, 0x2); //CLK to '1'
             //wait_us(1);
         }
-        LPCMod_FastWriteIO(0x2, 0);
+        LPCMod_FastWriteIO(0x2, 0); //CLK to '0'.
+        LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
     }
-        LPCMod_FastWriteIO(0x1, 0x0);	
-    for(i = 7; i >= 0; i--){
-            //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-            LPCMod_FastWriteIO(0x2, 0);
-            //wait_us(1);
-            LPCMod_FastWriteIO(0x2, 0x2);
-            //wait_us(1);
-        }
-        LPCMod_FastWriteIO(0x2, 0);
-#endif
 }

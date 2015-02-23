@@ -9,8 +9,6 @@
  *                                                                         *
  ***************************************************************************/
 
-#define METOOBFM_MAGIC1 0x314d4642
-
 void loadRunScript(void *fname);
 
 void saveScriptToFlash(void *fname);

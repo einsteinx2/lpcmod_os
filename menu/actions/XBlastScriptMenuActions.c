@@ -6,7 +6,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include <XBlastScriptMenuActions.h>
+#include "XBlastScriptMenuActions.h"
 #include "ToolsMenuActions.h"
 #include "boot.h"
 #include "BootIde.h"
@@ -16,25 +16,32 @@
 #include "memory_layout.h"
 #include "lib/scriptEngine/xblastScriptEngine.h"
 
-void loadRunScript(void *fname){
+bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo){
     int res;
-    FATXFILEINFO fileinfo;
     FATXPartition *partition;
 
     partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    
-    res = LoadFATXFile(partition, fname, &fileinfo);
+
+    res = LoadFATXFile(partition, filename, fileinfo);
     CloseFATXPartition (partition);
     if (!res) {
         printk ("\n\n\n\n\n           Loading script failed");
         dots ();
         cromwellError ();
-        while (1)
-            ;
+        fileinfo->fileSize = 0;
+        fileinfo->buffer = NULL;
+        return false;
     }
-    fileinfo.fileSize = trimScript(&(fileinfo.buffer), fileinfo.fileSize);
-    runScript(fileinfo.buffer, fileinfo.fileSize, 0, NULL);   //No param for now
-    free(fileinfo.buffer);
+    fileinfo->fileSize = trimScript(&(fileinfo->buffer), fileinfo->fileSize);
+    return true;
+}
+
+void loadRunScript(void *fname){
+    FATXFILEINFO fileinfo;
+    if(loadScriptFromHDD(fname, &fileinfo)){
+        runScript(fileinfo.buffer, fileinfo.fileSize, 0, NULL);   //No param for now
+        free(fileinfo.buffer);
+    }
 
     ToolFooter();
 
@@ -43,27 +50,15 @@ void loadRunScript(void *fname){
 
 
 void saveScriptToFlash(void *fname){
-    int res;
     FATXFILEINFO fileinfo;
-    FATXPartition *partition;
 
-    partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
-
-    res = LoadFATXFile(partition, fname, &fileinfo);
-    CloseFATXPartition (partition);
-    if (!res) {
-        printk ("\n\n\n\n\n           Loading script failed");
-        dots ();
-        cromwellError ();
-        while (1)
-            ;
+    if(loadScriptFromHDD(fname, &fileinfo)){
+        LPCmodSettings.firstScript.ScripMagicNumber = 0xFAF1;
+        LPCmodSettings.firstScript.nextEntryPosition = fileinfo.fileSize + sizeof(_LPCmodSettings) + 1;
+        scriptSavingPtr = malloc(fileinfo.fileSize);
+        memcpy(scriptSavingPtr, fileinfo.buffer, fileinfo.fileSize);
+        free(fileinfo.buffer);
     }
-    fileinfo.fileSize = trimScript(&(fileinfo.buffer), fileinfo.fileSize);
-    LPCmodSettings.firstScript.ScripMagicNumber = 0xFAF1;
-    LPCmodSettings.firstScript.nextEntryPosition = fileinfo.fileSize + sizeof(_LPCmodSettings) + 1;
-    scriptSavingPtr = malloc(fileinfo.fileSize);
-    memcpy(scriptSavingPtr, fileinfo.buffer, fileinfo.fileSize);
-    free(fileinfo.buffer);
 
     ToolFooter();
 

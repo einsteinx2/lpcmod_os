@@ -53,6 +53,8 @@ void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
         "Unknown"
     };
 
+    ClearScreen();
+
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
     VIDEO_CURSOR_POSY=vmode.ymargin;
 
@@ -141,7 +143,12 @@ extern void BootResetAction ( void ) {
 
     u8 EjectButtonPressed=0;
 
-    debugSPIPrint("\nXBlast OS is starting.");
+#ifdef SPITRACE
+    //Required to populate GenPurposeIOs before toggling GPIOs.
+    LPCMod_WriteIO(0x4, 0x4); // /CS to '1'
+#endif
+
+    debugSPIPrint("XBlast OS is starting.");
 
     A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
 
@@ -164,6 +171,7 @@ extern void BootResetAction ( void ) {
 
     fHasHardware = 0;
 
+#ifndef SPITRACE        //Do not reset GenPurposeIOs values as they've been updated when "LPCMod_WriteIO(0x4, 0x4)" function was called.
     GenPurposeIOs.GPO3 = 0;
     GenPurposeIOs.GPO2 = 0;
     GenPurposeIOs.GPO1 = 0;
@@ -172,6 +180,7 @@ extern void BootResetAction ( void ) {
     GenPurposeIOs.GPI0 = 0;
     GenPurposeIOs.A19BufEn = 0;
     GenPurposeIOs.EN_5V = 0;
+#endif
 
     memcpy(&cromwell_config,(void*)(0x03A00000+0x20),4);
     memcpy(&cromwell_retryload,(void*)(0x03A00000+0x24),4);
@@ -209,13 +218,13 @@ extern void BootResetAction ( void ) {
         LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
 //    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
     fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
-    //debugSPIPrint("\nModchip hardware ID is: 0x%04X", fHasHardware);
+    debugSPIPrint("Modchip hardware ID is: 0x%04X", fHasHardware);
 //    }
     u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
-    //debugSPIPrint("\nProbing for X3 EEprom. Result: 0x%08X", x3probe);
+    debugSPIPrint("Probing for X3 EEprom. Result: 0x%08X", x3probe);
     if(x3probe != 0xff && x3probe != 0x80000002){       //Another (hacky) way to detect is to probe SMBus at addresses
         fHasHardware = SYSCON_ID_X3;                    //normally unused by the Xbox. By my own experimentation, address
-        //debugSPIPrint("\nAssuming X3 chip detected.");  //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
+        debugSPIPrint("Assuming X3 chip detected.");  //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
     }                                                   //offset 0 of address 0x51 will return either 0xff or 0x80000002.
                                                         //Any other value will be assumed coming from the (encrypted?)
                                                         //X3 eeprom and thus instructing the program that a X3 is detected.
@@ -224,41 +233,41 @@ extern void BootResetAction ( void ) {
 
 
     if(fHasHardware == SYSCON_ID_V1){
-        //debugSPIPrint("\nXBlast Lite V1 detected on LPC bus.");
+        debugSPIPrint("XBlast Lite V1 detected on LPC bus.");
         sprintf(modName,"%s", "XBlast Lite V1");
         //Check which flash chip is detected by system.
         BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
         if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
-            //debugSPIPrint("\nXBlast Lite V1 flash chip detected. We booted from LPC indeed.");
+            debugSPIPrint("XBlast Lite V1 flash chip detected. We booted from LPC indeed.");
             //Make sure we'll be reading from OS Bank
             switchOSBank(BNKOS);
         }
         else {  //SST49LF080A flash chip was NOT detected.
-            //debugSPIPrint("\nXBlast Lite V1 flash chip NOT detected. Assuming we booted from TSOP");
+            debugSPIPrint("XBlast Lite V1 flash chip NOT detected. Assuming we booted from TSOP");
             fHasHardware = SYSCON_ID_V1_TSOP;
             WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
         }
         LPCMod_ReadIO(NULL);
-        //debugSPIPrint("\nRead XBlast Lite V1 IO status.");
+        debugSPIPrint("Read XBlast Lite V1 IO status.");
     }
     else if(fHasHardware == SYSCON_ID_XT){
-       //debugSPIPrint("\nAladdin XBlast detected on LPC bus.");
+       debugSPIPrint("Aladdin XBlast detected on LPC bus.");
        sprintf(modName,"%s", "Aladdin XBlast");
        //Check which flash chip is detected by system.
        BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
        if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
-           //debugSPIPrint("\nAladdin XBlast flash chip detected. We booted from LPC indeed.");
+           debugSPIPrint("Aladdin XBlast flash chip detected. We booted from LPC indeed.");
            //Make sure we'll be reading from OS Bank
            switchOSBank(BNKOS);
        }
        else {  //SST49LF080A flash chip was NOT detected.
-           //debugSPIPrint("\nAladdin XBlast flash chip NOT detected. Assuming we booted from TSOP");
+           debugSPIPrint("Aladdin XBlast flash chip NOT detected. Assuming we booted from TSOP");
            fHasHardware = SYSCON_ID_XT_TSOP;
            WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
        }
     }
     else {
-        //debugSPIPrint("\nNo XBlast OS compatible hardware found.");
+        debugSPIPrint("No XBlast OS compatible hardware found.");
         if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
             sprintf(modName,"%s", "SmartXX V1/V2");
         else if(fHasHardware == SYSCON_ID_XXOPX)
@@ -277,7 +286,7 @@ extern void BootResetAction ( void ) {
     LPCmodSettings.OSsettings.migrateSetttings = 0xFF; //Will never be 0xFF
     //Retrieve XBlast OS settings from flash. Function checks if valid device can be read from.
     BootFlashGetOSSettings(&LPCmodSettings);
-    //debugSPIPrint("\nRead persistent OS settings from flash.");
+    debugSPIPrint("Read persistent OS settings from flash.");
 
 
     if(LPCmodSettings.OSsettings.migrateSetttings > 1 ||
@@ -304,7 +313,7 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.LCDsettings.displayBIOSNameBoot > 1 ||
        (LPCmodSettings.firstScript.ScripMagicNumber&0xFFF0) != 0xFAF0 ||
        LPCmodSettings.firstScript.nextEntryPosition > (0x3FDFC - 0x3F000 - sizeof(_LPCmodSettings) - sizeof(_scriptEntry))){
-            //debugSPIPrint("\nNo persistent OS settings found on flash. Creating default settings.");
+            debugSPIPrint("No persistent OS settings found on flash. Creating default settings.");
             fFirstBoot = true;
             initialLPCModOSBoot(&LPCmodSettings);                //No settings for LPCMod were present in flash.
             //OS sometimes lock on after a fresh flash. Disabling to see if that's causing it.(probably)
@@ -318,16 +327,16 @@ extern void BootResetAction ( void ) {
     	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();		//Get previously set fan speed
     else
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
-    //debugSPIPrint("\nFan speed adjustment if needed.");
+    debugSPIPrint("Fan speed adjustment if needed.");
 
     if(fHasHardware == SYSCON_ID_V1_TSOP){
     	//LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20) >> 5;     //A19ctrl maps to bit5
         LPCmodSettings.OSsettings.TSOPcontrol = (u8)GenPurposeIOs.A19BufEn;
-        //debugSPIPrint("\nBuffer enable for A19 control : %sabled.", GenPurposeIOs.A19BufEn? "En" : "Dis");
+        debugSPIPrint("Buffer enable for A19 control : %sabled.", GenPurposeIOs.A19BufEn? "En" : "Dis");
     }
 
     BootLCDInit();    //Basic init. Do it even if no LCD is connected on the system.
-    //debugSPIPrint("\nBootLCDInit done.");
+    debugSPIPrint("BootLCDInit done.");
     
     //Stuff to do right after loading persistent settings from flash.
     if(!fFirstBoot){
@@ -338,9 +347,9 @@ extern void BootResetAction ( void ) {
            fHasHardware == SYSCON_ID_XXOPX ||
            fHasHardware == SYSCON_ID_XX3 ||
            fHasHardware == SYSCON_ID_X3){
-            //debugSPIPrint("\nCheck if we need to drive the LCD.");
+            debugSPIPrint("Check if we need to drive the LCD.");
             assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
-            //debugSPIPrint("\nassertInitLCD done.");
+            debugSPIPrint("assertInitLCD done.");
         }
         //further init here.
     }
@@ -356,10 +365,10 @@ extern void BootResetAction ( void ) {
     //setup_ioapic();
     // We look how much memory we have ..
     BootDetectMemorySize();
-    //debugSPIPrint("\nDetected RAM size : %uMB.", xbox_ram);
+    debugSPIPrint("Detected RAM size : %uMB.", xbox_ram);
 
     BootEepromReadEntireEEPROM();
-    //debugSPIPrint("\nEEprom read.");
+    debugSPIPrint("EEprom read.");
         
     I2CTransmitWord(0x10, 0x1a01); // unknown, done immediately after reading out eeprom data
     I2CTransmitWord(0x10, 0x1b04); // unknown
@@ -374,31 +383,31 @@ extern void BootResetAction ( void ) {
     printk("           BOOT: start USB init\n");
 #endif
     BootStartUSB();
-    //debugSPIPrint("\nUSB init done.");
+    debugSPIPrint("USB init done.");
 
     mbVersion = I2CGetXboxMBRev();
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         if(LPCmodSettings.OSsettings.runBootScript){
-            //debugSPIPrint("\nRunning boot script.");
+            debugSPIPrint("Running boot script.");
             bootScriptSize = fetchBootScriptFromFlash(&bootScriptBuffer);
             if(bootScriptSize > 0){
                 i = BNKOS;
                 runScript(bootScriptBuffer, bootScriptSize, 1, &i);
                 free(bootScriptBuffer);
             }
-            //debugSPIPrint("\nBoot script execution done.");
+            debugSPIPrint("Boot script execution done.");
         }
         if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && cromwell_config==CROMWELL){       //Quickboot only if on the right hardware.
-            //debugSPIPrint("\nCheck any Quickboot or EjectButton boot rule.");
+            debugSPIPrint("Check any Quickboot or EjectButton boot rule.");
             if(EjectButtonPressed && LPCmodSettings.OSsettings.altBank != BNKOS){              //Xbox was started from eject button and eject button quick boot is enabled.
-                //debugSPIPrint("\nEject button press boot detected.");
+                debugSPIPrint("Eject button press boot detected.");
                 if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP){
-                    //debugSPIPrint("\nBooting XBlast flash bank");
+                    debugSPIPrint("Booting XBlast flash bank");
                     switchBootBank(LPCmodSettings.OSsettings.altBank);
               	}
                 else{
-                    //debugSPIPrint("\nBooting TSOP flash bank");
+                    debugSPIPrint("Booting TSOP flash bank");
                     //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
                     //If booting from TSOP, use of the XODUS_CONTROL register is fine.
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
@@ -419,13 +428,13 @@ extern void BootResetAction ( void ) {
             I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
             if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //Eject button NOT pressed and Quickboot ON.
-                //debugSPIPrint("\nGoing to Quickboot.");
+                debugSPIPrint("Going to Quickboot.");
                 if(LPCmodSettings.OSsettings.activeBank > BOOTFROMTSOP){
-                    //debugSPIPrint("\nBooting XBlast flash bank");
+                    debugSPIPrint("Booting XBlast flash bank");
                     switchBootBank(LPCmodSettings.OSsettings.activeBank);
               	}
                 else{
-                    //debugSPIPrint("\nBooting TSOP flash bank");
+                    debugSPIPrint("Booting TSOP flash bank");
                     //If booting from TSOP, use of the XODUS_CONTROL register is fine.
                     if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
                         switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
@@ -440,7 +449,7 @@ extern void BootResetAction ( void ) {
                 while(1);
             }
         }
-        //debugSPIPrint("\nNo Quickboot or EjectButton boot this time.");
+        debugSPIPrint("No Quickboot or EjectButton boot this time.");
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
     }
     // Load and Init the Background image
@@ -461,8 +470,6 @@ extern void BootResetAction ( void ) {
         );
     }
     // paint the backdrop
-    ClearScreen();
-
     printMainMenuHeader(&of, modName, fHasHardware);
 
     // set Ethernet MAC address from EEPROM
@@ -487,26 +494,25 @@ extern void BootResetAction ( void ) {
 #endif
 
 
-    //debugSPIPrint("\nStarting IDE init.");
+    debugSPIPrint("Starting IDE init.");
     BootIdeInit();
-    //debugSPIPrint("\nIDE init done.");
+    debugSPIPrint("IDE init done.");
     
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi){
-        //debugSPIPrint("\nMaster HDD exist.");
+        debugSPIPrint("Master HDD exist.");
     	if(DEV_FEATURES){
-			//TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
-    	                //debugSPIPrint("\nTrying to load new JPEG from HDD.");
-    	                LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg");
-			if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
-				ClearScreen();
-				printMainMenuHeader(&of, modName, fHasHardware);
-			}
+            //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
+            debugSPIPrint("Trying to load new JPEG from HDD.");
+            LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg");
+            if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
+                printMainMenuHeader(&of, modName, fHasHardware);
+            }
     	}
 
         if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
-            //debugSPIPrint("\nTrying to load settings from cfg file on HDD.");
+            debugSPIPrint("Trying to load settings from cfg file on HDD.");
             tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
             returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings);
             if(returnValue == 0){
@@ -567,26 +573,26 @@ extern void BootResetAction ( void ) {
             && tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND - 1)
             && !(tsaHarddiskInfo[i].m_securitySettings&0x0002)) {    //Drive not locked.
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
-                //debugSPIPrint("\nNo FATX detected on %s HDD.", i ? "Slave" : "Master");
+                debugSPIPrint("No FATX detected on %s HDD.", i ? "Slave" : "Master");
                 // We save the complete framebuffer to memory (we restore at exit)
                 videosavepage = malloc(FB_SIZE);
                 memcpy(videosavepage,(void*)FB_START,FB_SIZE);
                 char ConfirmDialogString[50];
                 sprintf(ConfirmDialogString, "               Format new drive (%s)?\0", i ? "slave":"master");
                 if(!ConfirmDialog(ConfirmDialogString, 1)){
-                    //debugSPIPrint("\nFormatting base partitions.");
+                    debugSPIPrint("Formatting base partitions.");
                     FATXFormatDriveC(i, 0);                     //'0' is for non verbose
                     FATXFormatDriveE(i, 0);
                     FATXFormatCacheDrives(i, 0);
                     FATXSetBRFR(i);
                     //If there's enough sectors to make F and/or G drive(s).
                     if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM)){
-                        //debugSPIPrint("\nShow user extended partitions format options.");
+                        debugSPIPrint("Show user extended partitions format options.");
                         DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
                     }
                     if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
                         FATXSetInitMBR(i);                      //Since I'm such a nice program, I will integrate the partition table to the MBR.
-                    //debugSPIPrint("\nHDD format done.");
+                    debugSPIPrint("HDD format done.");
                 }
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 free(videosavepage);
@@ -597,7 +603,7 @@ extern void BootResetAction ( void ) {
     
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
-    //debugSPIPrint("\nStarting IconMenu.");
+    debugSPIPrint("Starting IconMenu.");
     while(IconMenu())
         IconMenuInit();
     //Good practice.

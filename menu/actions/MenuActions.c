@@ -29,8 +29,38 @@ void AdvancedMenu(void *textmenu) {
     TextMenu((TEXTMENU*)textmenu, NULL);
 }
 
+void assertBankScriptExecBankBoot(void * data){
+    FATXFILEINFO fileinfo;
+    u8 bank = *(u8 *)data;
+
+    if(LPCmodSettings.OSsettings.runBankScript){
+        extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
+        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
+                runScript(fileinfo.buffer, fileinfo.fileSize, 1, &bank);
+                free(fileinfo.buffer);
+        }
+    }
+
+    BootModBios(bank);
+}
+
+void assertBankScriptExecTSOPBoot(void * data){
+    FATXFILEINFO fileinfo;
+    u8 bank = *(u8 *)data;
+
+    if(LPCmodSettings.OSsettings.runBankScript){
+        extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
+        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
+                runScript(fileinfo.buffer, fileinfo.fileSize, 1, &bank);
+                free(fileinfo.buffer);
+        }
+    }
+
+    BootOriginalBios(bank);
+}
+
 // Booting Original Bios
-void BootOriginalBios(void *data) {
+void BootOriginalBios(u8 bank) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
     
@@ -41,7 +71,7 @@ void BootOriginalBios(void *data) {
     	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
     	    switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
         else
-            switchBootBank(*(u8*)data);    // switch to original bios but modchip listen to LPC commands.
+            switchBootBank(bank);    // switch to original bios but modchip listen to LPC commands.
 
         I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     }
@@ -53,10 +83,10 @@ void BootOriginalBios(void *data) {
 }    
 
 // Booting bank Modbios
-void BootModBios(void *data) {
+void BootModBios(u8 bank) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
-    switchBootBank(*(u8*)data);
+    switchBootBank(bank);
     
     BootStopUSB();
     

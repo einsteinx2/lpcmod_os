@@ -66,7 +66,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
         iconPtr->iconSlot = ICON_SOURCE_SLOT5;
         iconPtr->szCaption = "Boot 512KB bank";
         iconPtr->bankID = BNK512;
-        iconPtr->functionPtr = BootModBios;
+        iconPtr->functionPtr = assertBankScriptExecBankBoot;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
             *(u8*)iconPtr->functionDataPtr = BNK512;
             iconPtr->dataPtrAlloc = true;
@@ -76,7 +76,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
         iconPtr->iconSlot = ICON_SOURCE_SLOT4;
         iconPtr->szCaption = "Boot 256KB bank";
         iconPtr->bankID = BNK256;
-        iconPtr->functionPtr = BootModBios;
+        iconPtr->functionPtr = assertBankScriptExecBankBoot;
         iconPtr->functionDataPtr = malloc(sizeof(u8));
             *(u8*)iconPtr->functionDataPtr = BNK256;
             iconPtr->dataPtrAlloc = true;
@@ -89,7 +89,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
                 iconPtr->iconSlot = ICON_SOURCE_SLOT3;
                 iconPtr->szCaption = "Boot OnBoard Bank0";
                 iconPtr->bankID = BNKTSOPSPLIT0;
-                iconPtr->functionPtr = BootOriginalBios;
+                iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
                 iconPtr->functionDataPtr = malloc(sizeof(u8));
                         *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT0;
                         iconPtr->dataPtrAlloc = true;
@@ -99,7 +99,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
                 iconPtr->iconSlot = ICON_SOURCE_SLOT3;
                 iconPtr->szCaption = "Boot OnBoard Bank1";
                 iconPtr->bankID = BNKTSOPSPLIT1;
-                iconPtr->functionPtr = BootOriginalBios;
+                iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
                 iconPtr->functionDataPtr = malloc(sizeof(u8));
                         *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT1;
                         iconPtr->dataPtrAlloc = true;
@@ -110,7 +110,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
             iconPtr->iconSlot = ICON_SOURCE_SLOT3;
             iconPtr->szCaption = "Boot OnBoard BIOS";
             iconPtr->bankID = BNKFULLTSOP;
-            iconPtr->functionPtr = BootOriginalBios;
+            iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
             iconPtr->functionDataPtr = malloc(sizeof(u8));
                     *(u8*)iconPtr->functionDataPtr = BNKFULLTSOP;
                     iconPtr->dataPtrAlloc = true;

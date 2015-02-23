@@ -38,9 +38,11 @@ void BootFromEtherboot(void *);
 #endif
 
 // Booting Original Bios
-void BootOriginalBios(void * data);
+void assertBankScriptExecTSOPBoot(void * data);
+void BootOriginalBios(u8 bank);
 
 // Booting 256k Modbios
-void BootModBios(void * data);
+void assertBankScriptExecBankBoot(void * data);
+void BootModBios(u8 bank);
 
 #endif

@@ -36,14 +36,14 @@ void FlashBiosFromHDD (void *fname) {
         printk ("\n\n\n\n\n           Loading BIOS failed");
         dots ();
         cromwellError ();
-        while (1)
-            ;
+        goto jumpToEnd;
     }
     memcpy(fileBuf, fileinfo.buffer, fileinfo.fileSize);
     free(fileinfo.buffer);
     fileinfo.buffer = fileBuf;
     FlashFileFromBuffer(fileinfo.buffer, fileinfo.fileSize, 1); //1 to display confirmDialog
     free(fileinfo.buffer);
+jumpToEnd:
     CloseFATXPartition (partition);
     
     return;
@@ -52,39 +52,27 @@ void FlashBiosFromHDD (void *fname) {
 
 void FlashBiosFromCD (void *cdromId) {
 #ifdef FLASH
-    memcpy ((void*) FB_START, videosavepage, FB_SIZE);
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     BootLoadFlashCD (*(int *) cdromId);
 #endif
 }
 
 void enableNetflash (void *flashType) {
 #ifdef FLASH
-
-    //Save current frameBuffer
-    //u8 currentFrameBuffer = malloc(FB_SIZE);
-    //memcpy(currentFrameBuffer,(void*)FB_START,FB_SIZE);
-
-    memcpy ((void*) FB_START, videosavepage, FB_SIZE);
-    //videosavepage contains data set at the beginning of IconMenu() function.
-    //Cheap way to get a blank screen with only Header text data.
-    VIDEO_ATTR = 0xffef37;
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     printk ("\n\n\n\n\n\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
-    //initialiseNetwork ();
-    //netFlash ();
+
     etherboot(*(u8 *)flashType);
-    //Restore FrameBuffer for Menu display
-    //memcpy((void*)FB_START,currentFrameBuffer,FB_SIZE);
-    //free(currentFrameBuffer);
 #endif
 }
 
 void enableWebupdate (void *whatever) {
 #ifdef FLASH
-    memcpy ((void*) FB_START, videosavepage, FB_SIZE);
-    VIDEO_ATTR = 0xffef37;
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     printk ("\n\n\n\n\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
+
     //initialiseNetwork ();
     //webUpdate ();
 #endif

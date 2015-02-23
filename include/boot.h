@@ -506,7 +506,11 @@ unsigned char *videosavepage;
 
 u8 * scriptSavingPtr;
 
-
+#ifdef SPITRACE
+#define debugSPIPrint(...) printTextSPI(__func__, __VA_ARGS__)
+#else
+#define debugSPIPrint(...)
+#endif
 
 
 //Physical Memory allocation stuff
