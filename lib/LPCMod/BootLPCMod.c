@@ -448,7 +448,6 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
             return 3; //Cannot file file in cluster chain map.
         }
         CloseFATXPartition(partition);
-        //while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);  //Debug to see string prints
     }
     else{
         return 2; //Cannot open partition.
@@ -478,7 +477,7 @@ FATXFILEINFO fileinfo;
                 CloseFATXPartition(partition);
                 ToolHeader("Saving to C:\\XBlast\\xblast.cfg aborted.");
                 cromwellWarning();
-                ToolFooter();
+                UIFooter();
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
                 return 1;
             }
@@ -508,7 +507,7 @@ FATXFILEINFO fileinfo;
         ToolHeader("Error opening partition. Drive formatted?");
     }
 
-    ToolFooter();
+    UIFooter();
     return 0;
 }
 

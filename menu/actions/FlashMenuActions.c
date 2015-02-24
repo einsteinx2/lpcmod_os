@@ -96,11 +96,6 @@ void switchBootBank (u8 bank) {
 }
 
 void FlashFooter (void) {
-    VIDEO_ATTR = 0xffc8c8c8;
-    printk ("\n\n           Press Button 'A' to continue.");
-    //if(fHasHardware == SYSCON_ID_V1)
-    //    switchBank(BNKOS);
-    while ((risefall_xpad_BUTTON (TRIGGER_XPAD_KEY_A) != 1))
-        wait_ms (10);
+    UIFooter();
     initialSetLED (LPCmodSettings.OSsettings.LEDColor);
 }

@@ -77,7 +77,7 @@ bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     
     if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
         printk("           Unable to calculate drive password - eeprom corrupt?");
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
         return false;
     }
     if(verbose){
@@ -100,15 +100,15 @@ bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
 endExec:
         printk("\n           Locking drive failed");
         cromwellError();
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
         return false;
     }
     if(verbose){
         cromwellSuccess();
         printk("           Make a note of the password above.\n");
-        printk("           Press Button A to continue");
+        printk("           Press Button 'B' or 'Back' to continue");
 
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
     }
     return true;
 }
@@ -125,8 +125,8 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
 
     if(tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0010){            //Unlock attempt counter expired
         printk("\n\n\n\n\n           \2Drive is now locked out.\n           \2Reboot system to reset HDD unlock capabilities.\n\n");
-        printk("           \2Press Button A to continue");
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        printk("           \2Press Button 'B' or 'Back' to continue");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
         return false;
     }
     if(verbose){
@@ -181,8 +181,8 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
 
 endExec:
     if(verbose){
-        printk("           \2Press Button A to continue");
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        printk("           \2Press Button 'B' or 'Back' to continue");
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
     }
     return result;
 }
@@ -244,9 +244,9 @@ void DisplayHDDPassword(void *driveId) {
         }
     }    
     VIDEO_ATTR=0xffffff;
-    printk("\n\n           Press Button A to continue.");
+    printk("\n\n           Press Button 'B' or 'Back' to continue.");
 
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
 }
 
 void FormatCacheDrives(void *driveId){
@@ -257,7 +257,7 @@ void FormatCacheDrives(void *driveId){
 
     HDDMenuHeader("Format cache drives");
     FATXFormatCacheDrives(nIndexDrive, 1);      //'1' for verbose
-    HDDMenuFooter();
+    UIFooter();
 }
 
 void FormatDriveC(void *driveId){
@@ -268,7 +268,7 @@ void FormatDriveC(void *driveId){
         
     HDDMenuHeader("Format C: drive");      //'1' for verbose
     FATXFormatDriveC(nIndexDrive, 1);
-    HDDMenuFooter();
+    UIFooter();
 }
 
 void FormatDriveE(void *driveId){
@@ -279,18 +279,12 @@ void FormatDriveE(void *driveId){
 
     HDDMenuHeader("Format E: drive");      //'1' for verbose
     FATXFormatDriveE(nIndexDrive, 1);
-    HDDMenuFooter();
-}
-
-void HDDMenuFooter(void) {
-    VIDEO_ATTR=0xffc8c8c8;
-    printk("\n\n           Press Button 'A' to continue.");
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    UIFooter();
 }
 
 void HDDMenuHeader(char *title) {
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    printk("\n\n\n\n\n           ");
+    printk("\n\n\n\n\n");
     VIDEO_ATTR=0xffffef37;
     printk("\2%s\2\n           ", title);
     VIDEO_ATTR=0xffc8c8c8;
@@ -341,7 +335,7 @@ void DisplayHDDInfo(void *driveId) {
             }
         }
     }
-    HDDMenuFooter();
+    UIFooter();
 }
 
 void FormatDriveFG(void *driveId) {
@@ -388,19 +382,19 @@ void FormatDriveFG(void *driveId) {
     if(!ConfirmDialog(buffer, 1)){
         HDDMenuHeader("Format F: drive");
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
-        HDDMenuFooter();
+        UIFooter();
 
         if(formatOption != F_NOG){
             HDDMenuHeader("Format G: drive");
             FATXFormatExtendedDrive(nDriveIndex, 6, gstart, gsize);             //G: drive is partition 6 in table
-            HDDMenuFooter();
+            UIFooter();
         }
         else{       //Print G drive entry in partition table being inactive and of null size.
             if(tsaHarddiskInfo[nDriveIndex].m_fHasMbr == 1) {       //No need to do anything if no MBR is on disk.
                if(BootIdeReadSector(nDriveIndex, &buffer[0], 0x00, 0, 512)) {
                     VIDEO_ATTR=0xffff0000;
                     printk("\n\1                Unable to read MBR sector...\n");
-                    HDDMenuFooter();
+                    UIFooter();
                     return;
                 }
                 else{
@@ -458,5 +452,5 @@ void CheckSMARTRETURNSTATUS(void * drive){
         printk("\n\1          S.M.A.R.T. not enabled.\n\1          Please enable S.M.A.R.T. to use this feature.");
     }
 
-    HDDMenuFooter();
+    UIFooter();
 }

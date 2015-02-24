@@ -178,7 +178,7 @@ void GPIORead(void * ignored){
     printk("\n\n\2           GPI : 0b%u%u", GenPurposeIOs.GPI1, GenPurposeIOs.GPI0);
     printk("\n\n\2           A19Ctrl : 0b%u", GenPurposeIOs.A19BufEn);
     printk("\n\n\2           EN_5V : 0b%u", GenPurposeIOs.EN_5V);
-    ToolFooter();
+    UIFooter();
     return;
 }
 
@@ -275,6 +275,6 @@ void settingsPrintData(void * ignored){
             }
         }
     }
-    printk("\n\n           Press Button 'A' to continue.");
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+    printk("\n\n           Press Button 'B' or 'Back' to continue.");
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
 }

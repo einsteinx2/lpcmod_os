@@ -360,18 +360,25 @@ int sprintf(char * buf, const char *fmt, ...)
     return i;
 }
 
-void printTextSPI(char * buffer, ...){
+void printTextSPI(const char * functionName, char * buffer, ...){
     unsigned char pos;
     char i;
     int stringLength;
     char tempBuf[200];
+    char outputBuf[200];
 
     va_list args;
     LPCMod_FastWriteIO(0x2, 0); //CLK to '0'
-    va_start(args, buffer);
-    vsprintf(tempBuf,buffer,args);
+    if(buffer != NULL){
+        va_start(args, buffer);
+        vsprintf(tempBuf,buffer,args);
+        sprintf(outputBuf, "%s: %s", functionName, tempBuf);
+    }
+    else{
+        sprintf(outputBuf, "%s", functionName);
+    }
 
-    stringLength = strlen(tempBuf);
+    stringLength = strlen(outputBuf);
     if(stringLength > 200)
         stringLength = 200;
 
@@ -379,7 +386,7 @@ void printTextSPI(char * buffer, ...){
     for(pos = 0; pos <= stringLength; pos++){
         LPCMod_FastWriteIO(0x4, 0); // /CS to '0'
         for(i = 7; i >= 0; i--){
-            LPCMod_FastWriteIO(0x3, (tempBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
+            LPCMod_FastWriteIO(0x3, (outputBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
             //wait_us(1);
             LPCMod_FastWriteIO(0x2, 0x2); //CLK to '1'
             //wait_us(1);

@@ -29,7 +29,6 @@ void FormatDriveC(void *driveId);
 void FormatDriveE(void *driveId);
 
 void HDDMenuHeader(char *title);
-void HDDMenuFooter(void);
 
 void DisplayHDDInfo(void *driveId);
 

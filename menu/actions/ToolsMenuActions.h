@@ -19,7 +19,6 @@ void memtest(void);
 int testBank(int bank);
 
 void ToolHeader(char *title);
-void ToolFooter(void);
 
 //void TSOPRecoveryReboot(void *ignored);
 

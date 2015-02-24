@@ -60,7 +60,7 @@ void displayEditEEPROMBuffer(void *ignored){
     for(i = 0; i < 16; i++){
         printk(" %02X", editeeprom->OnlineKey[i]);
     }
-    ToolFooter();
+    UIFooter();
 }
 
 
@@ -223,7 +223,7 @@ void bruteForceFixDisplayresult(void *ignored){
     else{
         printk("\n\n           Brute force fix not useful here.\n           Aborting.\n\n\n");
     }
-    ToolFooter();
+    UIFooter();
 }
 
 bool bruteForceFixEEprom(void){
@@ -265,7 +265,7 @@ void confirmSaveToEEPROMChip(void *ignored){
     memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));   //Copy back edition buffer to main eeprom buffer.
     ToolHeader("Saved EEPROM image");
     printk("\n\n           Modified buffer has been saved to main EEPROM buffer.\n           Pressing \'A\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
-    ToolFooter();
+    UIFooter();
     for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
         if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
             if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
@@ -302,7 +302,7 @@ void confirmSaveToEEPROMChip(void *ignored){
         printk("\n\n           Error unlocking drives with previous key.");
         printk("\n           Actual EEPROM has NOT been changed.");
         printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");
-        ToolFooter();
+        UIFooter();
     }
 }
 
@@ -390,7 +390,7 @@ void restoreEEPROMFromFile(void *fname) {
     else{
             printk("\n\n           Error!\n           File read error.");
     }
-    ToolFooter();
+    UIFooter();
 }
 
 int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size){

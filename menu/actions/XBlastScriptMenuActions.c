@@ -43,7 +43,7 @@ void loadRunScript(void *fname){
         free(fileinfo.buffer);
     }
 
-    ToolFooter();
+    UIFooter();
 
     return;
 }
@@ -60,7 +60,7 @@ void saveScriptToFlash(void *fname){
         free(fileinfo.buffer);
     }
 
-    ToolFooter();
+    UIFooter();
 
     return;
 }
@@ -73,7 +73,7 @@ void loadScriptFromFlash(void * ignored){
     runScript(buffer, size, 0, NULL);   //No param for now
     free(buffer);
 
-    ToolFooter();
+    UIFooter();
 
     return;
 }

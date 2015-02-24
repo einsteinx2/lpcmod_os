@@ -127,8 +127,6 @@ printk("\n\n");
         }
         
     }
-   // while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-    
 
     return c;
 }
