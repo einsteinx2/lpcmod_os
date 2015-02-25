@@ -220,17 +220,6 @@ extern void BootResetAction ( void ) {
     fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
     debugSPIPrint("Modchip hardware ID is: 0x%04X", fHasHardware);
 //    }
-    u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
-    debugSPIPrint("Probing for X3 EEprom. Result: 0x%08X", x3probe);
-    if(x3probe != 0xff && x3probe != 0x80000002){       //Another (hacky) way to detect is to probe SMBus at addresses
-        fHasHardware = SYSCON_ID_X3;                    //normally unused by the Xbox. By my own experimentation, address
-        debugSPIPrint("Assuming X3 chip detected.");  //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
-    }                                                   //offset 0 of address 0x51 will return either 0xff or 0x80000002.
-                                                        //Any other value will be assumed coming from the (encrypted?)
-                                                        //X3 eeprom and thus instructing the program that a X3 is detected.
-                                                        //More tests will be needed to verify and confirm this theory.
-                                                        //Tests have been done on NTSC-U 1.0 and 1.6(a) Xboxes so far.
-
 
     if(fHasHardware == SYSCON_ID_V1){
         debugSPIPrint("XBlast Lite V1 detected on LPC bus.");
@@ -268,6 +257,17 @@ extern void BootResetAction ( void ) {
     }
     else {
         debugSPIPrint("No XBlast OS compatible hardware found.");
+        u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
+        debugSPIPrint("Probing for X3 EEprom. Result: 0x%08X", x3probe);
+        if(x3probe != 0xff && x3probe != 0x80000002){       //Another (hacky) way to detect is to probe SMBus at addresses
+            fHasHardware = SYSCON_ID_X3;                    //normally unused by the Xbox. By my own experimentation, address
+            debugSPIPrint("Assuming X3 chip detected.");    //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
+        }                                                   //offset 0 of address 0x51 will return either 0xff or 0x80000002.
+                                                            //Any other value will be assumed coming from the (encrypted?)
+                                                            //X3 eeprom and thus instructing the program that a X3 is detected.
+                                                            //More tests will be needed to verify and confirm this theory.
+                                                            //Tests have been done on NTSC-U 1.0 and 1.6(a) Xboxes so far.
+
         if(fHasHardware == SYSCON_ID_XX1 || fHasHardware == SYSCON_ID_XX2)
             sprintf(modName,"%s", "SmartXX V1/V2");
         else if(fHasHardware == SYSCON_ID_XXOPX)
@@ -427,7 +427,7 @@ extern void BootResetAction ( void ) {
             I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
             I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-            if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot == 1){       //Eject button NOT pressed and Quickboot ON.
+            if(!EjectButtonPressed && LPCmodSettings.OSsettings.Quickboot){       //Eject button NOT pressed and Quickboot ON.
                 debugSPIPrint("Going to Quickboot.");
                 if(LPCmodSettings.OSsettings.activeBank > BOOTFROMTSOP){
                     debugSPIPrint("Booting XBlast flash bank");
@@ -505,8 +505,10 @@ extern void BootResetAction ( void ) {
     	if(DEV_FEATURES){
             //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
             debugSPIPrint("Trying to load new JPEG from HDD.");
-            LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg");
+            if(!LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg"))
+            	debugSPIPrint("\"ìcons.jpg\" loaded. Moving on to \"backdrop.jpg\".");
             if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
+           	debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.");
                 printMainMenuHeader(&of, modName, fHasHardware);
             }
     	}

@@ -71,7 +71,7 @@ void restoreEEPromFromFlash(void *whatever){
     	    LockHDD(0,0, (unsigned char *)&eeprom);		     //Silently lock master.
         }
         if((lockPreference&2) == 2){       //Slave was initially locked.
-            LockHDD(1,0);              //Silently lock slave.
+            LockHDD(1,0, (unsigned char *)&eeprom);              //Silently lock slave.
         }
     }
     else {

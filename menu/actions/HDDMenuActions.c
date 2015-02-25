@@ -34,25 +34,17 @@ void AssertLockUnlock(void *itemPtr){
 
 void AssertLockUnlockFromNetwork(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    u8 nIndexDrive = 1;                                //Toggle master by default.
-    char temp = HDDLOCK_NETFLASH;
+    u8 nIndexDrive = 1;                                //Toggle slave by default.
+    char temp = HDD1LOCK_NETFLASH;
     unsigned char *eepromPtr;
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
     nIndexDrive = (u8)tempItemPtr->szParameter[50];
+    if(nIndexDrive == 0)
+        temp = HDD0LOCK_NETFLASH;
 
     enableNetflash((void *)&temp);
-    //if(gobalGenericPtr == NULL)
-        return;
-    //eepromPtr = (unsigned char *)gobalGenericPtr;
 
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-        UnlockHDD(nIndexDrive, 1, eepromPtr);
-    }
-    else {
-        LockHDD(nIndexDrive, 1, eepromPtr);
-    }
-    //free(gobalGenericPtr);
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
         sprintf(tempItemPtr->szCaption, "Unlock");
     }
@@ -195,7 +187,7 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
             "TEAMASSEMBLY",
             "XBOXSCENE",
             "Seagate                         ",
-            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW\0"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
+            "WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW"   //WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCWD might also be valid. From personal experience WDCWDCWDCWDCWDCWDCWDCWDCWDCWDCW is more common.
     };
     printk("\n           Trying Master Password unlock.");
     for(i = 0; i < 4; i++){
@@ -204,17 +196,17 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
                 printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
             }
             else{
-                printk("\n           Unlock Using Master Password %s successful.", MasterPasswordList[i]);
+                printk("\n           Unlock Using Master Password %s successful.\n", MasterPasswordList[i]);
                 return true;
             }
         }
         else{
-            printk("\n           Drive is locked out. No further unlock attempts possible.\n           Power cycle console to reset HDD state.");
+            printk("\n           Drive is locked out. No further unlock attempts possible.\n           Power cycle console to reset HDD state.\n");
             i = 4;
             break;
         }
     }
-    printk("\n          Master Password Unlock failed.\n          No suitable password found.");
+    printk("\n          Master Password Unlock failed.\n          No suitable password found.\n");
     return result;
 }
 

@@ -743,6 +743,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
     
         memcpy(&ide_cmd_data[2],master_password,12);
         
+        //Keep same Master Password Identifier.
         memcpy(&ide_cmd_data[34], &(tsaHarddiskInfo[driveId].m_masterPassSupport),2);
         
         if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1)) return 1;
@@ -834,7 +835,11 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     //Set master password flag
     ide_cmd_data[0]|=0x01;
 
+    debugSPIPrint("Master password is: %s", master_password);
     memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
+    
+    ide_cmd_data[34] = 0;
+    ide_cmd_data[35] = 1;
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp)) return 1;
 
     BootIdeWaitDataReady(uIoBase);

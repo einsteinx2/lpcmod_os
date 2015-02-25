@@ -76,6 +76,15 @@ static char http_file6[] =
 static char http_file7[] =
 #include "webContent/failEEPROM.html.h"
 ;
+static char http_file8[] =
+#include "webContent/mainHDDLOCK.html.h"
+;
+static char http_file9[] =
+#include "webContent/okHDDLOCK.html.h"
+;
+static char http_file10[] =
+#include "webContent/failHDDLOCK.html.h"
+;
 static char http_file404[] = "HTTP/1.1 404 NOT FOUND\nContent-Type: text/html\nContent-Length: 11\n\nHello 404!\n";
 static char http_file500[] = "HTTP/1.1 500 Internal Server Error\nContent-Type: text/html\nContent-Length: 11\n\nError 500!\n";
 
@@ -83,7 +92,7 @@ struct http_file {
 	int len;
 	char *data;
 };
-static struct http_file http_files[8]={
+static struct http_file http_files[11]={
     {sizeof (http_file0) - 1, http_file0},       /* 0 */
     {sizeof (http_file1) - 1, http_file1},       /* 1 */
     {sizeof (http_file2) - 1, http_file2},       /* 2 */
@@ -91,7 +100,10 @@ static struct http_file http_files[8]={
     {sizeof (http_file500) - 1, http_file500},   /* 4 */
     {sizeof (http_file0) - 1, http_file5},       /* 5 */
     {sizeof (http_file1) - 1, http_file6},       /* 6 */
-    {sizeof (http_file2) - 1, http_file7}        /* 7 */
+    {sizeof (http_file2) - 1, http_file7},       /* 7 */
+    {sizeof (http_file0) - 1, http_file8},       /* 8 */
+    {sizeof (http_file1) - 1, http_file9},       /* 9 */
+    {sizeof (http_file2) - 1, http_file10}       /* 10 */
 };
 
 /*-----------------------------------------------------------------------------------*/
@@ -126,9 +138,22 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
             case EEPROM_NETFLASH:
                 netFlashOver = updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
                 break;
-            case HDDLOCK_NETFLASH:
-                //gobalGenericPtr = (void *)malloc(hs->bios_len);
-                //memcpy(gobalGenericPtr, hs->bios_start, hs->bios_len);
+            case HDD0LOCK_NETFLASH:
+                if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
+                    UnlockHDD(0, 0, hs->bios_start);
+                }
+                else {
+                    LockHDD(0, 0, hs->bios_start);
+                }
+                netFlashOver = 1;
+                break;
+            case HDD1LOCK_NETFLASH:
+		if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
+		    UnlockHDD(1, 0, hs->bios_start);
+		}
+		else {
+		    LockHDD(1, 0, hs->bios_start);
+		}
                 netFlashOver = 1;
                 break;
             default:
@@ -221,14 +246,21 @@ http_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
 static int
 handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 {
+    u8 fileSelect;
 	if (!hs->gotfirst) {
 		if (strncmp (hs->lineBuf, "GET /", 4) == 0) {
 			unsigned long fno = simple_strtoul (&hs->lineBuf[5], NULL, NULL);
 			if (fno > 2) {
 				fno = 3; /* 404 */
 			}
-			hs->file = http_files[fno + (pcb->flashType * 5)].data;
-			hs->left = http_files[fno + (pcb->flashType * 5)].len;
+			if(pcb->flashType == HDD0LOCK_NETFLASH || pcb->flashType == HDD1LOCK_NETFLASH){
+			    fileSelect = 8;
+			}
+			else{
+			    fileSelect = pcb->flashType * 5;
+			}
+			hs->file = http_files[fno + (fileSelect)].data;
+			hs->left = http_files[fno + (fileSelect)].len;
 		} else if (strncmp (hs->lineBuf, "POST /", 5) == 0) {
 			hs->ispost = 1;
 			hs->file = http_files[4].data;
@@ -330,20 +362,46 @@ handle_post(struct http_state *hs, unsigned char flashType)
 
 	len = end - start;
 
-
-	if ((flashType == BIOS_NETFLASH && (len != 256*1024 && len != 512*1024 && len != 1024*1024)) ||
-	    ((flashType == EEPROM_NETFLASH || flashType == HDDLOCK_NETFLASH) && len != 256)) {
-		hs->file = http_files[2 + (flashType * 5)].data;
-		hs->left = http_files[2 + (flashType * 5)].len;
+	switch(flashType){
+	case BIOS_NETFLASH:
+	    if(len != 256*1024 && len != 512*1024 && len != 1024*1024){
+	        hs->file = http_files[2].data;
+		hs->left = http_files[2].len;
 		printk ("Illegal size, NOT flashing\n");
 		return 0;
+	    }
+	    hs->file = http_files[1].data;
+	    hs->left = http_files[1].len;
+	    break;
+	case EEPROM_NETFLASH:
+	    if(len != 256){
+	        hs->file = http_files[7].data;
+		hs->left = http_files[7].len;
+		printk ("Illegal size, NOT flashing\n");
+		return 0;
+	    }
+	    hs->file = http_files[6].data;
+	    hs->left = http_files[6].len;
+	    break;
+	case HDD0LOCK_NETFLASH:
+	case HDD1LOCK_NETFLASH:
+            if(len != 256){
+	        hs->file = http_files[10].data;
+		hs->left = http_files[10].len;
+		printk ("Illegal size, NOT flashing\n");
+		return 0;
+	    }
+	    hs->file = http_files[9].data;
+	    hs->left = http_files[9].len;
+	    break;
+	default:
+		printk ("Unkown operation. Halting.\n");
+		return 0;
+	    break;
 	}
 
 	hs->bios_start = start;
 	hs->bios_len = len;
-
-	hs->file = http_files[1 + (flashType * 5)].data;
-	hs->left = http_files[1 + (flashType * 5)].len;
 
 	return 1;
 }
