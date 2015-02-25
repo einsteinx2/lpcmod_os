@@ -140,19 +140,19 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 break;
             case HDD0LOCK_NETFLASH:
                 if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-                    UnlockHDD(0, 0, hs->bios_start);
+                    UnlockHDD(0, 0, (u8 *)hs->bios_start);
                 }
                 else {
-                    LockHDD(0, 0, hs->bios_start);
+                    LockHDD(0, 0, (u8 *)hs->bios_start);
                 }
                 netFlashOver = 1;
                 break;
             case HDD1LOCK_NETFLASH:
 		if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-		    UnlockHDD(1, 0, hs->bios_start);
+		    UnlockHDD(1, 0, (u8 *)hs->bios_start);
 		}
 		else {
-		    LockHDD(1, 0, hs->bios_start);
+		    LockHDD(1, 0, (u8 *)hs->bios_start);
 		}
                 netFlashOver = 1;
                 break;

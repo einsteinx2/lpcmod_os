@@ -257,53 +257,7 @@ bool bruteForceFixEEprom(void){
 }
 
 void confirmSaveToEEPROMChip(void *ignored){
-    u8 nIndexDrive, unlockConfirm[2];
-    bool cancelChanges = false;
-
-    if(ConfirmDialog("          Save modified EEPROM to chip?", 1))
-            return;
-    memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));   //Copy back edition buffer to main eeprom buffer.
-    ToolHeader("Saved EEPROM image");
-    printk("\n\n           Modified buffer has been saved to main EEPROM buffer.\n           Pressing \'A\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
-    UIFooter();
-    for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
-        if(tsaHarddiskInfo[nIndexDrive].m_fDriveExists && !tsaHarddiskInfo[nIndexDrive].m_fAtapi){      //If there's a HDD plugged on specified port
-            if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
-                    if(UnlockHDD(nIndexDrive, 0, (unsigned char *)&eeprom))                                             //0 is for silent
-                        unlockConfirm[nIndexDrive] = 1;                                   //Everything went well, we'll relock after eeprom write.
-                    else{
-                        unlockConfirm[0] = 255;       //error
-                        unlockConfirm[1] = 255;       //error
-                        break;
-                    }
-            }
-            else{
-                unlockConfirm[nIndexDrive] = 0;                                         //Drive not locked, won't relock after eeprom write.
-            }
-        }
-        else{
-            unlockConfirm[nIndexDrive] = 0;       //Won't relock as no HDD was detected on that port.
-        }
-    }
-    if(unlockConfirm[0] == 255 && unlockConfirm[1] == 255){      //error in unlocking one of 2 drives.
-        cancelChanges = ConfirmDialog("        Drive(s) still locked! Continue anyway?", 1);
-    }
-    if(!cancelChanges){
-        memcpy(&eeprom, editeeprom, sizeof(EEPROMDATA));
-        for(nIndexDrive = 0; nIndexDrive < 2; nIndexDrive++){               //Probe 2 possible drives
-            if(unlockConfirm[nIndexDrive] == 1){
-                LockHDD(nIndexDrive, 0, (unsigned char *)&eeprom);                                //0 is for silent mode.
-            }
-        }
-        SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.
-        while(1);
-    }
-    else{
-        printk("\n\n           Error unlocking drives with previous key.");
-        printk("\n           Actual EEPROM has NOT been changed.");
-        printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");
-        UIFooter();
-    }
+    replaceEEPROMContentFromBuffer(editeeprom);
 }
 
 void editMACAddress(void *ignored){

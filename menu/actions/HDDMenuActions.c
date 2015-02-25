@@ -108,12 +108,15 @@ endExec:
 bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     u8 password[20];
     bool result = false; //Start assuming not good.
+    bool eepromBuffersCompare = true;  //Assume eepromPtr's content is identical to internal pointer image.
+    int i;
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
 
     if(eepromPtr == NULL){
         printk("\n\n\n\n\n           Security disable failed!");
         goto endExec;
     }
+
 
     if(tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0010){            //Unlock attempt counter expired
         printk("\n\n\n\n\n           \2Drive is now locked out.\n           \2Reboot system to reset HDD unlock capabilities.\n\n");
@@ -124,8 +127,17 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     if(verbose){
         if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
     }
+
+    for(i = 0; i < 0x2C; i++){
+        if(eepromPtr[i] != *(unsigned char *)(&eeprom + i)){
+            eepromBuffersCompare = false;
+            break;
+        }
+
+    }
+
     //Do not try Master password unlock if eeprom pointer isn't pointing to internal eeprom image.
-    if((eepromPtr == (unsigned char *)&eeprom) && ((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)){
+    if(eepromBuffersCompare && ((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)){
         printk("\n\n           Something's wrong with the drive!\n           Jumping to Master Password Unlock sequence.");
         if(!masterPasswordUnlockSequence(nIndexDrive)){
             result = false;
@@ -136,14 +148,21 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     else{
         //Password calculation error.
         if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
-            printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
-            //Go to Master password unlock.
-            if(!masterPasswordUnlockSequence(nIndexDrive)){
-                result = false;
-                verbose = true;
+
+                printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
+            if(eepromBuffersCompare){
+                //Go to Master password unlock.
+                if(!masterPasswordUnlockSequence(nIndexDrive)){
+                    result = false;
+                    verbose = true;
+                }
+                else{
+                    result = true;
+                }
             }
             else{
-                result = true;
+                verbose = true;
+                goto endExec;
             }
         }
         else{

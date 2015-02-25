@@ -15,7 +15,7 @@
 #include "video.h"
 #include "BootFATX.h"
 
-
+bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr);
 
 void saveEEPromToFlash(void *whatever){
     u8 i;
@@ -33,52 +33,11 @@ void saveEEPromToFlash(void *whatever){
 }
 
 void restoreEEPromFromFlash(void *whatever){
-    u8 i;
-    u8 lockPreference = 0;
-    u8 emptyCount = 0;
-    char hddString[6];
-    for(i = 0; i < 2; i++){
-        if (tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi) {
-    	    if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002){        //Drive locked.
-    	        lockPreference += (i + 1);             //0=no drive locked, 1=master locked, 2= slave locked
-    	    }                                          //3=both drives locked.
-        }
+    if(replaceEEPROMContentFromBuffer(&(LPCmodSettings.bakeeprom))){
+        ToolHeader("No EEPROM backup on modchip.");
+        printk("\n           Nothing to restore. Xbox EEPROM is unchanged.");
+        UIFooter();
     }
-    
-    for(i = 0; i < 4; i++) {         //Checksum2 is 4 bytes long.
-        if(LPCmodSettings.bakeeprom.Checksum2[i] == 0xFF)
-            emptyCount++;
-    }
-    if(emptyCount < 4){            //Make sure checksum2 is not 0xFFFFFFFF.
-                        //It is practically impossible to get such value in this checksum field.
-        if(ConfirmDialog("       Restore backed up EEProm content?", 1))
-            return;
-        if((lockPreference&1) == 1){       //Master is locked.
-    	    if(!UnlockHDD(0,0, (unsigned char *)&eeprom)){		     //Silently unlock master.
-    	        ToolHeader("ERROR: Could not unlock master HDD");
-    	    	goto failed;
-    	    }
-        }
-        if((lockPreference&2) == 2){       //Slave is locked.
-            if(!UnlockHDD(1,0, (unsigned char *)&eeprom)){              //Silently unlock slave.
-                ToolHeader("ERROR: Could not unlock slave HDD");
-                goto failed;
-            }
-        }
-        memcpy(&eeprom,&(LPCmodSettings.bakeeprom),sizeof(EEPROMDATA));
-        ToolHeader("Restored back up to Xbox");
-        if((lockPreference&1) == 1){       //Master was initiallylocked.
-    	    LockHDD(0,0, (unsigned char *)&eeprom);		     //Silently lock master.
-        }
-        if((lockPreference&2) == 2){       //Slave was initially locked.
-            LockHDD(1,0, (unsigned char *)&eeprom);              //Silently lock slave.
-        }
-    }
-    else {
-        ToolHeader("ERROR: No back up data on modchip");
-    }
-failed:
-UIFooter();
 }
 
 void warningDisplayEepromEditMenu(void *ignored){
@@ -275,4 +234,61 @@ void prevA19controlModBootValue(void * itemPtr){
             sprintf(itemPtr, "%s", "No");
             break;
     }
+}
+
+bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr){
+    u8 i, emptyCount = 0, unlockConfirm[2];
+    bool cancelChanges = false;
+
+    for(i = 0; i < 4; i++) {         //Checksum2 is 4 bytes long.
+        if(eepromPtr->Checksum2[i] == 0xFF)
+        emptyCount++;
+    }
+    if(emptyCount < 4){            //Make sure checksum2 is not 0xFFFFFFFF.
+        for(i = 0; i < 2; i++){               //Probe 2 possible drives
+            if(tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi){      //If there's a HDD plugged on specified port
+                if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
+                    if(UnlockHDD(i, 0, (unsigned char *)&eeprom))                                             //0 is for silent
+                        unlockConfirm[i] = 1;                                   //Everything went well, we'll relock after eeprom write.
+                    else{
+                        unlockConfirm[0] = 255;       //error
+                        unlockConfirm[1] = 255;       //error
+                        break;
+                    }
+                }
+                else{
+                    unlockConfirm[i] = 0;                                         //Drive not locked, won't relock after eeprom write.
+                }
+            }
+            else{
+                unlockConfirm[i] = 0;       //Won't relock as no HDD was detected on that port.
+            }
+        }
+
+        if(unlockConfirm[0] == 255 && unlockConfirm[1] == 255){      //error in unlocking one of 2 drives.
+            cancelChanges = ConfirmDialog("        Drive(s) still locked! Continue anyway?", 1);
+        }
+        if(!cancelChanges){
+            memcpy(&eeprom, eepromPtr, sizeof(EEPROMDATA));
+            for(i = 0; i < 2; i++){               //Probe 2 possible drives
+                if(unlockConfirm[i] == 1){
+                    LockHDD(i, 0, (unsigned char *)&eeprom);                                //0 is for silent mode.
+                }
+            }
+            ToolHeader("Saved EEPROM image");
+            printk("\n\n           Modified buffer has been saved to main EEPROM buffer.\n           Pressing \'B\' will program EEPROM chip and restart the console.\n           Pressing Power button will cancel EEPROM chip write.\n\n\n");
+            UIFooter();
+            SlowReboot(NULL);   //This function will take care of saving eeprom image to chip.
+            while(1);
+            return false;
+        }
+        else{
+            printk("\n\n           Error unlocking drives with previous key.");
+            printk("\n           Actual EEPROM has NOT been changed.");
+            printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");
+            UIFooter();
+            return false;
+        }
+    }
+    return true;        //Error
 }
