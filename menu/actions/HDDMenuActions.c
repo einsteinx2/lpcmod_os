@@ -170,7 +170,16 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
             if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
                 //Calculated password is not the correct one for this drive.
                 printk("\n           Security disable failed!");
-                if(!masterPasswordUnlockSequence(nIndexDrive)){
+                if(eepromBuffersCompare){
+                    if(!masterPasswordUnlockSequence(nIndexDrive)){
+                        result = false;
+                        verbose = true;
+                    }
+                    else{
+                    	result = true;
+                    }
+                }
+                else{
                     result = false;
                     verbose = true;
                 }

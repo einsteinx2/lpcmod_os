@@ -387,9 +387,7 @@ void printTextSPI(const char * functionName, char * buffer, ...){
         LPCMod_FastWriteIO(0x4, 0); // /CS to '0'
         for(i = 7; i >= 0; i--){
             LPCMod_FastWriteIO(0x3, (outputBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
-            //wait_us(1);
             LPCMod_FastWriteIO(0x2, 0x2); //CLK to '1'
-            //wait_us(1);
         }
         LPCMod_FastWriteIO(0x2, 0); //CLK to '0'.
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
