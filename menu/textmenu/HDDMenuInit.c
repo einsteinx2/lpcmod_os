@@ -313,17 +313,33 @@ TEXTMENU *HDDLockUnlockMenuInit(void * drive) {
     sprintf(menuPtr->szCaption, "Lock/Unlock menu : %s", nDriveIndex ? "Slave":"Master");
 
 
+    //!!!!!! THE 2 ENTRIES BELOW MUST BE KEPT IN THE SAME ORDER!!!!!!!!
     //This drive is locked - produce an unlock menu
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     if((tsaHarddiskInfo[nDriveIndex].m_securitySettings &0x0002)==0x0002) {
-        sprintf(itemPtr->szCaption,"Unlock HDD");
+        sprintf(itemPtr->szCaption,"Unl");
     }
     else {
-        sprintf(itemPtr->szCaption,"Lock HDD");
+        sprintf(itemPtr->szCaption,"L");
     }
+    sprintf(itemPtr->szParameter, "ock HDD");
     itemPtr->szParameter[50] = nDriveIndex;
     itemPtr->functionPtr= AssertLockUnlock;
+    itemPtr->functionDataPtr = itemPtr;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    if((tsaHarddiskInfo[nDriveIndex].m_securitySettings &0x0002)==0x0002) {
+        sprintf(itemPtr->szCaption,"Unl");
+    }
+    else {
+        sprintf(itemPtr->szCaption,"L");
+    }
+    sprintf(itemPtr->szParameter, " ock HDD from network");
+    itemPtr->szParameter[50] = nDriveIndex;
+    itemPtr->functionPtr= AssertLockUnlockFromNetwork;
     itemPtr->functionDataPtr = itemPtr;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -338,19 +354,6 @@ TEXTMENU *HDDLockUnlockMenuInit(void * drive) {
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    if((tsaHarddiskInfo[nDriveIndex].m_securitySettings &0x0002)==0x0002) {
-        sprintf(itemPtr->szCaption,"Unlock");
-    }
-    else {
-        sprintf(itemPtr->szCaption,"Lock");
-    }
-    sprintf(itemPtr->szParameter, " from network");
-    itemPtr->szParameter[50] = nDriveIndex;
-    itemPtr->functionPtr= AssertLockUnlockFromNetwork;
-    itemPtr->functionDataPtr = itemPtr;
-    TextMenuAddItem(menuPtr, itemPtr);
 
     ResetDrawChildTextMenu(menuPtr);
 

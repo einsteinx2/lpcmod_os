@@ -25,11 +25,13 @@ void AssertLockUnlock(void *itemPtr){
         LockHDD(nIndexDrive, 1, (unsigned char *)&eeprom);                        //1 is for verbose
     }
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
-        sprintf(tempItemPtr->szCaption, "Unlock HDD");
+        sprintf(tempItemPtr->szCaption, "Unl");
+
     }
     else{
-        sprintf(tempItemPtr->szCaption, "Lock HDD");
+        sprintf(tempItemPtr->szCaption, "L");
     }
+    sprintf(tempItemPtr->nextMenuItem->szCaption, tempItemPtr->szCaption);
 }
 
 void AssertLockUnlockFromNetwork(void *itemPtr){
@@ -46,11 +48,12 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
     enableNetflash((void *)&temp);
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {
-        sprintf(tempItemPtr->szCaption, "Unlock");
+        sprintf(tempItemPtr->szCaption, "Unl");
     }
     else{
-        sprintf(tempItemPtr->szCaption, "Lock");
+        sprintf(tempItemPtr->szCaption, "L");
     }
+    sprintf(tempItemPtr->previousMenuItem->szCaption, tempItemPtr->szCaption);
 }
 
 bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
@@ -108,7 +111,7 @@ endExec:
 bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     u8 password[20];
     bool result = false; //Start assuming not good.
-    bool eepromBuffersCompare = true;  //Assume eepromPtr's content is identical to internal pointer image.
+    bool eepromBuffersCompareEquals = true;  //Assume eepromPtr's content is identical to internal pointer image.
     int i;
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
 
@@ -130,14 +133,19 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
 
     for(i = 0; i < 0x2C; i++){
         if(eepromPtr[i] != *(unsigned char *)(&eeprom + i)){
-            eepromBuffersCompare = false;
+            eepromBuffersCompareEquals = false;
             break;
         }
 
     }
 
+    if(!eepromBuffersCompareEquals && (tsaHarddiskInfo[0].m_securitySettings &0x0004)==0x0004) {       //Successful SECURITY_UNLOCK not yet issued.
+        if(issue_SECURITY_UNLOCK_ATACommand(nIndexDrive, eepromPtr))  //Send SECURITY_UNLOCK only if eepromPtr does not point to Xbox internal EEPROM
+            goto endExec;                                             //Failed, no need to try sending SECURITY_DISABLE as it will fail too.
+    }
+
     //Do not try Master password unlock if eeprom pointer isn't pointing to internal eeprom image.
-    if(eepromBuffersCompare && ((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)){
+    if(eepromBuffersCompareEquals && ((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)){
         printk("\n\n           Something's wrong with the drive!\n           Jumping to Master Password Unlock sequence.");
         if(!masterPasswordUnlockSequence(nIndexDrive)){
             result = false;
@@ -148,9 +156,8 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
     else{
         //Password calculation error.
         if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
-
-                printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
-            if(eepromBuffersCompare){
+            printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
+            if(eepromBuffersCompareEquals){
                 //Go to Master password unlock.
                 if(!masterPasswordUnlockSequence(nIndexDrive)){
                     result = false;
@@ -170,7 +177,7 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
             if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
                 //Calculated password is not the correct one for this drive.
                 printk("\n           Security disable failed!");
-                if(eepromBuffersCompare){
+                if(eepromBuffersCompareEquals){
                     if(!masterPasswordUnlockSequence(nIndexDrive)){
                         result = false;
                         verbose = true;

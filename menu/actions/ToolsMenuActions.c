@@ -237,18 +237,16 @@ void prevA19controlModBootValue(void * itemPtr){
 }
 
 bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr){
-    u8 i, emptyCount = 0, unlockConfirm[2];
+    u8 i, eepromVersion = 0, unlockConfirm[2];
     bool cancelChanges = false;
+    char unused[20];
 
-    for(i = 0; i < 4; i++) {         //Checksum2 is 4 bytes long.
-        if(eepromPtr->Checksum2[i] == 0xFF)
-        emptyCount++;
-    }
-    if(emptyCount < 4){            //Make sure checksum2 is not 0xFFFFFFFF.
+    eepromVersion = BootHddKeyGenerateEepromKeyData(editeeprom,unused);
+    if(eepromVersion >= 9 && eepromVersion < 13){            //Make sure eeprom is properly decrypted.
         for(i = 0; i < 2; i++){               //Probe 2 possible drives
             if(tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi){      //If there's a HDD plugged on specified port
                 if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
-                    if(UnlockHDD(i, 0, (unsigned char *)&eeprom))                                             //0 is for silent
+                    if(UnlockHDD(i, 0, (unsigned char *)&eeprom))                   //0 is for silent
                         unlockConfirm[i] = 1;                                   //Everything went well, we'll relock after eeprom write.
                     else{
                         unlockConfirm[0] = 255;       //error
@@ -283,6 +281,7 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr){
             return false;
         }
         else{
+            ToolHeader("Operation aborted");
             printk("\n\n           Error unlocking drives with previous key.");
             printk("\n           Actual EEPROM has NOT been changed.");
             printk("\n           Please Manually unlock all connected HDDs before modifying EEPROM content.");

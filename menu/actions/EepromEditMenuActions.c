@@ -257,7 +257,12 @@ bool bruteForceFixEEprom(void){
 }
 
 void confirmSaveToEEPROMChip(void *ignored){
-    replaceEEPROMContentFromBuffer(editeeprom);
+    if(replaceEEPROMContentFromBuffer(editeeprom)){
+        ToolHeader("Operation aborted");
+        printk("\n           Invalid EEPROM image data.");
+        printk("\n           Data not saved!");
+        UIFooter();
+    }
 }
 
 void editMACAddress(void *ignored){

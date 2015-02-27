@@ -388,7 +388,7 @@ extern void BootResetAction ( void ) {
     mbVersion = I2CGetXboxMBRev();
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
-        if(LPCmodSettings.OSsettings.runBootScript){
+        if(LPCmodSettings.OSsettings.runBootScript && (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)){
             debugSPIPrint("Running boot script.");
             bootScriptSize = fetchBootScriptFromFlash(&bootScriptBuffer);
             if(bootScriptSize > 0){

@@ -371,7 +371,6 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     unsigned short* drive_info;
     u8 baBuffer[512];
     u8 n = 0;
-    char * repetitiveString1 = "\n          Consider using Unlock HDD option in settings \n          to try unlocking with Master Password.";
      
     tsaHarddiskInfo[nIndexDrive].m_fwPortBase = uIoBase;
     tsaHarddiskInfo[nIndexDrive].m_wCountHeads = 0u;
@@ -517,23 +516,11 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
         tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = drive_info[92];
         
+
         if (cromwell_config==CROMWELL) {
             if((drive_info[128]&0x0004)==0x0004) //Drive in locked status
             { 
-                unsigned char password[20];
-                if (CalculateDrivePassword(nIndexDrive,password, (unsigned char *)&eeprom)) {
-                    printk("\n\n\n\n\n\n\n          Unable to calculate drive password - eeprom corrupt?%s", repetitiveString1);
-                        return 1;
-                }
-                
-                if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_UNLOCK, password)) {
-                    printk("\n\n\n\n\n\n\n          Unlock using HDD key failed. Wrong key.%s", repetitiveString1);
-                }
-                else {
-#ifndef SILENT_MODE
-                    printk("Unlock OK");    
-#endif
-                }
+                issue_SECURITY_UNLOCK_ATACommand(nIndexDrive, (u8 *)&eeprom);
             }
         }  
 
@@ -1820,4 +1807,20 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
     }
 
     return result;
+}
+
+bool issue_SECURITY_UNLOCK_ATACommand(int nIndexDrive, u8 * eepromPtr){
+    char * repetitiveString1 = "\n          Consider using another \"Unlock HDD\" option in settings \n          to try unlocking with Master Password.";
+    unsigned char password[20];
+    if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
+        printk("\n\n\n\n\n\n\n          Unable to calculate drive password - eeprom corrupt?%s", repetitiveString1);
+        return true;
+    }
+
+    if (DriveSecurityChange(tsaHarddiskInfo[nIndexDrive].m_fwPortBase, nIndexDrive, IDE_CMD_SECURITY_UNLOCK, password)) {
+        printk("\n\n\n\n\n\n\n          SECURITY_UNLOCK using HDD key failed. Wrong key.%s", repetitiveString1);
+        return true;
+    }
+
+    return false;
 }
