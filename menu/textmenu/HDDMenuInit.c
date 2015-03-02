@@ -337,7 +337,7 @@ TEXTMENU *HDDLockUnlockMenuInit(void * drive) {
     else {
         sprintf(itemPtr->szCaption,"L");
     }
-    sprintf(itemPtr->szParameter, " ock HDD from network");
+    sprintf(itemPtr->szParameter, "ock HDD from network");
     itemPtr->szParameter[50] = nDriveIndex;
     itemPtr->functionPtr= AssertLockUnlockFromNetwork;
     itemPtr->functionDataPtr = itemPtr;

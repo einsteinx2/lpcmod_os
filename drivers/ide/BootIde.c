@@ -520,7 +520,10 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         if (cromwell_config==CROMWELL) {
             if((drive_info[128]&0x0004)==0x0004) //Drive in locked status
             { 
-                issue_SECURITY_UNLOCK_ATACommand(nIndexDrive, (u8 *)&eeprom);
+            	char userPassword[21];
+            	CalculateDrivePassword(nIndexDrive, userPassword, (char *)&eeprom);
+            	userPassword[20] = '\0';
+                HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_UNLOCK, userPassword, false);
             }
         }  
 
@@ -660,10 +663,11 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
     //If drive is a hard disk, see what type of partitioning it has.
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
-
-        if(FATXCheckFATXMagic(nIndexDrive)){
-            // report on the MBR-ness of the drive contents
-            tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+	if(!(tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)){
+            if(FATXCheckFATXMagic(nIndexDrive)){
+                // report on the MBR-ness of the drive contents
+                tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+            }
         }
 
             //Check if drive support S.M.A.R.T.
@@ -1809,18 +1813,64 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
     return result;
 }
 
-bool issue_SECURITY_UNLOCK_ATACommand(int nIndexDrive, u8 * eepromPtr){
-    char * repetitiveString1 = "\n          Consider using another \"Unlock HDD\" option in settings \n          to try unlocking with Master Password.";
-    unsigned char password[20];
-    if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
-        printk("\n\n\n\n\n\n\n          Unable to calculate drive password - eeprom corrupt?%s", repetitiveString1);
-        return true;
+int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char * password, bool masterPassword){
+    char ide_cmd_data[512];    
+    char baBuffer[512];
+    unsigned short*    drive_info = (unsigned short*)baBuffer;
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    unsigned short uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
+    int i;
+    
+    BootIdeWaitNotBusy(uIoBase);
+    
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nIndexDrive);
+    
+    memset(ide_cmd_data,0x00,512);
+    
+    if(masterPassword && (ATACommand == IDE_CMD_SECURITY_UNLOCK || ATACommand == IDE_CMD_SECURITY_DISABLE)){
+    	//Set master password flag
+    	ide_cmd_data[0]|=0x01;
+    }
+       
+    //printk("\n          password length: %u\n          ", strlen(password));
+    
+    //for(i = 0; i < strlen(password); i++){
+    //   printk(" %02X", (u8)password[i]);
+    //}
+    memcpy(&ide_cmd_data[2],password,strlen(password));
+
+    if(masterPassword && tsaHarddiskInfo[nIndexDrive].m_masterPassSupport != 0xFFFF && ATACommand == IDE_CMD_SECURITY_SET_PASSWORD)
+        ide_cmd_data[34] = 1;
+
+    if(BootIdeIssueAtaCommand(uIoBase, ATACommand, &tsicp)){
+        //printk("\n          Issue ATA command failed.");
+        return 1;
+    }
+        
+    BootIdeWaitDataReady(uIoBase);
+    BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
+           
+    if (BootIdeWaitNotBusy(uIoBase))    
+    {
+        //printk("\n          IDE data write failed.");
+        return 1;
+    }
+    
+    // check that we are unlocked
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) 
+    {
+        //printk("\n          Issue IDENTIFY  ATA command failed.");
+        return 1;
+    }
+    BootIdeWaitDataReady(uIoBase);
+    if(BootIdeReadData(uIoBase, baBuffer, IDE_SECTOR_SIZE)) 
+    {
+        //printk("\n          IDENTIFY data readback failed.");
+        return 1;
     }
 
-    if (DriveSecurityChange(tsaHarddiskInfo[nIndexDrive].m_fwPortBase, nIndexDrive, IDE_CMD_SECURITY_UNLOCK, password)) {
-        printk("\n\n\n\n\n\n\n          SECURITY_UNLOCK using HDD key failed. Wrong key.%s", repetitiveString1);
-        return true;
-    }
-
-    return false;
+    tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
+    tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = drive_info[92];
+    //Success, hopefully.
+    return 0;
 }

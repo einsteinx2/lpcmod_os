@@ -51,12 +51,18 @@ typedef enum {
     LETTERBOX = 0x10
 } VID_FORMAT;
 
+
 typedef enum {
     R720p = 0x02,
     R1080i = 0x04,
     R480p = 0x08
 }VID_RESOLUTION;
 
+typedef enum {
+    V1_0 = 0x0A,
+    V1_1 = 0x0B,
+    V1_6 = 0x0C
+} EEPROM_VERSION;
 
 //Structure that holds contents of 256 byte EEPROM image..
 typedef struct _EEPROMDATA {

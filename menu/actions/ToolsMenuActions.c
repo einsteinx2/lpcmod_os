@@ -34,7 +34,7 @@ void saveEEPromToFlash(void *whatever){
 
 void restoreEEPromFromFlash(void *whatever){
     if(replaceEEPROMContentFromBuffer(&(LPCmodSettings.bakeeprom))){
-        ToolHeader("No EEPROM backup on modchip.");
+        ToolHeader("No valid EEPROM backup on modchip.");
         printk("\n           Nothing to restore. Xbox EEPROM is unchanged.");
         UIFooter();
     }
@@ -241,12 +241,12 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr){
     bool cancelChanges = false;
     char unused[20];
 
-    eepromVersion = BootHddKeyGenerateEepromKeyData(editeeprom,unused);
-    if(eepromVersion >= 9 && eepromVersion < 13){            //Make sure eeprom is properly decrypted.
+    eepromVersion = BootHddKeyGenerateEepromKeyData(eepromPtr, unused);
+    if(eepromVersion >= V1_0 && eepromVersion <= V1_6){            //Make sure eeprom is properly decrypted.
         for(i = 0; i < 2; i++){               //Probe 2 possible drives
             if(tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi){      //If there's a HDD plugged on specified port
                 if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002) {       //If drive is locked
-                    if(UnlockHDD(i, 0, (unsigned char *)&eeprom))                   //0 is for silent
+                    if(UnlockHDD(i, 0, (unsigned char *)&eeprom, true))                   //0 is for silent
                         unlockConfirm[i] = 1;                                   //Everything went well, we'll relock after eeprom write.
                     else{
                         unlockConfirm[0] = 255;       //error

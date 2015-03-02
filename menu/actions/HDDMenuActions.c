@@ -19,7 +19,7 @@ void AssertLockUnlock(void *itemPtr){
     nIndexDrive = (u8)tempItemPtr->szParameter[50];
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-        UnlockHDD(nIndexDrive, 1, (unsigned char *)&eeprom);                      //1 is for verbose
+        UnlockHDD(nIndexDrive, 1, (unsigned char *)&eeprom, true);                      //1 is for verbose
     }
     else {
         LockHDD(nIndexDrive, 1, (unsigned char *)&eeprom);                        //1 is for verbose
@@ -108,15 +108,13 @@ endExec:
     return true;
 }
 
-bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
-    u8 password[20];
-    bool result = false; //Start assuming not good.
-    bool eepromBuffersCompareEquals = true;  //Assume eepromPtr's content is identical to internal pointer image.
+int UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr, bool internalEEPROM) {
+    u8 userPassword[21];
+    int result = false; //Start assuming not good.
     int i;
-    unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
 
     if(eepromPtr == NULL){
-        printk("\n\n\n\n\n           Security disable failed!");
+        printk("\n\n\n\n\n           Security disable failed. No EEPROM data supplied!");
         goto endExec;
     }
 
@@ -125,99 +123,70 @@ bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
         printk("\n\n\n\n\n           \2Drive is now locked out.\n           \2Reboot system to reset HDD unlock capabilities.\n\n");
         printk("           \2Press Button 'B' or 'Back' to continue");
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
-        return false;
+        return -1;
     }
     if(verbose){
         if (ConfirmDialog("                    Confirm Unlock HDD?", 1)) return false;
     }
 
-    for(i = 0; i < 0x2C; i++){
-        if(eepromPtr[i] != *(unsigned char *)(&eeprom + i)){
-            eepromBuffersCompareEquals = false;
-            break;
-        }
+    CalculateDrivePassword(nIndexDrive, userPassword, eepromPtr);
+    userPassword[20] = '\0';
 
-    }
-
-    if(!eepromBuffersCompareEquals && (tsaHarddiskInfo[0].m_securitySettings &0x0004)==0x0004) {       //Successful SECURITY_UNLOCK not yet issued.
-        if(issue_SECURITY_UNLOCK_ATACommand(nIndexDrive, eepromPtr))  //Send SECURITY_UNLOCK only if eepromPtr does not point to Xbox internal EEPROM
-            goto endExec;                                             //Failed, no need to try sending SECURITY_DISABLE as it will fail too.
-    }
-
-    //Do not try Master password unlock if eeprom pointer isn't pointing to internal eeprom image.
-    if(eepromBuffersCompareEquals && ((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)){
-        printk("\n\n           Something's wrong with the drive!\n           Jumping to Master Password Unlock sequence.");
-        if(!masterPasswordUnlockSequence(nIndexDrive)){
-            result = false;
-            verbose = true;
-        }
-    }
-    //We can try to go on with normal unlock procedure.
-    else{
-        //Password calculation error.
-        if (CalculateDrivePassword(nIndexDrive,password, eepromPtr)) {
-            printk("\n\n           Unable to calculate drive password - eeprom corrupt?");
-            if(eepromBuffersCompareEquals){
-                //Go to Master password unlock.
-                if(!masterPasswordUnlockSequence(nIndexDrive)){
-                    result = false;
-                    verbose = true;
-                }
-                else{
-                    result = true;
-                }
+    //HDD security has been disable (ie already have access?)
+    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004){
+        //Do not try Master password unlock if eeprom pointer isn't pointing to internal eeprom image.
+        if(internalEEPROM){
+	    printk("\n\n           Something's wrong with the drive!\n           Jumping to Master Password Unlock sequence.");
+	    if(masterPasswordUnlockSequence(nIndexDrive)){
+		result = 0;	//Sucess
+		verbose = true;
             }
             else{
-                verbose = true;
-                goto endExec;
+                result = -1;
             }
+            goto endExec;
         }
         else{
-            //Password calculation was successful.
-            if (DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_DISABLE, password)) {
-                //Calculated password is not the correct one for this drive.
-                printk("\n           Security disable failed!");
-                if(eepromBuffersCompareEquals){
-                    if(!masterPasswordUnlockSequence(nIndexDrive)){
-                        result = false;
-                        verbose = true;
-                    }
-                    else{
-                    	result = true;
-                    }
-                }
-                else{
-                    result = false;
-                    verbose = true;
-                }
-            }
-            else{
-                    result = true;
+            if(HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_UNLOCK, userPassword, false)){
+                printk("\n\n           Unlock drive failed. Supplied EEPROM is not good!");
+       	        result = -1;
+       	        goto endExec;
             }
         }
     }
-    if(result){
+    
+    
+    if(HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_DISABLE, userPassword, false)){
+        printk("\n\n           Unlock drive failed.");
+        printk("\n           Password used was:");
+        for(i = 0; i < strlen(userPassword); i++){
+            printk(" %02X", userPassword[i]);
+        }
+    	result = -1;
+    	goto endExec;
+    }
+    else result = 0;
+            
+    if(result == 0){
         //Unlock successful, read if there's a MBR, only if FATX formatted drive.
         if(FATXCheckFATXMagic(nIndexDrive)){
             // report on the MBR-ness of the drive contents
             tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
         }
         if(verbose)
-            printk("\n\n\n\n\n           \2This drive is now unlocked.\n\n");
+            printk("\n\n\n\n\n           \2This drive is now unlocked.\n");
     }
 
 endExec:
     if(verbose){
-        printk("           \2Press Button 'B' or 'Back' to continue");
+        printk("\2\n           \2Press Button 'B' or 'Back' to continue");
         while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
     }
     return result;
 }
 
 bool masterPasswordUnlockSequence(int nIndexDrive){
-    bool result = false;    //Assume not working.
     u8 i;
-    unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     const char * MasterPasswordList[] = {
             "TEAMASSEMBLY",
             "XBOXSCENE",
@@ -227,22 +196,22 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
     printk("\n           Trying Master Password unlock.");
     for(i = 0; i < 4; i++){
         if(!(tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0010)){           //Drive is not locked out.
-            if(!driveMasterPasswordUnlock(uIoBase, nIndexDrive, MasterPasswordList[i])){
+            if(HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_UNLOCK, (char *)MasterPasswordList[i], true)){
                 printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
             }
             else{
+                HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_DISABLE, (char *)MasterPasswordList[i], true);
                 printk("\n           Unlock Using Master Password %s successful.\n", MasterPasswordList[i]);
                 return true;
             }
         }
         else{
             printk("\n           Drive is locked out. No further unlock attempts possible.\n           Power cycle console to reset HDD state.\n");
-            i = 4;
             break;
         }
     }
     printk("\n          Master Password Unlock failed.\n          No suitable password found.\n");
-    return result;
+    return false;
 }
 
 

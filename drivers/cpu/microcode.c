@@ -323,8 +323,8 @@ void display_cpuid_update_microcode(void)
         pf = 1 << ((val[1] >> 18) & 7);
     }
 //    printk("\n\n");
-    printk("\n\n\n\n          microcode_info: sig = 0x%08X pf=0x%08X rev = 0x%08X\n",sig, pf, rev);
-    printk("          x86_model = 0x%04X x86_family = 0x%04X\n",x86_model, x86_family);
+//    printk("\n\n\n\n          microcode_info: sig = 0x%08X pf=0x%08X rev = 0x%08X\n",sig, pf, rev);
+//    printk("          x86_model = 0x%04X x86_family = 0x%04X\n",x86_model, x86_family);
   
     m = (struct microcode *)microcode_updates;
     // We have 2 microocde Tables

@@ -190,7 +190,7 @@ int getGameRegionValue(void){
 
     version = decryptEEPROMData((u8 *)&eeprom, baEepromDataLocalCopy);
 
-    if(version == 13)
+    if(version > V1_6)
         result = XBE_INVALID;
     else {
         memcpy(&gameRegion,&baEepromDataLocalCopy[28+16],4);
@@ -218,7 +218,7 @@ int setGameRegionValue(u8 value){
 
     version = decryptEEPROMData((u8 *)&eeprom, baEepromDataLocalCopy);
 
-    if (version == 13) return (-1);    //error, let's not do something stupid here. Leave with dignity.
+    if (version > V1_6) return (-1);    //error, let's not do something stupid here. Leave with dignity.
     //else we know the version
     memset(&RC4_key,0,sizeof(rc4_key));
     memcpy(&baEepromDataLocalCopy[28+16],&gameRegion,4);
@@ -255,7 +255,7 @@ u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf){
 
         // Static Version change not included yet
 
-        for (counter=9;counter<13;counter++)
+        for (counter=V1_0;counter<=V1_6;counter++)
         {
                 memset(&RC4_key,0,sizeof(rc4_key));
             memcpy(&baEepromDataLocalCopy[0], eepromPtr, 0x30);

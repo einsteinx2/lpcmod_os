@@ -18,8 +18,8 @@
 
 void AssertLockUnlock(void *driveId);
 void AssertLockUnlockFromNetwork(void *itemPtr);
-bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr);
-bool UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr);
+bool LockHDD(int nIndexDrive, bool verbos, unsigned char *eepromPtr);
+int UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr, bool internalEEPROM);
 bool masterPasswordUnlockSequence(int nIndexDrive);
 
 void DisplayHDDPassword(void *driveId);

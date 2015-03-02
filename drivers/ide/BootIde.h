@@ -79,6 +79,6 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 int driveSMARTRETURNSTATUS(int nDriveIndex);
 
-bool issue_SECURITY_UNLOCK_ATACommand(int nIndexDrive, u8 * eepromPtr);
+int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char * password, bool masterPassword);
 
 #endif

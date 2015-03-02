@@ -136,23 +136,25 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 free(fileBuf);
                 break;
             case EEPROM_NETFLASH:
-                netFlashOver = updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
+                updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
+                netFlashOver = 1;
+                UIFooter();
                 break;
             case HDD0LOCK_NETFLASH:
                 if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-                    UnlockHDD(0, 0, (u8 *)hs->bios_start);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
+                    UnlockHDD(0, 1, (u8 *)hs->bios_start, false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
                 }
                 else {
-                    LockHDD(0, 0, (u8 *)hs->bios_start);
+                    LockHDD(0, 1, (u8 *)hs->bios_start);
                 }
                 netFlashOver = 1;
                 break;
             case HDD1LOCK_NETFLASH:
                 if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-                    UnlockHDD(1, 0, (u8 *)hs->bios_start);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
+                    UnlockHDD(1, 1, (u8 *)hs->bios_start,false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
                 }
 		else {
-		    LockHDD(1, 0, (u8 *)hs->bios_start);
+		    LockHDD(1, 1, (u8 *)hs->bios_start);
 		}
                 netFlashOver = 1;
                 break;
