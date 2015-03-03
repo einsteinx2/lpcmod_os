@@ -50,7 +50,7 @@ void BootLCDSwitchType(void){
                     break;
                 case 2:
                     xLCD.Line1Start = 0x00;    //16x2, 2 Lines
-                    xLCD.Line2Start = xLCD.Line1Start + LPCmodSettings.LCDsettings.lineLength;
+                    xLCD.Line2Start = 0x40;
                     xLCD.Line3Start = 0xFF;
                     xLCD.Line4Start = 0xFF;
                     break;
