@@ -787,7 +787,7 @@ bool lcdBacklightFunction(u8 value){
 bool lcdPowerFunction(u8 value){
 	//printk("\n     lcdPower function called : %u",value);
     //printf("\n****LCD power %s", value ? "ON": "OFF");
-    LPCmodSettings.LCDsettings.enable5V = value? 1 : 0;
+    LPCmodSettings.LCDsettings.enable5V = (value? 1 : 0);
     assertInitLCD();
     return true;
 }

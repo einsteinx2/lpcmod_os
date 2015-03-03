@@ -477,7 +477,6 @@ u16 fHasHardware;
 //Globals to save value of LPC register
 u8 xF70ELPCRegister;
 u8 x00FFLPCRegister;
-u8 xF70FLPCRegister;
 
 bool TSOPRecoveryMode;
 

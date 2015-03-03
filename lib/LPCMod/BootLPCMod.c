@@ -173,7 +173,7 @@ void LPCMod_WriteIO(u8 port, u8 value){
     GenPurposeIOs.A19BufEn = (temp & 0x02) >> 1;
     GenPurposeIOs.EN_5V = (temp & 0x01);
 
-    WriteToIO(XBLAST_IO, (GenPurposeIOs.GPO3 << 7) | (GenPurposeIOs.GPO2 << 6) | (GenPurposeIOs.GPO1 << 5) | (GenPurposeIOs.GPO0 << 4) | GenPurposeIOs.EN_5V);
+    LPCMod_WriteGenPurposeIOs();
 }
 
 void LPCMod_FastWriteIO(u8 port, u8 value){
@@ -181,6 +181,11 @@ void LPCMod_FastWriteIO(u8 port, u8 value){
     GenPurposeIOs.GPO2 = (port & 0x04)? (value & 0x04) >> 2: GenPurposeIOs.GPO2;
     GenPurposeIOs.GPO1 = (port & 0x02)? (value & 0x02) >> 1: GenPurposeIOs.GPO1;
     GenPurposeIOs.GPO0 = (port & 0x01)? (value & 0x01) : GenPurposeIOs.GPO0;
+
+    LPCMod_WriteGenPurposeIOs();
+}
+
+void LPCMod_WriteGenPurposeIOs(void){
     WriteToIO(XBLAST_IO, (GenPurposeIOs.GPO3 << 7) | (GenPurposeIOs.GPO2 << 6) | (GenPurposeIOs.GPO1 << 5) | (GenPurposeIOs.GPO0 << 4) | GenPurposeIOs.EN_5V);
 }
 

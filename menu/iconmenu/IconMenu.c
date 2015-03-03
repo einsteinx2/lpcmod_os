@@ -340,14 +340,16 @@ bool IconMenu(void) {
                 if(LPCmodSettings.LCDsettings.customTextBoot == 0){
                     LPCMod_LCDBankString(bankString, selectedIcon->bankID);
                     xLCD.PrintLine[1](CENTERSTRING, bankString);
-                    if(temp != 0) {
-                        sprintf(timeoutString, "Auto boot in %ds", iconTimeRemain);
-                        xLCD.PrintLine[2](CENTERSTRING, timeoutString);
+                    if(LPCmodSettings.LCDsettings.nbLines >= 4){
+                        if(temp != 0) {
+                            sprintf(timeoutString, "Auto boot in %ds", iconTimeRemain);
+                            xLCD.PrintLine[2](CENTERSTRING, timeoutString);
+                        }
+                        else {
+                            xLCD.ClearLine(2);
+                        }
+                        xLCD.ClearLine(3);
                     }
-                    else {
-                        xLCD.ClearLine(2);
-                    }
-                    xLCD.ClearLine(3);
                 }
             }
             changed=0;

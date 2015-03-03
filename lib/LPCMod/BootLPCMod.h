@@ -31,6 +31,8 @@ void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct);
 void LPCMod_WriteIO(u8 port, u8 value);
 void LPCMod_FastWriteIO(u8 port, u8 value);
 
+void LPCMod_WriteGenPurposeIOs(void);
+
 void LPCMod_LCDBankString(char * string, u8 bankID);
 
 int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr);

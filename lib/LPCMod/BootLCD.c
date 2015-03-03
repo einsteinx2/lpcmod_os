@@ -40,34 +40,17 @@ void BootLCDSwitchType(void){
             xLCD.Line3Start = 0x40;
             xLCD.Line4Start = 0x60;
             break;
-        default:                                //HD44780 by default
-            switch(LPCmodSettings.LCDsettings.nbLines){
-                case 1:
-                    xLCD.Line1Start = 0x00;    //Single line
-                    xLCD.Line2Start = 0xFF;
-                    xLCD.Line3Start = 0xFF;
-                    xLCD.Line4Start = 0xFF;
-                    break;
-                case 2:
-                    xLCD.Line1Start = 0x00;    //16x2, 2 Lines
-                    xLCD.Line2Start = 0x40;
-                    xLCD.Line3Start = 0xFF;
-                    xLCD.Line4Start = 0xFF;
-                    break;
-                default:                       //20x4
-                    xLCD.Line1Start = 0x00;    //4 lines
-                    xLCD.Line2Start = 0x40;
-                    xLCD.Line3Start = xLCD.Line1Start + LPCmodSettings.LCDsettings.lineLength;
-                    xLCD.Line4Start = xLCD.Line2Start + LPCmodSettings.LCDsettings.lineLength;
-                    break;
-            }
+        default:                       //HD44780 by default
+            xLCD.Line1Start = 0x00;    //4 lines config is good for smaller LCD too.
+            xLCD.Line2Start = 0x40;
+            xLCD.Line3Start = xLCD.Line1Start + LPCmodSettings.LCDsettings.lineLength;
+            xLCD.Line4Start = xLCD.Line2Start + LPCmodSettings.LCDsettings.lineLength;
         }
 }
 
 void toggleEN5V(u8 value){
-    xF70FLPCRegister &= 0xFE;   //Remove bit setting regarding Enable_5V state
-    xF70FLPCRegister |= (value & 0x01);  //Add in proper bit if value if necessary.
-    WriteToIO(XBLAST_IO, xF70FLPCRegister);     //Write to LPC register
+    GenPurposeIOs.EN_5V = value;
+    LPCMod_WriteGenPurposeIOs();     //Write to LPC register
 }
 
 void setLCDContrast(u8 value){

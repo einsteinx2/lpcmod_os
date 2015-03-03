@@ -161,7 +161,6 @@ extern void BootResetAction ( void ) {
     xF70ELPCRegister = 0x03;       //Assume no control over the banks but we are booting from bank3
     x00FFLPCRegister = ReadFromIO(XODUS_CONTROL);       //Read A15 and D0 states.
                                                         //Should return 0x04 on normal boot, 0x08 on TSOP recovery.
-    xF70FLPCRegister = 0x00;       //Assume no output pins activated yet.
 
     TSOPRecoveryMode = 0;
     //TSOPRecoveryMode = (x00FFLPCRegister & 0x08) >> 3;  //If we booted and A15 was already set.
