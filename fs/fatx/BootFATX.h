@@ -165,7 +165,7 @@ typedef struct
 //int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
 //A decision has been made. Left it commented for "legacy" purposes.
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo);
-void PrintFAXPartitionTable(int nDriveIndex);
+void PrintFATXPartitionTable(int nDriveIndex);
 int FATXSignature(int nDriveIndex,unsigned int block);
 FATXPartition *OpenFATXPartition(int nDriveIndex,unsigned int partitionOffset,
                         u_int64_t partitionSize);

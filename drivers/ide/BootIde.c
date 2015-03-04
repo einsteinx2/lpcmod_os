@@ -104,9 +104,11 @@ const char * const szaSenseKeys[] = {
 int BootIdeWaitNotBusy(unsigned uIoBase)
 {
     u8 b = 0x80;                                //Start being busy
+    debugSPIPrint("Waiting for drive to return to not busy state.");
     while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
         b=IoInputByte(IDE_REG_ALTSTATUS(uIoBase));
     }
+    debugSPIPrint("Drive not busy. Error bit = %u", b&0x01);
     return b&0x01;         //bit0 == ERR
 }
 
@@ -124,13 +126,22 @@ int BootIdeWaitDataReady(unsigned uIoBase)
     //HDD's STATUS register until the necessary state is reached.
     do {
         if (((IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x88) == 0x08)){       //DRQ bit raised and BSY bit cleared.
-            if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;        //ERR bit raised, return 2.
+            debugSPIPrint("Drive reading to reply.");
+            if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01){
+                debugSPIPrint("Error bit raised.");
+                return 2;        //ERR bit raised, return 2.
+            }
+            debugSPIPrint("No error.");
             return 0;                                                           //Everything good, move on.
         }
         i--;
     } while (i != 0);
 
-    if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) return 2;                //ERR bit raised.
+    if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) {
+        debugSPIPrint("Error bit raised after timed out.");
+        return 2;                //ERR bit raised.
+    }
+    debugSPIPrint("Timeout error.");
     return 1;                                                                   //Timeout error.
 }
 
@@ -153,7 +164,7 @@ int BootIdeIssueAtaCommand(
      
      /* 48-bit LBA */   
         /* this won't hurt for non 48-bit LBA commands since we re-write these registers below */   
-    
+    debugSPIPrint("Issuing ATA command.");
     IoOutputByte(IDE_REG_SECTOR_COUNT(uIoBase), params->m_bCountSectorExt);   
     IoOutputByte(IDE_REG_SECTOR_NUMBER(uIoBase), params->m_bSectorExt);   
     IoOutputByte(IDE_REG_CYLINDER_LSB(uIoBase), params->m_wCylinderExt & 0xFF);   
@@ -206,6 +217,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
         debugSPIPrint("Ended with an error.");
         return 2;
     }
+    debugSPIPrint("Data read over. No error.");
     return 0;
 }
 
@@ -403,6 +415,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     
     {
             //printk_debug("  Drive %d: Not Ready\n", nIndexDrive);
+            debugSPIPrint("Drive returned error. Exiting init.");
             return 1;
     }
     //if(nIndexDrive) printk("\n      BootIdeWaitNotBusy");
@@ -410,15 +423,22 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {
     	//if(nIndexDrive) printk("\n      IDE_CMD_IDENTIFY");
+        debugSPIPrint("Drive is ATAPI, surely DVD drive.");
         BootIdeIssueAtaCommand(uIoBase, ATAPI_SOFT_RESET, &tsicp);
+        debugSPIPrint("Issuing ATAPI IDENTIFY command.");
         if (BootIdeIssueAtaCommand(uIoBase,IDE_CMD_PACKET_IDENTIFY,&tsicp)) {
+            debugSPIPrint("ATAPI IDENTIFY command returned error. Drive not detected. Halting!");
             //printk(" Drive %d: Not detected\n");
             return 1;
         }
         tsaHarddiskInfo[nIndexDrive].m_fAtapi=true;
+        debugSPIPrint("Succesfully identified ATAPI device.");
         //if(nIndexDrive) printk("\n      m_fAtapi=true");
     } 
-    else tsaHarddiskInfo[nIndexDrive].m_fAtapi=false;
+    else{
+        debugSPIPrint("Drive is not ATAPI, so IDE.");
+        tsaHarddiskInfo[nIndexDrive].m_fAtapi=false;
+    }
         
     BootIdeWaitDataReady(uIoBase);
     
@@ -467,6 +487,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
     if (tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
      // CDROM/DVD
+        debugSPIPrint("ATAPI device specific init routine.");
                 // We Detected a CD-DVD or so, as there are no Heads ...
         tsaHarddiskInfo[nIndexDrive].m_fAtapi=true;
 #ifndef SILENT_MODE
@@ -478,9 +499,14 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             tsaHarddiskInfo[nIndexDrive].m_szSerial,
             tsaHarddiskInfo[nIndexDrive].m_szFirmware);
 #endif
-
+        debugSPIPrint("hd%c: ", nIndexDrive+'a');
+        debugSPIPrint("    %s",tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
+        debugSPIPrint("    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
+        debugSPIPrint("    %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
+        debugSPIPrint("    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
         if (cromwell_config==CROMWELL) 
         {
+            debugSPIPrint("Reset ATAPI device specific requirement from cold boot.");
               // this is the only way to clear the ATAPI ''I have been reset'' error indication
             u8 ba[128];
             ba[2]=0x06;
@@ -501,6 +527,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         
         
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).
+        debugSPIPrint("IDE(HDD) device specific init routine.");
         unsigned long ulDriveCapacity1024=((tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal /1000)*512)/1000;
         
 #ifndef SILENT_MODE
@@ -513,6 +540,11 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             ulDriveCapacity1024/1000, ulDriveCapacity1024%1000 
         );
 #endif
+        debugSPIPrint("hd%c: ", nIndexDrive+'a');
+        debugSPIPrint("    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
+        debugSPIPrint("    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
+        debugSPIPrint("    %u.%uGB", ulDriveCapacity1024/1000, ulDriveCapacity1024%1000);
+
         tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
         tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = drive_info[92];
         
@@ -523,20 +555,28 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             	char userPassword[21];
             	CalculateDrivePassword(nIndexDrive, userPassword, (char *)&eeprom);
             	userPassword[20] = '\0';
+            	debugSPIPrint("Drive requires SECURITY_UNLOCK");
+            	debugSPIPrint("Calculated password: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+            	  userPassword[0], userPassword[1], userPassword[2], userPassword[3], userPassword[4], userPassword[5], userPassword[6], userPassword[7],
+            	  userPassword[8], userPassword[9], userPassword[10], userPassword[11], userPassword[12], userPassword[13], userPassword[14], userPassword[15],
+            	  userPassword[16], userPassword[17], userPassword[18], userPassword[19]);
                 HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_UNLOCK, userPassword, false);
             }
         }  
 
         //Useful for READ/WRITE_MLTIPLE commands
         tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = *((unsigned char*)&(drive_info[47]));
+        debugSPIPrint("HDD support multiple sector transfers of %u sectors per command", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);
 
         //ATA specs require that we send SET MULTIPLE MOD command at least once to enable MULTIPLE READ/WRITE
         //commands. We send the SET MULTIPLE MODE command with the default number of sector per block.
         //But first let's check if we need to. 
         //If bit8 of word 59 is set along with a valid sector/block value, we don't need to send command.
         if((tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer + 0x0100) != (drive_info[59]&0x01FF)){
+            debugSPIPrint("Setting HDD Mutimode sectors to maximum sector per transfer.");
             if(BootIdeSetMultimodeSectors(nIndexDrive, tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer)){
                 printk("\n\n\n\n\n\n\n\n              Unable to change Multimode's sectors per block.");
+                debugSPIPrint("Unable to change Multimode's sectors per block.");
                 wait_ms(3000);
                 return 1;
             }
@@ -544,10 +584,12 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         if (drive_info[49] & 0x400) 
         { 
             /* bit 10 of capability word is IORDY supported bit */
+            debugSPIPrint("IORDY control bit supported.");
             tsaHarddiskInfo[nIndexDrive].m_bIORDY = 1;
         }
 
         tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = *((unsigned int*)&(drive_info[67]));       //Value in ns
+        debugSPIPrint("Minimum PIO cycle for HDD is %u.", tsaHarddiskInfo[nIndexDrive].m_minPIOcycle);
         //Set fastest PIO mode depending on cycle time supplied by HDD.
 
 
@@ -605,6 +647,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x3F3F0000);
         }
         else*/ if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383){   //Mode1
+            debugSPIPrint("Trying to set PIO mode 1.");
             n = BootIdeSetTransferMode(nIndexDrive, 0x09);
             //Mode1 timing specs are as follow:
             //Register 0x48, set at 0x65656565 for all drives(4)
@@ -620,6 +663,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x4F4F0055);
         }
         else{                                                         //Mode0
+            debugSPIPrint("Trying to set PIO mode 0 (default).");
             n = BootIdeSetTransferMode(nIndexDrive, 0x08);
             //Mode0 timing specs are as follow:
             //Register 0x48, set at 0xA8A8A8A8 for all drives(4)
@@ -635,6 +679,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x5F5F00AA);
         }
         if(n){
+            debugSPIPrint("BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
             printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
         }
 
@@ -653,19 +698,25 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //Then we would be ready to put some data in memory and send DMA R/W commands to HDD.
 */
     }
+
+    debugSPIPrint("Common init routine for both IDE and ATAPI devices.");
     if (drive_info[49] & 0x200) 
     { 
         /* bit 9 of capability word is lba supported bit */
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_LBA;
+        debugSPIPrint("Drive is accessed by LBA.");
     } else {
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_CHS;
+        debugSPIPrint("Drive is accessed by CHS(seriously?).");
     }
 
     //If drive is a hard disk, see what type of partitioning it has.
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
 	if(!(tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)){
+	    debugSPIPrint("HDD is not locked. Attempting to read FATX magic string");
             if(FATXCheckFATXMagic(nIndexDrive)){
                 // report on the MBR-ness of the drive contents
+                debugSPIPrint("Drive is FATX.");
                 tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
             }
         }
@@ -673,11 +724,14 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Check if drive support S.M.A.R.T.
         tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = drive_info[82] & 0x0001;
         if(tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities){
+            debugSPIPrint("Drive support S.M.A.R.T..");
             //Is S.M.A.R.T. enabled?
             tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled = drive_info[85] & 0x0001;
+            debugSPIPrint("S.M.A.R.T. is %s.", tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled ? "enabled" : "disabled");
             //Bit0 : Support Error Logging.
             //Bit1 : Support S.M.A.R.T. Self-tests.
             tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported = drive_info[84] & 0x0003;
+            debugSPIPrint("Drive support S.M.A.R.T. %s%s.", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x1) ? "error logging" : "", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x2) ? "self-tests" : "");
         }
 /*
         if(FATXCheckMBR(nIndexDrive)) {
@@ -695,7 +749,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         printk("\n");
 */
     } 
-
+    debugSPIPrint("Drive init done.");
     return 0;
 }
 
@@ -922,7 +976,9 @@ int BootIdeInit(void)
     IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
     //Init both master and slave
 
+    debugSPIPrint("IDE init for Master drive");
     BootIdeDriveInit(IDE_BASE1, 0);
+    debugSPIPrint("IDE init for Slave drive");
     BootIdeDriveInit(IDE_BASE1, 1);
         
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi)
@@ -933,20 +989,24 @@ int BootIdeInit(void)
         tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
         IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
+        debugSPIPrint("Reading IDE cable information through Master drive");
         if(!BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) 
         {
             u16 waBuffer[256];
             BootIdeWaitDataReady(uIoBase);
+            debugSPIPrint("Read data back from Master drive");
             if(!BootIdeReadData(uIoBase, (u8 *)&waBuffer[0], IDE_SECTOR_SIZE)) 
             {
 //                printk("%04X ", waBuffer[80]);
                 if( ((waBuffer[93]&0xc000)!=0) && ((waBuffer[93]&0x8000)==0) && ((waBuffer[93]&0xe000)!=0x6000))     
                 {
+                    debugSPIPrint("Detected 80-conductors IDE cable");
                     tsaHarddiskInfo[0].m_bCableConductors=80;
                 }
 
             } else {
                 //printk("Error getting final GET_INFO\n");
+                debugSPIPrint("Error getting data from IDENTIFY command");
             }
         }
     }
@@ -955,6 +1015,7 @@ int BootIdeInit(void)
     {
 #ifndef SILENT_MODE
         printk("UDMA2\n");
+        debugSPIPrint("IDE cable limits UDMA support to UDMA2.");
 #endif
     } else 
     {
@@ -967,8 +1028,9 @@ int BootIdeInit(void)
 #ifndef SILENT_MODE
         printk("UDMA%d\n", nAta);
 #endif
+        debugSPIPrint("UDMA%u supported by Master drive", nAta);
     }
-
+    debugSPIPrint("IDE init done for both Master and Slave");
     return 0;
 }
 
@@ -1134,7 +1196,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             }
         }
 
-	debugSPIPrint("No error detected before request.");
+		debugSPIPrint("No error remaining before request.");
         BootIdeWaitNotBusy(uIoBase);
 
         if(n_bytes<2048) 
@@ -1154,10 +1216,11 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         ba[7]=0; 
         ba[8]=1;
 
-	debugSPIPrint("Issuing ATAPI command and packet.");
+	    debugSPIPrint("Issuing ATAPI command and packet.");
+	    
         if(BootIdeIssueAtapiPacketCommandAndPacket(nDriveIndex, ba)) 
         {
-            debugSPIPrint("Unable to issue ATAPI command.");
+            debugSPIPrint("Unable to issue ATAPI command. Halting.");
 //            printk("BootIdeReadSector Unable to issue ATAPI command\n");
             return 1;
         }
@@ -1175,6 +1238,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         {
             while(1) 
             {
+            	//XXX: Reduce wait delay length?
                 debugSPIPrint("More data to be read.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, pbBuffer, nReturn);                
@@ -1258,6 +1322,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         } else {
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
+                //XXX: Reduce wait delay length?
                 debugSPIPrint("Error reading data, retrying.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, baBufferSector, IDE_SECTOR_SIZE);
@@ -1277,6 +1342,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         if (status!=0) {
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
+                //XXX: Reduce wait delay length?
             	debugSPIPrint("Error reading data, retrying.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);        
@@ -1288,6 +1354,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         }
     }
     debugSPIPrint("Reading from ATA device over.");
+    return 0;
 }
 
 /* -------------------------------------------------------------------------------- */
@@ -1849,6 +1916,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     memset(ide_cmd_data,0x00,512);
     
     if(masterPassword && (ATACommand == IDE_CMD_SECURITY_UNLOCK || ATACommand == IDE_CMD_SECURITY_DISABLE)){
+        debugSPIPrint("Setting bit for Master Password usage.");
     	//Set master password flag
     	ide_cmd_data[0]|=0x01;
     }
@@ -1860,8 +1928,10 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     //}
     memcpy(&ide_cmd_data[2],password,strlen(password));
 
-    if(masterPassword && tsaHarddiskInfo[nIndexDrive].m_masterPassSupport != 0xFFFF && ATACommand == IDE_CMD_SECURITY_SET_PASSWORD)
+    if(masterPassword && tsaHarddiskInfo[nIndexDrive].m_masterPassSupport != 0xFFFF && ATACommand == IDE_CMD_SECURITY_SET_PASSWORD){
         ide_cmd_data[34] = 1;
+        debugSPIPrint("HDD support MasterPassword Index. Setting this to \"1\".");
+    }
 
     if(BootIdeIssueAtaCommand(uIoBase, ATACommand, &tsicp)){
         //printk("\n          Issue ATA command failed.");
@@ -1878,6 +1948,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     }
     
     // check that we are unlocked
+    debugSPIPrint("Security change command sent. Refreshing drives properties.");
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) 
     {
         //printk("\n          Issue IDENTIFY  ATA command failed.");

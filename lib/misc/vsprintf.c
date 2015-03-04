@@ -360,6 +360,7 @@ int sprintf(char * buf, const char *fmt, ...)
     return i;
 }
 
+#ifdef SPITRACE
 void printTextSPI(const char * functionName, char * buffer, ...){
     unsigned char pos;
     char i;
@@ -393,3 +394,4 @@ void printTextSPI(const char * functionName, char * buffer, ...){
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
     }
 }
+#endif

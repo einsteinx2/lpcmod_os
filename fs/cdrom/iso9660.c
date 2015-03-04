@@ -17,7 +17,7 @@ int isupper( int ch )
     return (unsigned int)(ch - 'A') < 26u;
 }
 
-strip_blank(char *buffer, unsigned char len) {
+void strip_blank(char *buffer, unsigned char len) {
     unsigned char i;
     for(i = len; i > 0; i--) {
         if(buffer[i] != ' ') {

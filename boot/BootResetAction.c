@@ -310,8 +310,7 @@ extern void BootResetAction ( void ) {
        LPCmodSettings.LCDsettings.displayMsgBoot > 1 ||
        LPCmodSettings.LCDsettings.customTextBoot > 1 ||
        LPCmodSettings.LCDsettings.displayBIOSNameBoot > 1 ||
-       (LPCmodSettings.firstScript.ScripMagicNumber&0xFFF0) != 0xFAF0 ||
-       LPCmodSettings.firstScript.nextEntryPosition > (0x3FDFC - 0x3F000 - sizeof(_LPCmodSettings) - sizeof(_scriptEntry))){
+       (LPCmodSettings.firstScript.ScripMagicNumber&0xFFF0) != 0xFAF0){
             debugSPIPrint("No persistent OS settings found on flash. Creating default settings.");
             fFirstBoot = true;
             initialLPCModOSBoot(&LPCmodSettings);                //No settings for LPCMod were present in flash.
@@ -450,6 +449,9 @@ extern void BootResetAction ( void ) {
         }
         debugSPIPrint("No Quickboot or EjectButton boot this time.");
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+    }
+    else{
+        debugSPIPrint("First boot so no script or bank loading before going to OS at least once.");
     }
     // Load and Init the Background image
     // clear the Video Ram

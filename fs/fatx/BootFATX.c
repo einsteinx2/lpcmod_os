@@ -267,7 +267,7 @@ int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo
     return false;
 }
 
-void PrintFAXPartitionTable(int nDriveIndex) {
+void PrintFATXPartitionTable(int nDriveIndex) {
     FATXPartition *partition = NULL;
     FATXFILEINFO fileinfo;
 
@@ -921,18 +921,24 @@ int FATXCheckMBR(u8 driveId){
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
         printk("\n\n\n           FATXCheckMBR : Unable to read MBR sector\n");
+        debugSPIPrint("Unable to read MBR sector (0).");
         return 0;
     }
     else{
         for(i = 0; i < 48; i++){
-            if(ba[i] != sourceTable[i])         //Contains generic MBR header
+            if(ba[i] != sourceTable[i]){         //Contains generic MBR header
+                debugSPIPrint("Partition table header not properly constructed.");
                 return 0;                       //First 48 bytes should always be identical for every Part tables.
+            }
         }
         for(i = 48; i < 208; i++){
-            if(ba[i] != sourceTable[i])         //Contains standard Xbox Partitions (C,E,X,Y,Z)
+            if(ba[i] != sourceTable[i]){         //Contains standard Xbox Partitions (C,E,X,Y,Z)
+                debugSPIPrint("Partition table base entries(C,E,X,Y,Z) not standard.");
                 return -1;                      //If basic partition entries contains unconventional values, return error.
+            }
         }
     }
+    debugSPIPrint("Drive has valid MBR partition table.");
     return 1;
 }
 
@@ -940,6 +946,7 @@ int FATXCheckFATXMagic(u8 driveId){
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x03, 0, 512)) {
         printk("\n\n\n           FATXCheckFATXMagic : Unable to read MBR sector\n");
+        debugSPIPrint("Unable to read FATX sector (3).");
         return 0;
     }
     if((ba[0]=='B') && (ba[1]=='R') && (ba[2]=='F') && (ba[3]=='R')){

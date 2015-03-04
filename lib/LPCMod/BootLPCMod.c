@@ -270,7 +270,7 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
         &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
         
 
-IPsettingsPtrArray[0] =
+        IPsettingsPtrArray[0] =
         tempLPCmodSettings->OSsettings.staticIP;
         IPsettingsPtrArray[1] =
         tempLPCmodSettings->OSsettings.staticGateway;
@@ -282,7 +282,7 @@ IPsettingsPtrArray[0] =
         tempLPCmodSettings->OSsettings.staticDNS2;
 
 
-textSettingsPtrArray[0] = 
+        textSettingsPtrArray[0] =
         tempLPCmodSettings->OSsettings.biosName0;
         textSettingsPtrArray[1] = 
         tempLPCmodSettings->OSsettings.biosName1;
@@ -300,7 +300,7 @@ textSettingsPtrArray[0] =
         tempLPCmodSettings->LCDsettings.customString3;
 
 
-specialCasePtrArray[0] =
+        specialCasePtrArray[0] =
         &(tempLPCmodSettings->OSsettings.activeBank);
         specialCasePtrArray[1] =
         &(tempLPCmodSettings->OSsettings.altBank);
