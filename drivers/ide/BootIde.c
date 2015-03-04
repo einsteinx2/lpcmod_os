@@ -183,9 +183,9 @@ int BootIdeIssueAtaCommand(
 int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 {
     u16 * ptr = (u16 *) buf;
-
+    debugSPIPrint("Reading %u bytes.", size);
     if (BootIdeWaitDataReady(uIoBase)) {
-        //printk("BootIdeReadData data not ready...\n");
+        debugSPIPrint("Data not ready..");
         return 1;
     }
 
@@ -203,7 +203,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 
     IoInputByte(IDE_REG_STATUS(uIoBase));
     if(IoInputByte(IDE_REG_ALTSTATUS(uIoBase)) & 0x01) {
-        //printk("BootIdeReadData ended with an error\n");
+        debugSPIPrint("Ended with an error.");
         return 2;
     }
     return 0;
@@ -1095,6 +1095,8 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     int status;
     unsigned char ideReadCommand = IDE_CMD_READ_MULTI_RETRY; /* 48-bit LBA */
     
+    debugSPIPrint("Read %u bytes on sector %u from drive %u", n_bytes, block, nDriveIndex);
+    
     if(!tsaHarddiskInfo[nDriveIndex].m_fDriveExists) return 4;
 
     uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
@@ -1106,6 +1108,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         (tsaHarddiskInfo[nDriveIndex].m_fDriveExists == 0))
     {
         //printk("unknown drive\n");
+        debugSPIPrint("Unknown drive. Halting.");
         return 1;
     }
 
@@ -1114,7 +1117,9 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
                    // CD - DVD ROM
         u8 ba[12];
         int nReturn;
-
+	
+	debugSPIPrint("Drive is DVD drive.");
+	
         IoInputByte(IDE_REG_STATUS(uIoBase));
         if(IoInputByte(IDE_REG_STATUS(uIoBase)&1)) 
         {     // sticky error
@@ -1129,6 +1134,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             }
         }
 
+	debugSPIPrint("No error detected before request.");
         BootIdeWaitNotBusy(uIoBase);
 
         if(n_bytes<2048) 
@@ -1148,8 +1154,10 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         ba[7]=0; 
         ba[8]=1;
 
+	debugSPIPrint("Issuing ATAPI command and packet.");
         if(BootIdeIssueAtapiPacketCommandAndPacket(nDriveIndex, ba)) 
         {
+            debugSPIPrint("Unable to issue ATAPI command.");
 //            printk("BootIdeReadSector Unable to issue ATAPI command\n");
             return 1;
         }
@@ -1161,22 +1169,27 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 //        printk("nReturn = %x\n", nReturn);
 
         if(nReturn>2048) nReturn=2048;
+        debugSPIPrint("Reading data from ATAPI drive.");
         status = BootIdeReadData(uIoBase, pbBuffer, nReturn);
         if (status != 0) 
         {
             while(1) 
             {
+                debugSPIPrint("More data to be read.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, pbBuffer, nReturn);                
                 if (status == 0) 
                 {
+                    debugSPIPrint("Data reading is over.");
                     break;
                 }
             }
         }
+        debugSPIPrint("Successful reading from ATAPI drive.");
         return 0;
     }
 
+    debugSPIPrint("Device is ATA (HDD) drive.");
     if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8) 
     {
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
@@ -1191,7 +1204,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     if( block >= 0x10000000 ) 
     {     
         /* 48-bit LBA access required for this block */ 
-        
+        debugSPIPrint("LBA48 disk access required.");
         tsicp.m_bCountSectorExt = 0;   
         
          /* This routine can have a max LBA of 32 bits (due to unsigned int data type used for block parameter) */   
@@ -1205,9 +1218,10 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     
     } else {
             // Looks Like we do not have LBA 48 need
+            debugSPIPrint("Legacy LBA28/CHS reading is used.");
             if (tsaHarddiskInfo[nDriveIndex].m_bLbaMode == IDE_DH_CHS) 
             { 
-
+		debugSPIPrint("Drive is accessed by CHS(wtf).");
             track = block / tsaHarddiskInfo[nDriveIndex].m_wCountSectorsPerTrack;
             
             tsicp.m_bSector = 1+(block % tsaHarddiskInfo[nDriveIndex].m_wCountSectorsPerTrack);
@@ -1235,16 +1249,21 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     
     if (n_bytes != IDE_SECTOR_SIZE)
     {
+    	debugSPIPrint("Requests was made for %u bytes.", n_bytes);
         status = BootIdeReadData(uIoBase, baBufferSector, IDE_SECTOR_SIZE);
         if (status == 0) {
+            debugSPIPrint("Read everything we came for.");
             memcpy(pbBuffer, baBufferSector+byte_offset, n_bytes);
         
         } else {
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
+                debugSPIPrint("Error reading data, retrying.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, baBufferSector, IDE_SECTOR_SIZE);
                 if (status == 0) {
+                    debugSPIPrint("Reading data finally over.");
+                    debugSPIPrint("Copying %u bytes to output buffer starting from offset %u.", n_bytes, byte_offset);
                     memcpy(pbBuffer, baBufferSector+byte_offset, n_bytes);
                     break;
                 }
@@ -1253,20 +1272,22 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         }
     
     } else {
-    
+    	debugSPIPrint("Request was made for exactly one sector(512 bytes) .");
         status = BootIdeReadData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
         if (status!=0) {
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
+            	debugSPIPrint("Error reading data, retrying.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);        
                 if (status == 0) {
+                    debugSPIPrint("Reading data finally over.");
                     break;
                 }
             }
         }
     }
-    return status;
+    debugSPIPrint("Reading from ATA device over.");
 }
 
 /* -------------------------------------------------------------------------------- */

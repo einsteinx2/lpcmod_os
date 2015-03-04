@@ -318,19 +318,19 @@ void textMenuLCDPrint(TEXTMENU *menu, TEXTMENUITEM *selectedItem){
             xLCD.PrintLine[1](JUSTIFYLEFT, menu->szCaption);
             titleLine[xLCD.LineSize] = 0;                    //End of line character.
             memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
-            if(LPCmodSettings.LCDsettings.nbLines >= 4){
-                for(i = 0; i < strlen(selectedItem->szCaption); i++){
-                    if(selectedItem->szCaption[i] == ':' && i >= 7){	       //Quick fix to display F: and G: drive strings in their entirety
-                        if( i < xLCD.LineSize)                                     //as they would be cut off by this logic on the LCD.
-                            titleLine[i] = selectedItem->szCaption[i];             //Copy characters as long as we're under 20 characters or no ':' was encountered.
-                        colon = true;
-                        break;                                                     //Leave the for-loop as no other character will be printed on this line.
-                    }
-                    else{
-                        if( i < xLCD.LineSize)
-                            titleLine[i] = selectedItem->szCaption[i];             //Print out the ':' character anyway.
-                    }
+            for(i = 0; i < strlen(selectedItem->szCaption); i++){
+                if(selectedItem->szCaption[i] == ':' && i >= 7){	       //Quick fix to display F: and G: drive strings in their entirety
+                    if( i < xLCD.LineSize)                                     //as they would be cut off by this logic on the LCD.
+                        titleLine[i] = selectedItem->szCaption[i];             //Copy characters as long as we're under 20 characters or no ':' was encountered.
+                    colon = true;
+                    break;                                                     //Leave the for-loop as no other character will be printed on this line.
                 }
+                else{
+                    if( i < xLCD.LineSize)
+                        titleLine[i] = selectedItem->szCaption[i];             //Print out the ':' character anyway.
+                }
+            }
+            if(LPCmodSettings.LCDsettings.nbLines >= 4){
                 xLCD.PrintLine[2](JUSTIFYLEFT, titleLine);
                 if(colon) {
                     memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.

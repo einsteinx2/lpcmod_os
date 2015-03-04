@@ -293,6 +293,7 @@ void DisplayHDDInfo(void *driveId) {
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
     u8 clusterSize;
     u32 partSize;
+    debugSPIPrint("Display HDD info for %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
 
     printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
 
@@ -308,11 +309,14 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
     if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr){
+        debugSPIPrint("MBR detected on %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
         if(BootIdeReadSector(nIndexDrive, &MBRBuffer[0], 0x00, 0, 512)) {
-            VIDEO_ATTR=0xffff0000;
+            //VIDEO_ATTR=0xffff0000;
+            debugSPIPrint("Unable to read MBR sector...");
             printk("\n\1                Unable to read MBR sector...\n");
         }
         else{
+            debugSPIPrint("MBR sector read. Printing results on screen.");
             for(i = 0; i < 7; i++){     //Print only info for C, E, F, G, X, Y and Z
                 if(mbr->TableEntries[i].Name[0] != ' ' && mbr->TableEntries[i].LBAStart != 0){          //Valid partition entry only
                     printk("\n\1                 %s", mbr->TableEntries[i].Name);
