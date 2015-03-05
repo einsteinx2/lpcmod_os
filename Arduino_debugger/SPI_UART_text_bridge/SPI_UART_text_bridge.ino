@@ -1,6 +1,6 @@
 //Small sketch to read debug data coming from XBlast OS
 //Through the GPO ports of XBlast modchip.
-//XBlast sends data via bit-banged SPI at 166KHz, MSB first, 
+//XBlast sends data via bit-banged SPI at max 166KHz, MSB first, 
 //data latched on rising edge and idle clock to low.
 //Arduino relay SPI-in data to UART-out. This way, text can be
 //picked up in a terminal on your computer.
@@ -15,9 +15,13 @@
 
 #include <SPI.h>
 
-char buf [200];
-volatile byte pos;
-volatile boolean process_it;
+char buf;
+volatile byte posCurrentLine;
+//No circular buffer for now.
+//volatile byte posSPIin;
+//volatile byte posSerialout;
+volatile boolean sendNewLine;
+volatile boolean sendCharacter;
 
 void setup (void)
 {
@@ -33,8 +37,11 @@ void setup (void)
   SPCR |= _BV(SPE);
   
   // get ready for an interrupt 
-  pos = 0;   // buffer empty
-  process_it = false;
+  posCurrentLine = 0;   // buffer empty
+  //posSPIin = 0;
+  //posSerialout = 0;
+  sendNewLine = false;
+  sendCharacter = false;
 
   // now turn on interrupts
   SPI.attachInterrupt();
@@ -45,28 +52,26 @@ void setup (void)
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-byte c = SPDR;  // grab byte from SPI Data Register
-  
-  // add to buffer if room
-  if (pos < sizeof buf)
-    {
-    buf [pos++] = c;  //SPI is MSB first and UART is LSB first
-    
-    if (c == '\0' || pos == sizeof buf)
-      process_it = true;
-      
+    buf = SPDR;  // grab byte from SPI Data Register
+    posCurrentLine += 1;
+    if (buf == '\0' || posCurrentLine >= 200){
+        sendNewLine = true;
+        posCurrentLine = 0;
     }
+    sendCharacter = true;
 }
 
 // main loop - wait for flag set in interrupt routine
 void loop (void)
 {
-  if (process_it)
+  if (sendCharacter)
   {
-    buf [pos] = 0;  
-    Serial.println (buf);
-    pos = 0;
-    process_it = false;
+    Serial.print(buf);
+    if(sendNewLine == true){
+        Serial.println();
+        sendNewLine = false;  
+    }
+    sendCharacter = false;
   }
     
 }
