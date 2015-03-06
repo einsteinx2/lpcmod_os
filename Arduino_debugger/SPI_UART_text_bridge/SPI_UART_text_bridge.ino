@@ -16,16 +16,16 @@
 #include <SPI.h>
 
 char buf;
-volatile byte posCurrentLine;
+//volatile byte posCurrentLine;
 //No circular buffer for now.
 //volatile byte posSPIin;
 //volatile byte posSerialout;
-volatile boolean sendNewLine;
+//volatile boolean sendNewLine;
 volatile boolean sendCharacter;
 
 void setup (void)
 {
-  Serial.begin (115200);   // print on terminal
+  Serial.begin(115200);   // print on terminal
   Serial.println("XBlast SPI debugger");
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
@@ -37,10 +37,10 @@ void setup (void)
   SPCR |= _BV(SPE);
   
   // get ready for an interrupt 
-  posCurrentLine = 0;   // buffer empty
+  //posCurrentLine = 0;   // buffer empty
   //posSPIin = 0;
   //posSerialout = 0;
-  sendNewLine = false;
+  //sendNewLine = false;
   sendCharacter = false;
 
   // now turn on interrupts
@@ -53,11 +53,6 @@ void setup (void)
 ISR (SPI_STC_vect)
 {
     buf = SPDR;  // grab byte from SPI Data Register
-    posCurrentLine += 1;
-    if (buf == '\0' || posCurrentLine >= 200){
-        sendNewLine = true;
-        posCurrentLine = 0;
-    }
     sendCharacter = true;
 }
 
@@ -67,11 +62,11 @@ void loop (void)
   if (sendCharacter)
   {
     Serial.print(buf);
-    if(sendNewLine == true){
+    if(buf == '\0'){
         Serial.println();
-        sendNewLine = false;  
     }
     sendCharacter = false;
   }
     
 }
+

@@ -392,6 +392,7 @@ void printTextSPI(const char * functionName, char * buffer, ...){
         }
         LPCMod_FastWriteIO(0x2, 0); //CLK to '0'.
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
+        wait_us(60);
     }
 }
 #endif

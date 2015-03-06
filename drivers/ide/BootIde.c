@@ -1339,6 +1339,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     } else {
     	debugSPIPrint("Request was made for exactly one sector(512 bytes) .");
         status = BootIdeReadData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
+        debugSPIPrint("BootIdeReadData returns %u.", status);
         if (status!=0) {
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
