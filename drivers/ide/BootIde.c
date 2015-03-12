@@ -200,10 +200,12 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
         return 1;
     }
 
+    debugSPIPrint("Data Ready, fetching %u bytes.", size);
     while (size > 1) {
         *ptr++ = IoInputWord(IDE_REG_DATA(uIoBase));
         size -= 2;
     }
+    debugSPIPrint("Data fetch over. Everything is in \"ptr\" buffer.");
 
     //32 32bits read from the controller.
 /*    while (size > 3) {
