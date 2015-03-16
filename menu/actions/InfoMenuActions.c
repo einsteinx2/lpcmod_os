@@ -16,25 +16,26 @@
 
 
 void ShowTemperature(void *whatever) {
-    int c, cx;
-    int f, fx;
+    int c, cx, cg;
+    int f, fx, fg;
     InfoHeader("Temperature");
-    if (I2CGetTemperature(&c, &cx)) {
-        f = ((9.0 / 5.0) * c) + 32.0;
+    I2CGetTemperature(&c, &cx, &cg);
+    f = ((9.0 / 5.0) * c) + 32.0;
+    fg = ((9.0 / 5.0) * cg) + 32.0;
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("CPU temperature: ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%d°C / %d°F\n           ", c, f);
+    VIDEO_ATTR=0xffc8c8c8;
+    printk("GPU temperature: ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%d°C / %d°F\n           ", cg, fg);
+    if(cx > -273)
+    {
         fx = ((9.0 / 5.0) * cx) + 32.0;
-        VIDEO_ATTR=0xffc8c8c8;
-        printk("CPU temperature: ");
-        VIDEO_ATTR=0xffc8c800;
-        printk("%d�C / %d�F\n           ", c, f);
-        VIDEO_ATTR=0xffc8c8c8;
         printk("Board temperature: ");
         VIDEO_ATTR=0xffc8c800;
-        printk("%d�C / %d�F", cx, fx);
-    } else {
-        VIDEO_ATTR=0xffff0000;
-      printk("Error getting temperatures!  ");
-        VIDEO_ATTR=0xffc8c8c8;
-        printk("This does not work on Xbox v1.6+.");
+        printk("%d°C / %d°F", cx, fx);
     }
     UIFooter();
 }
@@ -61,6 +62,14 @@ void ShowEeprom(void *whatever) {
 void ShowFlashChip(void *whatever) {
     InfoHeader("Flash device");
     BootShowFlashDevice();
+    UIFooter();
+}
+
+void ShowCPUInfo(void *whatever){
+    InfoHeader("CPU info");
+    printk("CPU Frequency: ");
+    VIDEO_ATTR=0xffc8c800;
+    printk("%4.2f MHz\n", getCPUFreq());
     UIFooter();
 }
 

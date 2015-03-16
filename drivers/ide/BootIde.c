@@ -107,7 +107,7 @@ int BootIdeWaitNotBusy(unsigned uIoBase)
     //debugSPIPrint("Waiting for drive to return to not busy state.");
     while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
         b=IoInputByte(IDE_REG_STATUS(uIoBase));
-        if(b == 0 || b&0x20)	//No device
+        if(b == 0 || (b&0x20))	//No device
             return -1;
     }
     //debugSPIPrint("Drive not busy. Error bit = %u", b&0x01);
@@ -159,10 +159,10 @@ int BootIdeIssueAtaCommand(
     //IoInputByte(IDE_REG_STATUS(uIoBase));     //No need since we'll be checking ALT_STATUS register in BootIdeWaitNotBusy function.
 
     n=BootIdeWaitNotBusy(uIoBase);
-//    if(n)    {// as our command may be being used to clear the error, not a good policy to check too closely!
-//        printk("error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
-//        return 1;
-//    }
+    if(n == -1)    {// as our command may be being used to clear the error, not a good policy to check too closely!
+        debugSPIPrint("Error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
+        return n;
+    }
      
      /* 48-bit LBA */   
         /* this won't hurt for non 48-bit LBA commands since we re-write these registers below */   
@@ -183,9 +183,9 @@ int BootIdeIssueAtaCommand(
 //    wait_smalldelay();
 
     n=BootIdeWaitNotBusy(uIoBase);
-    if(n)    {
+    if(n){
 //        printk("\n      error on BootIdeIssueAtaCommand wait 3: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
-        debugSPIPrint("Waiting for good status reg returned error : %d", n);
+        debugSPIPrint("Error on BootIdeIssueAtaCommand wait 2: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
         return n;
     }
 
@@ -426,7 +426,6 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             return 1;
     }
 */    
-    wait_ms(1);
     
     n=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp);
     

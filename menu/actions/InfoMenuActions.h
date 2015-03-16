@@ -13,6 +13,7 @@ void ShowTemperature(void *);
 void ShowVideo(void *);
 void ShowEeprom(void *);
 void ShowFlashChip(void *);
+void ShowCPUInfo(void *whatever);
 void InfoHeader(char *title);
 
 #endif

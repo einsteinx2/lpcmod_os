@@ -63,3 +63,6 @@
 #define DEV_FEATURES 1
 
 #define SPITRACE
+
+//Print info from Int handlers. Absolutely remove when not debugging interrupts!
+//#define SPI_INT_TRACE

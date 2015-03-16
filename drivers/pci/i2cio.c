@@ -202,16 +202,65 @@ extern int I2cSetFrontpanelLed(u8 b)
     return ERR_SUCCESS;
 }
 
-bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp)
+bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp, int * pGPUTemp)
 {
-    *pnLocalTemp=I2CTransmitByteGetReturn(0x4c, 0x01);
-    *pExternalTemp=I2CTransmitByteGetReturn(0x4c, 0x00);
+    u8 cpuTempCount = 0;
+    u8 cpu, cpudec;
+    float temp1, cpuFrac = 0.0;
+
+    ReadfromSMBus(0x20, 0x0A, 0, pGPUTemp);
+
+    if(mbVersion != REV1_6){
+        *pnLocalTemp=I2CTransmitByteGetReturn(0x4c, 0x01);
+        *pExternalTemp=I2CTransmitByteGetReturn(0x4c, 0x00);
+    }
+    else{
+        //1.6 specific Temperature code.
+        //No motherboard temperature sensor?
+        *pExternalTemp = -273;
+        //GPU trim
+        *pGPUTemp *= 0.8f;    //Might be unnecessary.
+
+        //Fetch CPU temp
+        while(cpuTempCount < 10){
+            // if its a 1.6 then we get the CPU temperature from the xcalibur
+            IoOutputByte(0xc004, (0x70 << 1) | 0x01);  // address
+            IoOutputByte(0xc008, 0xC1);                // command
+            IoOutputWord(0xc000, IoInputWord(0xc000));      // clear errors
+            IoOutputByte(0xc002, 0x0d);                // start block transfer
+            while ((IoInputByte(0xc000) & 8));         // wait for response
+
+            if (!(IoInputByte(0xc000) & 0x23)) // if there was a error then just skip this read..
+            {
+                IoInputByte(0xc004);                       // read out the data reg (no. bytes in block, will be 4)
+                cpudec = IoInputByte(0xc009);              // first byte
+                cpu    = IoInputByte(0xc009);              // second byte
+                IoInputByte(0xc009);                       // read out the two last bytes, dont' think its neccesary
+                IoInputByte(0xc009);                       // but done to be on the safe side
+
+                /* the temperature recieved from the xcalibur is very jumpy, so we try and smooth it
+                  out by taking the average over 10 samples */
+                temp1 = (float)cpu + (float)cpudec / 256;
+                temp1 /= 10;
+                cpuFrac += temp1;
+
+                if (cpuTempCount == 9){ // if we have taken 10 samples then commit the new temperature
+                    *pnLocalTemp = cpuFrac;
+                    break;
+                }
+                else{
+                    cpuTempCount++;     // increase sample count
+                }
+            }
+        }
+    }
     
+
     //Check for bus error - 1.6 xboxes have no readable 
     //temperature sensors.
-    if (*pnLocalTemp==ERR_I2C_ERROR_BUS || 
-            *pExternalTemp==ERR_I2C_ERROR_BUS)        
-                return false;
+    //if (*pnLocalTemp==ERR_I2C_ERROR_BUS ||
+    //        *pExternalTemp==ERR_I2C_ERROR_BUS)
+    //            return false;
     return true;
 }
 

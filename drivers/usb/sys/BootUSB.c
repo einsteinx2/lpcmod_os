@@ -47,9 +47,9 @@ void BootStartUSB(void)
 
     nousb=0;
 
-        init_wrapper();
-        subsys_usb_init();
-        hub_thread_handler=thread_handler;
+    init_wrapper();
+    subsys_usb_init();
+    hub_thread_handler=thread_handler;
     usb_hcd_pci_probe(&xx_ohci_dev, module_table_pci_ids);    
     XPADInit();
     
@@ -66,9 +66,9 @@ void BootStartUSB(void)
 void USBGetEvents(void)
 {    
     inc_jiffies(1);
-        do_all_timers();
-        hub_thread_handler(NULL);
-        handle_irqs(-1);       
+    do_all_timers();
+    hub_thread_handler(NULL);
+    handle_irqs(-1);
 }
 /*------------------------------------------------------------------------*/ 
 void BootStopUSB(void)
