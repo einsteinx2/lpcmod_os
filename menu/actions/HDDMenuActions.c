@@ -310,7 +310,7 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
     if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr){
         debugSPIPrint("MBR detected on %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
-        if(BootIdeReadSector(nIndexDrive, &MBRBuffer[0], 0x00, 0, 512)) {
+        if(BootIdeReadSector(nIndexDrive, MBRBuffer, 0x00, 0, 512)) {
             //VIDEO_ATTR=0xffff0000;
             debugSPIPrint("Unable to read MBR sector...");
             printk("\n\1                Unable to read MBR sector...\n");
@@ -375,17 +375,19 @@ void FormatDriveFG(void *driveId) {
             return;
             break;
     }
-    gstart = SECTOR_EXTEND + fsize;
-    gsize = nExtendSectors - fsize;
+    gstart = SECTOR_EXTEND + fsize + 1;
+    gsize = nExtendSectors - fsize - 1;
     if(gsize >= LBASIZE_1024GB)
         gsize = LBASIZE_1024GB - 1;
     if(!ConfirmDialog(buffer, 1)){
         HDDMenuHeader("Format F: drive");
+        debugSPIPrint("Formatting F: drive. Partition start : 0x%X, size : 0x%X", SECTOR_EXTEND, fsize);
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
         UIFooter();
 
         if(formatOption != F_NOG){
             HDDMenuHeader("Format G: drive");
+            debugSPIPrint("Formatting G: drive. Partition start : 0x%X, size : 0x%X", gstart, gsize);
             FATXFormatExtendedDrive(nDriveIndex, 6, gstart, gsize);             //G: drive is partition 6 in table
             UIFooter();
         }

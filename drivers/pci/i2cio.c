@@ -257,13 +257,16 @@ void I2CSetFanSpeed(u8 speed){
 //TODO: switch case for cleaner look?
 u8 I2CGetXboxMBRev(void){
     u8 result = REVUNKNOWN;
-    u32 temp;
-    char ver[4] = "000";
+    u32 temp[3];
+    char ver[4];
     ver[3] = 0;        //Terminator.
     I2CTransmitWord(0x10, 0x0100);                //Reset ID counter.
-    ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[0]);
-    ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[1]);
-    ReadfromSMBus(0x10, 0x01, 1, (u32 *)&ver[2]);
+    ReadfromSMBus(0x10, 0x01, 1, &temp[0]);
+    ReadfromSMBus(0x10, 0x01, 1, &temp[1]);
+    ReadfromSMBus(0x10, 0x01, 1, &temp[2]);
+    ver[0] = (char)temp[0];
+    ver[1] = (char)temp[1];
+    ver[2] = (char)temp[2];
 #if 0
 #ifdef DEV_FEATURES
     //TODO: remove once fixed
@@ -284,7 +287,7 @@ u8 I2CGetXboxMBRev(void){
         result = REV1_1;
     }
     else if (!strcmp(ver,("P11")) || !strcmp(ver,("1P1")) || !strcmp(ver,("11P"))){
-        if(ReadfromSMBus(0x6A, 0x00, 0, &temp) == 0){
+        if(ReadfromSMBus(0x6A, 0x00, 0, temp) == 0){
             result = REV1_4;
         }
         else {

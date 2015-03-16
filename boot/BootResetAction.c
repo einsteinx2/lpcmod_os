@@ -26,6 +26,17 @@
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/scriptEngine/xblastScriptEngine.h"
 
+const char *xbox_mb_rev[8] = {
+        "DevKit",
+        "DebugKit",
+        "1.0",
+        "1.1",
+        "1.2/1.3",
+        "1.4/1.5",
+        "1.6/1.6b",
+        "Unknown"
+    };
+
 JPEG jpegBackdrop;
 
 int nTempCursorMbrX, nTempCursorMbrY;
@@ -42,16 +53,6 @@ void ClearScreen (void) {
 void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
     //Length of array is set depending on how many revision can be uniquely identified.
     //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
-    const char *xbox_mb_rev[8] = {
-        "DevKit",
-        "DebugKit",
-        "1.0",
-        "1.1",
-        "1.2/1.3",
-        "1.4/1.5",
-        "1.6/1.6b",
-        "Unknown"
-    };
 
     ClearScreen();
 
@@ -320,7 +321,6 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
-
     if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT)	//If coming from XBE and no XBlast Mod is detected
     	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();		//Get previously set fan speed
     else
@@ -353,7 +353,6 @@ extern void BootResetAction ( void ) {
     }
 
 
-
     // We disable The CPU Cache
     cache_disable();
     // We Update the Microcode of the CPU
@@ -384,6 +383,7 @@ extern void BootResetAction ( void ) {
     debugSPIPrint("USB init done.");
 
     mbVersion = I2CGetXboxMBRev();
+    debugSPIPrint("Xbox motherboad rev: %s.", xbox_mb_rev[mbVersion]);
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         if(LPCmodSettings.OSsettings.runBootScript && (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)){
@@ -488,8 +488,8 @@ extern void BootResetAction ( void ) {
     VIDEO_ATTR=0xffc8c8c8;
     printk("           Initializing IDE Controller\n");
 #endif
-    BootIdeWaitNotBusy(0x1f0);
-    wait_ms(100);
+//    BootIdeWaitNotBusy(0x1f0);
+//    wait_ms(100);
 #ifndef SILENT_MODE
     printk("           Ready\n");
 #endif

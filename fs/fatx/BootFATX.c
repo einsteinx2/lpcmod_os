@@ -309,8 +309,8 @@ int FATXSignature(int nDriveIndex,unsigned int block) {
 }
 
 FATXPartition *OpenFATXPartition(int nDriveIndex,
-        unsigned int partitionOffset,
-        u_int64_t partitionSize) {
+    unsigned int partitionOffset,
+    u_int64_t partitionSize) {
     unsigned char partitionInfo[FATX_PARTITION_HEADERSIZE];
     FATXPartition *partition;
     int readSize;
@@ -1384,7 +1384,9 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         clusterSize = 64;
     else
         clusterSize = 32;
-
+        
+    debugSPIPrint("Cluster size is %uKB.", clusterSize / 2);
+    
     //Calculate size of FAT, in number of 512-byte sectors.
     chainmapSize = (lbaSize / clusterSize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
     chainmapSize = chainmapSize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
@@ -1393,6 +1395,8 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
 
     while((chainmapSize % 8) != 0)                    //Round it to 4096 byte boundary.
         chainmapSize += 1;
+        
+    debugSPIPrint("Chainmap size is %u sectors.", chainmapSize);
 	
     if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {                           //MBR is present on HDD
         if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
@@ -1401,16 +1405,19 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
             cromwellWarning();
             return;
         }
+        debugSPIPrint("MBR read on HDD, will be updating it.");
     }
     else
     {                                                   //If no MBR already on disk
         memcpy(mbr, &BackupPartTbl, sizeof(BackupPartTbl)); //Copy backup in working buffer and work from there.
+    	debugSPIPrint("No MBR on HDD. Will take default one and start from there.");
     }
 
     printk("\n\n\n           Writing partition table in MBR.   ");
     mbr->TableEntries[partition].Flags = PE_PARTFLAGS_IN_USE;
     mbr->TableEntries[partition].LBAStart = lbaStart;
     mbr->TableEntries[partition].LBASize = lbaSize;
+    debugSPIPrint("MBR entry writing. Starts at 0x%X. Size is 0x%X.", lbaStart, lbaSize);
     FATXSetMBR(driveId, mbr);
     cromwellSuccess();
 
@@ -1459,7 +1466,6 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     memset(buffer,0xff,512);                    //Killer buffer.
 
     printk("\n\n           Writing Boot Block.   ");
-
     // Starting (from 0 to 512*8 = 0x1000). Erasing Partition header data.
     //4KB so 8*512 bytes sectors.
     for (counter=lbaStart;counter<(lbaStart+8); counter++) {
@@ -1469,12 +1475,14 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
             return;
         }
     }
+
     //Write Partition info on first sector. last seven sectors of the first 0x1000 are already 0xff anyway.
     if(BootIdeWriteSector(driveId,headerBuf,lbaStart, DEFAULT_WRITE_RETRY)){   //Partition header write.
         printk("\n           Write error, sector %u   ", lbaStart);
         cromwellWarning();
         return;
     }
+
     cromwellSuccess();
 
     printk("\n\n           Writing Cluster Chain map.   ");
@@ -1495,17 +1503,21 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         return;
     }
 **********************************************************************/
+
     for(i = 0; i < (chainmapSize >> 8); i++){                         //Must be done multiple times as WRITE MULTIPLE will only take buffers of 256 sectors long.
                                                                       //In fact, the number of time chainmapSize can fit 256.
         //Start by writing 0 everywhere, skip the first 144 sectors to write 9*256 sectors up to the end,
         //Reuse n times memory allocated (all set to 0x00) of 256*512 bytes in size in the event (chainmapSize % 256) != 0.
         //If (chainmapSize % 256) == 0, start of buffer contains initial chainmap initialization.
+if(partition != 6){
         if(BootIdeWriteMultiple(driveId, ptrBuffer, lbaStart+8+(chainmapSize % 256)+(i << 8), 256, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
             printk("\n           Write error, Cluster Chainmap   ");                               //Length for E: drive is fixed at 2448 sectors
             cromwellWarning();
             return;
         }
+}
     }
+
     if(chainmapSize % 256){                       //If there's a partial WRITE MULTIPLE COMMAND to be issued.
         if(lbaSize >= FATX16_MAXLBA)
             memset(ptrBuffer,0xff,4*2);          //FATX32 partition, cluster entry is Dword-sized
@@ -1544,6 +1556,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         cromwellWarning();
         return;
     }
+
     free(ptrBuffer);
     //for a total of 8 + chainmapSize + (clustersize * 2) sectors written.
     cromwellSuccess();
