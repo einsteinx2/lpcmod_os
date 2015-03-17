@@ -65,28 +65,28 @@ double RDTSC(void){
     unsigned long a, d;
 
     rdtsc(a,d);
-
+    debugSPIPrint("d:0x%X, a:0x%X", d, a);
     return (((unsigned long long)a) | (((unsigned long long)d) << 32));
 }
 
-extern unsigned long getCPUFreq(void){
+extern double getCPUFreq(void){
     double Tcpu_fsb, Tcpu_result, Fcpu;
     u32 Twin_fsb, Twin_result;
 
     Tcpu_fsb = RDTSC();
-    Twin_fsb = BIOS_TICK_COUNT;
+    Twin_fsb = IoInputDword(0x8008);
 
-    wait_ms(10);
+    wait_ms(300);
 
     Tcpu_result = RDTSC();
-    Twin_result = BIOS_TICK_COUNT;
+    Twin_result = IoInputDword(0x8008);
     
-    debugSPIPrint("CPU1: %u, win1: %u", Tcpu_result-Tcpu_fsb, Twin_result-Twin_fsb);
+    debugSPIPrint("CPU1: %u, win1: %u, win2: %u", Tcpu_result-Tcpu_fsb, Twin_fsb, Twin_result);
 
     Fcpu = (Tcpu_result - Tcpu_fsb);
     Fcpu /= (Twin_result - Twin_fsb);
     
-    debugSPIPrint("Fcpu: %u", Fcpu / 100);
+    debugSPIPrint("Fcpu: %u", Fcpu / 100.0);
 
-    return Fcpu/100;
+    return Fcpu/100.0;
 }

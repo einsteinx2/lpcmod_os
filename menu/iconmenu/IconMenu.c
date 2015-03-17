@@ -291,7 +291,7 @@ bool IconMenu(void) {
         if(temp != 0) {
             temp = IoInputDword(0x8008) - COUNT_start;
             oldIconTimeRemain = iconTimeRemain;
-                 iconTimeRemain = varBootTimeWait - temp/0x369E99;
+            iconTimeRemain = varBootTimeWait - temp/0x369E99;
             if(oldIconTimeRemain != iconTimeRemain) {
                 changed = 1;
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);

@@ -375,8 +375,8 @@ void FormatDriveFG(void *driveId) {
             return;
             break;
     }
-    gstart = SECTOR_EXTEND + fsize + 1;
-    gsize = nExtendSectors - fsize - 1;
+    gstart = SECTOR_EXTEND + fsize;
+    gsize = nExtendSectors - fsize;
     if(gsize >= LBASIZE_1024GB)
         gsize = LBASIZE_1024GB - 1;
     if(!ConfirmDialog(buffer, 1)){

@@ -109,7 +109,7 @@ void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
         VIDEO_ATTR=0xffc8c800;
         printk("%doC  ", n);
         VIDEO_ATTR=0xffc8c8c8;
-        printk("GPU Temp: ");
+        printk("M/b Temp: ");
         VIDEO_ATTR=0xffc8c800;
         printk("%doC  ", nx);
     }

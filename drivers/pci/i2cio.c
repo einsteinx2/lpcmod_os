@@ -208,6 +208,7 @@ bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp)
     u8 cpu, cpudec;
     float temp1, cpuFrac = 0.0;
 
+    //Motherboard temp.
     ReadfromSMBus(0x10, 0x0A, 1, pExternalTemp);
 
     if(mbVersion != REV1_6){

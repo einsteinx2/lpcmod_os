@@ -27,7 +27,7 @@ void ShowTemperature(void *whatever) {
     VIDEO_ATTR=0xffc8c800;
     printk("%d°C / %d°F\n           ", c, f);
     VIDEO_ATTR=0xffc8c8c8;
-    printk("GPU temperature: ");
+    printk("Board temperature: ");
     VIDEO_ATTR=0xffc8c800;
     printk("%d°C / %d°F\n", cx, fx);
     UIFooter();
@@ -63,8 +63,9 @@ void ShowCPUInfo(void *whatever){
     InfoHeader("CPU info");
     printk("CPU Frequency: ");
     VIDEO_ATTR=0xffc8c800;
-    temp = getCPUFreq();
-    printk("%X MHz\n", temp);
+    temp = (u32)getCPUFreq();
+    debugSPIPrint("Display value on screen: %u", temp);
+    printk("%u MHz\n", temp);
     UIFooter();
 }
 
