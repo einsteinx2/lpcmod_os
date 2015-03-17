@@ -21,7 +21,7 @@ TEXTMENU* XBlastScriptMenuInit(void) {
     //Run Script.
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Run script");
+    strcpy(itemPtr->szCaption, "Run script from HDD");
     itemPtr->functionPtr= DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)RunScriptMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
@@ -35,23 +35,25 @@ TEXTMENU* XBlastScriptMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Load script from flash.
+    if(LPCmodSettings.firstScript.ScripMagicNumber == 0xFAF1){
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Run script from flash");
+        itemPtr->functionPtr= loadScriptFromFlash;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
+
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Run script from flash");
-    itemPtr->functionPtr= loadScriptFromFlash;
+    strcpy(itemPtr->szCaption,"Enable Boot script : ");
+    sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+    itemPtr->functionPtr= toggleRunBootScript;
+    itemPtr->functionDataPtr= itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggleRunBootScript;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggleRunBootScript;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
-
-	itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-	strcpy(itemPtr->szCaption,"Enable Boot script : ");
-	sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
-	itemPtr->functionPtr= toggleRunBootScript;
-	itemPtr->functionDataPtr= itemPtr->szParameter;
-	itemPtr->functionLeftPtr=toggleRunBootScript;
-	itemPtr->functionLeftDataPtr = itemPtr->szParameter;
-	itemPtr->functionRightPtr=toggleRunBootScript;
-	itemPtr->functionRightDataPtr = itemPtr->szParameter;
-	TextMenuAddItem(menuPtr, itemPtr);
 
     return menuPtr;
 

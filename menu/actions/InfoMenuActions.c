@@ -16,12 +16,12 @@
 
 
 void ShowTemperature(void *whatever) {
-    int c, cx, cg;
-    int f, fx, fg;
+    int c, cx;
+    int f, fx;
     InfoHeader("Temperature");
-    I2CGetTemperature(&c, &cx, &cg);
+    I2CGetTemperature(&c, &cx);
     f = ((9.0 / 5.0) * c) + 32.0;
-    fg = ((9.0 / 5.0) * cg) + 32.0;
+    fx = ((9.0 / 5.0) * cx) + 32.0;
     VIDEO_ATTR=0xffc8c8c8;
     printk("CPU temperature: ");
     VIDEO_ATTR=0xffc8c800;
@@ -29,14 +29,7 @@ void ShowTemperature(void *whatever) {
     VIDEO_ATTR=0xffc8c8c8;
     printk("GPU temperature: ");
     VIDEO_ATTR=0xffc8c800;
-    printk("%d°C / %d°F\n           ", cg, fg);
-    if(cx > -273)
-    {
-        fx = ((9.0 / 5.0) * cx) + 32.0;
-        printk("Board temperature: ");
-        VIDEO_ATTR=0xffc8c800;
-        printk("%d°C / %d°F", cx, fx);
-    }
+    printk("%d°C / %d°F\n", cx, fx);
     UIFooter();
 }
 
@@ -66,10 +59,12 @@ void ShowFlashChip(void *whatever) {
 }
 
 void ShowCPUInfo(void *whatever){
+    u32 temp;
     InfoHeader("CPU info");
     printk("CPU Frequency: ");
     VIDEO_ATTR=0xffc8c800;
-    printk("%4.2f MHz\n", getCPUFreq());
+    temp = getCPUFreq();
+    printk("%X MHz\n", temp);
     UIFooter();
 }
 

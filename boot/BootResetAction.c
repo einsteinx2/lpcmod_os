@@ -109,7 +109,7 @@ void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
         VIDEO_ATTR=0xffc8c800;
         printk("%doC  ", n);
         VIDEO_ATTR=0xffc8c8c8;
-        printk("M/b Temp: ");
+        printk("GPU Temp: ");
         VIDEO_ATTR=0xffc8c800;
         printk("%doC  ", nx);
     }
@@ -503,15 +503,13 @@ extern void BootResetAction ( void ) {
     //But first do we have a HDD on Master?
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi){
         debugSPIPrint("Master HDD exist.");
-    	if(DEV_FEATURES){
-            //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
-            debugSPIPrint("Trying to load new JPEG from HDD.");
-            if(!LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg"))
-            	debugSPIPrint("\"ìcons.jpg\" loaded. Moving on to \"backdrop.jpg\".");
-            if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
-           	debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.");
-                printMainMenuHeader(&of, modName, fHasHardware);
-            }
+        //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
+        debugSPIPrint("Trying to load new JPEG from HDD.");
+        if(!LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg"))
+            debugSPIPrint("\"ìcons.jpg\" loaded. Moving on to \"backdrop.jpg\".");
+        if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
+            debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.");
+            printMainMenuHeader(&of, modName, fHasHardware);
     	}
 
         if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){

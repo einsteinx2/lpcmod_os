@@ -114,15 +114,13 @@ TEXTMENU *ToolsMenuInit(void) {
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(DEV_FEATURES){
-        if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
-			itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-			memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-			strcpy(itemPtr->szCaption, "XBlast scripts");
-			itemPtr->functionPtr= DrawChildTextMenu;
-			itemPtr->functionDataPtr = (void *)XBlastScriptMenuInit();
-			TextMenuAddItem(menuPtr, itemPtr);
-        }
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+	memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+	strcpy(itemPtr->szCaption, "XBlast scripts");
+	itemPtr->functionPtr= DrawChildTextMenu;
+	itemPtr->functionDataPtr = (void *)XBlastScriptMenuInit();
+	TextMenuAddItem(menuPtr, itemPtr);
     }
 
     if(DEV_FEATURES){

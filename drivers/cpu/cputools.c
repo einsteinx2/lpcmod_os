@@ -62,28 +62,31 @@ extern void cache_enable(void)
 
 //Thanks to anyone involved in XBMC for CPU freq code!
 double RDTSC(void){
-    double x;
-    u32 a, d;
+    unsigned long a, d;
 
     rdtsc(a,d);
 
     return (((unsigned long long)a) | (((unsigned long long)d) << 32));
 }
 
-extern double getCPUFreq(void){
+extern unsigned long getCPUFreq(void){
     double Tcpu_fsb, Tcpu_result, Fcpu;
     u32 Twin_fsb, Twin_result;
 
     Tcpu_fsb = RDTSC();
     Twin_fsb = BIOS_TICK_COUNT;
 
-    wait_ms(300);
+    wait_ms(10);
 
     Tcpu_result = RDTSC();
     Twin_result = BIOS_TICK_COUNT;
+    
+    debugSPIPrint("CPU1: %u, win1: %u", Tcpu_result-Tcpu_fsb, Twin_result-Twin_fsb);
 
     Fcpu = (Tcpu_result - Tcpu_fsb);
     Fcpu /= (Twin_result - Twin_fsb);
+    
+    debugSPIPrint("Fcpu: %u", Fcpu / 100);
 
-    return Twin_fsb/100;
+    return Fcpu/100;
 }

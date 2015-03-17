@@ -81,18 +81,16 @@ TEXTMENU *HDDOperationsMenuInit(void * drive){
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(DEV_FEATURES){
-        if(tsaHarddiskInfo[nDriveIndex].m_fHasSMARTcapabilities){
-            //S.M.A.R.T. menu
-            itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"S.M.A.R.T. menu");
-            itemPtr->functionPtr= (void *)HDDSMARTOperationsMenuInit;
-            itemPtr->functionDataPtr = malloc(sizeof(u8));
-                *(u8*)itemPtr->functionDataPtr = nDriveIndex;
-            itemPtr->functionDataPtrMemAlloc = true;
-            TextMenuAddItem(menuPtr, itemPtr);
-        }
+    if(tsaHarddiskInfo[nDriveIndex].m_fHasSMARTcapabilities){
+        //S.M.A.R.T. menu
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption,"S.M.A.R.T. menu");
+        itemPtr->functionPtr= (void *)HDDSMARTOperationsMenuInit;
+        itemPtr->functionDataPtr = malloc(sizeof(u8));
+            *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtrMemAlloc = true;
+        TextMenuAddItem(menuPtr, itemPtr);
     }
 
     //Format menu

@@ -202,24 +202,21 @@ extern int I2cSetFrontpanelLed(u8 b)
     return ERR_SUCCESS;
 }
 
-bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp, int * pGPUTemp)
+bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp)
 {
     u8 cpuTempCount = 0;
     u8 cpu, cpudec;
     float temp1, cpuFrac = 0.0;
 
-    ReadfromSMBus(0x20, 0x0A, 0, pGPUTemp);
+    ReadfromSMBus(0x10, 0x0A, 1, pExternalTemp);
 
     if(mbVersion != REV1_6){
         *pnLocalTemp=I2CTransmitByteGetReturn(0x4c, 0x01);
-        *pExternalTemp=I2CTransmitByteGetReturn(0x4c, 0x00);
     }
     else{
         //1.6 specific Temperature code.
-        //No motherboard temperature sensor?
-        *pExternalTemp = -273;
         //GPU trim
-        *pGPUTemp *= 0.8f;    //Might be unnecessary.
+        *pExternalTemp *= 0.8f;    //Might be unnecessary.
 
         //Fetch CPU temp
         while(cpuTempCount < 10){

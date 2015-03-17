@@ -273,7 +273,7 @@ u32 PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned
 
 int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite);
 int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite);
-bool I2CGetTemperature(int *, int *, int *);
+bool I2CGetTemperature(int *, int *);
 void I2CModifyBits(u8 bAds, u8 bReg, u8 bData, u8 bMask);
 
 ///////// BootIde.c
