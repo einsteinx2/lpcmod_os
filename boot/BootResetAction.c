@@ -50,7 +50,7 @@ void ClearScreen (void) {
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 }
 
-void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
+void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware, u32 cpuSpeed){
     //Length of array is set depending on how many revision can be uniquely identified.
     //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
 
@@ -89,7 +89,7 @@ void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware){
    } else {
         VIDEO_ATTR=0xffffa20f;
    }
-   printk("  RAM: %dMiB\n", xbox_ram);
+   printk("  CPU: %uMHz   RAM: %dMiB\n", cpuSpeed, xbox_ram);
 
     VIDEO_CURSOR_POSX=(vmode.xmargin/*+64*/)*4;
 #ifndef SILENT_MODE
@@ -134,7 +134,9 @@ extern void BootResetAction ( void ) {
     int n, nx, i, returnValue = 255;
     char modName[30] = "Unsupported modchip!";
     u8 * bootScriptBuffer;
+    u8 tempFanSpeed = 20;
     int bootScriptSize;
+    u32 cpuSpeed;
     _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH of;
     // A bit hacky, but easier to maintain.
@@ -289,28 +291,29 @@ extern void BootResetAction ( void ) {
     debugSPIPrint("Read persistent OS settings from flash.");
 
 
-    if(LPCmodSettings.OSsettings.migrateSetttings > 1 ||
-       LPCmodSettings.OSsettings.activeBank == 0xFF ||
-       LPCmodSettings.OSsettings.altBank == 0xFF ||
-       LPCmodSettings.OSsettings.Quickboot > 1 ||
+    if(LPCmodSettings.OSsettings.migrateSetttings == 0xFF ||
+       LPCmodSettings.OSsettings.activeBank > 0x87 ||
+       LPCmodSettings.OSsettings.altBank > 0x87 ||
+       LPCmodSettings.OSsettings.Quickboot == 0xFF ||
        LPCmodSettings.OSsettings.selectedMenuItem == 0xFF ||
        LPCmodSettings.OSsettings.fanSpeed > 100 ||
-       LPCmodSettings.OSsettings.bootTimeout == 0xFF ||
-       LPCmodSettings.OSsettings.LEDColor == 0xFF ||
-       LPCmodSettings.OSsettings.TSOPcontrol > 0x01 ||
-       LPCmodSettings.OSsettings.TSOPhide > 0x01 ||
+       LPCmodSettings.OSsettings.fanSpeed < 10 ||
+       LPCmodSettings.OSsettings.bootTimeout > 240 ||
+       LPCmodSettings.OSsettings.LEDColor > 4 || 
+       LPCmodSettings.OSsettings.TSOPcontrol == 0xFF ||
+       LPCmodSettings.OSsettings.TSOPhide == 0xFF ||
        LPCmodSettings.OSsettings.enableNetwork == 0xFF ||
        LPCmodSettings.OSsettings.useDHCP == 0xFF ||
        LPCmodSettings.LCDsettings.migrateLCD == 0xFF ||
-       LPCmodSettings.LCDsettings.enable5V > 1 ||
+       LPCmodSettings.LCDsettings.enable5V == 0xFF ||
        LPCmodSettings.LCDsettings.lcdType > 1 ||        //Because HDD44780 = 0 and KS0073 = 1. No other valid value possible.
-       LPCmodSettings.LCDsettings.nbLines == 0xFF ||
-       LPCmodSettings.LCDsettings.lineLength == 0xFF ||
+       LPCmodSettings.LCDsettings.nbLines > 8 ||
+       LPCmodSettings.LCDsettings.lineLength > 40 ||
        LPCmodSettings.LCDsettings.backlight > 100 ||
        LPCmodSettings.LCDsettings.contrast > 100 ||
-       LPCmodSettings.LCDsettings.displayMsgBoot > 1 ||
-       LPCmodSettings.LCDsettings.customTextBoot > 1 ||
-       LPCmodSettings.LCDsettings.displayBIOSNameBoot > 1 ||
+       LPCmodSettings.LCDsettings.displayMsgBoot == 0xFF ||
+       LPCmodSettings.LCDsettings.customTextBoot == 0xFF ||
+       LPCmodSettings.LCDsettings.displayBIOSNameBoot == 0xFF ||
        (LPCmodSettings.firstScript.ScripMagicNumber&0xFFF0) != 0xFAF0){
             debugSPIPrint("No persistent OS settings found on flash. Creating default settings.");
             fFirstBoot = true;
@@ -321,8 +324,15 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
-    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT)	//If coming from XBE and no XBlast Mod is detected
-    	LPCmodSettings.OSsettings.fanSpeed = I2CGetFanSpeed();		//Get previously set fan speed
+    if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){	//If coming from XBE and no XBlast Mod is detected
+    	tempFanSpeed = I2CGetFanSpeed();
+    	if(tempFanSpeed < 10)
+    	    tempFanSpeed = 10;
+    	else if(tempFanSpeed > 100)
+    	    tempFanSpeed = 100;
+    	    
+    	LPCmodSettings.OSsettings.fanSpeed = tempFanSpeed;		//Get previously set fan speed
+    }
     else
     	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
     debugSPIPrint("Fan speed adjustment if needed.");
@@ -379,6 +389,9 @@ extern void BootResetAction ( void ) {
 #ifndef SILENT_MODE
     printk("           BOOT: start USB init\n");
 #endif
+
+    cpuSpeed = getCPUFreq();
+    
     BootStartUSB();
     debugSPIPrint("USB init done.");
 
@@ -420,7 +433,6 @@ extern void BootResetAction ( void ) {
                 I2CRebootQuick();
                 while(1);	//Hang there.
             }
-            wait_ms(100);
             EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
             I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
             I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
@@ -471,7 +483,7 @@ extern void BootResetAction ( void ) {
         );
     }
     // paint the backdrop
-    printMainMenuHeader(&of, modName, fHasHardware);
+    printMainMenuHeader(&of, modName, fHasHardware, cpuSpeed);
 
     // set Ethernet MAC address from EEPROM
     {
@@ -509,7 +521,7 @@ extern void BootResetAction ( void ) {
             debugSPIPrint("\"ìcons.jpg\" loaded. Moving on to \"backdrop.jpg\".");
         if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
             debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.");
-            printMainMenuHeader(&of, modName, fHasHardware);
+            printMainMenuHeader(&of, modName, fHasHardware, cpuSpeed);
     	}
 
         if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){

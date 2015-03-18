@@ -152,16 +152,17 @@ int BootIdeWaitDataReady(unsigned uIoBase)
 int BootIdeIssueAtaCommand(
     unsigned uIoBase,
     ide_command_t command,
-    tsIdeCommandParams * params)
+    tsIdeCommandParams * params, bool skipFirstWait)
 {
     int n;
 
     //IoInputByte(IDE_REG_STATUS(uIoBase));     //No need since we'll be checking ALT_STATUS register in BootIdeWaitNotBusy function.
-
-    n=BootIdeWaitNotBusy(uIoBase);
-    if(n == -1)    {// as our command may be being used to clear the error, not a good policy to check too closely!
-        debugSPIPrint("Error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
-        return n;
+    if(!skipFirstWait){
+        n=BootIdeWaitNotBusy(uIoBase);
+        if(n == -1)    {// as our command may be being used to clear the error, not a good policy to check too closely!
+            debugSPIPrint("Error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
+            return n;
+        }
     }
      
      /* 48-bit LBA */   
@@ -339,7 +340,7 @@ int BootIdeIssueAtapiPacketCommandAndPacket(int nDriveIndex, u8 *pAtapiCommandPa
 
     tsicp.m_wCylinder=2048;
     BootIdeWaitNotBusy(uIoBase);
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_ATAPI_PACKET, &tsicp)) 
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_ATAPI_PACKET, &tsicp, false)) 
     {
 //            printk("  Drive %d: BootIdeIssueAtapiPacketCommandAndPacket 1 FAILED, error=%02X\n", nDriveIndex, IoInputByte(IDE_REG_ERROR(uIoBase)));
             return 1;
@@ -426,8 +427,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             return 1;
     }
 */    
-    
-    n=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp);
+    n=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false);
     
     if(n == -1){
     	debugSPIPrint("No device at %s position. Halting init.", nIndexDrive? "slave" : "master");
@@ -442,7 +442,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //BootIdeIssueAtaCommand(uIoBase, ATAPI_SOFT_RESET, &tsicp);
         if((cl == 0x14 && ch == 0xEB) || (cl == 0x69 && ch == 0x96)){
             debugSPIPrint("Issuing ATAPI IDENTIFY command.");
-            if (BootIdeIssueAtaCommand(uIoBase,IDE_CMD_PACKET_IDENTIFY,&tsicp)) {
+            if (BootIdeIssueAtaCommand(uIoBase,IDE_CMD_PACKET_IDENTIFY,&tsicp, false)) {
                 debugSPIPrint("ATAPI IDENTIFY command returned error. Drive not detected. Halting!");
                 //printk(" Drive %d: Not detected\n");
                 return 1;
@@ -815,7 +815,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
         if(tsaHarddiskInfo[driveId].m_masterPassSupport != 0xFFFF)
             memcpy(&ide_cmd_data[34], &(tsaHarddiskInfo[driveId].m_masterPassSupport),2);
 
-        if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1)) return 1;
+        if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1, false)) return 1;
         BootIdeWaitDataReady(uIoBase);
         BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
 
@@ -830,7 +830,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
     //Password is only 20 bytes long - the rest is 0-padded.
     memcpy(&ide_cmd_data[2],password,20);
 
-    if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1)) return 1;
+    if(BootIdeIssueAtaCommand(uIoBase, ide_cmd, &tsicp1, false)) return 1;
         
     BootIdeWaitDataReady(uIoBase);
     BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
@@ -841,7 +841,7 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
     }
     // check that we are unlocked
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(driveId);
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) 
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) 
     {
         return 1;
     }
@@ -908,7 +908,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     debugSPIPrint("Master password is: %s", master_password);
     memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
 
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp)) return 1;
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp, false)) return 1;
 
     BootIdeWaitDataReady(uIoBase);
     BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
@@ -920,7 +920,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
 
 
     // check that we are unlocked
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp))
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false))
     {
         return false;
     }
@@ -947,7 +947,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     }
 
     //ide_cmd_data's content is the same for both commands so we'll just reuse it to disable lock.
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp)) return 1;
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_DISABLE, &tsicp, false)) return 1;
 
     BootIdeWaitDataReady(uIoBase);
     BootIdeWriteData(uIoBase, ide_cmd_data, IDE_SECTOR_SIZE);
@@ -957,7 +957,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
         return false;
     }
     // check that we are unlocked
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp))
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false))
     {
         return false;
     }
@@ -1012,7 +1012,7 @@ int BootIdeInit(void)
         IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
         debugSPIPrint("Reading IDE cable information through Master drive");
-        if(!BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) 
+        if(!BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) 
         {
             u16 waBuffer[256];
             BootIdeWaitDataReady(uIoBase);
@@ -1327,7 +1327,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         }
         }       
         
-    if(BootIdeIssueAtaCommand(uIoBase, ideReadCommand, &tsicp)) 
+    if(BootIdeIssueAtaCommand(uIoBase, ideReadCommand, &tsicp, false)) 
     {
         //printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
@@ -1454,7 +1454,7 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 
                 IDE_DH_LBA;
         }
         }       
-    if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp)) 
+    if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp, false)) 
     {
         printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
@@ -1566,7 +1566,7 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
                         IDE_DH_LBA;
             }
         }
-    if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp))
+    if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp, false))
     {
         printk("\n                      ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
@@ -1762,7 +1762,7 @@ int BootIdeSetTransferMode(int nIndexDrive, int nMode)
         int nReturn=0;
         tsicp.m_bCountSector = (u8)nMode;
         IoOutputByte(IDE_REG_FEATURE(uIoBase), 3); // set transfer mode subcmd
-        nReturn=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_FEATURES, &tsicp);
+        nReturn=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_FEATURES, &tsicp, false);
         return nReturn;
     }
 }
@@ -1778,13 +1778,13 @@ int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
     BootIdeWaitNotBusy(uIoBase);
     
     tsicp.m_bCountSector = nbSectors;           //Only relevant register(excluding Command register)
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_MULTIPLE_MODE, &tsicp)){
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_MULTIPLE_MODE, &tsicp, false)){
         return 1;
     }
 
     BootIdeWaitNotBusy(uIoBase);
     
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {     //Check back our change
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) {     //Check back our change
         //printk(" Drive %d: Not detected\n");
         return 1;
     }
@@ -1857,12 +1857,12 @@ bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd){
 
     tsicp.m_wCylinder = 0xC24F; //Necessary for SMART subcommands.
     IoOutputByte(IDE_REG_FEATURE(uIoBase), smart_cmd); // set SMART operation subcmd
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp, false))
         return true;
 
     BootIdeWaitNotBusy(uIoBase);
 
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) {     //Check back our change
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) {     //Check back our change
         //printk(" Drive %d: Not detected\n");
         return 1;
     }
@@ -1901,7 +1901,7 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
     tsicp.m_wCylinder = 0xC24F; //Necessary for SMART subcommands.
     tsicp.m_bSector = 0x1;      //Summary SMART error log
     IoOutputByte(IDE_REG_FEATURE(uIoBase), 0xDA); // 0xDA = SMART RETURN STATUS subcommand.
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp))
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SMART, &tsicp, false))
         return -1;
 
     BootIdeWaitNotBusy(uIoBase);
@@ -1960,7 +1960,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
         debugSPIPrint("HDD support MasterPassword Index. Setting this to \"1\".");
     }
 
-    if(BootIdeIssueAtaCommand(uIoBase, ATACommand, &tsicp)){
+    if(BootIdeIssueAtaCommand(uIoBase, ATACommand, &tsicp, false)){
         //printk("\n          Issue ATA command failed.");
         return 1;
     }
@@ -1976,7 +1976,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     
     // check that we are unlocked
     debugSPIPrint("Security change command sent. Refreshing drives properties.");
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp)) 
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) 
     {
         //printk("\n          Issue IDENTIFY  ATA command failed.");
         return 1;

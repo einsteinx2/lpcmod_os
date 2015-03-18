@@ -58,17 +58,6 @@ void ShowFlashChip(void *whatever) {
     UIFooter();
 }
 
-void ShowCPUInfo(void *whatever){
-    u32 temp;
-    InfoHeader("CPU info");
-    printk("CPU Frequency: ");
-    VIDEO_ATTR=0xffc8c800;
-    temp = (u32)getCPUFreq();
-    debugSPIPrint("Display value on screen: %u", temp);
-    printk("%u MHz\n", temp);
-    UIFooter();
-}
-
 void InfoHeader(char *title) {
     printk("\n\n\n\n\n");
     VIDEO_ATTR=0xffffef37;

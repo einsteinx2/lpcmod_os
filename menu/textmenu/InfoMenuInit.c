@@ -52,15 +52,6 @@ TEXTMENU *InfoMenuInit(void) {
     itemPtr->functionPtr= ShowFlashChip;
       itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
-
-    if(DEV_FEATURES){
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption,"CPU info");
-        itemPtr->functionPtr= ShowCPUInfo;
-          itemPtr->functionDataPtr = NULL;
-        TextMenuAddItem(menuPtr, itemPtr);
-    }
         
     return menuPtr;
 }

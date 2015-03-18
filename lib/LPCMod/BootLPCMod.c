@@ -59,7 +59,7 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->OSsettings.activeBank = BNK512;
     LPCmodSettings->OSsettings.altBank = BNKOS;
     LPCmodSettings->OSsettings.Quickboot = 0;
-    LPCmodSettings->OSsettings.selectedMenuItem = 0;
+    LPCmodSettings->OSsettings.selectedMenuItem = BNK512;
     LPCmodSettings->OSsettings.fanSpeed = DEFAULT_FANSPEED;
     LPCmodSettings->OSsettings.bootTimeout = BOOT_TIMEWAIT;
     LPCmodSettings->OSsettings.LEDColor = LED_GREEN;    //Set for next boot
@@ -376,7 +376,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                 valueStartPtr++;
                                 if(i < IPTEXTPARAMGROUP){       //Numerical value parse
                                     if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9'){
-                                        *settingsPtrArray[i] = (u8)atoi(&compareBuf[valueStartPtr])? 1 : 0;
+                                        *settingsPtrArray[i] = (u8)strtol(&compareBuf[valueStartPtr], NULL, 0);
                                     }
                                     else if(!strncmp(&compareBuf[valueStartPtr], "Y", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "y", 1) ||

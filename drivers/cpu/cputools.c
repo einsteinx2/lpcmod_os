@@ -69,24 +69,39 @@ double RDTSC(void){
     return (((unsigned long long)a) | (((unsigned long long)d) << 32));
 }
 
-extern double getCPUFreq(void){
+extern unsigned long getCPUFreq(void){
     double Tcpu_fsb, Tcpu_result, Fcpu;
     u32 Twin_fsb, Twin_result;
+    unsigned long finalResult;
 
     Tcpu_fsb = RDTSC();
     Twin_fsb = IoInputDword(0x8008);
 
-    wait_ms(300);
+    wait_ms(200);
 
     Tcpu_result = RDTSC();
     Twin_result = IoInputDword(0x8008);
     
-    debugSPIPrint("CPU1: %u, win1: %u, win2: %u", Tcpu_result-Tcpu_fsb, Twin_fsb, Twin_result);
+    //debugSPIPrint("CPU1: %u, win1: %u, win2: %u", Tcpu_result-Tcpu_fsb, Twin_fsb, Twin_result);
 
     Fcpu = (Tcpu_result - Tcpu_fsb);
     Fcpu /= (Twin_result - Twin_fsb);
+    Fcpu *= 3.375;
+    finalResult = Fcpu;
     
-    debugSPIPrint("Fcpu: %u", Fcpu / 100.0);
+    if(finalResult < 704)
+        finalResult = 700;     //Trusty half speed
+    else if(finalResult < 736)
+        finalResult = 733;     //Normal CPU
+    else if(finalResult < 750)
+        finalResult = 740;     //DreamX half sped
+    else if(finalResult < 1100)
+        finalResult = 1000;    //1GHz CPU
+    else if(finalResult < 1410)
+        finalResult = 1400;    //Trusty 1.4GHz
+    else
+        finalResult = 1480;    //DreamX 1.48GHz    
+    //debugSPIPrint("Fcpu: %u", finalResult);
 
-    return Fcpu/100.0;
+    return finalResult;
 }
