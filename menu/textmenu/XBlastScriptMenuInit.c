@@ -27,12 +27,14 @@ TEXTMENU* XBlastScriptMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Save script to flash.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Save script to flash");
-    itemPtr->functionPtr= DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)SaveScriptMenuInit();
-    TextMenuAddItem(menuPtr, itemPtr);
+    if(cromwell_config==CROMWELL || (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)){
+        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Save script to flash");
+        itemPtr->functionPtr= DrawChildTextMenu;
+        itemPtr->functionDataPtr = (void *)SaveScriptMenuInit();
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     //Load script from flash.
     if(LPCmodSettings.firstScript.ScripMagicNumber == 0xFAF1){

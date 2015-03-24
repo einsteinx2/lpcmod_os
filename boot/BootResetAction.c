@@ -135,10 +135,11 @@ extern void BootResetAction ( void ) {
     char modName[30] = "Unsupported modchip!";
     u8 * bootScriptBuffer;
     u8 tempFanSpeed = 20;
-    int bootScriptSize;
+    int bootScriptSize = -1;
     u32 cpuSpeed;
     _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH of;
+    FATXFILEINFO fileinfo;
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
         #include "flashtypes.h"
@@ -399,7 +400,7 @@ extern void BootResetAction ( void ) {
     debugSPIPrint("Xbox motherboad rev: %s.", xbox_mb_rev[mbVersion]);
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
-        if(LPCmodSettings.OSsettings.runBootScript && (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)){
+        if(LPCmodSettings.OSsettings.runBootScript && cromwell_config==CROMWELL){
             debugSPIPrint("Running boot script.");
             bootScriptSize = fetchBootScriptFromFlash(&bootScriptBuffer);
             if(bootScriptSize > 0){
@@ -542,6 +543,16 @@ extern void BootResetAction ( void ) {
                    fHasHardware == SYSCON_ID_XX3 ||
                    fHasHardware == SYSCON_ID_X3){
                     assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+                }
+                //bootScriptSize should not have changed if we're here.
+                if(LPCmodSettings.OSsettings.runBootScript && bootScriptSize <= 0){
+                    debugSPIPrint("Running boot script.");
+                    if(loadScriptFromHDD("\\XBlast\\scripts\\boot.script", &fileinfo)){
+                        i = BNKOS;
+                        runScript(bootScriptBuffer, bootScriptSize, 1, &i);
+                        free(bootScriptBuffer);
+                    }
+                    debugSPIPrint("Boot script execution done.");
                 }
             }
 
