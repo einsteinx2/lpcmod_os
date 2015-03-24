@@ -1,176 +1,77 @@
 VAR padButton = 0
-VAR lcdLineLength = 0
-VAR lcdBacklight = 0
+VAR newFanSpeed = 20
+VAR changeFanSpeed = 0
+VAR newLEDColor = 0
+VAR quit = 0
 
-VAR spiRowCount = 0
-VAR spiTemp
+$buttonReleaseLoop
+padButton = XPAD()
 
-#These are used as constants. Just to make it easier to edit LED matrix pattern scroll.
-VAR spiFirstPattern = 0xAA
-VAR spiSecondPattern = 0x55
-
-#Reset LCD
-LCDR()
-
-$loopLine0
-IF(lcdLineLength < 19)
-    lcdLineLength = lcdLineLength + 1
-    LCDW(0, "This is a script to", lcdLineLength)
-    WAIT(100)
-    GOTO loopLine0
+IF(padButton != 0)
+    GOTO buttonReleaseLoop
 ENDIF
-
-lcdLineLength = 0
-$loopLine1
-IF(lcdLineLength < 20)
-    lcdLineLength = lcdLineLength + 1
-    LCDW(1, "show off cool things", lcdLineLength)
-    WAIT(100)
-    GOTO loopLine1
-ENDIF
-
-lcdLineLength = 0
-$loopLine2
-IF(lcdLineLength < 15)
-    lcdLineLength = lcdLineLength + 1
-    LCDW(2, "you can do with", lcdLineLength)
-    WAIT(100)
-    GOTO loopLine2
-ENDIF
-
-lcdLineLength = 0
-$loopLine3
-IF(lcdLineLength < 20)
-    lcdLineLength = lcdLineLength + 1
-    LCDW(3, "XBlast script engine", lcdLineLength)
-    WAIT(100)
-    GOTO loopLine3
-ENDIF
-
-#Wait 5 seconds or so. Stalls execution.
-WAIT(5000)
-LCDR()
-
-lcdLineLength = 0
-$loopLine4
-IF(lcdLineLength < 17)
-    lcdLineLength = lcdLineLength + 1
-    LCDW(0, "You can also read", lcdLineLength)
-    WAIT(100)
-    GOTO loopLine4
-ENDIF
-
-lcdLineLength = 0
-$loopLine5
-IF(lcdLineLength < 18)
-    lcdLineLength = lcdLineLength + 1
-    LCDW(1, "controller buttons", lcdLineLength)
-    WAIT(100)
-    GOTO loopLine5
-ENDIF
-
-WAIT(500)
-
-LCDW(3, "Press A to continue")
-
-LED("rrrg")
-
-lcdLineLength = 0
 
 $buttonLoop
 padButton = XPAD()
-IF(padButton != xpadA)
-	IF(lcdLineLength == 0)
-		IF(lcdBacklight < 100)
-			lcdBacklight = lcdBacklight + 1
-		ELSE
-			lcdLineLength = 1
-		ENDIF
-	ELSE
-		IF(lcdBacklight > 0)
-			lcdBacklight = lcdBacklight - 1
-		ELSE
-			lcdLineLength = 0
-		ENDIF
-	ENDIF
-	LCDB(lcdBacklight)
-	WAIT(15)
-		
-	GOTO buttonLoop
-ENDIF
 
-LED("gggg")
-
-#Full backlighting
-LCDB(100)
-LCDR()
-
-LCDW(0, "SPI read/write")
-LCDW(1, "is also supported!")
-
-#AS1107 chip interface
-#just run the clock a little. Probably not necessary.
-GPO(4, 4)
-SPIW(0x00)
-
-#set normal operation
-GPO(4, 0)
-SPIW(0x0C)
-SPIW(0x01)
-GPO(4, 4)
-
-#set intensity to 8/16
-GPO(4, 0)
-SPIW(0x0A)
-SPIW(0x08)
-GPO(4, 4)
-
-#set scan limit to full range
-GPO(4, 0)
-SPIW(0x0B)
-SPIW(0x07)
-GPO(4, 4)
-
-$depressLoop
-padButton = XPAD()
 IF(padButton == xpadA)
-	GOTO depressLoop
+    IF(newLedColor < 8)
+        newLedColor = newLedColor + 1
+    ELSE
+        newLedColor = 1
+    ENDIF
+
+    IF(newLedColor == 1)
+        LED("rgrg")
+    ENDIF
+    IF(newLedColor == 2)
+        LED("roro")
+    ENDIF
+    IF(newLedColor == 3)
+        LED("ogog")
+    ENDIF
+    IF(newLedColor == 4)
+        LED("rrrr")
+    ENDIF
+    IF(newLedColor == 5)
+        LED("oooo")
+    ENDIF
+    IF(newLedColor == 6)
+        LED("gggg")
+    ENDIF
+    IF(newLedColor == 7)
+        LED("oxox")
+    ENDIF
+    IF(newLedColor == 8)
+        LED("rogx")
+    ENDIF
 ENDIF
 
-#infinte loop until you press B
-LCDW(3, "Press B to continue")
-
-$spiLoop0
-padButton = XPAD()
-IF(padButton != xpadB)
-
-	#set dots to display in checker style
-	GPO(4, 0)
-	SPIW(spiRowCount)
-	SPIW(spiTemp)
-	GPO(4, 4)
-
-	IF(spiRowCount > 7)
-		spiRowCount = 0
-	ELSE
-		spiRowCount =  spiRowCount + 1
-	ENDIF
-	
-	IF(spiTemp == spiFirstPattern)
-		spiTemp = spiSecondPattern
-	ELSE
-		spiTemp = spiFirstPattern
-	ENDIF
-
-	WAIT(10)
-
-	GOTO spiLoop0
+IF(padButton == xpadB)
+	quit = 1	
 ENDIF
 
-#turn off
-GPO(4, 0)
-SPIW(0x0C)
-SPIW(0x00)
-GPO(4, 4)
+IF(padButton == xpadX)
+    IF(newFanSpeed >= 20)
+        changeFanSpeed = 1
+        newFanSpeed = newFanSpeed - 10
+    ENDIF
+ENDIF
+
+IF(padButton !== xpadY)
+    IF(newFanSpeed <= 90)
+        changeFanSpeed = 1
+        newFanSpeed = newFanSpeed + 10
+    ENDIF
+ENDIF
+
+IF(changeFanSpeed == 1)
+    changeFanSpeed = 0
+    FAN(newFanSpeed)
+ENDIF
+
+IF(quit != 1)
+    GOTO buttonLoop
+ENDIF
 
 END

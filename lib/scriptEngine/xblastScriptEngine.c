@@ -265,7 +265,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         //Manually append terminating character at the end of the string
         compareBuf[tempCounter] = '\0';
         //if(compareBuf[0] != '\0')
-        //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
+        //    printk("\n       %s", compareBuf); //debug, print the whole file line by line.
 
         stringStartPtr = ++stringStopPtr;     //Prepare to move on to next line.
 
@@ -727,13 +727,13 @@ bool bootFunction(u8 bank){
 }
 bool fanFunction(u8 value){
     //printf("\n****Fan speed: %u", value);
-	//printk("\n     fan function called : %u\%",value);
+    //printk("\n     fan function called : %u\%",value);
     if(value >=10 && value <= 100)
         I2CSetFanSpeed(value);
     return true;
 }
 bool ledFunction(char * value){
-	//printk("\n     LED function called : %s", value);
+    //printk("\n     LED function called : %s", value);
     //printf("\n****LED pattern: %s", value);
     setLED(value);
     return true;
@@ -822,9 +822,10 @@ bool SPIWrite(u8 data){
 u8 XPADRead(void){
     //printf("\n****Controller Pad read");
     int i;
+    
     for(i = TRIGGER_XPAD_KEY_A; i <= TRIGGER_XPAD_KEY_WHITE; i++){
-        if(XPAD_current[0].keys[i])
-            return (i +1);      //+1 to keep 0 value for no button pressed.
+        if(risefall_xpad_BUTTON(i) == 1)
+            return i + 1;
     }
     return 0;
 }
