@@ -136,7 +136,7 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 free(fileBuf);
                 break;
             case EEPROM_NETFLASH:
-                updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len);
+                updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len, true);
                 netFlashOver = 1;
                 UIFooter();
                 break;

@@ -458,7 +458,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_LCDW:
-                        if(argumentList[1].exist && argumentList[2].exist && argumentList[2].text != NULL){
+                        if(argumentList[1].exist && argumentList[2].exist && argumentList[2].text != NULL && argumentList[2].type == ARGTYPE_STRING){
                             if(argumentList[3].exist && (argumentList[3].type == ARGTYPE_VARIABLE || argumentList[3].type == ARGTYPE_NUMERIC))
                                 lcdPrintFunction((u8)argumentList[1].value, argumentList[2].text, argumentList[3].value);
                             else
@@ -904,7 +904,7 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
         stringTempPtr = stringStartPtr;
         while(file[stringTempPtr] != '(' && file[stringTempPtr] != '\n' && file[stringTempPtr] != '\0' && stringTempPtr < (stringStartPtr + 6))
             stringTempPtr += 1;
-        if(stringTempPtr >= 2){        //Detected something on this line.
+        if((stringTempPtr - stringStartPtr) >= 2){        //Detected something on this line.
             //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
             //Copy necessary text in compareBuf.
             strncpy(compareBuf, &file[stringStartPtr], stringTempPtr - stringStartPtr);
@@ -1275,7 +1275,10 @@ int trimScript(u8 ** file, u32 fileSize){
         while(linePtr < (stringStopPtr - CRdetected) && (*file)[linePtr] != '#'){
         	if((*file)[linePtr] == '\"')
         		insideTextString = !insideTextString;
-            if((*file)[linePtr] != ' ' || insideTextString){
+            if(((*file)[linePtr] != ' ' && (*file)[linePtr] != '\t') || insideTextString){
+                if((*file)[linePtr] == '\t' && insideTextString)
+                    currentSegment->lineBuf[tempPtr] = ' ';
+                else
             	//Copy into list element character by character as long as it's not a space.
                 currentSegment->lineBuf[tempPtr] = (*file)[linePtr];
                 tempPtr += 1;

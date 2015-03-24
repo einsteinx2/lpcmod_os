@@ -547,5 +547,3 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename){
 
     return 0;
 }
-
-

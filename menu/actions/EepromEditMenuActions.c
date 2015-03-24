@@ -230,7 +230,7 @@ void restoreEEPROMFromFile(void *fname) {
     res = LoadFATXFile(partition, fname, &fileinfo);
     ToolHeader("Load EEPROM image from HDD");
     if(res){
-        updateEEPROMEditBufferFromInputBuffer(fileinfo.buffer, fileinfo.fileSize);
+        updateEEPROMEditBufferFromInputBuffer(fileinfo.buffer, fileinfo.fileSize, true);
         free(fileinfo.buffer);
     }
     else{
@@ -239,7 +239,7 @@ void restoreEEPROMFromFile(void *fname) {
     UIFooter();
 }
 
-int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size){
+int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size, bool verbose){
     int res = 0, version;
     u8 decryptedData[0x30];
     u8 tempBuffer[256];
@@ -291,23 +291,24 @@ int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size){
             EepromCRC((u8 *)editeeprom->Checksum2,(u8 *)editeeprom->SerialNumber,0x28);
             EepromCRC((u8 *)editeeprom->Checksum3,(u8 *)editeeprom->TimeZoneBias,0x5b);
             
-            res = 1;
+            res = 0;
     
         }
         else{       //Content of new EEPROM image is not valid.
             res = -1;   //loaded EEPROM image is not valid
         }
     }
-
-    if(res > 0){
-        printk("\n\n           Success!.\n           EEPROM image successfully loaded to modified EEPROM buffer.");
-    }
-    else{
-        printk("\n\n           Error!");
-        if(res == -1)
-            printk("\n           Invalid EEPROM image file.");
-        else if(res == -3)
-            printk ("\n          EEPROM image file size wrong.");
+    if(verbose){
+        if(res == 0){
+            printk("\n\n           Success!.\n           EEPROM image successfully loaded to modified EEPROM buffer.");
+        }
+        else{
+            printk("\n\n           Error!");
+            if(res == -1)
+                printk("\n           Invalid EEPROM image file.");
+            else if(res == -3)
+                printk ("\n          EEPROM image file size wrong.");
+        }
     }
     return res;
 }

@@ -82,3 +82,8 @@ void toggleRunBootScript(void * itemStr){
     (LPCmodSettings.OSsettings.runBootScript) = (LPCmodSettings.OSsettings.runBootScript)? 0 : 1;
     sprintf(itemStr,"%s",LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
 }
+
+void toggleRunBankScript(void * itemStr){
+    (LPCmodSettings.OSsettings.runBankScript) = (LPCmodSettings.OSsettings.runBankScript)? 0 : 1;
+    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
+}

@@ -178,7 +178,7 @@ int main (int argc, const char * argv[])
 	FILE *pFile;
 	u32 fileSize;
 	u8 * buffer;
-    printf("XBlast OS script syntax checker.\n");
+     printf("XBlast OS script syntax checker.\n");
 
     if( argc < 2 ) {
         showUsage(argv[0]);
@@ -347,8 +347,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
            risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
            risefall_xpad_STATE(XPAD_STATE_START)&&
-           XPAD_current[0].keys[4]){        //black button
-            if(!ConfirmDialog("        Force quit script execution?"), 1)
+           XPAD_current[0].keys[5]){        //white button
                 goto endExecution;
         }
 */
@@ -825,7 +824,7 @@ bool SPIWrite(u8 data){
 
 u8 XPADRead(void){
     printf("\n****Controller Pad read");
-    return 1;
+    return 0;
 }
 
 bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly){
@@ -903,7 +902,7 @@ bool parseFileForIFStatements(u8 * file, u32 fileSize, _ifStatementList * ifStat
         stringTempPtr = stringStartPtr;
         while(file[stringTempPtr] != '(' && file[stringTempPtr] != '\n' && file[stringTempPtr] != '\0' && stringTempPtr < (stringStartPtr + 6))
             stringTempPtr += 1;
-        if(stringTempPtr >= 2){        //Detected something on this line.
+        if((stringTempPtr - stringStartPtr) >= 2){        //Detected something on this line.
             //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
             //Copy necessary text in compareBuf.
             strncpy(compareBuf, &file[stringStartPtr], stringTempPtr - stringStartPtr);
@@ -1274,9 +1273,12 @@ int trimScript(u8 ** file, u32 fileSize){
         while(linePtr < (stringStopPtr - CRdetected) && (*file)[linePtr] != '#'){
         	if((*file)[linePtr] == '\"')
         		insideTextString = !insideTextString;
-            if((*file)[linePtr] != ' ' || insideTextString){
-            	//Copy into list element character by character as long as it's not a space.
-                currentSegment->lineBuf[tempPtr] = (*file)[linePtr];
+            if(((*file)[linePtr] != ' ' && (*file)[linePtr] != '\t') || insideTextString){
+                if((*file)[linePtr] == '\t' && insideTextString)
+                    currentSegment->lineBuf[tempPtr] = ' ';
+                else
+                    //Copy into list element character by character as long as it's not a space.
+                    currentSegment->lineBuf[tempPtr] = (*file)[linePtr];
                 tempPtr += 1;
             }
             linePtr += 1;

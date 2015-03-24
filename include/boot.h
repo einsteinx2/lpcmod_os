@@ -355,7 +355,6 @@ int sprintf(char * buf, const char *fmt, ...);
 char * strstr(const char * s1,const char * s2);
 
 
-
 //Configuration parameters saved in flash
 typedef struct _OSsettings {
     u8    migrateSetttings;    //Flag to indicate if settings in this struct should be carried over a OS update.

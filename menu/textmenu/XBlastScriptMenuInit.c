@@ -55,6 +55,18 @@ TEXTMENU* XBlastScriptMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption,"Enable Bank script : ");
+    sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
+    itemPtr->functionPtr= toggleRunBankScript;
+    itemPtr->functionDataPtr= itemPtr->szParameter;
+    itemPtr->functionLeftPtr=toggleRunBankScript;
+    itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+    itemPtr->functionRightPtr=toggleRunBankScript;
+    itemPtr->functionRightDataPtr = itemPtr->szParameter;
+    TextMenuAddItem(menuPtr, itemPtr);
+
     return menuPtr;
 
 }

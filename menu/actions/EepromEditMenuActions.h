@@ -25,6 +25,6 @@ void editMACAddress(void *ignored);
 
 void restoreEEPROMFromFile(void *fname);
 
-int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size);
+int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size, bool verbose);
 
 #endif

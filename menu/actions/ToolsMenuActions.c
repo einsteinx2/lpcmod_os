@@ -18,26 +18,33 @@
 bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr);
 
 void saveEEPromToFlash(void *whatever){
-    u8 i;
-    u8 emptyCount = 0;
-    for(i = 0; i < 4; i++) {    //Checksum2 is 4 bytes long.
-        if(LPCmodSettings.bakeeprom.Checksum2[i] == 0xFF)
-            emptyCount++;
+    u8 unusedBuf[0x30];
+    int version;
+
+    version = decryptEEPROMData((u8 *)&(LPCmodSettings.bakeeprom), unusedBuf);
+    if(version >= V1_0 && version <= V1_6){   //Current content in eeprom is valid.
+        if(ConfirmDialog("       Overwrite back up EEProm content?", 1)){
+            return;
+        }
     }
-        if(emptyCount < 4)            //Make sure checksum2 is not 0xFFFFFFFF.
-            if(ConfirmDialog("       Overwrite back up EEProm content?", 1))
-                return;
     memcpy(&(LPCmodSettings.bakeeprom),&eeprom,sizeof(EEPROMDATA));
     ToolHeader("Back up to flash successful");
     UIFooter();
 }
 
 void restoreEEPromFromFlash(void *whatever){
-    if(replaceEEPROMContentFromBuffer(&(LPCmodSettings.bakeeprom))){
-        ToolHeader("No valid EEPROM backup on modchip.");
-        printk("\n           Nothing to restore. Xbox EEPROM is unchanged.");
-        UIFooter();
+
+    editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
+    if(!updateEEPROMEditBufferFromInputBuffer(&(LPCmodSettings.bakeeprom), sizeof(EEPROMDATA), false)){
+        if(replaceEEPROMContentFromBuffer(editeeprom)){
+            ToolHeader("No valid EEPROM backup on modchip.");
+            printk("\n           Nothing to restore. Xbox EEPROM is unchanged.");
+            UIFooter();
+        }
     }
+
+    free(editeeprom);
+    editeeprom = NULL;
 }
 
 void warningDisplayEepromEditMenu(void *ignored){
@@ -47,6 +54,7 @@ void warningDisplayEepromEditMenu(void *ignored){
     memcpy(editeeprom, &eeprom, sizeof(EEPROMDATA));   //Initial copy into edition buffer.
     ResetDrawChildTextMenu(eepromEditMenuInit());
     free(editeeprom);
+    editeeprom = NULL;
 }
 
 void wipeEEPromUserSettings(void *whatever){

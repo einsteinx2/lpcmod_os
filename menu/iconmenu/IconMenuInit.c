@@ -122,7 +122,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
 #ifdef ADVANCED_MENU
     iconPtr = (ICON *)malloc(sizeof(ICON));
     iconPtr->iconSlot = ICON_SOURCE_SLOT2;
-    iconPtr->szCaption = "Setttings";
+    iconPtr->szCaption = "Settings";
     iconPtr->bankID = NOBNKID;
     iconPtr->functionPtr = AdvancedMenu;
     iconPtr->functionDataPtr = (void *)TextMenuInit();
