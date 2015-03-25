@@ -324,7 +324,10 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
     u8 textStringCopyLength;
     
     setCFGFileTransferPtr(LPCmodSettingsPtr);
-
+    
+    //Take what's already properly set and start from there.
+    if(LPCmodSettingsPtr != &LPCmodSettings)   //Avoid useless and potentially hazardous memcpy!
+        memcpy((u8 *)LPCmodSettingsPtr, (u8 *)&LPCmodSettings, sizeof(_LPCmodSettings));
 
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
     if(partition != NULL){
