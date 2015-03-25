@@ -61,9 +61,9 @@ void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware, u32
 
     printk("\n\n");
     if (cromwell_config==XROMWELL) {
-        printk("           \2XBlast OS (XBE) v" VERSION "\n\n\2");
+        printk("           \2"PROG_NAME" (XBE) v" VERSION "\n\n\2");
     } else if (cromwell_config==CROMWELL) {
-        printk("           \2XBlast OS (ROM) v" VERSION "\n\n\2");
+        printk("           \2"PROG_NAME" (ROM) v" VERSION "\n\n\2");
     }
 
     VIDEO_ATTR=0xff00ff00;

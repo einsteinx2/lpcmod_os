@@ -163,7 +163,8 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootParser.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
-OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
+OBJECTS-CROM += $(TOPDIR)/obj/md5.o
+#OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 OBJECTS-CROM += $(TOPDIR)/obj/strtol.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
 #USB

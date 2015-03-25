@@ -557,15 +557,18 @@ int fetchBootScriptFromFlash(u8 ** buffer){
         #include "flashtypes.h"
     };
     if(LPCmodSettings.firstScript.ScripMagicNumber == 0xFAF1){  //No need to dig in further if no script was saved there.
-        if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
+        bufferSize = LPCmodSettings.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
+        if(bufferSize > 0){
+            if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
 
-            memset(&of,0xFF,sizeof(of));
-            of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+                memset(&of,0xFF,sizeof(of));
+                of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
 
-            if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
-                bufferSize = LPCmodSettings.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
-                *buffer = (u8 *)malloc(bufferSize);
-                memcpy(*buffer,(const u8*)&(of.m_pbMemoryMappedStartAddress[0x3f000 + sizeof(_LPCmodSettings)]), bufferSize);
+                if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
+
+                    *buffer = (u8 *)malloc(bufferSize);
+                    memcpy(*buffer,(const u8*)&(of.m_pbMemoryMappedStartAddress[0x3f000 + sizeof(_LPCmodSettings)]), bufferSize);
+                }
             }
         }
     }

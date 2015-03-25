@@ -15,6 +15,7 @@
 #include "memory_layout.h"
 #include "video.h"
 #include "include/lpcmod_v1.h"
+#include "md5.h"
 
 //Selects which function should be called for flashing.
 bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm){
@@ -81,6 +82,9 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 {
     OBJECT_FLASH of;
     bool fMore=true;
+    int i;
+    u8 md5result[16];
+    MD5_CTX hashcontext;
 
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -110,10 +114,20 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         (dwLength % 262144) != 0 || dwLength == 0)                       //Image size is not a multiple of 256KB or is 0.
         return 3; // requested layout won't fit device - sanity check fail
     if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && currentFlashBank == BNKOS){ //Only check when on a XBlast mod. For the rest, I don't care.
-        //if(assertOSUpdateValidInput(pbNewData))
-        //    return 4;  //Not valid XBlast OS image.
-        if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
+
+        //if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
+        //    return 5;
+
+        if(strncmp(&pbNewData[dwLength - 16 - 32], PROG_NAME, 9))
             return 5;
+
+        MD5Init(&hashcontext);
+        MD5Update(&hashcontext, pbNewData, dwLength-0x1000);
+        MD5Final(md5result, &hashcontext);
+        for(i = 0; i < 16; i++){
+            if(md5result[i] != pbNewData[dwLength - 16 + i])
+                return 5;
+        }
     }
     else{       //If not XBlast Mod on BNKOS, mirror image to fill the entire size of detected flash up to 1MB
         mirrorImage(pbNewData, dwLength, &of);

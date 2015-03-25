@@ -1,5 +1,7 @@
 ////////////////////// compile-time options ////////////////////////////////
 
+#define PROG_NAME "XBlast OS"
+
 //XBlast OS version number
 #define VERSION "0.3 (beta)"
 

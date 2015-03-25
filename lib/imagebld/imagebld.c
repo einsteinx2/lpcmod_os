@@ -76,7 +76,7 @@ void writeBiosIdentifier(unsigned char *cromimage, int biosSize) {
     memcpy(BiosHeader->Magic,"AUTO",4);
     BiosHeader->HeaderVersion=1;
     BiosHeader->BiosSize= biosSize;
-    sprintf(BiosHeader->Name,"XBlast OS %s",VERSION);
+    sprintf(BiosHeader->Name,"%s %s",PROG_NAME, VERSION);
                                        
     BiosHeader->XboxVersion =       BiosID_Version10 |
                                     BiosID_Version11 |
@@ -92,7 +92,7 @@ void writeBiosIdentifier(unsigned char *cromimage, int biosSize) {
                                     BiosID_VideoEncoder_Xcalibur;
                                     
     MD5Init(&hashcontext);
-    MD5Update(&hashcontext, cromimage, biosSize-16);
+    MD5Update(&hashcontext, cromimage, biosSize-0x1000);
     MD5Final(BiosHeader->MD5Hash, &hashcontext);      
 }
 
