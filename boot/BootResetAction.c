@@ -135,10 +135,11 @@ extern void BootResetAction ( void ) {
     char modName[30] = "Unsupported modchip!";
     u8 * bootScriptBuffer;
     u8 tempFanSpeed = 20;
-    int bootScriptSize = -1;
+    int bootScriptSize = -1, res, dcluster;
     u32 cpuSpeed;
     _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH of;
+    FATXPartition *partition;
     FATXFILEINFO fileinfo;
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -543,6 +544,25 @@ extern void BootResetAction ( void ) {
                    fHasHardware == SYSCON_ID_XX3 ||
                    fHasHardware == SYSCON_ID_X3){
                     assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+                }
+                
+                partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+	        if(partition != NULL) {
+        	    dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
+        	    if((dcluster != -1) && (dcluster != 1)) {
+            		dcluster = FATXFindDir(partition, dcluster, "scripts");
+        	    }
+        	    if((dcluster != -1) && (dcluster != 1)) {
+        	    	res = FATXFindFile(partition, "bank.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+                	if(res == 0 || fileinfo.fileSize == 0) {
+                	    LPCmodSettings.OSsettings.runBankScript = 0;
+			}
+        	    	res = FATXFindFile(partition, "boot.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+                	if(res == 0 || fileinfo.fileSize == 0) {
+                	    LPCmodSettings.OSsettings.runBootScript = 0;
+			}
+                    }
+                    CloseFATXPartition(partition);
                 }
                 //bootScriptSize should not have changed if we're here.
                 if(LPCmodSettings.OSsettings.runBootScript && bootScriptSize <= 0){

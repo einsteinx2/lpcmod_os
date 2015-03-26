@@ -102,7 +102,7 @@ TEXTMENU* RunScriptMenuInit(void) {
     strcpy(fullPathptr, "'");
     fullPathptr = NULL;
 
-    //Only supports BIOS file fetch from Master HDD.
+    //Only supports script file fetch from Master HDD.
     partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));

@@ -61,18 +61,18 @@ void saveScriptToFlash(void *fname){
     FATXFILEINFO fileinfo;
 
     if(loadScriptFromHDD(fname, &fileinfo)){
-        if(fileinfo.fileSize <= (0x3FDFC - 0x3F000 - sizeof(_LPCmodSettings))){  //Should give 2808 bytes
+        if(fileinfo.fileSize <= (0x3FE00 - 0x3F000 - sizeof(_LPCmodSettings))){  //Should give 2812 bytes
             LPCmodSettings.firstScript.ScripMagicNumber = 0xFAF1;
             LPCmodSettings.firstScript.nextEntryPosition = fileinfo.fileSize + sizeof(_LPCmodSettings) + 1;
             scriptSavingPtr = malloc(fileinfo.fileSize);
             memcpy(scriptSavingPtr, fileinfo.buffer, fileinfo.fileSize);
             ToolHeader("Saved boot script to flash.");
-            printk("\n           Script occupies %u bytes of %u bytes available.", fileinfo.fileSize , 0x3FDFC - 0x3F000 - sizeof(_LPCmodSettings));
+            printk("\n           Script occupies %u bytes of %u bytes available.", fileinfo.fileSize , 0x3FE00 - 0x3F000 - sizeof(_LPCmodSettings));
         }
         else{
             ToolHeader("Cannot save boot script.");
             printk("\n           Script size is too big for flash space left available.");
-            printk("\n           Script requires %u bytes and only %u bytes are available.", fileinfo.fileSize , 0x3FDFC - 0x3F000 - sizeof(_LPCmodSettings));
+            printk("\n           Script requires %u bytes and only %u bytes are available.", fileinfo.fileSize , 0x3FE00 - 0x3F000 - sizeof(_LPCmodSettings));
         }
         free(fileinfo.buffer);
     }
@@ -113,6 +113,7 @@ void toggleRunBootScript(void * itemStr){
             LPCmodSettings.OSsettings.runBootScript = 1;
         }
         else{
+            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             ToolHeader("Cannot activate boot script.");
             printk("\n           No script found in flash.");
             UIFooter();
@@ -128,6 +129,7 @@ void toggleRunBankScript(void * itemStr){
         LPCmodSettings.OSsettings.runBankScript = 0;
     }
     else{
+    	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
         if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
             free(fileinfo.buffer);
             LPCmodSettings.OSsettings.runBankScript = 1;

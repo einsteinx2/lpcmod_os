@@ -119,7 +119,7 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         //    return 5;
 
         if(strncmp(&pbNewData[dwLength - 16 - 32], PROG_NAME, 9))
-            return 5;
+            return 4;
 
         MD5Init(&hashcontext);
         MD5Update(&hashcontext, pbNewData, dwLength-0x1000);
@@ -396,7 +396,7 @@ bool BootFlashPrintResult(int res, u32 fileSize) {
                 case 5:
                     printk ("\n           ");
                     cromwellError ();
-                    printk ("\n           CRC mismatch.");
+                    printk ("\n           MD5 mismatch.");
                     break;
                 default:
                     printk ("\n           ");
