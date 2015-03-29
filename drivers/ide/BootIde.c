@@ -1192,7 +1192,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         (tsaHarddiskInfo[nDriveIndex].m_fDriveExists == 0))
     {
         //printk("unknown drive\n");
-        debugSPIPrint("Unknown drive. Halting.");
+        //debugSPIPrint("Unknown drive. Halting.");
         return 1;
     }
 
@@ -1202,7 +1202,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         u8 ba[12];
         int nReturn;
 	
-	debugSPIPrint("Drive is DVD drive.");
+	//debugSPIPrint("Drive is DVD drive.");
 	
         IoInputByte(IDE_REG_STATUS(uIoBase));
         if(IoInputByte(IDE_REG_STATUS(uIoBase)&1)) 
@@ -1218,7 +1218,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             }
         }
 
-		debugSPIPrint("No error remaining before request.");
+	//debugSPIPrint("No error remaining before request.");
         BootIdeWaitNotBusy(uIoBase);
 
         if(n_bytes<2048) 
@@ -1238,11 +1238,11 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         ba[7]=0; 
         ba[8]=1;
 
-	    debugSPIPrint("Issuing ATAPI command and packet.");
+	//debugSPIPrint("Issuing ATAPI command and packet.");
 	    
         if(BootIdeIssueAtapiPacketCommandAndPacket(nDriveIndex, ba)) 
         {
-            debugSPIPrint("Unable to issue ATAPI command. Halting.");
+            //debugSPIPrint("Unable to issue ATAPI command. Halting.");
 //            printk("BootIdeReadSector Unable to issue ATAPI command\n");
             return 1;
         }
@@ -1254,24 +1254,24 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 //        printk("nReturn = %x\n", nReturn);
 
         if(nReturn>2048) nReturn=2048;
-        debugSPIPrint("Reading data from ATAPI drive.");
+        //debugSPIPrint("Reading data from ATAPI drive.");
         status = BootIdeReadData(uIoBase, pbBuffer, nReturn);
         if (status != 0) 
         {
             while(1) 
             {
             	//XXX: Reduce wait delay length?
-                debugSPIPrint("More data to be read.");
+                //debugSPIPrint("More data to be read.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, pbBuffer, nReturn);                
                 if (status == 0) 
                 {
-                    debugSPIPrint("Data reading is over.");
+                    //debugSPIPrint("Data reading is over.");
                     break;
                 }
             }
         }
-        debugSPIPrint("Successful reading from ATAPI drive.");
+        //debugSPIPrint("Successful reading from ATAPI drive.");
         return 0;
     }
 
@@ -1290,7 +1290,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     if( block >= 0x10000000 ) 
     {     
         /* 48-bit LBA access required for this block */ 
-        debugSPIPrint("LBA48 disk access required.");
+        //debugSPIPrint("LBA48 disk access required.");
         tsicp.m_bCountSectorExt = 0;   
         
          /* This routine can have a max LBA of 32 bits (due to unsigned int data type used for block parameter) */   
@@ -1307,7 +1307,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             //debugSPIPrint("Legacy LBA28/CHS reading is used.");
             if (tsaHarddiskInfo[nDriveIndex].m_bLbaMode == IDE_DH_CHS) 
             { 
-		debugSPIPrint("Drive is accessed by CHS(wtf).");
+		//debugSPIPrint("Drive is accessed by CHS(wtf).");
             track = block / tsaHarddiskInfo[nDriveIndex].m_wCountSectorsPerTrack;
             
             tsicp.m_bSector = 1+(block % tsaHarddiskInfo[nDriveIndex].m_wCountSectorsPerTrack);
@@ -1345,12 +1345,12 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
                 //XXX: Reduce wait delay length?
-                debugSPIPrint("Error reading data, retrying.");
+                //debugSPIPrint("Error reading data, retrying.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, baBufferSector, IDE_SECTOR_SIZE);
                 if (status == 0) {
-                    debugSPIPrint("Reading data finally over.");
-                    debugSPIPrint("Copying %u bytes to output buffer starting from offset %u.", n_bytes, byte_offset);
+                    //debugSPIPrint("Reading data finally over.");
+                    //debugSPIPrint("Copying %u bytes to output buffer starting from offset %u.", n_bytes, byte_offset);
                     memcpy(pbBuffer, baBufferSector+byte_offset, n_bytes);
                     break;
                 }
@@ -1366,11 +1366,11 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             // UPS, it failed, but we are brutal, we try again ....
             while(1) {
                 //XXX: Reduce wait delay length?
-            	debugSPIPrint("Error reading data, retrying.");
+            	//debugSPIPrint("Error reading data, retrying.");
                 wait_ms(50);
                 status = BootIdeReadData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);        
                 if (status == 0) {
-                    debugSPIPrint("Reading data finally over.");
+                    //debugSPIPrint("Reading data finally over.");
                     break;
                 }
             }

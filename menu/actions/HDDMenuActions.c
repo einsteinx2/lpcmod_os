@@ -293,7 +293,7 @@ void DisplayHDDInfo(void *driveId) {
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
     u8 clusterSize;
     u32 partSize;
-    debugSPIPrint("Display HDD info for %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
+    //debugSPIPrint("Display HDD info for %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
 
     printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
 
@@ -309,14 +309,14 @@ void DisplayHDDInfo(void *driveId) {
     printk("\n\1           FATX Formatted? : %s ", tsaHarddiskInfo[nIndexDrive].m_enumDriveType==EDT_XBOXFS ? "Yes" : "No");
     printk("\n\1           Xbox MBR on HDD? : %s", tsaHarddiskInfo[nIndexDrive].m_fHasMbr ? "Yes" : "No");
     if(tsaHarddiskInfo[nIndexDrive].m_fHasMbr){
-        debugSPIPrint("MBR detected on %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
+        //debugSPIPrint("MBR detected on %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
         if(BootIdeReadSector(nIndexDrive, MBRBuffer, 0x00, 0, 512)) {
             //VIDEO_ATTR=0xffff0000;
-            debugSPIPrint("Unable to read MBR sector...");
+            //debugSPIPrint("Unable to read MBR sector...");
             printk("\n\1                Unable to read MBR sector...\n");
         }
         else{
-            debugSPIPrint("MBR sector read. Printing results on screen.");
+            //debugSPIPrint("MBR sector read. Printing results on screen.");
             for(i = 0; i < 7; i++){     //Print only info for C, E, F, G, X, Y and Z
                 if(mbr->TableEntries[i].Name[0] != ' ' && mbr->TableEntries[i].LBAStart != 0){          //Valid partition entry only
                     printk("\n\1                 %s", mbr->TableEntries[i].Name);
@@ -381,13 +381,13 @@ void FormatDriveFG(void *driveId) {
         gsize = LBASIZE_1024GB - 1;
     if(!ConfirmDialog(buffer, 1)){
         HDDMenuHeader("Format F: drive");
-        debugSPIPrint("Formatting F: drive. Partition start : 0x%X, size : 0x%X", SECTOR_EXTEND, fsize);
+        //debugSPIPrint("Formatting F: drive. Partition start : 0x%X, size : 0x%X", SECTOR_EXTEND, fsize);
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
         UIFooter();
 
         if(formatOption != F_NOG){
             HDDMenuHeader("Format G: drive");
-            debugSPIPrint("Formatting G: drive. Partition start : 0x%X, size : 0x%X", gstart, gsize);
+            //debugSPIPrint("Formatting G: drive. Partition start : 0x%X, size : 0x%X", gstart, gsize);
             FATXFormatExtendedDrive(nDriveIndex, 6, gstart, gsize);             //G: drive is partition 6 in table
             UIFooter();
         }

@@ -65,7 +65,7 @@ double RDTSC(void){
     unsigned long a, d;
 
     rdtsc(a,d);
-    debugSPIPrint("d:0x%X, a:0x%X", d, a);
+    //debugSPIPrint("d:0x%X, a:0x%X", d, a);
     return (((unsigned long long)a) | (((unsigned long long)d) << 32));
 }
 

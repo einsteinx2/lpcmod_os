@@ -921,24 +921,24 @@ int FATXCheckMBR(u8 driveId){
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
         printk("\n\n\n           FATXCheckMBR : Unable to read MBR sector\n");
-        debugSPIPrint("Unable to read MBR sector (0).");
+        //debugSPIPrint("Unable to read MBR sector (0).");
         return 0;
     }
     else{
         for(i = 0; i < 48; i++){
             if(ba[i] != sourceTable[i]){         //Contains generic MBR header
-                debugSPIPrint("Partition table header not properly constructed.");
+                //debugSPIPrint("Partition table header not properly constructed.");
                 return 0;                       //First 48 bytes should always be identical for every Part tables.
             }
         }
         for(i = 48; i < 208; i++){
             if(ba[i] != sourceTable[i]){         //Contains standard Xbox Partitions (C,E,X,Y,Z)
-                debugSPIPrint("Partition table base entries(C,E,X,Y,Z) not standard.");
+                //debugSPIPrint("Partition table base entries(C,E,X,Y,Z) not standard.");
                 return -1;                      //If basic partition entries contains unconventional values, return error.
             }
         }
     }
-    debugSPIPrint("Drive has valid MBR partition table.");
+    //debugSPIPrint("Drive has valid MBR partition table.");
     return 1;
 }
 
@@ -946,7 +946,7 @@ int FATXCheckFATXMagic(u8 driveId){
     u8 ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x03, 0, 512)) {
         printk("\n\n\n           FATXCheckFATXMagic : Unable to read MBR sector\n");
-        debugSPIPrint("Unable to read FATX sector (3).");
+        //debugSPIPrint("Unable to read FATX sector (3).");
         return 0;
     }
     if((ba[0]=='B') && (ba[1]=='R') && (ba[2]=='F') && (ba[3]=='R')){
@@ -1385,7 +1385,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     else
         clusterSize = 32;
         
-    debugSPIPrint("Cluster size is %uKB.", clusterSize / 2);
+    //debugSPIPrint("Cluster size is %uKB.", clusterSize / 2);
     
     //Calculate size of FAT, in number of 512-byte sectors.
     chainmapSize = (lbaSize / clusterSize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
@@ -1396,7 +1396,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     while((chainmapSize % 8) != 0)                    //Round it to 4096 byte boundary.
         chainmapSize += 1;
         
-    debugSPIPrint("Chainmap size is %u sectors.", chainmapSize);
+    //debugSPIPrint("Chainmap size is %u sectors.", chainmapSize);
 	
     if(tsaHarddiskInfo[driveId].m_fHasMbr == 1) {                           //MBR is present on HDD
         if(BootIdeReadSector(driveId, &buffer[0], 0x00, 0, 512)) {
@@ -1405,19 +1405,19 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
             cromwellWarning();
             return;
         }
-        debugSPIPrint("MBR read on HDD, will be updating it.");
+        //debugSPIPrint("MBR read on HDD, will be updating it.");
     }
     else
     {                                                   //If no MBR already on disk
         memcpy(mbr, &BackupPartTbl, sizeof(BackupPartTbl)); //Copy backup in working buffer and work from there.
-    	debugSPIPrint("No MBR on HDD. Will take default one and start from there.");
+    	//debugSPIPrint("No MBR on HDD. Will take default one and start from there.");
     }
 
     printk("\n\n\n           Writing partition table in MBR.   ");
     mbr->TableEntries[partition].Flags = PE_PARTFLAGS_IN_USE;
     mbr->TableEntries[partition].LBAStart = lbaStart;
     mbr->TableEntries[partition].LBASize = lbaSize;
-    debugSPIPrint("MBR entry writing. Starts at 0x%X. Size is 0x%X.", lbaStart, lbaSize);
+    //debugSPIPrint("MBR entry writing. Starts at 0x%X. Size is 0x%X.", lbaStart, lbaSize);
     FATXSetMBR(driveId, mbr);
     cromwellSuccess();
 
