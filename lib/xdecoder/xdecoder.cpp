@@ -17,7 +17,7 @@ string removeExtension(const std::string &filename) {
 }
 
 int main(int argc, char* argv[]) {
-	unsigned char buffer[0xBAC];
+	unsigned char buffer[0x3000];
 	int count = 0;
 	int inSize;
 	int tempVar, numOp1, numOp2;
@@ -75,9 +75,9 @@ int main(int argc, char* argv[]) {
 			return -1;
 		}
 		inFile.seekg(0x80, ios::beg);
-		inFile.read((char *) buffer, 0xBAC);
+		inFile.read((char *) buffer, 0x3000);
 
-		for (count = 0; count < 0xBAC; count += 9) {
+		for (count = 0; count < 0x3000; count += 9) {
 			xcode = (xcodeStruct *) (buffer + count);
 			ignore = 0;
 			sprintf(xcodeOp1, "%.2x%.2x%.2x%.2x", buffer[count + 4],

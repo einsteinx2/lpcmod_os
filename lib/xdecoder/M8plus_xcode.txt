@@ -1,114 +1,5 @@
-/*
- *
- *  BIOS ROM Startup Assembler
- *  (C)2002 Andy, Michael, Paul, Steve
- * Original top and bottom ROM code by Steve from an idea by Michael
- * -- NOTE: Comment removed, the top / bottom Code changed to turnaround code.
- */
-
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-/* 
-	Rewritten from Original .bin linking to compiler system by Lehner Franz (franz@caos.at) 
-	Rewritten to Dual Boot concept for 2BL loading
-	New written CPU Inits by Lehner Franz (franz@caos.at) 
-	Written New Working Xcodes + Xcode compiler by Lehner Franz (franz@caos.at) 
-	Focus support by Lehner Franz (franz@caos.at) 
-	Xcalibur support by Lehner Franz (franz@caos.at) 
-*/
- 
-#include "2bconsts.h"
-
-//#define MCPXREVD5	1
- 
-#define xcode_peek(val1) .byte 0x2; .long val1 ; .long 0x0 ;
-#define xcode_poke(val1,val2) .byte 0x3; .long val1 ; .long val2 ;
-#define xcode_pciout(val1,val2) .byte 0x4; .long val1 ; .long val2 ;
-#define xcode_pciin_a(val1) .byte 0x5; .long val1 ; .long 0x0 ;
-
-#define xcode_bittoggle(val1,val2) .byte 0x6; .long val1 ; .long val2 ;
-
-#define xcode_ifgoto(val1,val2) .byte 0x8; .long val1 ; .long (9*(val2-1)) ;
-
-#define xcode_outb(val1,val2) .byte 0x11; .long val1 ; .long val2 ;			    
-#define xcode_inb(val1) .byte 0x12; .long val1 ; .long 0x0 ;			    
-
-#define xcode_poke_a(val1) .byte 0x7; .long 0x3; .long val1 ;  
-#define xcode_pciout_a(val1) .byte 0x7; .long 0x4; .long val1 ;  
-#define xcode_outb_a(val1) .byte 0x7; .long 0x11; .long val1 ;  
-
-#define xcode_goto(val1) .byte 0x9; .long 0x0; .long (9*(val1-1));
-
-#define xcode_END(val1) .byte 0xEE; .long val1 ; .long 0x0;
-
-#define SMBUS 		0x0000c000
-
-
-#define SMB_xcode_Write(val1,val2); \
-			xcode_outb(SMBUS+8, val1); \
-			xcode_outb(SMBUS+6, val2); \
-			xcode_outb(SMBUS+2, 0x0000000a); \
-			xcode_inb(SMBUS); \
-			xcode_ifgoto(0x00000010,-1); \
-			xcode_outb(SMBUS, 0x00000010); 
-
-.code32
-
-.section .low_rom, "ax"
-
-.org 0x0
-	/* MCPX Magic Values - clock timings*/
-	
-	.long 0xff000009
-	.long 0xff000008
-	.long 0x2b16d065
-	.long 0x3346322d
-	.long 0x01010101
-	.long 0x08080808
-	.long 0x00000801
-
-	#ifndef MCPXREVD5
-	.long 0xc8fc7c8a	// MCPX =< D5
-	.long 0x44290213
-	.long 0x90004998		
-	.long 0x00000000
-	#else
-	.long 0xc8b4588a	// MCPX 1.6 > D5
-	.long 0x00100000
-	.long 0x00050aa7
-	.long 0xf0000000
-	#endif
-
-	.long 0xffffffff
-	.long 0xffffffff
-	
-	.org 0x40
-	.long _start_checksum	// This number will be overwritten  
-									// With imagebld, but we need a temp value
-	
-	.org 0x6c
-	.long 0x00000107
-	
-	.org 0x70		// MCPX Config Area
-	.long 0x0000000f
-	.long 0x40004400
-	
-#ifndef MCPXREVD5
-	.long 0x12d10070
-	.long 0x00000c90
-#else
-	.long 0x16ce0090
-	.long 0x00000dc0	
-#endif
-	
-.byte 0xf5 ; .long 0x00081000 ; .long 0x00000001;
-.byte 0x80 ; .long 0x00000114 ; .long 0x00000228;
+!!err_value=0xf5(0x00081000, 0x00000001);
+!!err_value=0x80(0x00000114, 0x00000228);
 xcode_pciout(0x80000884, 0x00008001);
 xcode_pciout(0x80000810, 0x00008001);
 xcode_pciout(0x80000804, 0x00000003);
@@ -136,9 +27,9 @@ xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, 0x00000002);
 xcode_goto(0x00000005);
 xcode_bittoggle(0x00000008, 0x00000000);
-xcode_ifgoto(0x00000000, -4);
+xcode_ifgoto(0x00000000, 0xfffffffc);
 xcode_outb(SMBUS, 0x000000ff);
-xcode_goto(0x0000016a); //Jump to "legacy" X-Codes portion.
+xcode_goto(0x0000016a);
 xcode_inb(SMBUS+9);
 xcode_inb(SMBUS+9);
 xcode_inb(SMBUS+9);
@@ -146,7 +37,7 @@ xcode_inb(SMBUS+9);
 xcode_outb(SMBUS, 0x000000ff);
 xcode_poke(0x0f0010b0, 0x01000010);
 xcode_poke(0x0f0010cc, 0x66660000);
-xcode_goto(39);
+xcode_goto(0x00000027);
 xcode_poke(0x0f0010d4, 0x0000000f);
 xcode_poke(0x0f0010b4, 0x00000000);
 xcode_poke(0x0f0010bc, 0x00005860);
@@ -167,7 +58,7 @@ xcode_outb(SMBUS+4, 0x00000021);
 xcode_outb(SMBUS+8, 0x00000001);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, 0xffffffff);
 xcode_outb(SMBUS, 0x00000010);
 xcode_inb(SMBUS+6);
 xcode_ifgoto(0x00000050, 0x00000002);
@@ -190,10 +81,10 @@ xcode_inb(SMBUS);
 xcode_pciout_a(0x8000103c);
 xcode_bittoggle(0x00000008, 0x00000000);
 xcode_ifgoto(0x00000008, 0x00000002);
-xcode_goto(-4);
+xcode_goto(0xfffffffc);
 xcode_pciin_a(0x8000103c);
 xcode_bittoggle(0x000000ff, 0x00000000);
-xcode_ifgoto(0x00000010, -12);
+xcode_ifgoto(0x00000010, 0xfffffff4);
 xcode_inb(SMBUS+6);
 xcode_bittoggle(0x000000ff, 0x00000000);
 xcode_poke_a(0x0f001248);
@@ -217,7 +108,7 @@ xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
 xcode_poke_a(0x0f101000);
 xcode_pciout(0x8000183c, 0x000000c2);
-xcode_goto(-36);
+xcode_goto(0xffffffdc);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0x00000001, 0x00000000);
 xcode_ifgoto(0x00000000, 0x00000029);
@@ -249,14 +140,14 @@ xcode_peek(0x0f001248);
 xcode_bittoggle(0xffff0000, 0x00000000);
 xcode_poke_a(0x0f0010b8);
 xcode_pciout(0x8000183c, 0x000000c1);
-xcode_goto(-107);
+xcode_goto(0xffffff95);
 xcode_pciin_a(0x8000183c);
 xcode_bittoggle(0x000000ff, 0x00000000);
 xcode_ifgoto(0x000000c1, 0x00000005);
 xcode_peek(0x0f001248);
 xcode_poke_a(0x0f00122c);
 xcode_pciout(0x8000183c, 0x000000c0);
-xcode_goto(-75);
+xcode_goto(0xffffffb5);
 xcode_peek(0x0f001248);
 xcode_poke_a(0x0f001214);
 xcode_pciout(0x8000183c, 0x000000c3);
@@ -264,41 +155,41 @@ xcode_goto(0x00000021);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x01010100);
 xcode_poke_a(0x0f001248);
-xcode_goto(-42);
+xcode_goto(0xffffffd6);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x02020200);
 xcode_poke_a(0x0f001248);
-xcode_goto(-43);
+xcode_goto(0xffffffd5);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x04040400);
 xcode_poke_a(0x0f001248);
-xcode_goto(-44);
+xcode_goto(0xffffffd4);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x08080800);
 xcode_poke_a(0x0f001248);
-xcode_goto(-45);
+xcode_goto(0xffffffd3);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x10101000);
 xcode_poke_a(0x0f001248);
-xcode_goto(-46);
+xcode_goto(0xffffffd2);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x20202000);
 xcode_poke_a(0x0f001248);
-xcode_goto(-47);
+xcode_goto(0xffffffd1);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x40404000);
 xcode_poke_a(0x0f001248);
-xcode_goto(-48);
+xcode_goto(0xffffffd0);
 xcode_peek(0x0f001248);
 xcode_bittoggle(0xffffffff, 0x80808000);
 xcode_poke_a(0x0f001248);
-xcode_goto(-50);
+xcode_goto(0xffffffce);
 xcode_poke(0x0f001248, 0x00000000);
-xcode_poke(0x0f001230, -1);
+xcode_poke(0x0f001230, 0xffffffff);
 xcode_poke(0x0f001234, 0xaaaaaaaa);
 xcode_poke(0x0f001238, 0xaaaaaaaa);
 xcode_poke(0x0f00123c, 0x8b8b8b8b);
-xcode_poke(0x0f001240, -1);
+xcode_poke(0x0f001240, 0xffffffff);
 xcode_poke(0x0f001244, 0x8b8b8b8b);
 xcode_poke(0x0f001248, 0x8b8b8b8b);
 xcode_poke(0x0f1002d4, 0x00000001);
@@ -482,7 +373,7 @@ xcode_outb(SMBUS+4, 0x00000020);
 xcode_outb(SMBUS+8, 0x00000013);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, 0xffffffff);
 xcode_outb(SMBUS, 0x00000010);
 xcode_pciin_a(0x8000183c);
 xcode_bittoggle(0x000000ff, 0x00000000);
@@ -490,12 +381,11 @@ xcode_outb_a(0x0000c006);
 xcode_outb(SMBUS+8, 0x00000012);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, 0xffffffff);
 xcode_outb(SMBUS, 0x00000010);
 xcode_pciout(0x8000f020, 0xfdf0fd00);
 xcode_pciout(0x80010010, 0xfd000000);
 xcode_goto(0x0000015f);
-//The bytecode interpreter begins here. Jumped from line 141 ( xcode_goto(0x0000016a); )
 xcode_pciout(0x80000884, 0x00008001);
 xcode_pciout(0x80000810, 0x00008001);
 xcode_pciout(0x80000804, 0x00000003);
@@ -511,11 +401,7 @@ xcode_pciout(0x80010010, 0x0f000000);
 xcode_pciout(0x80010014, 0xf0000000);
 xcode_pciout(0x80010004, 0x00000007);
 xcode_pciout(0x8000f004, 0x00000007);
-#ifndef MCPXREVD5
-    xcode_poke(0x0f0010b0, 0x07633461);
-#else
-    xcode_poke(0x0f0010b0, 0x01000010);
-#endif
+xcode_poke(0x0f0010b0, 0x07633461);
 xcode_poke(0x0f0010cc, 0x66660000);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0x000c0000, 0x00000000);
@@ -524,18 +410,14 @@ xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0xeeee0000);
-xcode_goto(11);
-
-xcode_ifgoto(0x000c0000, 6);
-
+xcode_goto(0x0000000b);
+xcode_ifgoto(0x000c0000, 0xfffffe9e);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x860c0000);
 xcode_poke_a(0x0f101000);
-
 xcode_poke(0x0f0010b8, 0xffff0000);
-    xcode_goto(0x00000005);
+xcode_goto(0x00000005);
 xcode_peek(0x0f101000);
-
 xcode_bittoggle(0xe1f3ffff, 0x820c0000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0x11110000);
@@ -553,27 +435,19 @@ xcode_poke(0x0f100330, 0x84848888);
 xcode_poke(0x0f10032c, 0xffffcfff);
 xcode_poke(0x0f100328, 0x00000001);
 xcode_poke(0x0f100338, 0x000000df);
-// Set up the SM - bus controller
 xcode_pciout(0x80000904, 0x00000001);
 xcode_pciout(0x80000914, 0x0000c001);
 xcode_pciout(0x80000918, 0x0000c201);
 xcode_outb(0x0000c200, 0x00000070);
-    //VIDEO INIT CODE
-    /* It is necessary to write to the video encoder, as the PIC
-    snoops the I2C traffic and will reset us if it doesn't see what
-    it judges as 'appropriate' traffic.  Conexant is the most urgent,
-    as on 1.0 Xboxes, the PIC was very strict and reset us earlier
-    than later models
-    */
 xcode_outb(SMBUS+4, 0x000000d4);
 xcode_outb(SMBUS+8, 0x0000000c);
 xcode_outb(SMBUS+6, 0x00000000);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, 0x00000002); //Write failed, forward 2
+xcode_ifgoto(0x00000010, 0x00000002);
 xcode_goto(0x00000005);
-xcode_bittoggle(0x00000008, 0x00000000); //Check fail status
-xcode_ifgoto(0x00000000, -4); //No result yet, read again.
+xcode_bittoggle(0x00000008, 0x00000000);
+xcode_ifgoto(0x00000000, 0xfffffffc);
 xcode_outb(SMBUS, 0x000000ff);
 xcode_goto(0x00000009);
 xcode_outb(SMBUS, 0x00000010);
@@ -587,29 +461,18 @@ SMB_xcode_Write(0x000000ce, 0x00000019);
 SMB_xcode_Write(0x000000c6, 0x0000009c);
 SMB_xcode_Write(0x00000032, 0x00000008);
 SMB_xcode_Write(0x000000c4, 0x00000001);
-//VIDEND - Encoder 'init' complete.
-
-// PIC SLAVE Address (Write)
 xcode_outb(SMBUS+4, 0x00000020);
-// I2Ctransmit(0x20,0x1,0x0);
-SMB_xcode_Write(0x01,0x00);
-
-// PIC SLAVE Address (Read)
+SMB_xcode_Write(0x00000001, 0x00000000);
 xcode_outb(SMBUS+4, 0x00000021);
-
-// I2Cgetbyte(0x8a,0x1);
 xcode_outb(SMBUS+8, 0x00000001);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, 0xffffffff);
 xcode_outb(SMBUS, 0x00000010);
-
-// If SMC version does not match ... ?????
 xcode_inb(SMBUS+6);
 xcode_ifgoto(0x00000050, 0x00000002);
 xcode_goto(0x00000002);
 xcode_pciout(0x8000036c, 0x01000000);
-
 xcode_poke(0x0f680500, 0x00011c01);
 xcode_poke(0x0f68050c, 0x000a0400);
 xcode_poke(0x0f001220, 0x00000000);
@@ -621,12 +484,11 @@ xcode_bittoggle(0x06000000, 0x00000000);
 xcode_ifgoto(0x00000000, 0x00000004);
 xcode_poke(0x0f001214, 0x48480848);
 xcode_poke(0x0f00122c, 0x88888888);
-xcode_goto(7);
+xcode_goto(0x00000007);
 xcode_ifgoto(0x06000000, 0x00000004);
 xcode_poke(0x0f001214, 0x09090909);
 xcode_poke(0x0f00122c, 0xaaaaaaaa);
-xcode_goto(3);
-
+xcode_goto(0x00000003);
 xcode_poke(0x0f001214, 0x09090909);
 xcode_poke(0x0f00122c, 0xaaaaaaaa);
 xcode_poke(0x0f001230, 0xffffffff);
@@ -651,13 +513,10 @@ xcode_poke(0x0f100210, 0x80000000);
 xcode_poke(0x0f00124c, 0xaa8baa8b);
 xcode_poke(0x0f001250, 0x0000aa8b);
 xcode_poke(0x0f100228, 0x081205ff);
-
 xcode_poke(0x0f001218, 0x00010000);
-
 xcode_pciin_a(0x80000860);
 xcode_bittoggle(0xffffffff, 0x00000400);
 xcode_pciout_a(0x80000860);
-
 xcode_pciout(0x8000084c, 0x0000fdde);
 xcode_pciout(0x8000089c, 0x871cc707);
 xcode_pciin_a(0x800008b4);
@@ -673,8 +532,6 @@ xcode_goto(0x00000001);
 xcode_poke(0x0f100200, 0x03070103);
 xcode_poke(0x0f100204, 0x11448000);
 xcode_pciout(0x8000103c, 0x00000000);
-
-
 xcode_pciout(0x8000183c, 0x00000000);
 xcode_poke(0x00555548, 0xaaaaaaaa);
 xcode_poke(0x02555548, 0x5a5a5a5a);
@@ -682,7 +539,6 @@ xcode_peek(0x02555548);
 xcode_ifgoto(0x5a5a5a5a, 0x0000000a);
 xcode_peek(0x00555548);
 xcode_ifgoto(0xaaaaaaaa, 0x00000004);
-
 xcode_pciin_a(0x8000103c);
 xcode_bittoggle(0xffffffff, 0x00000001);
 xcode_pciout_a(0x8000103c);
@@ -823,7 +679,7 @@ xcode_outb(SMBUS+4, 0x00000020);
 xcode_outb(SMBUS+8, 0x00000013);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, 0xffffffff);
 xcode_outb(SMBUS, 0x00000010);
 xcode_pciin_a(0x8000183c);
 xcode_bittoggle(0x000000ff, 0x00000000);
@@ -831,7 +687,7 @@ xcode_outb_a(0x0000c006);
 xcode_outb(SMBUS+8, 0x00000012);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, 0xffffffff);
 xcode_outb(SMBUS, 0x00000010);
 xcode_pciout(0x8000f020, 0xfdf0fd00);
 xcode_pciout(0x80010010, 0xfd000000);
@@ -843,262 +699,4 @@ xcode_poke(0x00000010, 0x1d8ba5f3);
 xcode_poke(0x00000014, 0x00090000);
 xcode_poke(0x00000018, 0x0000e3ff);
 xcode_poke(0x0000001c, 0x00000000);
-//xcode_END(0x00000806);
-	
-	// overflow trick
-	xcode_poke(0x00000000, 0xfc1B02ea);
-	xcode_poke(0x00000004, 0x000008ff);
-
-	xcode_END(0x00000806);
-
-
-	// Note: never change this from offset 0x1000 ....
-	//Oops sorry I did. M8+'s Xcodes are taking up too much space!
-	//Don't worry, visor hack was updated (well it's just above so you saw it).
-	// This is the Main Entry point ....        
-	.org 0x1B02
-        
-	// Good Morning CPU
-
-	// NOTE:
-	// We come here form the high rom section Jump
-	
-	// Clear Intel Interrupts in Processor Register
-	// Everytime very good, specially when comming out of a running envoronment
-		
-	movl	$0x1b, %ecx
-	xor	%eax, %eax
-	xor	%edx, %edx
-	wrmsr
-        
-	// Interrupts now Dead
-
-	xor	%eax, %eax
-	xor	%edx, %edx
-	xor	%ecx, %ecx
-	
-	// kill the cache  = Disable bit 30 + 29 = CD + NW 
-	// CD = Cache Disable (disable = 1)
-	// NW Not write through (disable = 1)
-	mov 	%cr0, %eax
-	orl	$0x60000000, %eax
-	mov	%eax, %cr0
-	wbinvd
-
-	// We clear the cr3 register
-	mov	%eax, %eax
-	mov	%eax, %cr3
-
-	// Clear Memory Type register
-	movl	$0x2ff, %ecx
-	xor	%eax, %eax
-	xor	%edx, %edx
-	wrmsr
-
-	//We are setting the Ram Init's now to set up the Regions in the Ram
-
-
-	// MTRR for RAM
-	// from address 0, Writeback Caching, 128MB range
-	movl	$0x200, %ecx
-	movl	$0x00000000, %edx
-	movl	$0x00000006, %eax 	// == WB_CACHE == 6
-	//movl	$0x00000004, %eax 	// Temporary, as USB development
-	wrmsr
-
-	// MASK0 set to 0xf8000[000] == 128M
-	movl	$0x201, %ecx
-	movl	$0x0000000f, %edx
-	movl	$0xf8000800, %eax
-	wrmsr
-
-	// MTRR for shadow RAM
-	// from address 0xf0000000, Write-combining Caching, 128MB range
-	movl	$0x202, %ecx
-	movl	$0x00000000, %edx
-	movl	$0xf0000001, %eax 	// Write-Combining == 1
-	wrmsr
-
-	// MASK0 set to 0xf8000[000] == 128M
-	movl	$0x203, %ecx
-	movl	$0x0000000f, %edx
-	movl	$0xf8000800, %eax
-	wrmsr
-
-	// MTRR for FLASH
-	movl	$0x204, %ecx
-	movl	$0x00000000, %edx
-	movl	$0xFff00000, %eax 	    // We set to Uncacheable
-	wrmsr
-
-	movl	$0x205, %ecx
-	movl	$0x0000000f, %edx
-	movl	$0xfff00800, %eax
-	wrmsr
-	
-
-	xor	%eax, %eax
-	xor	%edx, %edx
-
-	movl	$0x206, %ecx		// IA32_MTRR_PHYS Base 3
-	wrmsr
-	movl	$0x207, %ecx		// IA32_MTRR_PHYS_MASK 3
-	wrmsr
-
-	movl	$0x208, %ecx		// IA32_MTRR_PHYS Base 4
-	wrmsr                                                   
-	movl	$0x209, %ecx		// IA32_MTRR_PHYS_MASK 4
-	wrmsr                                                   
-
-	movl	$0x20a, %ecx		// IA32_MTRR_PHYS Base 5
-	wrmsr                                                   
-	movl	$0x20b, %ecx		// IA32_MTRR_PHYS_MASK 5
-	wrmsr                                                   
-
-	movl	$0x20c, %ecx		// IA32_MTRR_PHYS Base 6
-	wrmsr                                                   
-	movl	$0x20d, %ecx		// IA32_MTRR_PHYS_MASK 6
-	wrmsr
-
-	movl	$0x20e, %ecx		// IA32_MTRR_PHYS Base 7
-	wrmsr
-	movl	$0x20f, %ecx		// IA32_MTRR_PHYS_MASK 7
-	wrmsr                                                   
-                                              
-
-	// Define Memory in IA32_MTRR_DEF_TYPE
-	movl	$0x2ff, %ecx
-	xor	%edx, %edx
-	movl	$0x800, %eax //Enable MTRRs
-	wrmsr
-
-	/* turn on normal cache */
-	//  bit 30 + 29 = CD + NW 
-	// CD = Cache Disable (disable = 1)
-	// NW Not write through (disable = 1)
-	movl	%cr0, %eax
-	mov 	%eax, %ebx
-	andl	$0x9FFFFFFF,%eax
-	movl	%eax, %cr0
-
-	cld
-
-	// copy everything into RAM 
-
-	mov 	$_ram_location, %edi
-	mov 	$_start_ramcopy, %esi
-	mov 	$(_size_ramcopy + 100), %ecx
-	shr	$2,%ecx    // We dividy / 4, as we copy Dword oriented
-	rep 	movsl
-	
-	jmp   initaftermemcpy
-
-
-	// We leave Flash at this point, we never come back to it anymore.
-	// the following ASM instructions below, already are linked to memory 
-	// (look to the ldscript in this case)
-
-	.section .text, "ax"
-                         
-	// Note: We are in Memory here, not in Flash anylonger, 
-	// we have been copy'd here and linked for memory, as we reside in section .text
-	// Look to LDscript
-       
-	.global	MemoryChecksum
-MemoryChecksum:      	
-	// The SHA-1 Hashsum is dumped here after with ImageBLD
-	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
-	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
-	.long _size_sha1hash
-	.long 0x00  // Will be dumped in by imagebld ->compressed_image_start;
-	.long 0x00  // Will be dumped in by imagebld ->compressed_image_size;
-	.long 0x00  // Will be dumped in by imagebld ->0 .. 256kb image, 1 .. 1MB image
-	
-	.org 0x40  // We have linkbase for this programm = 0x100000 + 0x40 = divisable /4 .. so CPU likes it
-tableGdt:
-
-	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // 0x00 dummy
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9b, 0xcf, 0x00 // 0x08 code32
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9b, 0xcf, 0x00 // 0x10 code32
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x93, 0xcf, 0x00 // 0x18 data32
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9b, 0x8f, 0x00 // 0x20 code16 (8f indicates 4K granularity, ie, huge limit)
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x93, 0x8f, 0x00 // 0x28 data16
-	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // Dummy
-	
-tableGdtDescriptor:
-
-	.word 0x30
-	.long tableGdt
-	.word 0x0       // fill Word, so we get alliged again
-
-tableIdtDescriptor:
-
-	.word 2048
-	.long 0x400000
-	.word 0x0	// fill Word, so we get alliged again
-		
-initaftermemcpy:
-	// These Init Codes Can be found in the 2'nd Bootloader
-
-	// We set up a GDT now, this is not necessary needed, 
-	// but it is preferred, as we have more ability with commands
-        
-	// We clear the IDT in RAM
-	xor %eax,%eax
-	mov $0x5000,%ecx
-	mov $0x400000,%edi
-	rep stosb
-
-	lidt tableIdtDescriptor
-	lgdt tableGdtDescriptor
-	// set up selectors for everything
-
-	xor	%eax, %eax
-	lldt %ax
-
-	// Reload CS as 0010 from the new GDT using a far jump
-	.byte 0xEA          // jmp far 0010:reload_cs
-	.long reload_cs
-	.word 0x0010
-	.align 16
-
-reload_cs:
-
-	// CS is now a valid entry in the GDT.  Set SS, DS, and ES to valid
-	// descriptors, but clear FS and GS as they are not necessary.
-
-	// Set SS, DS, and ES to a data32 segment with maximum limit.
-	movw $0x0018, %ax
-	mov %eax, %ss
-	mov %eax, %ds
-	mov %eax, %es
-
-	// Clear FS and GS
-	xor %eax, %eax
-	mov %eax, %fs
-	mov %eax, %gs
-	
-	movl	$ 0x1ffff0,%esp
-
-	mov	$0x8, %al
-	mov	$0x61, %dx
-	out	%al, %dx
-
-	// Enable IDE and NIC
-	mov 	$0x8000088C, %eax 
-	movw 	$0xcf8, %dx 
-	outl	%eax, %dx 
-	movw 	$0xcfc, %dx 
-	movl 	$0x40000000, %eax 
-	outl	%eax, %dx
-      	
-	// CPU Whoami   ? sesless ?
-	mov 	$0x80000080, %eax 
-	movw 	$0xcf8, %dx 
-	outl	%eax, %dx 
-	movw 	$0xcfc, %dx 
-	movl 	$0x100, %eax 
-	outl	%eax, %dx 
-        
-	// this can be found in BootResetAction.c
-	jmp 	BootStartBiosLoader
+xcode_END(0x00000806);
