@@ -194,8 +194,10 @@ extern void BootStartBiosLoader ( void ) {
     
     // Bad, we did not get a valid im age to RAM, we stop and display a error
 
-    setLED("rxxx");
-        
+    //setLED("rxxx");
+	// Power_cycle
+ 	I2CTransmitWord(0x10, 0x0240);
+      	I2CTransmitWord(0x10, 0x0240);
 //    I2CTransmitWord(0x10, 0x1901); // no reset on eject
 //    I2CTransmitWord(0x10, 0x0c00); // eject DVD tray        
 

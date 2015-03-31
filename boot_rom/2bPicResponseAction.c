@@ -113,26 +113,19 @@ u16 BootPicManipulation(u8 bC, u8 bD, u8 bE,    u8 bF) {
 int BootPerformPicChallengeResponseAction()
 {
     u8 bC, bD, bE, bF;
-    int n;
 
-    n=I2CTransmitByteGetReturn( 0x10, 0x1c );
-    if(n<0) return n;
-    bC=n;
-    n=I2CTransmitByteGetReturn( 0x10, 0x1d );
-    if(n<0) return n;
-    bD=n;
-    n=I2CTransmitByteGetReturn( 0x10, 0x1e );
-    if(n<0) return n;
-    bE=n;
-    n=I2CTransmitByteGetReturn( 0x10, 0x1f );
-    if(n<0) return n;
-    bF=n;
+    bC=I2CTransmitByteGetReturn( 0x10, 0x1c );
+    bD=I2CTransmitByteGetReturn( 0x10, 0x1d );
+    bE=I2CTransmitByteGetReturn( 0x10, 0x1e );
+    bF=I2CTransmitByteGetReturn( 0x10, 0x1f );
+    if ((bC==0) && (bD==0) && (bE==0) && (bF==0)) I2CTransmitWord(0x10, 0x0240);
 
     {
         u16 w=BootPicManipulation(bC, bD, bE, bF);
 
         I2CTransmitWord( 0x10, 0x2000 | (w&0xff));
         I2CTransmitWord( 0x10, 0x2100 | (w>>8) );
+        I2CTransmitWord( 0x10, 0x0100 );
     }
 
     // continues as part of video setup....
