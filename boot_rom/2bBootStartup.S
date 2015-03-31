@@ -95,6 +95,7 @@
 	.long 0x00000c90
 
 	
+	//The bytecode interpreter begins here
 xcode_pciout(0x80000884, 0x00008001);
 xcode_pciout(0x80000810, 0x00008001);
 xcode_pciout(0x80000804, 0x00000003);
@@ -104,24 +105,31 @@ xcode_outb(0x00008026, 0x00000001);
 xcode_pciout(0x8000f04c, 0x00000001);
 xcode_pciout(0x8000f018, 0x00010100);
 xcode_pciout(0x80000084, 0x07ffffff);
+
 xcode_pciout(0x8000f020, 0x0ff00f00);
 xcode_pciout(0x8000f024, 0xf7f0f000);
 xcode_pciout(0x80010010, 0x0f000000);
 xcode_pciout(0x80010014, 0xf0000000);
 xcode_pciout(0x80010004, 0x00000007);
 xcode_pciout(0x8000f004, 0x00000007);
+
 xcode_pciout(0x80000904, 0x00000001);
 xcode_pciout(0x80000914, 0x0000c001);
 xcode_pciout(0x80000918, 0x0000c201);
 xcode_goto(0x00000002);
 xcode_goto(0x000000ac);
 xcode_poke(0x0f0010b0, 0x07633461);
+
 xcode_poke(0x0f0010cc, 0x66660000);
+
 xcode_peek(0x0f101000);
+
 xcode_bittoggle(0x000c0000, 0x00000000);
 xcode_ifgoto(0x00000000, 0x00000006);
 xcode_peek(0x0f101000);
+
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
+
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0xeeee0000);
 xcode_goto(0x0000000b);
@@ -129,9 +137,11 @@ xcode_ifgoto(0x000c0000, 0x00000006);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x860c0000);
 xcode_poke_a(0x0f101000);
+
 xcode_poke(0x0f0010b8, 0xffff0000);
 xcode_goto(0x00000005);
 xcode_peek(0x0f101000);
+
 xcode_bittoggle(0xe1f3ffff, 0x820c0000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0x11110000);
@@ -149,11 +159,25 @@ xcode_poke(0x0f100330, 0x84848888);
 xcode_poke(0x0f10032c, 0xffffcfff);
 xcode_poke(0x0f100328, 0x00000001);
 xcode_poke(0x0f100338, 0x000000df);
+
+// Set up the SM - bus controller
+//xcode_pciout(0x80000904, 0x00000001);
+//xcode_pciout(0x80000914, 0x0000c001);
+//xcode_pciout(0x80000918, 0x0000c201);
 xcode_outb(0x0000c200, 0x00000070);
+
+//VIDEO INIT CODE
+/* It is necessary to write to the video encoder, as the PIC
+ snoops the I2C traffic and will reset us if it doesn't see what
+ it judges as 'appropriate' traffic.  Conexant is the most urgent,
+ as on 1.0 Xboxes, the PIC was very strict and reset us earlier
+ than later models
+ */
 xcode_outb(SMBUS+4, 0x000000d4);
 xcode_outb(SMBUS+8, 0x0000000c);
 xcode_outb(SMBUS+6, 0x00000000);
 xcode_outb(SMBUS+2, 0x0000000a);
+
 xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, 0x00000002);
 xcode_goto(0x00000005);
@@ -170,12 +194,16 @@ xcode_outb(SMBUS+8, 0x000000ba);
 xcode_outb(SMBUS+6, 0x0000003f);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, 0x00000002);
+xcode_ifgoto(0x00000010, 0x00000002); //Write failed, forward 2
 xcode_goto(0x00000006);
-xcode_bittoggle(0x00000008, 0x00000000);
-xcode_ifgoto(0x00000000, -4);
+xcode_bittoggle(0x00000008, 0x00000000);//Check fail status
+xcode_ifgoto(0x00000000, -4);//No result yet, read again.
 xcode_outb(SMBUS, 0x000000ff);
 xcode_outb(SMBUS, 0x00000010);
+
+//xcode_outb(SMBUS+4, 0x000000e0);
+//SMB_xcode_Write(0x00000000, 0x00000000);
+//SMB_xcode_Write(0x000000b8, 0x00000000);
 xcode_goto(0x00000069);
 xcode_outb(SMBUS, 0x00000010);
 SMB_xcode_Write(0x0000006c, 0x00000046);
@@ -184,15 +212,27 @@ SMB_xcode_Write(0x000000ce, 0x00000019);
 SMB_xcode_Write(0x000000c6, 0x0000009c);
 SMB_xcode_Write(0x00000032, 0x00000008);
 SMB_xcode_Write(0x000000c4, 0x00000001);
+
+//VIDEND - Encoder 'init' complete.
+
+// PIC SLAVE Address (Write)
 xcode_outb(SMBUS+4, 0x00000020);
+// I2Ctransmit(0x20,0x1,0x0);
 SMB_xcode_Write(0x00000001, 0x00000000);
+
+// PIC SLAVE Address (Read)
 xcode_outb(SMBUS+4, 0x00000021);
+
+// I2Cgetbyte(0x8a,0x1);
 xcode_outb(SMBUS+8, 0x00000001);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, -1);
 xcode_outb(SMBUS, 0x00000010);
+
+// If SMC version does not match ... ?????
 xcode_inb(SMBUS+6);
+
 xcode_poke(0x0f680500, 0x00011c01);
 xcode_poke(0x0f68050c, 0x000a0400);
 xcode_poke(0x0f001220, 0x00000000);
@@ -237,6 +277,7 @@ xcode_poke(0x0f001218, 0x00010000);
 xcode_pciin_a(0x80000860);
 xcode_bittoggle(0xffffffff, 0x00000400);
 xcode_pciout_a(0x80000860);
+
 xcode_pciout(0x8000084c, 0x0000fdde);
 xcode_pciout(0x8000089c, 0x871cc707);
 xcode_pciin_a(0x800008b4);
@@ -440,11 +481,25 @@ xcode_poke(0x0f100204, 0x11448000);
 xcode_pciout(0x8000103c, 0x00000000);
 xcode_pciout(0x8000183c, 0x00000000);
 xcode_outb(SMBUS, 0x00000010);
+
+/* ----  Report Memory Size to PIC scratch register ---- */
+
+// We emulate Good memory result to PIC
+//xcode_pciin_a(0x8000183c);
+//xcode_bittoggle(0x000000ff,0x00000000);
+//xcode_outb_a(SMBUS+6);
+
 xcode_outb(SMBUS+4, 0x00000020);
+
 SMB_xcode_Write(0x00000013, 0x0000000f);
 SMB_xcode_Write(0x00000012, 0x000000f0);
+
+/* ---- Reload Nvidia Registers  ------------------------*/
+
 xcode_pciout(0x8000f020, 0xfdf0fd00);
 xcode_pciout(0x80010010, 0xfd000000);
+
+// overflow trick
 xcode_poke(0x00000000, 0xfc0F00ea);
 xcode_poke(0x00000004, 0x000008ff);
 xcode_END(0x00000806);
@@ -503,31 +558,31 @@ xcode_END(0x00000806);
 	wrmsr
 
 	// MASK0 set to 0xf8000[000] == 128M
-	movl	$0x201, %ecx
+        inc %ecx //movl	$0x201, %ecx
 	movl	$0x0000000f, %edx
 	movl	$0xf8000800, %eax
 	wrmsr
 
 	// MTRR for shadow RAM
 	// from address 0xf0000000, Write-combining Caching, 128MB range
-	movl	$0x202, %ecx
+        inc %ecx //movl	$0x202, %ecx
 	movl	$0x00000000, %edx
 	movl	$0xf0000001, %eax 	// Write-Combining == 1
 	wrmsr
 
 	// MASK0 set to 0xf8000[000] == 128M
-	movl	$0x203, %ecx
+        inc %ecx //movl	$0x203, %ecx
 	movl	$0x0000000f, %edx
 	movl	$0xf8000800, %eax
 	wrmsr
 
 	// MTRR for FLASH
-	movl	$0x204, %ecx
+	inc %ecx //movl	$0x204, %ecx
 	movl	$0x00000000, %edx
 	movl	$0xFff00000, %eax 	    // We set to Uncacheable
 	wrmsr
 
-	movl	$0x205, %ecx
+    inc %ecx //movl	$0x205, %ecx
 	movl	$0x0000000f, %edx
 	movl	$0xfff00800, %eax
 	wrmsr
@@ -536,29 +591,29 @@ xcode_END(0x00000806);
 	xor	%eax, %eax
 	xor	%edx, %edx
 
-	movl	$0x206, %ecx		// IA32_MTRR_PHYS Base 3
+	inc %ecx //movl	$0x206, %ecx		// IA32_MTRR_PHYS Base 3
 	wrmsr
-	movl	$0x207, %ecx		// IA32_MTRR_PHYS_MASK 3
-	wrmsr
-
-	movl	$0x208, %ecx		// IA32_MTRR_PHYS Base 4
-	wrmsr                                                   
-	movl	$0x209, %ecx		// IA32_MTRR_PHYS_MASK 4
-	wrmsr                                                   
-
-	movl	$0x20a, %ecx		// IA32_MTRR_PHYS Base 5
-	wrmsr                                                   
-	movl	$0x20b, %ecx		// IA32_MTRR_PHYS_MASK 5
-	wrmsr                                                   
-
-	movl	$0x20c, %ecx		// IA32_MTRR_PHYS Base 6
-	wrmsr                                                   
-	movl	$0x20d, %ecx		// IA32_MTRR_PHYS_MASK 6
+	inc %ecx //movl	$0x207, %ecx		// IA32_MTRR_PHYS_MASK 3
 	wrmsr
 
-	movl	$0x20e, %ecx		// IA32_MTRR_PHYS Base 7
+	inc %ecx //movl	$0x208, %ecx		// IA32_MTRR_PHYS Base 4
+	wrmsr                                                   
+	inc %ecx //movl	$0x209, %ecx		// IA32_MTRR_PHYS_MASK 4
+	wrmsr                                                   
+
+	inc %ecx //movl	$0x20a, %ecx		// IA32_MTRR_PHYS Base 5
+	wrmsr                                                   
+	inc %ecx //movl	$0x20b, %ecx		// IA32_MTRR_PHYS_MASK 5
+	wrmsr                                                   
+
+	inc %ecx //movl	$0x20c, %ecx		// IA32_MTRR_PHYS Base 6
+	wrmsr                                                   
+	inc %ecx //movl	$0x20d, %ecx		// IA32_MTRR_PHYS_MASK 6
 	wrmsr
-	movl	$0x20f, %ecx		// IA32_MTRR_PHYS_MASK 7
+
+	inc %ecx //movl	$0x20e, %ecx		// IA32_MTRR_PHYS Base 7
+	wrmsr
+	inc %ecx //movl	$0x20f, %ecx		// IA32_MTRR_PHYS_MASK 7
 	wrmsr                                                   
                                               
 
@@ -641,6 +696,7 @@ initaftermemcpy:
         
 	// We clear the IDT in RAM
 	xor %eax,%eax
+    // Below is equivalent to memset(0x400000, 0, 0x5000/4);
 	mov $0x5000,%ecx
 	mov $0x400000,%edi
 	rep stosb

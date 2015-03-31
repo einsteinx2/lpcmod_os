@@ -99,21 +99,25 @@ extern void BootStartBiosLoader ( void ) {
             
     if (memcmp(&bootloaderChecksum[0],&SHA1_result[0],20)==0) {
         // HEHE, the Image we copy'd into ram is SHA-1 hash identical, this is Optimum
+        IoOutputByte(XBLAST_IO, 0x10);
         BootPerformPicChallengeResponseAction();
     } else {
         // Bad, the checksum does not match, but we can nothing do now, we wait until PIC kills us
+        IoOutputByte(XBLAST_IO, 0x20);
         while(1);
     }
        
     // Sets the Graphics Card to 60 MB start address
     (*(unsigned int*)0xFD600800) = (0xf0000000 | ((64*0x100000) - 0x00400000));
-        
+    IoOutputByte(XBLAST_IO, 0x30);
     BootAGPBUSInitialization();
+    IoOutputByte(XBLAST_IO, 0x40);
 
     (*(unsigned int*)(0xFD000000 + 0x100200)) = 0x03070103 ;
     (*(unsigned int*)(0xFD000000 + 0x100204)) = 0x11448000 ;
-        
+    IoOutputByte(XBLAST_IO, 0x50);
     PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x84, 0x7FFFFFF);  // 128 MB
+    IoOutputByte(XBLAST_IO, 0x60);
     
     // Lets go, we have finished, the Most important Startup, we have now a valid Micro-loder im Ram
     // we are quite happy now
@@ -125,9 +129,11 @@ extern void BootStartBiosLoader ( void ) {
         if (Biossize_type==0) {
             // Means we have a 256 kbyte image
                 flashbank=3;
+                IoOutputByte(XBLAST_IO, 0x70);
         } else if (Biossize_type==1) {
             // Means we have a 1MB image
             // If 25 load attempts failed, we switch to the next bank
+            IoOutputByte(XBLAST_IO, 0x80);
             switch (loadretry) {
                 case 0:
                     flashbank=1;
@@ -144,6 +150,7 @@ extern void BootStartBiosLoader ( void ) {
             }
         }
         cromloadtry++;    
+        IoOutputByte(XBLAST_IO, 0x90);
                 
         // Copy From Flash To RAM
         memcpy(&bootloaderChecksum[0],(void*)(Buildinflash_Flash[flashbank]+compressed_image_start),20);
@@ -151,15 +158,19 @@ extern void BootStartBiosLoader ( void ) {
         memcpy((void*)CROMWELL_compress_temploc,(void*)(Buildinflash_Flash[flashbank]+compressed_image_start+20),compressed_image_size);
         memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
         
+        IoOutputByte(XBLAST_IO, 0xA0);
+
         // Lets Look, if we have got a Valid thing from Flash            
         SHA1Reset(&context);
         SHA1Input(&context,(void*)(CROMWELL_compress_temploc),compressed_image_size);
         SHA1Result(&context,SHA1_result);
         
+        IoOutputByte(XBLAST_IO, 0xB0);
+
         if (memcmp(&bootloaderChecksum[0],SHA1_result,20)==0) {
             // The Checksum is good                          
             // We start the Cromwell immediatly
-                        
+            IoOutputByte(XBLAST_IO, 0xC0);
             setLED("rrrr");
         
             BufferIN = (unsigned char*)(CROMWELL_compress_temploc);
@@ -180,6 +191,7 @@ extern void BootStartBiosLoader ( void ) {
     }
         
     if (validimage==1) {
+        IoOutputByte(XBLAST_IO, 0xD0);
         setLED("oooo");
 
         // We now jump to the cromwell, Good bye 2bl loader
@@ -192,6 +204,8 @@ extern void BootStartBiosLoader ( void ) {
         // We are not Longer here
     }
     
+    IoOutputByte(XBLAST_IO, 0xE0);
+
     // Bad, we did not get a valid im age to RAM, we stop and display a error
 
     //setLED("rxxx");

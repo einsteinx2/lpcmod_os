@@ -42,6 +42,9 @@ enum {
     ERR_BOOT_PIC_ALG_BROKEN = 0x80000101 // PIC algorithm did not pass its self-test
 };
 
+
+#define XBLAST_IO 0xF70Du       //GPO ports are mapped to four MSBs.
+
 //////// BootPerformPicChallengeResponseAction.c
 
 /* ----------------------------  IO primitives -----------------------------------------------------------
