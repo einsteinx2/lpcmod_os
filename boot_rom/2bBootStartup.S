@@ -34,6 +34,7 @@
 #define xcode_bittoggle(val1,val2) .byte 0x6; .long val1 ; .long val2 ;
 
 #define xcode_ifgoto(val1,val2) .byte 0x8; .long val1 ; .long (9*(val2-1)) ;
+#define xcode_ifgoto_label(val1,val2) .byte 0x8; .long val1 ; .long (val2-.-4) ;
 
 #define xcode_outb(val1,val2) .byte 0x11; .long val1 ; .long val2 ;			    
 #define xcode_inb(val1) .byte 0x12; .long val1 ; .long 0x0 ;			    
@@ -43,11 +44,13 @@
 #define xcode_outb_a(val1) .byte 0x7; .long 0x11; .long val1 ;  
 
 #define xcode_goto(val1) .byte 0x9; .long 0x0; .long (9*(val1-1));
+#define xcode_goto_label(val1) .byte 0x9; .long 0x0; .long (val1-.-4);
 
 #define xcode_END(val1) .byte 0xEE; .long val1 ; .long 0x0;
 
 #define SMBUS 		0x0000c000
 
+#define SMBUS_READ_RETRY -4
 
 #define SMB_xcode_Write(val1,val2); \
 			xcode_outb(SMBUS+8, val1); \
@@ -112,39 +115,40 @@ xcode_pciout(0x80010010, 0x0f000000);
 xcode_pciout(0x80010014, 0xf0000000);
 xcode_pciout(0x80010004, 0x00000007);
 xcode_pciout(0x8000f004, 0x00000007);
-
+// Set up the SM - bus controller
 xcode_pciout(0x80000904, 0x00000001);
 xcode_pciout(0x80000914, 0x0000c001);
 xcode_pciout(0x80000918, 0x0000c201);
-xcode_goto(0x00000002);
-xcode_goto(0x000000ac);
+xcode_goto_label(label1);
+xcode_goto_label(label2);	//Not very useful! Probably leftover from debugging...
+
+label1:
 xcode_poke(0x0f0010b0, 0x07633461);
-
 xcode_poke(0x0f0010cc, 0x66660000);
-
 xcode_peek(0x0f101000);
-
 xcode_bittoggle(0x000c0000, 0x00000000);
-xcode_ifgoto(0x00000000, 0x00000006);
+xcode_ifgoto_label(0x00000000, label3);
 xcode_peek(0x0f101000);
-
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
-
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0xeeee0000);
-xcode_goto(0x0000000b);
-xcode_ifgoto(0x000c0000, 0x00000006);
+xcode_goto_label(label4);
+
+label3:
+xcode_ifgoto_label(0x000c0000, label5);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x860c0000);
 xcode_poke_a(0x0f101000);
-
 xcode_poke(0x0f0010b8, 0xffff0000);
-xcode_goto(0x00000005);
-xcode_peek(0x0f101000);
+xcode_goto_label(label4);
 
+label5:
+xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x820c0000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0x11110000);
+
+label4:								//Ultimately, all of the above code merge back to here.
 xcode_poke(0x0f0010d4, 0x00000009);
 xcode_poke(0x0f0010b4, 0x00000000);
 xcode_poke(0x0f0010bc, 0x00005866);
@@ -159,11 +163,6 @@ xcode_poke(0x0f100330, 0x84848888);
 xcode_poke(0x0f10032c, 0xffffcfff);
 xcode_poke(0x0f100328, 0x00000001);
 xcode_poke(0x0f100338, 0x000000df);
-
-// Set up the SM - bus controller
-//xcode_pciout(0x80000904, 0x00000001);
-//xcode_pciout(0x80000914, 0x0000c001);
-//xcode_pciout(0x80000918, 0x0000c201);
 xcode_outb(0x0000c200, 0x00000070);
 
 //VIDEO INIT CODE
@@ -173,6 +172,7 @@ xcode_outb(0x0000c200, 0x00000070);
  as on 1.0 Xboxes, the PIC was very strict and reset us earlier
  than later models
  */
+ //This is focus...
 xcode_outb(SMBUS+4, 0x000000d4);
 xcode_outb(SMBUS+8, 0x0000000c);
 xcode_outb(SMBUS+6, 0x00000000);
@@ -180,31 +180,34 @@ xcode_outb(SMBUS+2, 0x0000000a);
 
 xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, 0x00000002);
-xcode_goto(0x00000005);
+xcode_goto_label(label6);						//Success!
 xcode_bittoggle(0x00000008, 0x00000000); //Check fail status
-xcode_ifgoto(0x00000000, -4);//No result yet, read again.
+xcode_ifgoto(0x00000000, SMBUS_READ_RETRY);//No result yet, read again.
 xcode_outb(SMBUS, 0x000000ff);
-xcode_goto(0x00000009);
+xcode_goto_label(label7);			//Abandon focus, go to connexant
+label6:						//focus phase 2
 xcode_outb(SMBUS, 0x00000010);
 SMB_xcode_Write(0x0000000d, 0x00000020);
-xcode_goto(0x00000033);
+xcode_goto_label(label24);		//Oops, missed that one.
+label7:			//Connexant init attempt.
 xcode_outb(SMBUS, 0x00000010);
-xcode_outb(SMBUS+4, 0x0000008a);
+xcode_outb(SMBUS+4, 0x0000008a);	//This is the address for connexant.
 xcode_outb(SMBUS+8, 0x000000ba);
 xcode_outb(SMBUS+6, 0x0000003f);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, 0x00000002); //Write failed, forward 2
-xcode_goto(0x00000006);
+xcode_goto_label(label8);						//Success!
 xcode_bittoggle(0x00000008, 0x00000000);//Check fail status
-xcode_ifgoto(0x00000000, -4);//No result yet, read again.
-xcode_outb(SMBUS, 0x000000ff);
+xcode_ifgoto(0x00000000, SMBUS_READ_RETRY);//No result yet, read again.
+xcode_outb(SMBUS, 0x000000ff);			//Abandon connexant.
 xcode_outb(SMBUS, 0x00000010);
 
 //xcode_outb(SMBUS+4, 0x000000e0);
 //SMB_xcode_Write(0x00000000, 0x00000000);
 //SMB_xcode_Write(0x000000b8, 0x00000000);
-xcode_goto(0x00000069);
+xcode_goto_label(label2);				//to 1.6 init?
+label8:				//Connexant phase 2
 xcode_outb(SMBUS, 0x00000010);
 SMB_xcode_Write(0x0000006c, 0x00000046);
 SMB_xcode_Write(0x000000b8, 0x00000000);
@@ -216,6 +219,7 @@ SMB_xcode_Write(0x000000c4, 0x00000001);
 //VIDEND - Encoder 'init' complete.
 
 // PIC SLAVE Address (Write)
+label24:	//Connexant, focus common phase 3.
 xcode_outb(SMBUS+4, 0x00000020);
 // I2Ctransmit(0x20,0x1,0x0);
 SMB_xcode_Write(0x00000001, 0x00000000);
@@ -227,12 +231,13 @@ xcode_outb(SMBUS+4, 0x00000021);
 xcode_outb(SMBUS+8, 0x00000001);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
-xcode_ifgoto(0x00000010, -1);
+xcode_ifgoto(0x00000010, -1);	//retry
 xcode_outb(SMBUS, 0x00000010);
 
 // If SMC version does not match ... ?????
 xcode_inb(SMBUS+6);
 
+//Not going to add markers in this section. Pointless since self-contained.
 xcode_poke(0x0f680500, 0x00011c01);
 xcode_poke(0x0f68050c, 0x000a0400);
 xcode_poke(0x0f001220, 0x00000000);
@@ -277,7 +282,6 @@ xcode_poke(0x0f001218, 0x00010000);
 xcode_pciin_a(0x80000860);
 xcode_bittoggle(0xffffffff, 0x00000400);
 xcode_pciout_a(0x80000860);
-
 xcode_pciout(0x8000084c, 0x0000fdde);
 xcode_pciout(0x8000089c, 0x871cc707);
 xcode_pciin_a(0x800008b4);
@@ -286,11 +290,14 @@ xcode_pciout_a(0x800008b4);
 xcode_pciout(0x80000340, 0xf0f0c0c0);
 xcode_pciout(0x80000344, 0x00c00000);
 xcode_pciout(0x8000035c, 0x04070000);
-xcode_goto(0x000000bf);
+xcode_goto_label(endExec);
+
+label2:		//Start of Xcalibur init?
 xcode_outb(0x0000c200, 0x00000070);
 xcode_poke(0x0f0010b0, 0x01000010);
 xcode_poke(0x0f0010cc, 0x66660000);
-xcode_goto(0x00000027);
+xcode_goto_label(label9);
+label13:
 xcode_poke(0x0f0010d4, 0x0000000f);
 xcode_poke(0x0f0010b4, 0x00000000);
 xcode_poke(0x0f0010bc, 0x00005860);
@@ -323,8 +330,10 @@ xcode_poke(0x0f001220, 0x00000000);
 xcode_poke(0x0f001228, 0x00000000);
 xcode_poke(0x0f001264, 0x00000000);
 xcode_poke(0x0f001210, 0x00000000);
-xcode_goto(0x00000002);
+xcode_goto_label(label10);
+label9:		//Xcalibur phase 2?
 xcode_pciout(0x8000183c, 0x000000c3);
+label10:
 xcode_outb(SMBUS+4, 0x000000a9);
 xcode_pciin_a(0x8000183c);
 xcode_outb_a(0x0000c008);
@@ -334,148 +343,194 @@ xcode_inb(SMBUS);
 xcode_pciout_a(0x8000103c);
 xcode_bittoggle(0x00000008, 0x00000000);
 xcode_ifgoto(0x00000008, 0x00000002);
-xcode_goto(-4);
+xcode_goto(SMBUS_READ_RETRY);
 xcode_pciin_a(0x8000103c);
 xcode_bittoggle(0x000000ff, 0x00000000);
-xcode_ifgoto(0x00000010, -12);
+xcode_ifgoto_label(0x00000010, label10);
 xcode_inb(SMBUS+6);
 xcode_bittoggle(0x000000ff, 0x00000000);
 xcode_poke_a(0x0f001248);
 xcode_pciin_a(0x8000183c);
 xcode_bittoggle(0x000000ff, 0x00000000);
-xcode_ifgoto(0x000000c3, 0x00000013);
+xcode_ifgoto_label(0x000000c3, label11);
 xcode_peek(0x0f001248);
 xcode_ifgoto(0x00000042, 0x00000004);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x800c0000);
-xcode_goto(0x0000000b);
+xcode_goto_label(label12);
 xcode_ifgoto(0x00000040, 0x00000004);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80080000);
-xcode_goto(0x00000007);
+xcode_goto_label(label12);
 xcode_ifgoto(0x00000002, 0x00000004);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80040000);
-xcode_goto(0x00000003);
+xcode_goto_label(label12);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
+label12:
 xcode_poke_a(0x0f101000);
 xcode_pciout(0x8000183c, 0x000000c2);
-xcode_goto(-36);
+xcode_goto_label(label10);
+label11:
 xcode_peek(0x0f001248);
 xcode_bittoggle(0x00000001, 0x00000000);
-xcode_ifgoto(0x00000000, 0x00000029);
+xcode_ifgoto_label(0x00000000, label14);
 xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000002, 0x00000000);
-xcode_ifgoto(0x00000000, 0x0000002a);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000004, 0x00000000);
-xcode_ifgoto(0x00000000, 0x0000002b);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000008, 0x00000000);
-xcode_ifgoto(0x00000000, 0x0000002c);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000010, 0x00000000);
-xcode_ifgoto(0x00000000, 0x0000002d);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000020, 0x00000000);
-xcode_ifgoto(0x00000000, 0x0000002e);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000040, 0x00000000);
-xcode_ifgoto(0x00000000, 0x0000002f);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0x00000080, 0x00000000);
-xcode_ifgoto(0x00000000, 0x00000030);
-xcode_pciin_a(0x8000183c);
-xcode_bittoggle(0x000000ff, 0x00000000);
-xcode_ifgoto(0x000000c2, 0x00000006);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffff0000, 0x00000000);
-xcode_poke_a(0x0f0010b8);
-xcode_pciout(0x8000183c, 0x000000c1);
-xcode_goto(-107);
-xcode_pciin_a(0x8000183c);
-xcode_bittoggle(0x000000ff, 0x00000000);
-xcode_ifgoto(0x000000c1, 0x00000005);
-xcode_peek(0x0f001248);
-xcode_poke_a(0x0f00122c);
-xcode_pciout(0x8000183c, 0x000000c0);
-xcode_goto(-75);
-xcode_peek(0x0f001248);
-xcode_poke_a(0x0f001214);
-xcode_pciout(0x8000183c, 0x000000c3);
-xcode_goto(0x00000021);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x01010100);
-xcode_poke_a(0x0f001248);
-xcode_goto(-42);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x02020200);
-xcode_poke_a(0x0f001248);
-xcode_goto(-43);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x04040400);
-xcode_poke_a(0x0f001248);
-xcode_goto(-44);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x08080800);
-xcode_poke_a(0x0f001248);
-xcode_goto(-45);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x10101000);
-xcode_poke_a(0x0f001248);
-xcode_goto(-46);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x20202000);
-xcode_poke_a(0x0f001248);
-xcode_goto(-47);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x40404000);
-xcode_poke_a(0x0f001248);
-xcode_goto(-48);
-xcode_peek(0x0f001248);
-xcode_bittoggle(0xffffffff, 0x80808000);
-xcode_poke_a(0x0f001248);
-xcode_goto(-50);
-xcode_poke(0x0f001248, 0x00000000);
-xcode_poke(0x0f001230, 0xffffffff);
-xcode_poke(0x0f001234, 0xaaaaaaaa);
-xcode_poke(0x0f001238, 0xaaaaaaaa);
-xcode_poke(0x0f00123c, 0x8b8b8b8b);
-xcode_poke(0x0f001240, 0xffffffff);
-xcode_poke(0x0f001244, 0x8b8b8b8b);
-xcode_poke(0x0f001248, 0x8b8b8b8b);
-xcode_poke(0x0f1002d4, 0x00000001);
-xcode_poke(0x0f1002c4, 0x00100000);
-xcode_poke(0x0f1002cc, 0x00100000);
-xcode_poke(0x0f1002c0, 0x00000011);
-xcode_poke(0x0f1002c8, 0x00000011);
-xcode_poke(0x0f1002c0, 0x00000032);
-xcode_poke(0x0f1002c8, 0x00000032);
-xcode_poke(0x0f1002c0, 0x00000132);
-xcode_poke(0x0f1002c8, 0x00000132);
-xcode_poke(0x0f1002d0, 0x00000001);
-xcode_poke(0x0f1002d0, 0x00000001);
-xcode_poke(0x0f100210, 0x80000000);
-xcode_poke(0x0f00124c, 0xaa8baa8b);
-xcode_poke(0x0f001250, 0x00005474);
-xcode_poke(0x0f100228, 0x081205ff);
-xcode_poke(0x0f001218, 0x00000000);
-xcode_pciin_a(0x80000860);
-xcode_bittoggle(0xffffffff, 0x00000400);
-xcode_pciout_a(0x80000860);
-xcode_pciout(0x8000084c, 0x0000fdde);
-xcode_pciout(0x8000089c, 0x871cc707);
-xcode_pciin_a(0x800008b4);
-xcode_bittoggle(0xfffff0ff, 0x00000f00);
-xcode_pciout_a(0x800008b4);
-xcode_pciout(0x80000340, 0xf0f0c0c0);
-xcode_pciout(0x80000344, 0x00000000);
-xcode_pciout(0x8000035c, 0x00000000);
+
+label14_2:
+	xcode_bittoggle(0x00000002,0x00000000);
+	xcode_ifgoto_label(0x00000000,label15)
+	xcode_peek(0x0f001248);
+
+label15_2:
+	xcode_bittoggle(0x00000004,0x00000000);
+	xcode_ifgoto_label(0x00000000,label16)
+	xcode_peek(0x0f001248);
+
+label16_2:
+	xcode_bittoggle(0x00000008,0x00000000);
+	xcode_ifgoto_label(0x00000000,label17)
+	xcode_peek(0x0f001248);
+
+label17_2:
+	xcode_bittoggle(0x00000010,0x00000000);
+	xcode_ifgoto_label(0x00000000,label18)
+	xcode_peek(0x0f001248);
+
+label18_2:
+	xcode_bittoggle(0x00000020,0x00000000);
+	xcode_ifgoto_label(0x00000000,label19)
+	xcode_peek(0x0f001248);
+
+label19_2:
+	xcode_bittoggle(0x00000040,0x00000000);
+	xcode_ifgoto_label(0x00000000,label20)
+	xcode_peek(0x0f001248);
+
+label20_2:
+	xcode_bittoggle(0x00000080,0x00000000);
+	xcode_ifgoto_label(0x00000000,label21)
+
+label21_2:
+
+	xcode_pciin_a(0x8000183C);
+	xcode_bittoggle(0x000000ff,0x00000000);
+
+	xcode_ifgoto_label(0x000000c2,label22)
+
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffff0000,0x00000000);
+	xcode_poke_a(0x0f0010b8);
+	xcode_pciout(0x8000183C, 0x000000c1);
+
+	xcode_goto_label(label13)
+
+label22:
+
+	xcode_pciin_a(0x8000183C);
+	xcode_bittoggle(0x000000ff,0x00000000);
+	xcode_ifgoto_label(0x000000c1,label23)
+	xcode_peek(0x0f001248);
+	xcode_poke_a(0x0f00122c);
+	xcode_pciout(0x8000183C, 0x000000c0);
+	xcode_goto_label(label10)
+
+label23:
+
+	xcode_peek(0x0f001248);
+	xcode_poke_a(0x0f001214);
+
+	xcode_pciout(0x8000183C, 0x000000c3);
+	xcode_goto_label(extendedEndExec)
+
+label14:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x01010100);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label14_2);
+label15:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x02020200);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label15_2);
+label16:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x04040400);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label16_2);
+label17:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x08080800);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label17_2);
+label18:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x10101000);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label18_2);
+label19:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x20202000);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label19_2);
+label20:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x40404000);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label20_2);
+label21:
+	xcode_peek(0x0f001248);
+	xcode_bittoggle(0xffffffff,0x80808000);
+	xcode_poke_a(0x0f001248);
+	xcode_goto_label(label21_2);
+
+
+extendedEndExec:
+
+	xcode_poke(0x0f001248, 0x00000000);
+	xcode_poke(0x0f001230, 0xffffffff);
+	xcode_poke(0x0f001234, 0xaaaaaaaa);
+	xcode_poke(0x0f001238, 0xaaaaaaaa);
+	xcode_poke(0x0f00123c, 0x8b8b8b8b);
+	xcode_poke(0x0f001240, 0xffffffff);
+	xcode_poke(0x0f001244, 0x8b8b8b8b);
+	xcode_poke(0x0f001248, 0x8b8b8b8b);
+	xcode_poke(0x0f1002d4, 0x00000001);
+	xcode_poke(0x0f1002c4, 0x00100000);
+	xcode_poke(0x0f1002cc, 0x00100000);
+	xcode_poke(0x0f1002c0, 0x00000011);
+	xcode_poke(0x0f1002c8, 0x00000011);
+	xcode_poke(0x0f1002c0, 0x00000032);
+	xcode_poke(0x0f1002c8, 0x00000032);
+	xcode_poke(0x0f1002c0, 0x00000132);
+	xcode_poke(0x0f1002c8, 0x00000132);
+	xcode_poke(0x0f1002d0, 0x00000001);
+	xcode_poke(0x0f1002d0, 0x00000001);
+	xcode_poke(0x0f100210, 0x80000000);
+	xcode_poke(0x0f00124c, 0xaa8baa8b);
+	xcode_poke(0x0f001250, 0x00005474);
+	xcode_poke(0x0f100228, 0x081205ff);
+	xcode_poke(0x0f001218, 0x00000000);
+
+	xcode_pciin_a(0x80000860);
+	xcode_bittoggle(0xffffffff,0x00000400);
+	xcode_pciout_a(0x80000860);
+
+
+	xcode_pciout(0x8000084c, 0x0000fdde);
+	xcode_pciout(0x8000089c, 0x871cc707);
+	xcode_pciin_a(0x800008b4);
+	xcode_bittoggle(0xfffff0ff,0x00000f00);
+	xcode_pciout_a(0x800008b4);
+	xcode_pciout(0x80000340, 0xf0f0c0c0);
+	xcode_pciout(0x80000344, 0x00000000);
+	xcode_pciout(0x8000035c, 0x00000000);
+endExec:		//There is no going back now.
 xcode_pciout(0x8000036c, 0x00230801);
 xcode_pciout(0x8000036c, 0x01230801);
-xcode_goto(0x00000001);
-xcode_goto(0x00000001);
+xcode_goto(1);
+xcode_goto(1);
 xcode_poke(0x0f100200, 0x03070103);
 xcode_poke(0x0f100204, 0x11448000);
 xcode_pciout(0x8000103c, 0x00000000);
