@@ -11,7 +11,7 @@ RAM_CODE = 0x00100000;
 
 /* this should be changed depending the actual size of the rom */
 ROM_SIZE = 256K;
-LOW_ROM = 0xfffc0000; 
+LOW_ROM = 0xff000000; 
 
 
 TOP_ROM = ( LOW_ROM + ROM_SIZE - 512 );

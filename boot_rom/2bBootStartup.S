@@ -67,7 +67,7 @@
 .org 0x0
 	/* MCPX Magic Values - clock timings*/
 	
-	.long 0xff000009 //SmartXX sets this one to 0xff000008
+	.long 0xff000008 //SmartXX sets this one to 0xff000008 but was originally 0xff000009
 	.long 0xff000008
 	.long 0x2b16d065
 	.long 0x3346322d
@@ -555,7 +555,7 @@ xcode_pciout(0x8000f020, 0xfdf0fd00);
 xcode_pciout(0x80010010, 0xfd000000);
 
 // overflow trick
-xcode_poke(0x00000000, 0xfc0F00ea);
+xcode_poke(0x00000000, 0x000F00ea);	//SmartXX uses bottom bank from flash. Make sure you change this in linker script too.
 xcode_poke(0x00000004, 0x000008ff);
 xcode_END(0x00000806);
 
@@ -634,12 +634,12 @@ xcode_END(0x00000806);
 	// MTRR for FLASH
 	inc %ecx //movl	$0x204, %ecx
 	movl	$0x00000000, %edx
-	movl	$0xFff00000, %eax 	    // We set to Uncacheable
+	movl	$0xFf000000, %eax 	    // We set to Uncacheable
 	wrmsr
 
     inc %ecx //movl	$0x205, %ecx
 	movl	$0x0000000f, %edx
-	movl	$0xfff00800, %eax
+	movl	$0xff000800, %eax
 	wrmsr
 	
 
@@ -693,7 +693,7 @@ xcode_END(0x00000806);
 
 	mov 	$_ram_location, %edi
 	mov 	$_start_ramcopy, %esi
-	mov 	$(_size_ramcopy + 100), %ecx
+	mov 	$(_size_ramcopy +10), %ecx
 	shr	$2,%ecx    // We dividy / 4, as we copy Dword oriented
 	rep 	movsl
 	
@@ -754,7 +754,12 @@ initaftermemcpy:
     // Below is equivalent to memset(0x400000, 0, 0x5000/4);
 	mov $0x5000,%ecx
 	mov $0x400000,%edi
-	rep stosb
+	rep stosl
+   	
+   	// memset((void*)0x03A30000,0x0,0x40000)
+	movl $0x400000, %ecx
+	movl $0x03A30000, %edi
+	rep stosl
 
 	lidt tableIdtDescriptor
 	lgdt tableGdtDescriptor

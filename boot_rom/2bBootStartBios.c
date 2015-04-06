@@ -45,7 +45,7 @@ u32 PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned
     IoOutputDword(0xcf8, base_addr);
     return IoInputDword(0xcfc);
 }
-
+/*
 void BootAGPBUSInitialization(void)
 {
     u32 temp;
@@ -60,7 +60,7 @@ void BootAGPBUSInitialization(void)
     PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x80, 0x00000100);
     
 }
- 
+*/
 /* -------------------------  Main Entry for after the ASM sequences ------------------------ */
 
 extern void BootStartBiosLoader ( void ) {
@@ -72,7 +72,7 @@ extern void BootStartBiosLoader ( void ) {
 
     unsigned int Buildinflash_Flash[4]    = { 0xfff00000,0xfff40000,0xfff80000,0xfffc0000};
     unsigned int cromwellidentify         =  1;
-    unsigned int flashbank             =  3;  // Default Bank
+    unsigned int flashbank             =  0;  // Default Bank
     unsigned int cromloadtry        =  0;
             
     struct SHA1Context context;
@@ -109,42 +109,44 @@ extern void BootStartBiosLoader ( void ) {
        
     // Sets the Graphics Card to 60 MB start address
     (*(unsigned int*)0xFD600800) = (0xf0000000 | ((64*0x100000) - 0x00400000));
-    IoOutputByte(XBLAST_IO, 0x30);
-    BootAGPBUSInitialization();
-    IoOutputByte(XBLAST_IO, 0x40);
+    //Why do this here when it is also called in BootResetAction?
+    //BootAGPBUSInitialization();
 
-    (*(unsigned int*)(0xFD000000 + 0x100200)) = 0x03070103 ;
-    (*(unsigned int*)(0xFD000000 + 0x100204)) = 0x11448000 ;
-    IoOutputByte(XBLAST_IO, 0x50);
-    PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x84, 0x7FFFFFF);  // 128 MB
+//XXX: Already done in X-Codes?
+    //(*(unsigned int*)(0xFD000000 + 0x100200)) = 0x03070103 ;
+    //(*(unsigned int*)(0xFD000000 + 0x100204)) = 0x11448000 ;
+
+
+//XXX: Useful? We do not require 128MB RAM in 2bl.
+    //PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x84, 0x7FFFFFF);  // 128 MB
     IoOutputByte(XBLAST_IO, 0x60);
     
     // Lets go, we have finished, the Most important Startup, we have now a valid Micro-loder im Ram
     // we are quite happy now
     
     validimage=0;
-    flashbank=3;
-    for (loadretry=0;loadretry<100;loadretry++) {
+    flashbank=0;
+    for (loadretry=0;loadretry<10;loadretry++) {
         cromloadtry=0;
         if (Biossize_type==0) {
             // Means we have a 256 kbyte image
-                flashbank=3;
+                flashbank=0;
                 IoOutputByte(XBLAST_IO, 0x70);
         } else if (Biossize_type==1) {
             // Means we have a 1MB image
-            // If 25 load attempts failed, we switch to the next bank
+            // If 2-3 load attempts failed, we switch to the next bank
             IoOutputByte(XBLAST_IO, 0x80);
             switch (loadretry) {
                 case 0:
                     flashbank=1;
                     break;    
-                case 25:
+                case 3:
                     flashbank=2;
                     break;
-                case 50:
+                case 6:
                     flashbank=0;
                     break;
-                case 75:
+                case 8:
                     flashbank=3;
                     break;    
             }
@@ -156,6 +158,8 @@ extern void BootStartBiosLoader ( void ) {
         memcpy(&bootloaderChecksum[0],(void*)(Buildinflash_Flash[flashbank]+compressed_image_start),20);
 
         memcpy((void*)CROMWELL_compress_temploc,(void*)(Buildinflash_Flash[flashbank]+compressed_image_start+20),compressed_image_size);
+
+        //XXX: Feel like it should be a memcpy of some value.
         memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
         
         IoOutputByte(XBLAST_IO, 0xA0);
@@ -180,10 +184,10 @@ extern void BootStartBiosLoader ( void ) {
             
             // This is a config bit in Cromwell, telling the Cromwell, that it is a Cromwell and not a Xromwell
             flashbank++; // As counting starts with 0, we increase +1
-            memcpy((void*)(CROMWELL_Memory_pos+0x20),&cromwellidentify,4);
-            memcpy((void*)(CROMWELL_Memory_pos+0x24),&cromloadtry,4);
-             memcpy((void*)(CROMWELL_Memory_pos+0x28),&flashbank,4);
-             memcpy((void*)(CROMWELL_Memory_pos+0x2C),&Biossize_type,4);
+            memcpy((void*)(CROMWELL_Memory_pos+0x20),&cromwellidentify,4);  //Will be cromwell_config in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos+0x24),&cromloadtry,4);       //Will be cromwell_retryload in Cromwell
+             memcpy((void*)(CROMWELL_Memory_pos+0x28),&flashbank,4);        //Will be cromwell_loadbank in Cromwell
+             memcpy((void*)(CROMWELL_Memory_pos+0x2C),&Biossize_type,4);    //Will be cromwell_Biostype in Cromwell
              validimage=1;
              
              break;
@@ -197,7 +201,7 @@ extern void BootStartBiosLoader ( void ) {
         // We now jump to the cromwell, Good bye 2bl loader
         // This means: jmp CROMWELL_Memory_pos == 0x03A00000
         __asm __volatile__ (
-        "wbinvd\n"
+        //"wbinvd\n"    //XXX: Useful or harmful?
         "cld\n"
         "ljmp $0x10, $0x03A00000\n"   
         );
@@ -211,9 +215,9 @@ extern void BootStartBiosLoader ( void ) {
     //setLED("rxxx");
 	// Power_cycle
  	I2CTransmitWord(0x10, 0x0240);
-      	I2CTransmitWord(0x10, 0x0240);
+    I2CTransmitWord(0x10, 0x0240);
 //    I2CTransmitWord(0x10, 0x1901); // no reset on eject
 //    I2CTransmitWord(0x10, 0x0c00); // eject DVD tray        
 
-        while(1);
+     while(1);
 }
