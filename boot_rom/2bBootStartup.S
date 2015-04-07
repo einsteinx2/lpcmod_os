@@ -756,6 +756,7 @@ initaftermemcpy:
 	mov $0x400000,%edi
 	rep stosl
    	
+   	//Clear decompressed kernel space.
    	// memset((void*)0x03A30000,0x0,0x40000)
 	movl $0x400000, %ecx
 	movl $0x03A30000, %edi
