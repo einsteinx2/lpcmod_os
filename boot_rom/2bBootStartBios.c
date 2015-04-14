@@ -85,8 +85,6 @@ extern void BootStartBiosLoader ( void ) {
     unsigned int compressed_image_size;
     unsigned int Biossize_type;
     
-    int validimage;
-            
     memcpy(&bootloaderChecksum[0],(void*)PROGRAMM_Memory_2bl,20);
     memcpy(&bootloadersize,(void*)(PROGRAMM_Memory_2bl+20),4);
     memcpy(&compressed_image_start,(void*)(PROGRAMM_Memory_2bl+24),4);
@@ -122,7 +120,6 @@ extern void BootStartBiosLoader ( void ) {
     // Lets go, we have finished, the Most important Startup, we have now a valid Micro-loder im Ram
     // we are quite happy now
     
-    validimage=0;
     flashbank=0;
     for (loadretry=0;loadretry<10;loadretry++) {
         cromloadtry=0;
@@ -159,7 +156,7 @@ extern void BootStartBiosLoader ( void ) {
 
         // Set remaining space after compressed data to 0x0.
         //XXX: Is this necessary?
-        memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
+        //memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
         
 
         // Lets Look, if we have got a Valid thing from Flash            
@@ -173,7 +170,7 @@ extern void BootStartBiosLoader ( void ) {
             // We start the Cromwell immediatly
 
             //Meh, we will turn the LED red real soon so let us save a few cycles here.
-            //setLED("rrrr");
+            setLED("rrrr");
         
             BufferIN = (unsigned char*)(CROMWELL_compress_temploc);
             BufferINlen=compressed_image_size;
@@ -186,23 +183,21 @@ extern void BootStartBiosLoader ( void ) {
             memcpy((void*)(CROMWELL_Memory_pos+0x24),&cromloadtry,4);       //Will be cromwell_retryload in Cromwell
              memcpy((void*)(CROMWELL_Memory_pos+0x28),&flashbank,4);        //Will be cromwell_loadbank in Cromwell
              memcpy((void*)(CROMWELL_Memory_pos+0x2C),&Biossize_type,4);    //Will be cromwell_Biostype in Cromwell
-             validimage=1;
+
+
+             setLED("oooo");
+
+             // We now jump to the cromwell, Good bye 2bl loader
+             // This means: jmp CROMWELL_Memory_pos == 0x03A00000
+             __asm __volatile__ (
+             //"wbinvd\n"    //XXX: Useful or harmful?
+             "cld\n"
+             "ljmp $0x10, $0x03A00000\n"
+             );
+             // We are not Longer here
              
              break;
         }
-    }
-        
-    if (validimage==1) {
-        //setLED("oooo");
-
-        // We now jump to the cromwell, Good bye 2bl loader
-        // This means: jmp CROMWELL_Memory_pos == 0x03A00000
-        __asm __volatile__ (
-        //"wbinvd\n"    //XXX: Useful or harmful?
-        "cld\n"
-        "ljmp $0x10, $0x03A00000\n"   
-        );
-        // We are not Longer here
     }
     
     IoOutputByte(XBLAST_IO, 0x40);

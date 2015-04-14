@@ -173,6 +173,7 @@ static void flush_window(void)
 
 static void error(char *x)
 {
+    setLED("rxox");
     while(1);    /* Halt */
 }
 
