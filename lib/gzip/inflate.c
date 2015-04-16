@@ -867,7 +867,7 @@ DEBG("dyn5a ");
   {
 DEBG("dyn5b ");
     if (i == 1) {
-      error(" incomplete literal tree\n");
+      while(1);  //Error... stall.
       huft_free(tl);
     }
     return i;                   /* incomplete code set */
@@ -878,7 +878,7 @@ DEBG("dyn5c ");
   {
 DEBG("dyn5d ");
     if (i == 1) {
-      error(" incomplete distance tree\n");
+      while(1);  //Error... stall.
 #ifdef PKZIP_BUG_WORKAROUND
       i = 0;
     }
@@ -1081,27 +1081,27 @@ static int gunzip(void)
 
     if (magic[0] != 037 ||
     ((magic[1] != 0213) && (magic[1] != 0236))) {
-        error("bad gzip magic numbers");
+        while(1);  //Error... stall.
         return -1;
     }
 
     /* We only support method #8, DEFLATED */
     if (method != 8)  {
-        error("internal error, invalid method");
+        while(1);  //Error... stall.
         return -1;
     }
 
     flags  = (uch)get_byte();
     if ((flags & ENCRYPTED) != 0) {
-        error("Input is encrypted\n");
+        while(1);  //Error... stall.
         return -1;
     }
     if ((flags & CONTINUATION) != 0) {
-        error("Multi part input\n");
+        while(1);  //Error... stall.
         return -1;
     }
     if ((flags & RESERVED) != 0) {
-        error("Input has invalid flags\n");
+        while(1);  //Error... stall.
         return -1;
     }
     (ulg)get_byte();    /* Get timestamp */
@@ -1135,16 +1135,16 @@ static int gunzip(void)
         case 0:
             break;
         case 1:
-            error("invalid compressed format (err=1)");
+            while(1);  //Error... stall.
             break;
         case 2:
-            error("invalid compressed format (err=2)");
+            while(1);  //Error... stall.
             break;
         case 3:
-            error("out of memory");
+            while(1);  //Error... stall.
             break;
         default:
-            error("invalid compressed format (other)");
+            while(1);  //Error... stall.
         }
         return -1;
     }
@@ -1165,11 +1165,11 @@ static int gunzip(void)
     
     /* Validate decompression */
     if (orig_crc != CRC_VALUE) {
-        error("crc error");
+        while(1);  //Error... stall.
         return -1;
     }
     if (orig_len != bytes_out) {
-        error("length error");
+        while(1);  //Error... stall.
         return -1;
     }
     return 0;

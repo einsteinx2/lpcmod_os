@@ -10,7 +10,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "2bconsts.h"
+//#include "2bconsts.h"
 #include "stdint.h"
 #include "cromwell_types.h"
 
@@ -18,7 +18,7 @@
 /////////////////////////////////
 // LED-flashing codes
 // or these together as argument to I2cSetFrontpanelLed
-
+/*
 enum {
     I2C_LED_RED0 = 0x80,
     I2C_LED_RED1 = 0x40,
@@ -29,7 +29,8 @@ enum {
     I2C_LED_GREEN2 = 0x02,
     I2C_LED_GREEN3 = 0x01
 };
-
+*/
+#define I2C_IO_BASE 0xc000
 ///////////////////////////////
 /* BIOS-wide error codes        all have b31 set  */
 
@@ -42,8 +43,6 @@ enum {
     ERR_BOOT_PIC_ALG_BROKEN = 0x80000101 // PIC algorithm did not pass its self-test
 };
 
-
-#define XBLAST_IO 0xF70Du       //GPO ports are mapped to four MSBs.
 
 //////// BootPerformPicChallengeResponseAction.c
 
@@ -58,10 +57,6 @@ static __inline void IoOutputWord(u16 wAds, u16 wValue) {
     __asm__ __volatile__ ("outw %0,%w1": :"a" (wValue), "Nd" (wAds));
     }
 
-static __inline void IoOutputDword(u16 wAds, u32 dwValue) {
-    __asm__ __volatile__ ("outl %0,%w1": :"a" (dwValue), "Nd" (wAds));
-}
-
 static __inline u8 IoInputByte(u16 wAds) {
   unsigned char _v;
   __asm__ __volatile__ ("inb %w1,%0":"=a" (_v):"Nd" (wAds));
@@ -74,16 +69,10 @@ static __inline u16 IoInputWord(u16 wAds) {
   return _v;
 }
 
-static __inline u32 IoInputDword(u16 wAds) {
-  u32 _v;
-  __asm__ __volatile__ ("inl %w1,%0":"=a" (_v):"Nd" (wAds));
-  return _v;
-}
-
 // boot process
 int BootPerformPicChallengeResponseAction(void);
 // LED control (see associated enum above)
-int I2cSetFrontpanelLed(u8 b);
+//int I2cSetFrontpanelLed(u8 b);
 
 ////////// BootResetActions.c
 

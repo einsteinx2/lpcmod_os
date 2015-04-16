@@ -105,8 +105,8 @@ static void *gzip_malloc(int size)
 {
     void *p;
 
-    if (size <0) error("Malloc error\n");
-    if (free_mem_ptr <= 0) error("Memory error\n");
+    if (size <0) while(1);  //Error... stall.
+    if (free_mem_ptr <= 0) while(1);  //Error... stall.
 
     free_mem_ptr = (free_mem_ptr + 3) & ~3;    /* Align */
 
@@ -114,7 +114,7 @@ static void *gzip_malloc(int size)
     free_mem_ptr += size;
 
     if (free_mem_ptr >= free_mem_end_ptr)
-        error("\nOut of memory\n");
+        while(1);  //Error... stall.
 
     return p;
 }
@@ -140,7 +140,7 @@ static void gzip_release(void **ptr)
 static int fill_inbuf(void)
 {
     if (insize != 0) {
-        error("ran out of input data\n");
+        while(1);  //Error... stall.
     }
 
     inbuf = input_data;
@@ -169,11 +169,6 @@ static void flush_window(void)
     bytes_out += (ulg)outcnt;
     output_ptr += (ulg)outcnt;
     outcnt = 0;
-}
-
-static void error(char *x)
-{
-    while(1);    /* Halt */
 }
 
 #define STACK_SIZE (4096)

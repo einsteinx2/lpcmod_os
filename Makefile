@@ -292,10 +292,10 @@ scriptchecker:
 	gcc -g -o bin/scriptChecker lib/scriptChecker/scriptChecker.c
 	
 imagecompress: obj/image-crom.bin bin/imagebld 
-	cp obj/image-crom.bin obj/image-crom.bin.tmp
-	gzip -9 obj/image-crom.bin.tmp
+	cp obj/image-crom.bin obj/c
+	gzip -9 obj/c
 	bin/imagebld -xbe xbe/XBlast\ OS.xbe obj/image-crom.bin
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin f
 
 256KBBinGen: imagecompress
-	bin/imagebld -rom obj/2blimage.bin obj/image-crom.bin.tmp.gz image/cromwell.bin
+	bin/imagebld -rom obj/2blimage.bin obj/c.gz image/cromwell.bin

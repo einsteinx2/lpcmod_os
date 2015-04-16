@@ -23,8 +23,6 @@
 	Xcalibur support by Lehner Franz (franz@caos.at) 
 */
  
-#include "2bconsts.h"
-
  
 #define xcode_peek(val1) .byte 0x2; .long val1 ; .long 0x0 ;
 #define xcode_poke(val1,val2) .byte 0x3; .long val1 ; .long val2 ;
@@ -119,36 +117,36 @@ xcode_pciout(0x8000f004, 0x00000007);
 xcode_pciout(0x80000904, 0x00000001);
 xcode_pciout(0x80000914, 0x0000c001);
 xcode_pciout(0x80000918, 0x0000c201);
-xcode_goto_label(label1);
-xcode_goto_label(label2);	//Not very useful! Probably leftover from debugging...
+xcode_goto_label(common_init);
+//xcode_goto_label(xcalibur_init);	//Not very useful! Probably leftover from debugging...
 
-label1:
+common_init:
 xcode_poke(0x0f0010b0, 0x07633461);
 xcode_poke(0x0f0010cc, 0x66660000);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0x000c0000, 0x00000000);
-xcode_ifgoto_label(0x00000000, label3);
+xcode_ifgoto_label(0x00000000, common_init_alt1);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0xeeee0000);
-xcode_goto_label(label4);
+xcode_goto_label(common_init_ending);
 
-label3:
-xcode_ifgoto_label(0x000c0000, label5);
+common_init_alt1:
+xcode_ifgoto_label(0x000c0000, common_init_alt2);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x860c0000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0xffff0000);
-xcode_goto_label(label4);
+xcode_goto_label(common_init_ending);
 
-label5:
+common_init_alt2:
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x820c0000);
 xcode_poke_a(0x0f101000);
 xcode_poke(0x0f0010b8, 0x11110000);
 
-label4:								//Ultimately, all of the above code merge back to here.
+common_init_ending:								//Ultimately, all of the above code merge back to here.
 xcode_poke(0x0f0010d4, 0x00000009);
 xcode_poke(0x0f0010b4, 0x00000000);
 xcode_poke(0x0f0010bc, 0x00005866);
@@ -180,16 +178,18 @@ xcode_outb(SMBUS+2, 0x0000000a);
 
 xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, 0x00000002);
-xcode_goto_label(label6);						//Success!
+xcode_goto_label(focus_init_part2);						//Success!
 xcode_bittoggle(0x00000008, 0x00000000); //Check fail status
 xcode_ifgoto(0x00000000, SMBUS_READ_RETRY);//No result yet, read again.
 xcode_outb(SMBUS, 0x000000ff);
-xcode_goto_label(label7);			//Abandon focus, go to connexant
-label6:						//focus phase 2
+xcode_goto_label(connexant_init);			//Abandon focus, go to connexant
+
+focus_init_part2:						//focus phase 2
 xcode_outb(SMBUS, 0x00000010);
 SMB_xcode_Write(0x0000000d, 0x00000020);
-xcode_goto_label(label24);		//Oops, missed that one.
-label7:			//Connexant init attempt.
+xcode_goto_label(focus_init_part3);		//Oops, missed that one.
+
+connexant_init:			//Connexant init attempt.
 xcode_outb(SMBUS, 0x00000010);
 xcode_outb(SMBUS+4, 0x0000008a);	//This is the address for connexant.
 xcode_outb(SMBUS+8, 0x000000ba);
@@ -197,7 +197,7 @@ xcode_outb(SMBUS+6, 0x0000003f);
 xcode_outb(SMBUS+2, 0x0000000a);
 xcode_inb(SMBUS);
 xcode_ifgoto(0x00000010, 0x00000002); //Write failed, forward 2
-xcode_goto_label(label8);						//Success!
+xcode_goto_label(connexant_init_part2);						//Success!
 xcode_bittoggle(0x00000008, 0x00000000);//Check fail status
 xcode_ifgoto(0x00000000, SMBUS_READ_RETRY);//No result yet, read again.
 xcode_outb(SMBUS, 0x000000ff);			//Abandon connexant.
@@ -206,8 +206,9 @@ xcode_outb(SMBUS, 0x00000010);
 //xcode_outb(SMBUS+4, 0x000000e0);
 //SMB_xcode_Write(0x00000000, 0x00000000);
 //SMB_xcode_Write(0x000000b8, 0x00000000);
-xcode_goto_label(label2);				//to 1.6 init?
-label8:				//Connexant phase 2
+xcode_goto_label(xcalibur_init);				//to 1.6 init?
+
+connexant_init_part2:				//Connexant phase 2
 xcode_outb(SMBUS, 0x00000010);
 SMB_xcode_Write(0x0000006c, 0x00000046);
 SMB_xcode_Write(0x000000b8, 0x00000000);
@@ -219,7 +220,7 @@ SMB_xcode_Write(0x000000c4, 0x00000001);
 //VIDEND - Encoder 'init' complete.
 
 // PIC SLAVE Address (Write)
-label24:	//Connexant, focus common phase 3.
+focus_init_part3:	//Connexant, focus common phase 3.
 xcode_outb(SMBUS+4, 0x00000020);
 // I2Ctransmit(0x20,0x1,0x0);
 SMB_xcode_Write(0x00000001, 0x00000000);
@@ -292,11 +293,12 @@ xcode_pciout(0x80000344, 0x00c00000);
 xcode_pciout(0x8000035c, 0x04070000);
 xcode_goto_label(endExec);
 
-label2:		//Start of Xcalibur init?
+xcalibur_init:
 xcode_outb(0x0000c200, 0x00000070);
 xcode_poke(0x0f0010b0, 0x01000010);
 xcode_poke(0x0f0010cc, 0x66660000);
-xcode_goto_label(label9);
+xcode_goto_label(xcalibur_init_part2);
+
 label13:
 xcode_poke(0x0f0010d4, 0x0000000f);
 xcode_poke(0x0f0010b4, 0x00000000);
@@ -330,10 +332,12 @@ xcode_poke(0x0f001220, 0x00000000);
 xcode_poke(0x0f001228, 0x00000000);
 xcode_poke(0x0f001264, 0x00000000);
 xcode_poke(0x0f001210, 0x00000000);
-xcode_goto_label(label10);
-label9:		//Xcalibur phase 2?
+xcode_goto_label(xcalibur_init_part3);
+
+xcalibur_init_part2:
 xcode_pciout(0x8000183c, 0x000000c3);
-label10:
+
+xcalibur_init_part3:
 xcode_outb(SMBUS+4, 0x000000a9);
 xcode_pciin_a(0x8000183c);
 xcode_outb_a(0x0000c008);
@@ -346,7 +350,7 @@ xcode_ifgoto(0x00000008, 0x00000002);
 xcode_goto(SMBUS_READ_RETRY);
 xcode_pciin_a(0x8000103c);
 xcode_bittoggle(0x000000ff, 0x00000000);
-xcode_ifgoto_label(0x00000010, label10);
+xcode_ifgoto_label(0x00000010, xcalibur_init_part3);
 xcode_inb(SMBUS+6);
 xcode_bittoggle(0x000000ff, 0x00000000);
 xcode_poke_a(0x0f001248);
@@ -368,10 +372,12 @@ xcode_bittoggle(0xe1f3ffff, 0x80040000);
 xcode_goto_label(label12);
 xcode_peek(0x0f101000);
 xcode_bittoggle(0xe1f3ffff, 0x80000000);
+
 label12:
 xcode_poke_a(0x0f101000);
 xcode_pciout(0x8000183c, 0x000000c2);
-xcode_goto_label(label10);
+xcode_goto_label(xcalibur_init_part3);
+
 label11:
 xcode_peek(0x0f001248);
 xcode_bittoggle(0x00000001, 0x00000000);
@@ -434,7 +440,7 @@ label22:
 	xcode_peek(0x0f001248);
 	xcode_poke_a(0x0f00122c);
 	xcode_pciout(0x8000183C, 0x000000c0);
-	xcode_goto_label(label10)
+	xcode_goto_label(xcalibur_init_part3)
 
 label23:
 
@@ -449,36 +455,43 @@ label14:
 	xcode_bittoggle(0xffffffff,0x01010100);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label14_2);
+
 label15:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x02020200);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label15_2);
+
 label16:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x04040400);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label16_2);
+
 label17:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x08080800);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label17_2);
+
 label18:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x10101000);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label18_2);
+
 label19:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x20202000);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label19_2);
+
 label20:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x40404000);
 	xcode_poke_a(0x0f001248);
 	xcode_goto_label(label20_2);
+
 label21:
 	xcode_peek(0x0f001248);
 	xcode_bittoggle(0xffffffff,0x80808000);
@@ -526,6 +539,7 @@ extendedEndExec:
 	xcode_pciout(0x80000340, 0xf0f0c0c0);
 	xcode_pciout(0x80000344, 0x00000000);
 	xcode_pciout(0x8000035c, 0x00000000);
+
 endExec:		//There is no going back now.
 xcode_pciout(0x8000036c, 0x00230801);
 xcode_pciout(0x8000036c, 0x01230801);
@@ -555,14 +569,14 @@ xcode_pciout(0x8000f020, 0xfdf0fd00);
 xcode_pciout(0x80010010, 0xfd000000);
 
 // overflow trick
-xcode_poke(0x00000000, 0x000F00ea);	//SmartXX uses bottom bank from flash. Make sure you change this in linker script too.
+xcode_poke(0x00000000, 0x000ED0ea);	//SmartXX uses bottom bank from flash. Make sure you change this in linker script too.
 xcode_poke(0x00000004, 0x000008ff);
 xcode_END(0x00000806);
 
 
 	// Note: never change this from offset 0x1000 ....
 	// This is the Main Entry point ....        
-	.org 0xF00
+	.org 0xED0	//Could be 0xECF
         
 	// Good Morning CPU
 

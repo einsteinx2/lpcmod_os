@@ -131,11 +131,11 @@ int BootPerformPicChallengeResponseAction()
     // continues as part of video setup....
     return ERR_SUCCESS;
 }
-
+/*
 extern int I2cSetFrontpanelLed(u8 b)
 {
     I2CTransmitWord( 0x10, 0x800 | b);  // sequencing thanks to Jarin the Penguin!
     I2CTransmitWord( 0x10, 0x701);
     return ERR_SUCCESS;
 }
-
+*/

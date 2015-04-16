@@ -376,7 +376,7 @@ int romcopy (
     temp = temp + 0x10;
     
     // We add additional 0x100 byts for some space
-    temp = temp + 0x100;
+    //temp = temp + 0x100;      //Why?
     
     bootloaderstruct.compressed_image_start = temp;
     bootloaderstruct.compressed_image_size =  romsize;
