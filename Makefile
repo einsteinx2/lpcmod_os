@@ -70,7 +70,7 @@ OBJECTS-ROMBOOT += $(TOPDIR)/obj/2bBootStartBios.o
 OBJECTS-ROMBOOT += $(TOPDIR)/obj/sha1.o
 OBJECTS-ROMBOOT += $(TOPDIR)/obj/2bBootLibrary.o
 OBJECTS-ROMBOOT += $(TOPDIR)/obj/misc.o
-OBJECTS-ROMBOOT += $(TOPDIR)/obj/LED.o
+#OBJECTS-ROMBOOT += $(TOPDIR)/obj/LED.o
                                              
 OBJECTS-CROM = $(TOPDIR)/obj/BootStartup.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootResetAction.o

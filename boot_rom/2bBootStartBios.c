@@ -18,59 +18,16 @@
 
 extern int decompress_kernel(char*out, char *data, int len);
 
-u32 PciWriteDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, unsigned int dw) 
-{
-        
-    u32 base_addr = 0x80000000;
-    base_addr |= ((bus & 0xFF) << 16);    // bus #
-    base_addr |= ((dev & 0x1F) << 11);    // device #
-    base_addr |= ((func & 0x07) << 8);    // func #
-    base_addr |= ((reg_off & 0xff));
-
-    IoOutputDword(0xcf8, base_addr );    
-    IoOutputDword(0xcfc ,dw);
-
-    return 0;    
-}
-
-u32 PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
-{
-    u32 base_addr = 0x80000000;
-    base_addr |= ((bus & 0xFF) << 16);    // bus #
-    base_addr |= ((dev & 0x1F) << 11);    // device #
-    base_addr |= ((func & 0x07) << 8);    // func #
-    base_addr |= ((func & 0x07) << 8);
-    base_addr |= ((reg_off & 0xff));
-        
-    IoOutputDword(0xcf8, base_addr);
-    return IoInputDword(0xcfc);
-}
-/*
-void BootAGPBUSInitialization(void)
-{
-    u32 temp;
-    PciWriteDword(BUS_0, DEV_1, FUNC_0, 0x54,   PciReadDword(BUS_0, DEV_1, FUNC_0, 0x54) | 0x88000000 );
-    
-    PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x64,   (PciReadDword(BUS_0, DEV_0, FUNC_0, 0x64))| 0x88000000 );
-    
-    temp =  PciReadDword(BUS_0, DEV_0, FUNC_0, 0x6C);
-    IoOutputDword(0xcfc , temp & 0xFFFFFFFE);
-    IoOutputDword(0xcfc , temp );
-    
-    PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x80, 0x00000100);
-    
-}
-*/
 /* -------------------------  Main Entry for after the ASM sequences ------------------------ */
+    // do not change this, this is linked to many many scipts
+
+#define CROMWELL_Memory_pos 	 	0x03A00000
+#define PROGRAMM_Memory_2bl 	 	0x00100000
+#define CROMWELL_compress_temploc 	0x02000000
 
 extern void BootStartBiosLoader ( void ) {
 
-    // do not change this, this is linked to many many scipts
-    unsigned int PROGRAMM_Memory_2bl     = 0x00100000;
-    unsigned int CROMWELL_Memory_pos     = 0x03A00000;
-    unsigned int CROMWELL_compress_temploc     = 0x02000000;
 
-    unsigned int Buildinflash_Flash[4]    = { 0xfff00000,0xfff40000,0xfff80000,0xfffc0000};
     unsigned int cromwellidentify         =  1;
     unsigned int flashbank             =  0;  // Default Bank
     unsigned int cromloadtry        =  0;
@@ -84,6 +41,16 @@ extern void BootStartBiosLoader ( void ) {
     unsigned int compressed_image_start;
     unsigned int compressed_image_size;
     unsigned int Biossize_type;
+
+//Use this to find bugs in boot sequence of 2bl.
+#if 0
+    BootPerformPicChallengeResponseAction();
+    I2cSetFrontpanelLed(
+    		I2C_LED_GREEN0 | I2C_LED_GREEN1 | I2C_LED_GREEN2 | I2C_LED_GREEN3 |
+			I2C_LED_RED0 | I2C_LED_RED1 | I2C_LED_RED2 | I2C_LED_RED3
+    );
+    while(1);
+#endif
     
     memcpy(&bootloaderChecksum[0],(void*)PROGRAMM_Memory_2bl,20);
     memcpy(&bootloadersize,(void*)(PROGRAMM_Memory_2bl+20),4);
@@ -100,65 +67,30 @@ extern void BootStartBiosLoader ( void ) {
         BootPerformPicChallengeResponseAction();
     } else {
         // Bad, the checksum does not match, but we can nothing do now, we wait until PIC kills us
-        IoOutputByte(XBLAST_IO, 0x10);
         while(1);
     }
        
     // Sets the Graphics Card to 60 MB start address
     (*(unsigned int*)0xFD600800) = (0xf0000000 | ((64*0x100000) - 0x00400000));
-    //Why do this here when it is also called in BootResetAction?
-    //BootAGPBUSInitialization();
-
-//XXX: Already done in X-Codes?
-    //(*(unsigned int*)(0xFD000000 + 0x100200)) = 0x03070103 ;
-    //(*(unsigned int*)(0xFD000000 + 0x100204)) = 0x11448000 ;
-
-
-//XXX: Useful? We do not require 128MB RAM in 2bl.
-    //PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x84, 0x7FFFFFF);  // 128 MB
     
     // Lets go, we have finished, the Most important Startup, we have now a valid Micro-loder im Ram
     // we are quite happy now
     
     flashbank=0;
     for (loadretry=0;loadretry<10;loadretry++) {
-        cromloadtry=0;
-        if (Biossize_type==0) {
-            // Means we have a 256 kbyte image
-                flashbank=0;
-        } else if (Biossize_type==1) {
-            // Means we have a 1MB image
-            // If 2-3 load attempts failed, we switch to the next bank
-            IoOutputByte(XBLAST_IO, 0x20);
-            switch (loadretry) {
-                case 0:
-                    flashbank=1;
-                    break;    
-                case 3:
-                    flashbank=2;
-                    break;
-                case 6:
-                    flashbank=0;
-                    break;
-                case 8:
-                    flashbank=3;
-                    break;    
-            }
-        }
-        cromloadtry++;    
+        cromloadtry+=1;
                 
         // Copy From Flash To RAM
         //Copy Kernel SHA-1 checksum
-        memcpy(&bootloaderChecksum[0],(void*)(Buildinflash_Flash[flashbank]+compressed_image_start),20);
+        memcpy(&bootloaderChecksum[0],(void*)(0xff000000+compressed_image_start),20);
 
         // Copy GZipped Kernel
-        memcpy((void*)CROMWELL_compress_temploc,(void*)(Buildinflash_Flash[flashbank]+compressed_image_start+20),compressed_image_size);
+        memcpy((void*)CROMWELL_compress_temploc,(void*)(0xff000000+compressed_image_start+20),compressed_image_size);
 
         // Set remaining space after compressed data to 0x0.
         //XXX: Is this necessary?
-        //memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
+        memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
         
-
         // Lets Look, if we have got a Valid thing from Flash            
         SHA1Reset(&context);
         SHA1Input(&context,(void*)(CROMWELL_compress_temploc),compressed_image_size);
@@ -169,9 +101,6 @@ extern void BootStartBiosLoader ( void ) {
             // The Checksum is good                          
             // We start the Cromwell immediatly
 
-            //Meh, we will turn the LED red real soon so let us save a few cycles here.
-            setLED("rrrr");
-        
             BufferIN = (unsigned char*)(CROMWELL_compress_temploc);
             BufferINlen=compressed_image_size;
             BufferOUT = (unsigned char*)CROMWELL_Memory_pos;
@@ -181,35 +110,29 @@ extern void BootStartBiosLoader ( void ) {
             flashbank++; // As counting starts with 0, we increase +1
             memcpy((void*)(CROMWELL_Memory_pos+0x20),&cromwellidentify,4);  //Will be cromwell_config in Cromwell
             memcpy((void*)(CROMWELL_Memory_pos+0x24),&cromloadtry,4);       //Will be cromwell_retryload in Cromwell
-             memcpy((void*)(CROMWELL_Memory_pos+0x28),&flashbank,4);        //Will be cromwell_loadbank in Cromwell
-             memcpy((void*)(CROMWELL_Memory_pos+0x2C),&Biossize_type,4);    //Will be cromwell_Biostype in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos+0x28),&flashbank,4);        //Will be cromwell_loadbank in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos+0x2C),&Biossize_type,4);    //Will be cromwell_Biostype in Cromwell
 
 
-             setLED("oooo");
-
-             // We now jump to the cromwell, Good bye 2bl loader
-             // This means: jmp CROMWELL_Memory_pos == 0x03A00000
-             __asm __volatile__ (
-             //"wbinvd\n"    //XXX: Useful or harmful?
-             "cld\n"
-             "ljmp $0x10, $0x03A00000\n"
-             );
-             // We are not Longer here
+            // We now jump to the cromwell, Good bye 2bl loader
+            // This means: jmp CROMWELL_Memory_pos == 0x03A00000
+            __asm __volatile__ (
+            "cld\n"
+            "ljmp $0x10, $0x03A00000\n"
+            );
+            // We are not Longer here
              
-             break;
+            break;
         }
     }
     
-    IoOutputByte(XBLAST_IO, 0x40);
-
     // Bad, we did not get a valid im age to RAM, we stop and display a error
 
-    //setLED("rxxx");
-	// Power_cycle
- 	I2CTransmitWord(0x10, 0x0240);
+    // Power_cycle
+    I2CTransmitWord(0x10, 0x0240);
     I2CTransmitWord(0x10, 0x0240);
 //    I2CTransmitWord(0x10, 0x1901); // no reset on eject
 //    I2CTransmitWord(0x10, 0x0c00); // eject DVD tray        
 
-     while(1);
+    while(1);
 }
