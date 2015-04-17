@@ -3,7 +3,7 @@
 #define PROG_NAME "XBlast OS"
 
 //XBlast OS version number
-#define VERSION "0.3 (beta)"
+#define VERSION "0.31 (beta)"
 
 // selects between the supported video modes, see boot.h for enum listing those available
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600
@@ -64,7 +64,7 @@
 //To show/hide stuff from public releases. Set now but will need to be changed to 0 soon.
 #define DEV_FEATURES 0
 
-#define SPITRACE
+//#define SPITRACE
 
 //Print info from Int handlers. Absolutely remove when not debugging interrupts!
 //#define SPI_INT_TRACE
