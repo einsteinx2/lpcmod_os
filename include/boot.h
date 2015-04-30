@@ -422,6 +422,7 @@ typedef struct _LPCmodSettings {
 
 
 _LPCmodSettings LPCmodSettings;
+_LPCmodSettings LPCmodSettingsOrigFromFlash;
 
 _scriptEntry *scriptEntryList;
 

@@ -130,7 +130,7 @@ ebd_init (struct netif *netif) {
 int
 run_lwip (unsigned char flashType) {
     struct ip_addr ipaddr, netmask, gw;
-    struct netif netif;
+    struct netif *netif;
     bool first = 1;
 
     mem_init ();
@@ -144,20 +144,30 @@ run_lwip (unsigned char flashType) {
     printk ("\n\n            TCP/IP initialized.\n");
     netFlashOver = false;
 
-    IP4_ADDR(&gw, 0,0,0,0);
-    IP4_ADDR(&ipaddr, 0,0,0,0);
-    IP4_ADDR(&netmask, 0,0,0,0);
+    netif = netif_find("eb");   //Trying to find previously configured network interface
 
-    //These will be overwritten by DHCP anyway if need be.
+    if(netif == NULL){
+        debugSPIPrint("No configured network interface found. Creating one.");
+        netif = (struct netif *)malloc(sizeof(struct netif));
+        //Will never be removed for entire duration of program execution so no free()...
 
+        //These will be overwritten by DHCP anyway if need be.
+        IP4_ADDR(&gw, 0,0,0,0);
+        IP4_ADDR(&ipaddr, 0,0,0,0);
+        IP4_ADDR(&netmask, 0,0,0,0);
 
-    netif_add (&netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
+        netif_add (netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
+    }
+    else{
+        debugSPIPrint("Found previously configured network interface.");
+    }
     if (LPCmodSettings.OSsettings.useDHCP){
-        dhcp_start (&netif);
+        //Re-run DHCP discover anyways just in case lease was revoked.
+        dhcp_start (netif);
     }
     else {
         //Not necessary, but polite.
-        dhcp_stop (&netif);
+        dhcp_stop (netif);
         IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
                  LPCmodSettings.OSsettings.staticGateway[1],
                  LPCmodSettings.OSsettings.staticGateway[2],
@@ -170,19 +180,19 @@ run_lwip (unsigned char flashType) {
                  LPCmodSettings.OSsettings.staticMask[1],
                  LPCmodSettings.OSsettings.staticMask[2],
                  LPCmodSettings.OSsettings.staticMask[3]);
-        netif_set_addr(&netif, &ipaddr, &netmask, &gw);
+        netif_set_addr(netif, &ipaddr, &netmask, &gw);
         //netif_set_ipaddr (&netif, &ipaddr);
         //netif_set_netmask (&netif, &netmask);
         //netif_set_gw (&netif, &gw);
-        dhcp_inform (&netif);
+        dhcp_inform (netif);
     }
 
-    netif_set_default (&netif);
+    netif_set_default (netif);
 
     httpd_init(flashType);
     int divisor = 0;
     while (!netFlashOver) {
-        if (!ebd_wait (&netif, TCP_TMR_INTERVAL)) {
+        if (!ebd_wait (netif, TCP_TMR_INTERVAL)) {
             //printk ("!ebd_wait");
             if (divisor++ == 60 * 4) {
                 
@@ -190,20 +200,20 @@ run_lwip (unsigned char flashType) {
                 divisor = 0;
             }
             if(first && divisor == 10){
-	        if (netif.dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
+	        if (netif->dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
 	            printk ("\n            DHCP FAILED - Falling back to %u.%u.%u.%u",
 	                ipaddr.addr & 0x000000ff,
 	                (ipaddr.addr & 0x0000ff00) >> 8,
 	                (ipaddr.addr & 0x00ff0000) >> 16,
 	                (ipaddr.addr & 0xff000000) >> 24);
-	            dhcp_stop (&netif);
-	            netif_set_addr(&netif, &ipaddr, &netmask, &gw);
+	            dhcp_stop (netif);
+	            netif_set_addr(netif, &ipaddr, &netmask, &gw);
 	        }
 	        printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
-	            ((netif.ip_addr.addr) & 0xff),
-	            ((netif.ip_addr.addr) >> 8 & 0xff),
-	            ((netif.ip_addr.addr) >> 16 & 0xff),
-	            ((netif.ip_addr.addr) >> 24 & 0xff));
+	            ((netif->ip_addr.addr) & 0xff),
+	            ((netif->ip_addr.addr) >> 8 & 0xff),
+	            ((netif->ip_addr.addr) >> 16 & 0xff),
+	            ((netif->ip_addr.addr) >> 24 & 0xff));
 	        first = 0;
                 }
             if (divisor & 1){

@@ -62,9 +62,9 @@
 #define WF_PORT 80
 
 //To show/hide stuff from public releases. Set now but will need to be changed to 0 soon.
-#define DEV_FEATURES 0
+#define DEV_FEATURES 1
 
-//#define SPITRACE
+#define SPITRACE
 
 //Print info from Int handlers. Absolutely remove when not debugging interrupts!
 //#define SPI_INT_TRACE

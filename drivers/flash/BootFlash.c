@@ -168,7 +168,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
                (pof->m_dwLengthUsedArea == pof->m_dwLengthInBytes)  // and doing the whole length of the chip
                 ) { // <3 means never entered busy mode - block erase code 0x30 not supported
                 #if 1
-                printk("           Trying to erase whole chip\n");
+                printk("\n           Trying to erase whole chip\n");
                 #endif
                 pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
                 pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;

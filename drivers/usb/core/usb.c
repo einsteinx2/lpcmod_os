@@ -103,6 +103,10 @@ int usb_device_probe(struct device *dev)
         error = driver->probe (intf, id);
         up (&driver->serialize);
     }
+    else{
+        //TODO: Add debug print to screen to show user VendorID/ProductID of incompatible hardware.
+        debugSPIPrint("Device named %s is not compatible.", dev->name);
+    }
     if (!error)
         intf->driver = driver;
 
@@ -411,14 +415,20 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
     for (; id->idVendor || id->bDeviceClass || id->bInterfaceClass ||
            id->driver_info; id++) {
 
+        debugSPIPrint("Checking USB device: Vendor:0x%04X  Product:0x%04X  Class:0x%02X", dev->descriptor.idVendor, dev->descriptor.idProduct, dev->descriptor.bDeviceClass);
+
         if ((id->match_flags & USB_DEVICE_ID_MATCH_VENDOR) &&
-            id->idVendor != dev->descriptor.idVendor)
+            id->idVendor != dev->descriptor.idVendor) {
+            debugSPIPrint("VendorID mismatch: Listed Vendor:0x%04X  Device Vendor:0x%04X", id->idVendor, dev->descriptor.idVendor);
             continue;
+        }
 
         if ((id->match_flags & USB_DEVICE_ID_MATCH_PRODUCT) &&
-            id->idProduct != dev->descriptor.idProduct)
+            id->idProduct != dev->descriptor.idProduct){
+            debugSPIPrint("ProductID mismatch: Listed Product:0x%04X  Device Product:0x%04X", id->idProduct, dev->descriptor.idProduct);
             continue;
-
+        }
+#if 0
         /* No need to test id->bcdDevice_lo != 0, since 0 is never
            greater than any unsigned number. */
         if ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_LO) &&
@@ -452,7 +462,8 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
         if ((id->match_flags & USB_DEVICE_ID_MATCH_INT_PROTOCOL) &&
             (id->bInterfaceProtocol != intf->desc.bInterfaceProtocol))
             continue;
-
+#endif
+        debugSPIPrint("Proper USB device found.");
         return id;
     }
 

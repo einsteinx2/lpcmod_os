@@ -18,10 +18,15 @@
 #define TEXTPARAMGROUP (IPTEXTPARAMGROUP + 5)
 #define SPECIALPARAMGROUP (TEXTPARAMGROUP + 8)
 extern char *xblastcfgstrings[NBTXTPARAMS];
-unsigned char *settingsPtrArray[IPTEXTPARAMGROUP];
-unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP];
-char *textSettingsPtrArray[SPECIALPARAMGROUP - TEXTPARAMGROUP];
-unsigned char *specialCasePtrArray[NBTXTPARAMS - SPECIALPARAMGROUP];
+
+typedef struct {
+    unsigned char *settingsPtrArray[IPTEXTPARAMGROUP];
+    unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP];
+    char *textSettingsPtrArray[SPECIALPARAMGROUP - TEXTPARAMGROUP];
+    unsigned char *specialCasePtrArray[NBTXTPARAMS - SPECIALPARAMGROUP];
+}_settingsPtrStruct;
+
+_settingsPtrStruct settingsPtrStruct;
 
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 
@@ -35,8 +40,10 @@ void LPCMod_WriteGenPurposeIOs(void);
 
 void LPCMod_LCDBankString(char * string, u8 bankID);
 
-int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr);
+int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct *settingsStruct);
 int LPCMod_SaveCFGToHDD(void);
+
+int LPCMod_CountNumberOfChangesInSettings(void);
 
 
 #endif // _BootLPCMod_H_

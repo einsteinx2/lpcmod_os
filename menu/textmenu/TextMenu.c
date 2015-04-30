@@ -42,6 +42,8 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     TEXTMENUITEM *item=NULL;
     int menucount;    
     
+    u8 uncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
+
     VIDEO_CURSOR_POSX=75;
     VIDEO_CURSOR_POSY=45;
     
@@ -107,7 +109,14 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
         printk("\n\2               %s%s\n",item->szCaption, item->szParameter);
         item=item->nextMenuItem;
     }
-    VIDEO_ATTR=0xffffff;
+
+    if(uncommittedChanges > 0){
+        //There are settings that have changed.
+        VIDEO_CURSOR_POSY = vmode.height - 100;
+        VIDEO_CURSOR_POSX = vmode.width - 180;
+        VIDEO_ATTR=0xff0000;
+        printk("\1Uncommitted changes: %u", uncommittedChanges);
+    }
     textMenuLCDPrint(menu, selectedItem);
 }
 

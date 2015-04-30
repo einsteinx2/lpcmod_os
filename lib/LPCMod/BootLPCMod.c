@@ -233,83 +233,83 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
     }
 }
 
-void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings){
-        settingsPtrArray[0] =
+void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStruct *settingsStruct){
+        settingsStruct->settingsPtrArray[0] =
         &(tempLPCmodSettings->OSsettings.Quickboot);
-        settingsPtrArray[1] =
+        settingsStruct->settingsPtrArray[1] =
         &(tempLPCmodSettings->OSsettings.fanSpeed);
-        settingsPtrArray[2] =
+        settingsStruct->settingsPtrArray[2] =
         &(tempLPCmodSettings->OSsettings.bootTimeout);
-        settingsPtrArray[3] =
+        settingsStruct->settingsPtrArray[3] =
         &(tempLPCmodSettings->OSsettings.TSOPcontrol);
-        settingsPtrArray[4] =
+        settingsStruct->settingsPtrArray[4] =
         &(tempLPCmodSettings->OSsettings.TSOPhide);
-        settingsPtrArray[5] =
+        settingsStruct->settingsPtrArray[5] =
         &(tempLPCmodSettings->OSsettings.runBankScript);
-        settingsPtrArray[6] =
+        settingsStruct->settingsPtrArray[6] =
         &(tempLPCmodSettings->OSsettings.runBootScript);
-        settingsPtrArray[7] =
+        settingsStruct->settingsPtrArray[7] =
         &(tempLPCmodSettings->OSsettings.enableNetwork);
-        settingsPtrArray[8] =
+        settingsStruct->settingsPtrArray[8] =
         &(tempLPCmodSettings->OSsettings.useDHCP);
-        settingsPtrArray[9] =
+        settingsStruct->settingsPtrArray[9] =
         &(tempLPCmodSettings->LCDsettings.enable5V);
-        settingsPtrArray[10] =
+        settingsStruct->settingsPtrArray[10] =
         &(tempLPCmodSettings->LCDsettings.nbLines);
-        settingsPtrArray[11] =
+        settingsStruct->settingsPtrArray[11] =
         &(tempLPCmodSettings->LCDsettings.lineLength);
-        settingsPtrArray[12] =
+        settingsStruct->settingsPtrArray[12] =
         &(tempLPCmodSettings->LCDsettings.backlight);
-        settingsPtrArray[13] =
+        settingsStruct->settingsPtrArray[13] =
         &(tempLPCmodSettings->LCDsettings.contrast);
-        settingsPtrArray[14] =
+        settingsStruct->settingsPtrArray[14] =
         &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
-        settingsPtrArray[15] =
+        settingsStruct->settingsPtrArray[15] =
         &(tempLPCmodSettings->LCDsettings.customTextBoot);
-        settingsPtrArray[16] =
+        settingsStruct->settingsPtrArray[16] =
         &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
         
 
-        IPsettingsPtrArray[0] =
+        settingsStruct->IPsettingsPtrArray[0] =
         tempLPCmodSettings->OSsettings.staticIP;
-        IPsettingsPtrArray[1] =
+        settingsStruct->IPsettingsPtrArray[1] =
         tempLPCmodSettings->OSsettings.staticGateway;
-        IPsettingsPtrArray[2] =
+        settingsStruct->IPsettingsPtrArray[2] =
         tempLPCmodSettings->OSsettings.staticMask;
-        IPsettingsPtrArray[3] =
+        settingsStruct->IPsettingsPtrArray[3] =
         tempLPCmodSettings->OSsettings.staticDNS1;
-        IPsettingsPtrArray[4] =
+        settingsStruct->IPsettingsPtrArray[4] =
         tempLPCmodSettings->OSsettings.staticDNS2;
 
 
-        textSettingsPtrArray[0] =
+        settingsStruct->textSettingsPtrArray[0] =
         tempLPCmodSettings->OSsettings.biosName0;
-        textSettingsPtrArray[1] = 
+        settingsStruct->textSettingsPtrArray[1] =
         tempLPCmodSettings->OSsettings.biosName1;
-        textSettingsPtrArray[2] = 
+        settingsStruct->textSettingsPtrArray[2] =
         tempLPCmodSettings->OSsettings.biosName2;
-        textSettingsPtrArray[3] = 
+        settingsStruct->textSettingsPtrArray[3] =
         tempLPCmodSettings->OSsettings.biosName3;
-        textSettingsPtrArray[4] = 
+        settingsStruct->textSettingsPtrArray[4] =
         tempLPCmodSettings->LCDsettings.customString0;
-        textSettingsPtrArray[5] = 
+        settingsStruct->textSettingsPtrArray[5] =
         tempLPCmodSettings->LCDsettings.customString1;
-        textSettingsPtrArray[6] = 
+        settingsStruct->textSettingsPtrArray[6] =
         tempLPCmodSettings->LCDsettings.customString2;
-        textSettingsPtrArray[7] = 
+        settingsStruct->textSettingsPtrArray[7] =
         tempLPCmodSettings->LCDsettings.customString3;
 
 
-        specialCasePtrArray[0] =
+        settingsStruct->specialCasePtrArray[0] =
         &(tempLPCmodSettings->OSsettings.activeBank);
-        specialCasePtrArray[1] =
+        settingsStruct->specialCasePtrArray[1] =
         &(tempLPCmodSettings->OSsettings.altBank);
-        specialCasePtrArray[2] =
+        settingsStruct->specialCasePtrArray[2] =
         &(tempLPCmodSettings->OSsettings.LEDColor);
-        specialCasePtrArray[3] =
+        settingsStruct->specialCasePtrArray[3] =
         &(tempLPCmodSettings->LCDsettings.lcdType);
 }
-int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
+int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct *settingsStruct){
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
     int res = false;
@@ -323,7 +323,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
     bool CRdetected;
     u8 textStringCopyLength;
     
-    setCFGFileTransferPtr(LPCmodSettingsPtr);
+    setCFGFileTransferPtr(LPCmodSettingsPtr, &settingsPtrStruct);
     
     //Take what's already properly set and start from there.
     if(LPCmodSettingsPtr != &LPCmodSettings)   //Avoid useless and potentially hazardous memcpy!
@@ -379,66 +379,66 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr){
                                 valueStartPtr++;
                                 if(i < IPTEXTPARAMGROUP){       //Numerical value parse
                                     if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9'){
-                                        *settingsPtrArray[i] = (u8)strtol(&compareBuf[valueStartPtr], NULL, 0);
+                                        *settingsStruct->settingsPtrArray[i] = (u8)strtol(&compareBuf[valueStartPtr], NULL, 0);
                                     }
                                     else if(!strncmp(&compareBuf[valueStartPtr], "Y", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "y", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "T", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "t", 1)){
-                                        *settingsPtrArray[i] = 1;
+                                        *settingsStruct->settingsPtrArray[i] = 1;
                                     }
                                     else if(!strncmp(&compareBuf[valueStartPtr], "N", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "n", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "F", 1) ||
                                             !strncmp(&compareBuf[valueStartPtr], "f", 1)){
-                                        *settingsPtrArray[i] = 0;
+                                        *settingsStruct->settingsPtrArray[i] = 0;
                                     }
                                 }
                                 else if(i < TEXTPARAMGROUP){       //IP string value parse
-                                    assertCorrectIPString(IPsettingsPtrArray[i - IPTEXTPARAMGROUP], &compareBuf[valueStartPtr]);
+                                    assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i - IPTEXTPARAMGROUP], &compareBuf[valueStartPtr]);
                                 }
                                 else if(i < SPECIALPARAMGROUP){    //Text value parse
                                     if((stringStopPtr - valueStartPtr) >= 20)
                                         textStringCopyLength = 20;
                                     else
                                         textStringCopyLength = stringStopPtr - valueStartPtr;
-                                    strncpy(textSettingsPtrArray[i - TEXTPARAMGROUP], &compareBuf[valueStartPtr], textStringCopyLength);
-                                    textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
+                                    strncpy(settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP], &compareBuf[valueStartPtr], textStringCopyLength);
+                                    settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
                                 }
                                 else{
                                     switch(i){
                                         case (SPECIALPARAMGROUP):
                                         case (SPECIALPARAMGROUP + 1):
                                             if(!strcmp(&compareBuf[valueStartPtr], "BNK512"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNK256"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK256;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK256;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNKTSOPSPLIT0"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT0;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT0;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNKTSOPSPLIT1"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNKFULLTSOP"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "BNKOS"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKOS;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKOS;
                                             break;
                                         case (SPECIALPARAMGROUP + 2):
                                             if(!strncmp(&compareBuf[valueStartPtr], "Of", 2) || !strncmp(&compareBuf[valueStartPtr], "of", 2))    //LED_OFF
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
                                             else if(!strncmp(&compareBuf[valueStartPtr], "G", 1) || !strncmp(&compareBuf[valueStartPtr], "g", 1))    //LED_GREEN
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_GREEN;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_GREEN;
                                             if(!strncmp(&compareBuf[valueStartPtr], "R", 1) || !strncmp(&compareBuf[valueStartPtr], "r", 1))    //LED_RED
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_RED;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_RED;
                                             if(!strncmp(&compareBuf[valueStartPtr], "Or", 2) || !strncmp(&compareBuf[valueStartPtr], "or", 2))    //LED_ORANGE
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_ORANGE;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_ORANGE;
                                             if(!strncmp(&compareBuf[valueStartPtr], "C", 1) || !strncmp(&compareBuf[valueStartPtr], "c", 1))    //LED_CYCLE
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
                                             break;
                                         case (SPECIALPARAMGROUP + 3):
                                             if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = HD44780 ;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = HD44780 ;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))
-                                                *specialCasePtrArray[i - SPECIALPARAMGROUP] = KS0073 ;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = KS0073 ;
                                             break;
                                     } //switch(i)
                                 } //!if(i < IPTEXTPARAMGROUP){
@@ -549,4 +549,38 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename){
         return -1;
 
     return 0;
+}
+
+int LPCMod_CountNumberOfChangesInSettings(void)
+{
+    int numberOfChanges = 0;
+    u8 i, j;
+    _settingsPtrStruct originalSettingsPtrStruct;
+    setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
+
+    for(i = 0; i < NBTXTPARAMS; i++){
+        if(i < IPTEXTPARAMGROUP){
+            if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i])
+                numberOfChanges += 1;
+        }
+        else if(i < TEXTPARAMGROUP){
+            for(j = 0; j < 4; j++){
+                if((originalSettingsPtrStruct.IPsettingsPtrArray[i])[j] != (settingsPtrStruct.IPsettingsPtrArray[i])[j]){
+                    numberOfChanges += 1;
+                    break;
+                }
+            }
+
+        }
+        else if(i < SPECIALPARAMGROUP){
+            if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i], settingsPtrStruct.textSettingsPtrArray[i]))
+                numberOfChanges += 1;
+        }
+        else{
+            if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i])
+                numberOfChanges += 1;
+        }
+    }
+
+    return numberOfChanges;
 }

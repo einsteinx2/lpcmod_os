@@ -290,6 +290,9 @@ extern void BootResetAction ( void ) {
     LPCmodSettings.OSsettings.migrateSetttings = 0xFF; //Will never be 0xFF
     //Retrieve XBlast OS settings from flash. Function checks if valid device can be read from.
     BootFlashGetOSSettings(&LPCmodSettings);
+    //Save a copy of fresly loaded settings from flash.
+    //This will be useful to detect settings changes
+    memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
     debugSPIPrint("Read persistent OS settings from flash.");
 
 
@@ -529,7 +532,7 @@ extern void BootResetAction ( void ) {
         if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
             debugSPIPrint("Trying to load settings from cfg file on HDD.");
             tempLPCmodSettings = (_LPCmodSettings *)malloc(sizeof(_LPCmodSettings));
-            returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings);
+            returnValue = LPCMod_ReadCFGFromHDD(tempLPCmodSettings, &settingsPtrStruct);
             if(returnValue == 0){
                 memcpy(&LPCmodSettings, tempLPCmodSettings, sizeof(_LPCmodSettings));
                 //settingsPrintData(NULL);

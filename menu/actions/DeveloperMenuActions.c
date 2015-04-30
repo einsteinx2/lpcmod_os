@@ -197,7 +197,7 @@ void settingsPrintData(void * ignored){
     for(i = 0; i < NBTXTPARAMS; i++){
         if(i < IPTEXTPARAMGROUP){
             if(!(i%2)){ //Pair increments
-                sprintf(spaceCountBuf, "%s%u", xblastcfgstrings[i], *settingsPtrArray[i]);
+                sprintf(spaceCountBuf, "%s%u", xblastcfgstrings[i], *settingsPtrStruct.settingsPtrArray[i]);
             }
             else{
                 stringLength = strlen(spaceCountBuf);
@@ -206,18 +206,18 @@ void settingsPrintData(void * ignored){
                 spaceCountBuf[30] = '\0';
                 //spaceCountBuf is now invariably 30 characters long
                 //Printk will display 2 aligned columns
-                printk("\n           %s%s%u", spaceCountBuf, xblastcfgstrings[i], *settingsPtrArray[i]);
+                printk("\n           %s%s%u", spaceCountBuf, xblastcfgstrings[i], *settingsPtrStruct.settingsPtrArray[i]);
             }
         }
         else if(i < TEXTPARAMGROUP)
-            printk("\n           %s%u.%u.%u.%u", xblastcfgstrings[i], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][0], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][1], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][2], IPsettingsPtrArray[i-IPTEXTPARAMGROUP][3]);
+            printk("\n           %s%u.%u.%u.%u", xblastcfgstrings[i], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][0], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][1], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][2], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][3]);
         else if(i < SPECIALPARAMGROUP)
-            printk("\n           %s%s", xblastcfgstrings[i],  textSettingsPtrArray[i-TEXTPARAMGROUP]);
+            printk("\n           %s%s", xblastcfgstrings[i],  settingsPtrStruct.textSettingsPtrArray[i-TEXTPARAMGROUP]);
         else{
             switch(i){
                 case (SPECIALPARAMGROUP):
                 case (SPECIALPARAMGROUP + 1):
-                    switch(*specialCasePtrArray[i - SPECIALPARAMGROUP]){
+                    switch(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
                         case BNK512:
                             sprintf(specialCasesBuf, "BNK512");
                             break;
@@ -243,7 +243,7 @@ void settingsPrintData(void * ignored){
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
                 case (SPECIALPARAMGROUP + 2):
-                    switch(*specialCasePtrArray[i - SPECIALPARAMGROUP]){
+                    switch(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
                         case LED_OFF:
                             sprintf(specialCasesBuf, "LED_OFF");
                             break;
@@ -266,9 +266,9 @@ void settingsPrintData(void * ignored){
                     printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
                     break;
                 case (SPECIALPARAMGROUP + 3):
-                    if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == HD44780)
+                    if(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] == HD44780)
                         printk("\n           %s%s", xblastcfgstrings[i], "HD44780");
-                    else if(*specialCasePtrArray[i - SPECIALPARAMGROUP] == KS0073)
+                    else if(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] == KS0073)
                         printk("\n           %s%s", xblastcfgstrings[i], "KS0073");
                     else
                         printk("\n           %s%s", xblastcfgstrings[i], "Error!");
