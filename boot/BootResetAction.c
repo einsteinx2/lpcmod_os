@@ -329,6 +329,10 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
+
+    //Let's set that up right here.
+    setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
+
     if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){	//If coming from XBE and no XBlast Mod is detected
     	tempFanSpeed = I2CGetFanSpeed();
     	if(tempFanSpeed < 10)
@@ -515,7 +519,8 @@ extern void BootResetAction ( void ) {
     debugSPIPrint("Starting IDE init.");
     BootIdeInit();
     debugSPIPrint("IDE init done.");
-    
+
+
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi){

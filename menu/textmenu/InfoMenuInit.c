@@ -52,6 +52,12 @@ TEXTMENU *InfoMenuInit(void) {
     itemPtr->functionPtr= ShowFlashChip;
       itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption,"Uncommitted change(s)");
+    itemPtr->functionPtr= ShowUncommittedChanges;
+    TextMenuAddItem(menuPtr, itemPtr);
         
     return menuPtr;
 }

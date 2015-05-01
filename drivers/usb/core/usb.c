@@ -412,20 +412,20 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
        id->driver_info is the way to create an entry that
        indicates that the driver want to examine every
        device and interface. */
+	debugSPIPrint("Checking USB named \"%s\": Vendor:0x%04X  Product:0x%04X  Class:0x%02X", dev->dev.name, dev->descriptor.idVendor, dev->descriptor.idProduct, dev->descriptor.bDeviceClass);
     for (; id->idVendor || id->bDeviceClass || id->bInterfaceClass ||
            id->driver_info; id++) {
 
-        debugSPIPrint("Checking USB device: Vendor:0x%04X  Product:0x%04X  Class:0x%02X", dev->descriptor.idVendor, dev->descriptor.idProduct, dev->descriptor.bDeviceClass);
 
         if ((id->match_flags & USB_DEVICE_ID_MATCH_VENDOR) &&
             id->idVendor != dev->descriptor.idVendor) {
-            debugSPIPrint("VendorID mismatch: Listed Vendor:0x%04X  Device Vendor:0x%04X", id->idVendor, dev->descriptor.idVendor);
+            //debugSPIPrint("VendorID mismatch: Listed Vendor:0x%04X  Device Vendor:0x%04X", id->idVendor, dev->descriptor.idVendor);
             continue;
         }
 
         if ((id->match_flags & USB_DEVICE_ID_MATCH_PRODUCT) &&
             id->idProduct != dev->descriptor.idProduct){
-            debugSPIPrint("ProductID mismatch: Listed Product:0x%04X  Device Product:0x%04X", id->idProduct, dev->descriptor.idProduct);
+            //debugSPIPrint("ProductID mismatch: Listed Product:0x%04X  Device Product:0x%04X", id->idProduct, dev->descriptor.idProduct);
             continue;
         }
 #if 0
@@ -463,10 +463,10 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
             (id->bInterfaceProtocol != intf->desc.bInterfaceProtocol))
             continue;
 #endif
-        debugSPIPrint("Proper USB device found.");
+        debugSPIPrint("Proper USB device found. Name : %s", dev->dev.name);
         return id;
     }
-
+    debugSPIPrint("USB named \"%s\" not found... Vendor:0x%04X  Product:0x%04X", dev->dev.name, dev->descriptor.idVendor, dev->descriptor.idProduct);
     return NULL;
 }
 

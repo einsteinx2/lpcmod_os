@@ -14,5 +14,6 @@ void ShowVideo(void *);
 void ShowEeprom(void *);
 void ShowFlashChip(void *);
 void InfoHeader(char *title);
+void ShowUncommittedChanges(void * nbUncommittedChangesPtr);
 
 #endif

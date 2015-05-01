@@ -191,9 +191,6 @@ void settingsPrintData(void * ignored){
     printk("\n           Persistent settings\n");
     VIDEO_ATTR=0xffc8c8c8;
     
-    setCFGFileTransferPtr(&
-    LPCmodSettings);
-    
     for(i = 0; i < NBTXTPARAMS; i++){
         if(i < IPTEXTPARAMGROUP){
             if(!(i%2)){ //Pair increments

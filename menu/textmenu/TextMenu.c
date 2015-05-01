@@ -88,7 +88,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     visibleCount = menu->visibleCount;
 
     if(visibleCount == 0) {
-        visibleCount = 11;
+        visibleCount = 10;
     }
 
     for (menucount=0; menucount<visibleCount; menucount++) {
@@ -112,9 +112,9 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 
     if(uncommittedChanges > 0){
         //There are settings that have changed.
-        VIDEO_CURSOR_POSY = vmode.height - 100;
-        VIDEO_CURSOR_POSX = vmode.width - 180;
-        VIDEO_ATTR=0xff0000;
+        VIDEO_CURSOR_POSY = vmode.height - 50;
+        VIDEO_CURSOR_POSX = vmode.width - 400;
+        VIDEO_ATTR=0xffffff;
         printk("\1Uncommitted changes: %u", uncommittedChanges);
     }
     textMenuLCDPrint(menu, selectedItem);

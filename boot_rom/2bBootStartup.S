@@ -65,7 +65,7 @@
 .org 0x0
 	/* MCPX Magic Values - clock timings*/
 	
-	.long 0xff000008 //SmartXX sets this one to 0xff000008 but was originally 0xff000009. SpiderGX has this set to 0xff000003
+	.long 0xff000009 //SmartXX sets this one to 0xff000008 but was originally 0xff000009. SpiderGX has this set to 0xff000003
 	.long 0xff000008
 	.long 0x2b16d065
 	.long 0x3346322d

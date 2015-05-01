@@ -49,13 +49,13 @@ extern void BootStartBiosLoader ( void ) {
     while(1);
 #endif
     
+    BootPerformPicChallengeResponseAction();
     memcpy(&bootloaderChecksum[0],(void*)PROGRAMM_Memory_2bl,20);
     memcpy(&bootloadersize,(void*)(PROGRAMM_Memory_2bl+20),4);
     memcpy(&compressed_image_start,(void*)(PROGRAMM_Memory_2bl+24),4);
     memcpy(&compressed_image_size,(void*)(PROGRAMM_Memory_2bl+28),4);
     memcpy(&Biossize_type,(void*)(PROGRAMM_Memory_2bl+32),4);   //0 for 256KB image. 1 for 1MB image.
 
-    BootPerformPicChallengeResponseAction();
 
     SHA1Reset(&context);
     SHA1Input(&context,(void*)(PROGRAMM_Memory_2bl+20),bootloadersize-20);

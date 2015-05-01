@@ -14,6 +14,7 @@
 #include "BootIde.h"
 #include "video.h"
 #include "BootFATX.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr);
 
@@ -182,7 +183,7 @@ void loadXBlastcfg(void * ignored){
         result = 1;
     }
     else{
-        result = LPCMod_ReadCFGFromHDD(&LPCmodSettings);
+        result = LPCMod_ReadCFGFromHDD(&LPCmodSettings, &settingsPtrStruct);
     }
     
     if(!result){

@@ -43,7 +43,7 @@ void LPCMod_LCDBankString(char * string, u8 bankID);
 int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct *settingsStruct);
 int LPCMod_SaveCFGToHDD(void);
 
-int LPCMod_CountNumberOfChangesInSettings(void);
+u8 LPCMod_CountNumberOfChangesInSettings(void);
 
 
 #endif // _BootLPCMod_H_

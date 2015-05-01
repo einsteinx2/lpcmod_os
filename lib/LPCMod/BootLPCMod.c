@@ -323,8 +323,6 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
     bool CRdetected;
     u8 textStringCopyLength;
     
-    setCFGFileTransferPtr(LPCmodSettingsPtr, &settingsPtrStruct);
-    
     //Take what's already properly set and start from there.
     if(LPCmodSettingsPtr != &LPCmodSettings)   //Avoid useless and potentially hazardous memcpy!
         memcpy((u8 *)LPCmodSettingsPtr, (u8 *)&LPCmodSettings, sizeof(_LPCmodSettings));
@@ -551,7 +549,7 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename){
     return 0;
 }
 
-int LPCMod_CountNumberOfChangesInSettings(void)
+u8 LPCMod_CountNumberOfChangesInSettings(void)
 {
     int numberOfChanges = 0;
     u8 i, j;
@@ -565,19 +563,18 @@ int LPCMod_CountNumberOfChangesInSettings(void)
         }
         else if(i < TEXTPARAMGROUP){
             for(j = 0; j < 4; j++){
-                if((originalSettingsPtrStruct.IPsettingsPtrArray[i])[j] != (settingsPtrStruct.IPsettingsPtrArray[i])[j]){
+                if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j]){
                     numberOfChanges += 1;
                     break;
                 }
             }
-
         }
         else if(i < SPECIALPARAMGROUP){
-            if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i], settingsPtrStruct.textSettingsPtrArray[i]))
+            if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]))
                 numberOfChanges += 1;
         }
         else{
-            if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i])
+            if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP])
                 numberOfChanges += 1;
         }
     }
