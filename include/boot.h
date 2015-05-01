@@ -505,6 +505,8 @@ unsigned char *videosavepage;
 
 u8 * scriptSavingPtr;
 
+u8 * bootScriptBuffer;
+
 #ifdef SPITRACE
 #define debugSPIPrint(...) printTextSPI(__func__, ##__VA_ARGS__)
 #else

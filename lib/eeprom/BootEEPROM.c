@@ -9,6 +9,7 @@ void BootEepromReadEntireEEPROM() {
     for(i = 0; i < 256; i++) {
         *pb++ = I2CTransmitByteGetReturn(0x54, i);
     }
+    memcpy(&origEeprom, &eeprom, sizeof(EEPROMDATA));
 }
 
 void BootEepromReloadEEPROM(EEPROMDATA * realeeprom) {
@@ -111,36 +112,6 @@ void EepromCRC(unsigned char *crc, unsigned char *data, long dataLen) {
         crc[pos] = (unsigned char) (CRCPosVal >> 8);
     }
     free(CRC_Data);
-}
-
-void EepromSetWidescreen(int enable) {
-    //Changing this setting requires that Checksum3 
-    //be recalculated.
-    
-    //Possible values are:
-    //0x00 : Full Screen
-    //0x01 : Widescreen
-    //0x10 : LetterBox
-    
-    //unsigned char sum[4];
-    if (enable) {
-        //Enable WS
-        //WriteToSMBus(0x54, 0x96, 0, 1);
-        eeprom.VideoFlags[2] = 0x01;
-    } 
-    else {
-        //Disable WSS
-        //WriteToSMBus(0x54, 0x96, 0, 0);
-        eeprom.VideoFlags[2] = 0x00;
-    }
-
-    EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
-/*
-    EepromCRC(sum,eeprom.TimeZoneBias,0x5b);
-    WriteToSMBus(0x54, 0x60, 1, sum[0]);
-    WriteToSMBus(0x54, 0x61, 1, sum[1]);
-    WriteToSMBus(0x54, 0x62, 1, sum[2]);
-    WriteToSMBus(0x54, 0x63, 1, sum[3]);*/
 }
 
 void EepromSetVideoStandard(VIDEO_STANDARD standard) {
@@ -288,3 +259,171 @@ u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf){
         return version;
 }
 
+u8 generateStringsForEEPROMChanges(bool genStrings){
+    u32 tempOrigChecksum2 = 0, tempOrigChecksum3 = 0, tempChecksum2 = 0, tempChecksum3 = 0;
+    u8 i, nbChanges = 0, stringLength;
+    char tempString[200];
+    char origTempItemString[20], tempItemString[20];
+
+    for(i = 0; i < 4; i++){
+        tempChecksum2 |= eeprom.Checksum2[i] << (i * 8);
+        tempChecksum3 |= eeprom.Checksum3[i] << (i * 8);
+
+        tempOrigChecksum2 |= origEeprom.Checksum2[i] << (i * 8);
+        tempOrigChecksum3 |= origEeprom.Checksum3[i] << (i * 8);
+    }
+
+    if(tempChecksum2 != tempOrigChecksum2){//Change in either Serial number, Video standard and/or MAC Address
+
+        //check serial number
+        for(i = 0; i < 12; i++){
+            if(origEeprom.SerialNumber[i] != eeprom.SerialNumber[i]){
+                if(genStrings){
+                    memcpy(origTempItemString, &origEeprom.SerialNumber[0], 12);
+                    origTempItemString[12]='\0';
+
+                    memcpy(tempItemString, &eeprom.SerialNumber[0], 12);
+                    tempItemString[12]='\0';
+
+                    sprintf(tempString, "Serial number= \"%s\" -> \"%s\"", origTempItemString, tempItemString);
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+
+                break;
+            }
+        }
+
+        //check MAC address
+        for(i = 0; i < 12; i++){
+            if(origEeprom.MACAddress[i] != eeprom.MACAddress[i]){
+                if(genStrings){
+                    sprintf(tempString, "MAC address= \"%02X:%02X:%02X:%02X:%02X:%02X\" -> \"%02X:%02X:%02X:%02X:%02X:%02X\"",
+                            origEeprom.MACAddress[0], origEeprom.MACAddress[1], origEeprom.MACAddress[2],
+                            origEeprom.MACAddress[3], origEeprom.MACAddress[4], origEeprom.MACAddress[5],
+                            eeprom.MACAddress[0], eeprom.MACAddress[1], eeprom.MACAddress[2],
+                            eeprom.MACAddress[3], eeprom.MACAddress[4], eeprom.MACAddress[5]);
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+
+                break;
+            }
+        }
+
+        if(*((VIDEO_STANDARD *)&origEeprom.VideoStandard) != *((VIDEO_STANDARD *)&eeprom.VideoStandard)){
+            if(genStrings){
+                if(*((VIDEO_STANDARD *)&origEeprom.VideoStandard) == NTSC_M)
+                    sprintf(origTempItemString, "NTSC-U");
+                else if(*((VIDEO_STANDARD *)&origEeprom.VideoStandard) == NTSC_J)
+                    sprintf(origTempItemString, "NTSC-J");
+                else if(*((VIDEO_STANDARD *)&origEeprom.VideoStandard) == PAL_I)
+                    sprintf(origTempItemString, "PAL");
+                else
+                    sprintf(origTempItemString, "Unknown/Error");
+
+                if(*((VIDEO_STANDARD *)&eeprom.VideoStandard) == NTSC_M)
+                    sprintf(tempItemString, "NTSC-U");
+                else if(*((VIDEO_STANDARD *)&eeprom.VideoStandard) == NTSC_J)
+                    sprintf(tempItemString, "NTSC-J");
+                else if(*((VIDEO_STANDARD *)&eeprom.VideoStandard) == PAL_I)
+                    sprintf(tempItemString, "PAL");
+                else
+                    sprintf(tempItemString, "Unknown/Error");
+
+                sprintf(tempString, "Video standard= \"%s\" -> \"%s\"", origTempItemString, tempItemString);
+                stringLength = strlen(tempString);
+                eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                eepromChangesStringArray[nbChanges][stringLength] = '\0';
+            }
+            nbChanges += 1;
+        }
+    }
+
+    if(origEeprom.Checksum3 != eeprom.Checksum3){//Change in either Video format and/or DVD region
+        if(tempChecksum3 == 0xFFFFFFFF && tempOrigChecksum3 != 0xFFFFFFFF){
+            //List as single change
+            nbChanges += 1;
+        }
+        else{
+            //List individual changes
+            if(origEeprom.VideoFlags[2] & R480p != eeprom.VideoFlags[2] & R480p){
+                if(genStrings){
+                    sprintf(tempString, "480p= \"%s\" -> \"%s\"", (origEeprom.VideoFlags[2] & R480p) ? "Yes" : "No", (eeprom.VideoFlags[2] & R480p) ? "Yes" : "No");
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+            }
+
+            if(origEeprom.VideoFlags[2] & R720p != eeprom.VideoFlags[2] & R720p){
+                if(genStrings){
+                    sprintf(tempString, "720p= \"%s\" -> \"%s\"", (origEeprom.VideoFlags[2] & R720p) ? "Yes" : "No", (eeprom.VideoFlags[2] & R720p) ? "Yes" : "No");
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+            }
+
+            if(origEeprom.VideoFlags[2] & R1080i != eeprom.VideoFlags[2] & R1080i){
+                if(genStrings){
+                    sprintf(tempString, "1080i= \"%s\" -> \"%s\"", (origEeprom.VideoFlags[2] & R1080i) ? "Yes" : "No", (eeprom.VideoFlags[2] & R1080i) ? "Yes" : "No");
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+            }
+
+            if(origEeprom.VideoFlags[2] & 0x11 != eeprom.VideoFlags[2] & 0x11){ //Video format mask
+                if(genStrings){
+                    if(origEeprom.VideoFlags[2] & WIDESCREEN)
+                        sprintf(origTempItemString, "Widescreen");
+                    else if(origEeprom.VideoFlags[2] & LETTERBOX)
+                        sprintf(origTempItemString, "Letterbox");
+                    else
+                        sprintf(origTempItemString, "Fullscreen");
+
+                    if(eeprom.VideoFlags[2] & WIDESCREEN)
+                        sprintf(tempItemString, "Widescreen");
+                    else if(eeprom.VideoFlags[2] & LETTERBOX)
+                        sprintf(tempItemString, "Letterbox");
+                    else
+                        sprintf(tempItemString, "Fullscreen");
+
+                    sprintf(tempString, "Video format= \"%s\" -> \"%s\"", origTempItemString, tempItemString);
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+            }
+
+            if(origEeprom.DVDPlaybackKitZone[0] != eeprom.DVDPlaybackKitZone[0]){
+                if(genStrings){
+                    sprintf(tempString, "DVD zone= \"%s\" -> \"%s\"", DVDregiontext[origEeprom.DVDPlaybackKitZone[0]], DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+                }
+                nbChanges += 1;
+            }
+        }
+    }
+
+    return nbChanges;
+}

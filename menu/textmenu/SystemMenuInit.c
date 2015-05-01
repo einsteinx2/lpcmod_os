@@ -16,28 +16,6 @@ TEXTMENU *SystemMenuInit(void) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
 
-    //I know, I know... There are multiple definitions of these in the code. I don't care. It's not like they are going to change much.
-    //String enum for DVD_ZONE
-    char *DVDregiontext[9] = {
-        "Region Clear",
-        "USA (1)",
-        "Europe (2)",
-        "India (3)",
-        "Australia (4)",
-        "USSR (5)",
-        "China (6)",
-        "Free (7)",
-        "Airlines (8)"
-    };
-    char *Gameregiontext[5] = {
-        "Unknown/Error",
-        "NTSC-U",
-        "NTSC-J",
-        "n/a",
-        "PAL"
-    };
-    
-
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "System settings");

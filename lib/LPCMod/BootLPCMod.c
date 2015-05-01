@@ -7,10 +7,8 @@
 #include "BootFATX.h"
 
 char *xblastcfgstrings[NBTXTPARAMS] = {
-	//Contains either numerical or boolean values.
+	//Contains boolean values.
 	"quickboot=",
-	"fanspeed=",
-	"boottimeout=",
 	"tsopcontrol=",
 	"tsophide=",
 	"runbankscript=",
@@ -18,13 +16,17 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
 	"enablenetwork=",
 	"usedhcp=",
 	"enable5v=",
+	"displaybootmsg=",
+	"customtextboot=",
+	"displaybiosnameboot=",
+
+	//Contains numerical values
+	"fanspeed=",
+	"boottimeout=",
 	"nblines=",
 	"linelength=",
 	"backlight=",
 	"contrast=",
-	"displaybootmsg=",
-	"customtextboot=",
-	"displaybiosnameboot=",
 
 	//Contains IP text strings.
 	"staticip=",
@@ -234,40 +236,44 @@ void LPCMod_LCDBankString(char * string, u8 bankID){
 }
 
 void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStruct *settingsStruct){
+
+        //Boolean values
         settingsStruct->settingsPtrArray[0] =
         &(tempLPCmodSettings->OSsettings.Quickboot);
         settingsStruct->settingsPtrArray[1] =
-        &(tempLPCmodSettings->OSsettings.fanSpeed);
-        settingsStruct->settingsPtrArray[2] =
-        &(tempLPCmodSettings->OSsettings.bootTimeout);
-        settingsStruct->settingsPtrArray[3] =
         &(tempLPCmodSettings->OSsettings.TSOPcontrol);
-        settingsStruct->settingsPtrArray[4] =
+        settingsStruct->settingsPtrArray[2] =
         &(tempLPCmodSettings->OSsettings.TSOPhide);
-        settingsStruct->settingsPtrArray[5] =
+        settingsStruct->settingsPtrArray[3] =
         &(tempLPCmodSettings->OSsettings.runBankScript);
-        settingsStruct->settingsPtrArray[6] =
+        settingsStruct->settingsPtrArray[4] =
         &(tempLPCmodSettings->OSsettings.runBootScript);
-        settingsStruct->settingsPtrArray[7] =
+        settingsStruct->settingsPtrArray[5] =
         &(tempLPCmodSettings->OSsettings.enableNetwork);
-        settingsStruct->settingsPtrArray[8] =
+        settingsStruct->settingsPtrArray[6] =
         &(tempLPCmodSettings->OSsettings.useDHCP);
-        settingsStruct->settingsPtrArray[9] =
+        settingsStruct->settingsPtrArray[7] =
         &(tempLPCmodSettings->LCDsettings.enable5V);
-        settingsStruct->settingsPtrArray[10] =
-        &(tempLPCmodSettings->LCDsettings.nbLines);
-        settingsStruct->settingsPtrArray[11] =
-        &(tempLPCmodSettings->LCDsettings.lineLength);
-        settingsStruct->settingsPtrArray[12] =
-        &(tempLPCmodSettings->LCDsettings.backlight);
-        settingsStruct->settingsPtrArray[13] =
-        &(tempLPCmodSettings->LCDsettings.contrast);
-        settingsStruct->settingsPtrArray[14] =
+        settingsStruct->settingsPtrArray[8] =
         &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
-        settingsStruct->settingsPtrArray[15] =
+        settingsStruct->settingsPtrArray[9] =
         &(tempLPCmodSettings->LCDsettings.customTextBoot);
-        settingsStruct->settingsPtrArray[16] =
+        settingsStruct->settingsPtrArray[10] =
         &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
+
+        //Numerical values
+        settingsStruct->settingsPtrArray[11] =
+        &(tempLPCmodSettings->OSsettings.fanSpeed);
+        settingsStruct->settingsPtrArray[12] =
+        &(tempLPCmodSettings->OSsettings.bootTimeout);
+        settingsStruct->settingsPtrArray[13] =
+        &(tempLPCmodSettings->LCDsettings.nbLines);
+        settingsStruct->settingsPtrArray[14] =
+        &(tempLPCmodSettings->LCDsettings.lineLength);
+        settingsStruct->settingsPtrArray[15] =
+        &(tempLPCmodSettings->LCDsettings.backlight);
+        settingsStruct->settingsPtrArray[16] =
+        &(tempLPCmodSettings->LCDsettings.contrast);
         
 
         settingsStruct->IPsettingsPtrArray[0] =
@@ -579,5 +585,40 @@ u8 LPCMod_CountNumberOfChangesInSettings(void)
         }
     }
 
+    if(generateStringsForEEPROMChanges(false)){ //do not generate strings
+        numberOfChanges += 1;
+    }
+
+    if(LPCMod_checkForBootScriptChanges()){
+        numberOfChanges += 1;
+    }
+
     return numberOfChanges;
+}
+
+bool LPCMod_checkForBootScriptChanges(void){
+    u32 oldBufferSize, modifiedBufferSize;
+    if(scriptSavingPtr == NULL){
+        return false;   //No new script to save. Therefore no changes.
+    }
+
+    if(bootScriptBuffer == NULL){
+        return true;    //If there's a new script to save but nothing is already saved in flash. Change detected.
+    }
+
+    //If there's both a new script to save and a script already saved in flash. Check if they are different.
+    modifiedBufferSize = LPCmodSettings.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
+    oldBufferSize = LPCmodSettingsOrigFromFlash.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
+
+    if(modifiedBufferSize != oldBufferSize){    //Scripts size differ.
+        return true;
+    }
+
+    //If above condition is false, it means both script have the same size
+    if(memcmp(scriptSavingPtr, bootScriptBuffer, oldBufferSize)){
+        return true;
+    }
+
+    //Both scripts are identical.
+    return false;
 }

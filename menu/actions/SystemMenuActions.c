@@ -28,13 +28,7 @@ void decrementFanSpeed(void * itemStr){
 }
 
 void incrementGameRegion(void * itemStr){
-    char *Gameregiontext[5] = {
-            "Unknown/Error",
-            "NTSC-U",
-            "NTSC-J",
-            "n/a",
-            "PAL"
-        };
+
     if(ConfirmDialog("           Confirm change Game region?", 0))
         return;
         
@@ -55,13 +49,7 @@ void incrementGameRegion(void * itemStr){
 }
 
 void decrementGameRegion(void * itemStr){
-    char *Gameregiontext[5] = {
-            "Unknown/Error",
-            "NTSC-U",
-            "NTSC-J",
-            "n/a",
-            "PAL"
-        };
+
     if(ConfirmDialog("           Confirm change Game region?",0))
         return;
         
@@ -82,18 +70,6 @@ void decrementGameRegion(void * itemStr){
 }
 
 void incrementDVDRegion(void * itemStr){
-    //String enum for DVD_ZONE
-    char *DVDregiontext[9] = {
-        "Region Clear",
-        "USA (1)",
-        "Europe (2)",
-        "India (3)",
-        "Australia (4)",
-        "USSR (5)",
-        "China (6)",
-        "Free (7)",
-        "Airlines (8)"
-    };
     if(eeprom.DVDPlaybackKitZone[0] < 8)
         eeprom.DVDPlaybackKitZone[0] += 1;
     sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
@@ -101,18 +77,6 @@ void incrementDVDRegion(void * itemStr){
 }
 
 void decrementDVDRegion(void * itemStr){
-    //String enum for DVD_ZONE
-    char *DVDregiontext[9] = {
-        "Region Clear",
-        "USA (1)",
-        "Europe (2)",
-        "India (3)",
-        "Australia (4)",
-        "USSR (5)",
-        "China (6)",
-        "Free (7)",
-        "Airlines (8)"
-    };
     if(eeprom.DVDPlaybackKitZone[0]  > 0)
         eeprom.DVDPlaybackKitZone[0] -= 1;
     sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);

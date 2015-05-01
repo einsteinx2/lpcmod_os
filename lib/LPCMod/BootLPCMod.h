@@ -17,6 +17,10 @@
 #define IPTEXTPARAMGROUP 17
 #define TEXTPARAMGROUP (IPTEXTPARAMGROUP + 5)
 #define SPECIALPARAMGROUP (TEXTPARAMGROUP + 8)
+
+#define NBBOOLEANPARAMS 11
+#define NBNUMERICVALUEPARAMS (IPTEXTPARAMGROUP - NBBOOLEANPARAMS)
+
 extern char *xblastcfgstrings[NBTXTPARAMS];
 
 typedef struct {
@@ -44,6 +48,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
 int LPCMod_SaveCFGToHDD(void);
 
 u8 LPCMod_CountNumberOfChangesInSettings(void);
+bool LPCMod_checkForBootScriptChanges(void);
 
 
 #endif // _BootLPCMod_H_

@@ -133,7 +133,6 @@ extern void BootResetAction ( void ) {
     int nTempCursorX, nTempCursorY;
     int n, nx, i, returnValue = 255;
     char modName[30] = "Unsupported modchip!";
-    u8 * bootScriptBuffer;
     u8 tempFanSpeed = 20;
     int bootScriptSize = -1, res, dcluster;
     u32 cpuSpeed;
@@ -407,11 +406,13 @@ extern void BootResetAction ( void ) {
 
     mbVersion = I2CGetXboxMBRev();
     debugSPIPrint("Xbox motherboad rev: %s.", xbox_mb_rev[mbVersion]);
+
+    bootScriptSize = fetchBootScriptFromFlash(&bootScriptBuffer);
+
     //Load up some more custom settings right before booting to OS.
     if(!fFirstBoot){
         if(LPCmodSettings.OSsettings.runBootScript && cromwell_config==CROMWELL){
             debugSPIPrint("Running boot script.");
-            bootScriptSize = fetchBootScriptFromFlash(&bootScriptBuffer);
             if(bootScriptSize > 0){
                 i = BNKOS;
                 runScript(bootScriptBuffer, bootScriptSize, 1, &i);

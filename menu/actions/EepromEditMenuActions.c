@@ -19,13 +19,7 @@ void displayEditEEPROMBuffer(void *ignored){
     u8 decryptedWholeBuffer[0x30];
     u8 version;
     char serialString[13];
-    char *Gameregiontext[5] = {
-        "Unknown/Error",
-        "NTSC-U",
-        "NTSC-J",
-        "n/a",
-        "PAL"
-    };
+
     version = decryptEEPROMData((u8 *)editeeprom, decryptedWholeBuffer);
     ToolHeader("Modified EEPROM buffer content");
     printk("\n\n           EEPROM version: %u", version);

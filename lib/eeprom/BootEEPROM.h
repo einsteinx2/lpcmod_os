@@ -118,8 +118,46 @@ typedef struct _EEPROMDATA {
 }__attribute__((packed)) EEPROMDATA;
 
 EEPROMDATA eeprom;
+EEPROMDATA origEeprom;
 EEPROMDATA *editeeprom;
 
+#define MAXEDITABLEPARAMSINEEPROM 10    //Modifiable fields in EEPROM by XBlast OS are:
+                                        //HDDKkey (not yet)
+                                        //XBERegion
+                                        //SerialNumber (not yet)
+                                        //MACAddress
+                                        //VideoStandard
+                                        //VideoFlags (Widescreen, Fullscreen, Letterbox)
+                                        //VideoFlags (480p)
+                                        //VideoFlags (720p)
+                                        //VideoFlags (1080i)
+                                        //DVDPlaybackKitZone
+
+
+char *eepromChangesStringArray[MAXEDITABLEPARAMSINEEPROM];
+
+
+//String enum for DVD_ZONE
+static const char * const DVDregiontext[] = {
+    "Region Clear",
+    "USA (1)",
+    "Europe (2)",
+    "India (3)",
+    "Australia (4)",
+    "USSR (5)",
+    "China (6)",
+    "Free (7)",
+    "Airlines (8)"
+};
+
+//String enum for XBE_REGSION
+static const char * const Gameregiontext[] = {
+    "Unknown/Error",
+    "NTSC-U",
+    "NTSC-J",
+    "n/a",
+    "PAL"
+};
 
 void BootEepromReadEntireEEPROM(void);
 void BootEepromReloadEEPROM(EEPROMDATA * realeeprom);
@@ -128,8 +166,8 @@ void BootEepromPrintInfo(void);
 void BootEepromWriteEntireEEPROM(void);
 void EepromCRC(unsigned char *crc, unsigned char *data, long dataLen);
 void EepromSetVideoStandard(VIDEO_STANDARD standard);
-void EepromSetWidescreen(int enable);
 u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf);
+u8 generateStringsForEEPROMChanges(bool genStrings);
 
 
 void assertWriteEEPROM(void);
