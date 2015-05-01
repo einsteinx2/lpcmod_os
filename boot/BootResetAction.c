@@ -292,7 +292,6 @@ extern void BootResetAction ( void ) {
     BootFlashGetOSSettings(&LPCmodSettings);
     //Save a copy of fresly loaded settings from flash.
     //This will be useful to detect settings changes
-    memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
     debugSPIPrint("Read persistent OS settings from flash.");
 
 
@@ -329,6 +328,8 @@ extern void BootResetAction ( void ) {
             LPCmodSettings.OSsettings.bootTimeout = 0;        //No countdown since it's the first boot since a flash update.
                                                             //Configure your device first.
     }
+
+    memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
 
     //Let's set that up right here.
     setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
