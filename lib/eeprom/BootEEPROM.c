@@ -1,5 +1,4 @@
 #include "boot.h"
-#include "VideoInitialization.h"
 #include "BootEEPROM.h"
 #include "rc4.h"
 

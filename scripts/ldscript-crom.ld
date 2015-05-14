@@ -22,6 +22,7 @@ SECTIONS {
 	.text LOW_ROM : AT ( 0 ){
 		_start_low_rom = . ;
 		*(.text);
+		*(.text.unlikely);
 		_end_low_rom = . ;
 	}
 

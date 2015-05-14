@@ -31,7 +31,7 @@ void AssertLockUnlock(void *itemPtr){
     else{
         sprintf(tempItemPtr->szCaption, "L");
     }
-    sprintf(tempItemPtr->nextMenuItem->szCaption, tempItemPtr->szCaption);
+    sprintf(tempItemPtr->nextMenuItem->szCaption, "%s", tempItemPtr->szCaption);
 }
 
 void AssertLockUnlockFromNetwork(void *itemPtr){
@@ -53,7 +53,7 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
     else{
         sprintf(tempItemPtr->szCaption, "L");
     }
-    sprintf(tempItemPtr->previousMenuItem->szCaption, tempItemPtr->szCaption);
+    sprintf(tempItemPtr->previousMenuItem->szCaption, "%s", tempItemPtr->szCaption);
 }
 
 bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {

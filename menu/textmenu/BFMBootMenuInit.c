@@ -55,7 +55,7 @@ TEXTMENU* BFMBootMenuInit(void) {
                     // AND it's filesize is divisible by 256k.
                     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
                     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption,fnames[i]+strlen(path));
+                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
                     itemPtr->functionPtr = bootBFMBios;
                     itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
                     itemPtr->functionDataPtrMemAlloc = true;    //at function return but we'll still get the pointer to the allocated memory location

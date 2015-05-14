@@ -190,8 +190,7 @@ int atoi(const char *str)
     return res;
 }
 
-int strcmp(s1, s2)
-register const char *s1, *s2;
+int strcmp(const char *s1, const char *s2)
 {
    while (*s1 == *s2++)
        if (*s1++ == 0)

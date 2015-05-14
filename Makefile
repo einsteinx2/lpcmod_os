@@ -1,4 +1,5 @@
-CC	= gcc-3.3.gcc-opt
+CC	= i686-linux-gnu-gcc
+
 #CC	= gcc-3.3
 
 # prepare check for gcc 3.3, $(GCC_3.3) will either be 0 or 1
@@ -19,8 +20,8 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 CROM_CFLAGS=$(INCLUDE)
 
 #You can override these if you wish.
-CFLAGS= -O2 -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type
-#CFLAGS= -Os -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type
+CFLAGS= -Os -march=pentium3m -m32 -msse -mfpmath=sse -mpc32 -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type -fno-stack-protector -fno-asynchronous-unwind-tables
+#CFLAGS= -Os -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type -fno-stack-protector -fno-asynchronous-unwind-tables
 
 # add the option for gcc 3.3 only, again, non-overridable
 ifeq ($(GCC_3.3), 1)
@@ -39,8 +40,8 @@ ifeq ($(ETHERBOOT), yes)
 ETH_SUBDIRS = etherboot
 CROM_CFLAGS	+= -DETHERBOOT
 ETH_INCLUDE = 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include	
-ETH_CFLAGS  = 	-O2 -march=pentium -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
-#ETH_CFLAGS  = 	-Os -march=pentium -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
+ETH_CFLAGS  = 	-Os -march=pentium3m -m32 -msse -mfpmath=sse -mpc32 -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -fno-stack-protector -fno-asynchronous-unwind-tables -pipe -Ui386
+#ETH_CFLAGS  = 	-Os -march=pentium -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -fno-stack-protector -fno-asynchronous-unwind-tables -pipe -Ui386
 endif
 
 LDFLAGS-ROM     = -s -S -T $(TOPDIR)/scripts/ldscript-crom.ld
