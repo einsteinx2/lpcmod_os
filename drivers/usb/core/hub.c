@@ -1188,7 +1188,7 @@ int usb_hub_init(void)
     pid_t pid;
 
     if (usb_register(&hub_driver) < 0) {
-        err("Unable to register USB hub driver");
+    	debugSPIPrint("Unable to register USB hub driver");
         return -1;
     }
 
@@ -1201,7 +1201,7 @@ int usb_hub_init(void)
 
     /* Fall through if kernel_thread failed */
     usb_deregister(&hub_driver);
-    err("failed to start hub_thread");
+    debugSPIPrint("failed to start hub_thread");
 
     return -1;
 }

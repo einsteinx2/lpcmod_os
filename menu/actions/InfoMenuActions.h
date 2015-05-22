@@ -9,11 +9,11 @@
  *                                                                         *
  ***************************************************************************/
 
-void ShowTemperature(void *);
-void ShowVideo(void *);
-void ShowEeprom(void *);
-void ShowFlashChip(void *);
+void ShowTemperature(void *whatever);
+void ShowVideo(void *whatever);
+void ShowEeprom(void *whatever);
+void ShowFlashChip(void *whatever);
 void InfoHeader(char *title);
-void ShowUncommittedChanges(void * nbUncommittedChangesPtr);
+void ShowUncommittedChanges(void *whatever);
 
 #endif

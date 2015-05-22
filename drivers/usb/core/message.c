@@ -69,7 +69,7 @@ static int usb_start_wait_urb(struct urb *urb, int timeout, int* actual_length)
                 urb->pipe, urb->status, timeout);
             status = urb->status;
         } else {
-            warn("usb_control/bulk_msg: timeout");
+            debugSPIPrint("usb_control/bulk_msg: timeout");
             usb_unlink_urb(urb);  // remove urb safely
             status = -ETIMEDOUT;
         }
@@ -805,7 +805,7 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 
     iface = usb_ifnum_to_if(dev, interface);
     if (!iface) {
-        warn("selecting invalid interface %d", interface);
+        debugSPIPrint("selecting invalid interface %d", interface);
         return -EINVAL;
     }
 
@@ -917,7 +917,7 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
         }
     }
     if ((!cp && configuration != 0) || (cp && configuration == 0)) {
-        warn("selecting invalid configuration %d", configuration);
+        debugSPIPrint("selecting invalid configuration %d", configuration);
         return -EINVAL;
     }
 

@@ -171,7 +171,6 @@ u8 generateStringsForEEPROMChanges(bool genStrings);
 
 
 void assertWriteEEPROM(void);
-void changeDVDRegion(u8 value);
-int getGameRegionValue(void);
+int getGameRegionValue(EEPROMDATA * eepromPtr);
 int setGameRegionValue(u8 value);
 #endif // _BootEEPROM_H_

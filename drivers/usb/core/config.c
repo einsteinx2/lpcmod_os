@@ -27,12 +27,12 @@ static int usb_parse_endpoint(struct usb_host_endpoint *endpoint, unsigned char 
     /* Everything should be fine being passed into here, but we sanity */
     /*  check JIC */
     if (header->bLength > size) {
-        err("ran out of descriptors parsing");
+        debugSPIPrint("ran out of descriptors parsing");
         return -1;
     }
         
     if (header->bDescriptorType != USB_DT_ENDPOINT) {
-        warn("unexpected descriptor 0x%X, expecting endpoint, 0x%X",
+        debugSPIPrint("unexpected descriptor 0x%X, expecting endpoint, 0x%X",
             header->bDescriptorType, USB_DT_ENDPOINT);
         return parsed;
     }
@@ -56,7 +56,7 @@ static int usb_parse_endpoint(struct usb_host_endpoint *endpoint, unsigned char 
         header = (struct usb_descriptor_header *)buffer;
 
         if (header->bLength < 2) {
-            err("invalid descriptor length of %d", header->bLength);
+            debugSPIPrint("invalid descriptor length of %d", header->bLength);
             return -1;
         }
 
@@ -67,7 +67,7 @@ static int usb_parse_endpoint(struct usb_host_endpoint *endpoint, unsigned char 
             (header->bDescriptorType == USB_DT_DEVICE))
             break;
 
-        dbg("skipping descriptor 0x%X",
+        debugSPIPrint("skipping descriptor 0x%X",
             header->bDescriptorType);
         numskipped++;
 
@@ -76,7 +76,7 @@ static int usb_parse_endpoint(struct usb_host_endpoint *endpoint, unsigned char 
         parsed += header->bLength;
     }
     if (numskipped)
-        dbg("skipped %d class/vendor specific endpoint descriptors", numskipped);
+        debugSPIPrint("skipped %d class/vendor specific endpoint descriptors", numskipped);
 
     /* Copy any unknown descriptors into a storage area for drivers */
     /*  to later parse */
@@ -90,7 +90,7 @@ static int usb_parse_endpoint(struct usb_host_endpoint *endpoint, unsigned char 
     endpoint->extra = kmalloc(len, GFP_KERNEL);
 
     if (!endpoint->extra) {
-        err("couldn't allocate memory for endpoint extra descriptors");
+        debugSPIPrint("couldn't allocate memory for endpoint extra descriptors");
         endpoint->extralen = 0;
         return parsed;
     }
@@ -117,7 +117,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
                     GFP_KERNEL);
     
     if (!interface->altsetting) {
-        err("couldn't kmalloc interface->altsetting");
+        debugSPIPrint("couldn't kmalloc interface->altsetting");
         return -1;
     }
 
@@ -131,14 +131,14 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
             oldmas = interface->max_altsetting;
             interface->max_altsetting += USB_ALTSETTINGALLOC;
             if (interface->max_altsetting > USB_MAXALTSETTING) {
-                warn("too many alternate settings (incr %d max %d)\n",
+                debugSPIPrint("too many alternate settings (incr %d max %d)\n",
                     USB_ALTSETTINGALLOC, USB_MAXALTSETTING);
                 return -1;
             }
 
             ptr = kmalloc(sizeof(*ptr) * interface->max_altsetting, GFP_KERNEL);
             if (ptr == NULL) {
-                err("couldn't kmalloc interface->altsetting");
+                debugSPIPrint("couldn't kmalloc interface->altsetting");
                 return -1;
             }
             memcpy(ptr, interface->altsetting, sizeof(*interface->altsetting) * oldmas);
@@ -167,7 +167,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
             header = (struct usb_descriptor_header *)buffer;
 
             if (header->bLength < 2) {
-                err("invalid descriptor length of %d", header->bLength);
+                debugSPIPrint("invalid descriptor length of %d", header->bLength);
                 return -1;
             }
 
@@ -186,7 +186,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
         }
 
         if (numskipped)
-            dbg("skipped %d class/vendor specific interface descriptors", numskipped);
+            debugSPIPrint("skipped %d class/vendor specific interface descriptors", numskipped);
 
         /* Copy any unknown descriptors into a storage area for */
         /*  drivers to later parse */
@@ -195,7 +195,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
             ifp->extra = kmalloc(len, GFP_KERNEL);
 
             if (!ifp->extra) {
-                err("couldn't allocate memory for interface extra descriptors");
+                debugSPIPrint("couldn't allocate memory for interface extra descriptors");
                 ifp->extralen = 0;
                 return -1;
             }
@@ -211,7 +211,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
             return parsed;
 
         if (ifp->desc.bNumEndpoints > USB_MAXENDPOINTS) {
-            warn("too many endpoints");
+            debugSPIPrint("too many endpoints");
             return -1;
         }
 
@@ -219,7 +219,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
             kmalloc(ifp->desc.bNumEndpoints *
             sizeof(struct usb_host_endpoint), GFP_KERNEL);
         if (!ifp->endpoint) {
-            err("out of memory");
+            debugSPIPrint("out of memory");
             return -1;    
         }
 
@@ -230,7 +230,7 @@ static int usb_parse_interface(struct usb_interface *interface, unsigned char *b
             header = (struct usb_descriptor_header *)buffer;
 
             if (header->bLength > size) {
-                err("ran out of descriptors parsing");
+                debugSPIPrint("ran out of descriptors parsing");
                 return -1;
             }
         
@@ -264,16 +264,16 @@ int usb_parse_configuration(struct usb_host_config *config, char *buffer)
     size = config->desc.wTotalLength;
 
     if (config->desc.bNumInterfaces > USB_MAXINTERFACES) {
-        warn("too many interfaces");
+        debugSPIPrint("too many interfaces");
         return -1;
     }
 
     config->interface = (struct usb_interface *)
         kmalloc(config->desc.bNumInterfaces *
         sizeof(struct usb_interface), GFP_KERNEL);
-    dbg("kmalloc IF %p, numif %i", config->interface, config->desc.bNumInterfaces);
+    debugSPIPrint("kmalloc IF %p, numif %i", config->interface, config->desc.bNumInterfaces);
     if (!config->interface) {
-        err("out of memory");
+        debugSPIPrint("out of memory");
         return -1;    
     }
 
@@ -298,7 +298,7 @@ int usb_parse_configuration(struct usb_host_config *config, char *buffer)
             header = (struct usb_descriptor_header *)buffer;
 
             if ((header->bLength > size) || (header->bLength < 2)) {
-                err("invalid descriptor length of %d", header->bLength);
+                debugSPIPrint("invalid descriptor length of %d", header->bLength);
                 return -1;
             }
 
@@ -309,25 +309,25 @@ int usb_parse_configuration(struct usb_host_config *config, char *buffer)
                 (header->bDescriptorType == USB_DT_DEVICE))
                 break;
 
-            dbg("skipping descriptor 0x%X", header->bDescriptorType);
+            debugSPIPrint("skipping descriptor 0x%X", header->bDescriptorType);
             numskipped++;
 
             buffer += header->bLength;
             size -= header->bLength;
         }
         if (numskipped)
-            dbg("skipped %d class/vendor specific endpoint descriptors", numskipped);
+            debugSPIPrint("skipped %d class/vendor specific endpoint descriptors", numskipped);
 
         /* Copy any unknown descriptors into a storage area for */
         /*  drivers to later parse */
         len = (int)(buffer - begin);
         if (len) {
             if (config->extralen) {
-                warn("extra config descriptor");
+                debugSPIPrint("extra config descriptor");
             } else {
                 config->extra = kmalloc(len, GFP_KERNEL);
                 if (!config->extra) {
-                    err("couldn't allocate memory for config extra descriptors");
+                    debugSPIPrint("couldn't allocate memory for config extra descriptors");
                     config->extralen = 0;
                     return -1;
                 }
@@ -415,12 +415,12 @@ int usb_get_configuration(struct usb_device *dev)
      struct usb_config_descriptor *desc;
 
     if (dev->descriptor.bNumConfigurations > USB_MAXCONFIG) {
-        warn("too many configurations");
+        debugSPIPrint("too many configurations");
         return -EINVAL;
     }
 
     if (dev->descriptor.bNumConfigurations < 1) {
-        warn("not enough configurations");
+        debugSPIPrint("not enough configurations");
         return -EINVAL;
     }
 
@@ -428,7 +428,7 @@ int usb_get_configuration(struct usb_device *dev)
         kmalloc(dev->descriptor.bNumConfigurations *
         sizeof(struct usb_host_config), GFP_KERNEL);
     if (!dev->config) {
-        err("out of memory");
+        debugSPIPrint("out of memory");
         return -ENOMEM;    
     }
     memset(dev->config, 0, dev->descriptor.bNumConfigurations *
@@ -437,13 +437,13 @@ int usb_get_configuration(struct usb_device *dev)
     dev->rawdescriptors = (char **)kmalloc(sizeof(char *) *
         dev->descriptor.bNumConfigurations, GFP_KERNEL);
     if (!dev->rawdescriptors) {
-        err("out of memory");
+        debugSPIPrint("out of memory");
         return -ENOMEM;
     }
 
     buffer = kmalloc(8, GFP_KERNEL);
     if (!buffer) {
-        err("unable to allocate memory for configuration descriptors");
+        debugSPIPrint("unable to allocate memory for configuration descriptors");
         return -ENOMEM;
     }
     desc = (struct usb_config_descriptor *)buffer;
@@ -454,9 +454,9 @@ int usb_get_configuration(struct usb_device *dev)
         result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno, buffer, 8);
         if (result < 8) {
             if (result < 0)
-                err("unable to get descriptor");
+                debugSPIPrint("unable to get descriptor");
             else {
-                err("config descriptor too short (expected %i, got %i)", 8, result);
+                debugSPIPrint("config descriptor too short (expected %i, got %i)", 8, result);
                 result = -EINVAL;
             }
             goto err;
@@ -467,7 +467,7 @@ int usb_get_configuration(struct usb_device *dev)
 
         bigbuffer = kmalloc(length, GFP_KERNEL);
         if (!bigbuffer) {
-            err("unable to allocate memory for configuration descriptors");
+            debugSPIPrint("unable to allocate memory for configuration descriptors");
             result = -ENOMEM;
             goto err;
         }
@@ -475,13 +475,13 @@ int usb_get_configuration(struct usb_device *dev)
         /* Now that we know the length, get the whole thing */
         result = usb_get_descriptor(dev, USB_DT_CONFIG, cfgno, bigbuffer, length);
         if (result < 0) {
-            err("couldn't get all of config descriptors");
+            debugSPIPrint("couldn't get all of config descriptors");
             kfree(bigbuffer);
             goto err;
         }    
     
         if (result < length) {
-            err("config descriptor too short (expected %i, got %i)", length, result);
+            debugSPIPrint("config descriptor too short (expected %i, got %i)", length, result);
             result = -EINVAL;
             kfree(bigbuffer);
             goto err;
@@ -491,7 +491,7 @@ int usb_get_configuration(struct usb_device *dev)
 
         result = usb_parse_configuration(&dev->config[cfgno], bigbuffer);
         if (result > 0)
-            dbg("descriptor data left");
+            debugSPIPrint("descriptor data left");
         else if (result < 0) {
             result = -EINVAL;
             goto err;

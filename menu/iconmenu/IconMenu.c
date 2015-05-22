@@ -70,6 +70,8 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
     u8 opaqueness;
     int tempX, tempY;
 
+    u8 uncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
+
     //Seeking icon with desired bankID value must be done when both firstVisibleIcon and selectedIcon are NULL.
     //This way, seeking desired icon will only occur at initial draw.
 /*
@@ -175,6 +177,14 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
     } else {
         VIDEO_CURSOR_POSX += 52;
         printk("\2Select from Menu \2");    
+    }
+
+    if(uncommittedChanges > 0){
+        //There are settings that have changed.
+        VIDEO_CURSOR_POSY = vmode.height - 40;
+        VIDEO_CURSOR_POSX = vmode.width - 550;
+        VIDEO_ATTR=0xffc8c8c8;
+        printk("\1Uncommitted changes: %u", uncommittedChanges);
     }
 
     VIDEO_CURSOR_POSX = tempX;

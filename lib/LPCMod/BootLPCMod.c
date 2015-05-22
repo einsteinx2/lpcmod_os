@@ -585,9 +585,7 @@ u8 LPCMod_CountNumberOfChangesInSettings(void)
         }
     }
 
-    if(generateStringsForEEPROMChanges(false)){ //do not generate strings
-        numberOfChanges += 1;
-    }
+    numberOfChanges += generateStringsForEEPROMChanges(false); //do not generate strings
 
     if(LPCMod_checkForBootScriptChanges()){
         numberOfChanges += 1;

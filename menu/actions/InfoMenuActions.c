@@ -66,12 +66,11 @@ void InfoHeader(char *title) {
     VIDEO_ATTR=0xffc8c8c8;
 }
 
-void ShowUncommittedChanges(void * nbUncommittedChangesPtr){
+void ShowUncommittedChanges(void *whatever){
 #define MAXITEMSINONESCREEN 20
     char printString[200];
     u8 UncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
     u8 NbOfItemsToList = UncommittedChanges;
-    u8 restartPoint = 0;
     bool tooMuchItems = false;
     u8 i, j, k;
     u8 numberOfEEPROMChanges;
@@ -113,62 +112,55 @@ void ShowUncommittedChanges(void * nbUncommittedChangesPtr){
             NbOfItemsToList -= 1;
         }
 
-    	for(k = 0; k < NbOfItemsToList; k++){
+        k = 0;
+		for(i = 0; (i < NBTXTPARAMS) && (k < NbOfItemsToList); i++){
+			if(i < IPTEXTPARAMGROUP){
+				if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i]){
+					if(i < NBBOOLEANPARAMS){
+						printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No", *settingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No");
+					}
+					else{
+						printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i], *settingsPtrStruct.settingsPtrArray[i]);
+					}
 
-            for(i = restartPoint; i < NBTXTPARAMS; i++){
-                if(i < IPTEXTPARAMGROUP){
-                    if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i]){
-                        if(i < NBBOOLEANPARAMS){
-                            printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No", *settingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No");
-                        }
-                        else{
-                            printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i], *settingsPtrStruct.settingsPtrArray[i]);
-                        }
-                        restartPoint = i + 1;
-                        break;
-                    }
-                }
-                else if(i < TEXTPARAMGROUP){
-                    for(j = 0; j < 4; j++){
-                        if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j]){
+					k += 1;
+				}
+			}
+			else if(i < TEXTPARAMGROUP){
+				for(j = 0; j < 4; j++){
+					if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j]){
 
-                            printk("\n       %s \"%u.%u.%u.%u\" -> \"%u.%u.%u.%u\"", xblastcfgstrings[i],
-                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
-                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
-                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
-                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3],
-                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
-                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
-                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
-                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3]);
+						printk("\n       %s \"%u.%u.%u.%u\" -> \"%u.%u.%u.%u\"", xblastcfgstrings[i],
+										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
+										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
+										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
+										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3],
+										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
+										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
+										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
+										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3]);
 
-                            restartPoint = i + 1;
-                            break;
-                        }
-                    }
-                }
-                else if(i < SPECIALPARAMGROUP){
-                    if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP])){
-                        printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
+						k += 1;
+						break;
+					}
+				}
+			}
+			else if(i < SPECIALPARAMGROUP){
+				if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP])){
+					printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
 
-                        restartPoint = i + 1;
-                        break;
-                    }
-                }
-                else{
-                    if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
-                        printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP], *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
+					k += 1;
+				}
+			}
+			else{
+				if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
+					printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP], *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
 
-                        restartPoint = i + 1;
-                        break;
-                    }
-                }
-            }
+					k += 1;
+				}
+			}
+		}
 
-            if(i == NBTXTPARAMS){       //We've passed through all parameters and did not find anything that changed anymore. No need to loop again!
-                break;
-            }
-    	}
     	if(tooMuchItems){
             printk("\n       Too much uncommitted changes to list them all...");
     	}

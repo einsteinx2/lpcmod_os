@@ -91,10 +91,12 @@ int usb_device_probe(struct device *dev)
     const struct usb_device_id *id;
     int error = -ENODEV;
 
-    dev_dbg(dev, "%s\n", __FUNCTION__);
+    debugSPIPrint("Entering usb_device_probe");
 
-    if (!driver->probe)
+    if (!driver->probe){
+    	debugSPIPrint("Error in usb_device_probe!");
         return error;
+    }
 
     id = usb_match_id (intf, driver->id_table);
     if (id) {
@@ -165,10 +167,10 @@ int usb_register(struct usb_driver *new_driver)
     retval = driver_register(&new_driver->driver);
 
     if (!retval) {
-        info("registered new driver %s", new_driver->name);
+        debugSPIPrint("registered new driver %s", new_driver->name);
         usbfs_update_special();
     } else {
-        err("problem %d when registering driver %s",
+    	debugSPIPrint("problem %d when registering driver %s",
             retval, new_driver->name);
     }
 
@@ -280,7 +282,7 @@ void usb_driver_claim_interface(struct usb_driver *driver, struct usb_interface 
 
     // FIXME change API to report an error in this case
     if (iface->driver)
-        err ("%s driver booted %s off interface %p",
+        debugSPIPrint ("%s driver booted %s off interface %p",
             driver->name, iface->driver->name, iface);
     else
         dbg("%s driver claimed interface %p", driver->name, iface);
@@ -401,8 +403,10 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
     struct usb_device *dev;
 
     /* proc_connectinfo in devio.c may call us with id == NULL. */
-    if (id == NULL)
+    if (id == NULL){
+    	debugSPIPrint("NULL id...");
         return NULL;
+    }
 
     intf = &interface->altsetting [interface->act_altsetting];
     dev = interface_to_usbdev(interface);
@@ -510,8 +514,10 @@ static int usb_device_match (struct device *dev, struct device_driver *drv)
     const struct usb_device_id *id;
 
     /* check for generic driver, which we don't match any device with */
-    if (drv == &usb_generic_driver)
+    if (drv == &usb_generic_driver){
+    	debugSPIPrint("Generic driver loaded. No matching to occur...");
         return 0;
+    }
 
     intf = to_usb_interface(dev);
 
@@ -522,6 +528,7 @@ static int usb_device_match (struct device *dev, struct device_driver *drv)
     if (id)
         return 1;
 
+    debugSPIPrint("No id... Returning...");
     return 0;
 }
 
@@ -843,7 +850,7 @@ int __usb_get_extra_descriptor(char *buffer, unsigned size, unsigned char type, 
         header = (struct usb_descriptor_header *)buffer;
 
         if (header->bLength < 2) {
-            err("invalid descriptor length of %d", header->bLength);
+            debugSPIPrint("invalid descriptor length of %d", header->bLength);
             return -1;
         }
 

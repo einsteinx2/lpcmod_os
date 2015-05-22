@@ -1,5 +1,4 @@
 #include "boot.h"
-#include "VideoInitialization.h"
 #include "BootEEPROM.h"
 #include "rc4.h"
 
@@ -12,12 +11,14 @@ void BootEepromReadEntireEEPROM() {
     memcpy(&origEeprom, &eeprom, sizeof(EEPROMDATA));
 }
 
-void BootEepromReloadEEPROM(EEPROMDATA * realeeprom) {
+void BootEepromReloadEEPROM(EEPROMDATA * realeeprom) {/*
     int i;
     u8 *pb=(u8 *)realeeprom;
     for(i = 0; i < 256; i++) {
         *pb++ = I2CTransmitByteGetReturn(0x54, i);
     }
+*/
+    memcpy(&eeprom, &origEeprom, sizeof(EEPROMDATA));
 }
 
 void BootEepromCompareAndWriteEEPROM(EEPROMDATA * realeeprom){
@@ -148,18 +149,13 @@ void assertWriteEEPROM(void){
     return;
 }
 
-void changeDVDRegion(u8 value){
-    eeprom.DVDPlaybackKitZone[0] = value;
-    EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
-}
-
-int getGameRegionValue(void){
+int getGameRegionValue(EEPROMDATA * eepromPtr){
     int result = -1;
     u8 baEepromDataLocalCopy[0x30];
     int version = 0;
     u32 gameRegion=0;
 
-    version = decryptEEPROMData((u8 *)&eeprom, baEepromDataLocalCopy);
+    version = decryptEEPROMData((u8 *)eepromPtr, baEepromDataLocalCopy);
 
     if(version > V1_6)
         result = XBE_INVALID;
@@ -261,9 +257,11 @@ u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf){
 
 u8 generateStringsForEEPROMChanges(bool genStrings){
     u32 tempOrigChecksum2 = 0, tempOrigChecksum3 = 0, tempChecksum2 = 0, tempChecksum3 = 0;
+    int origGameRegion, gameRegion;
     u8 i, nbChanges = 0, stringLength;
     char tempString[200];
-    char origTempItemString[20], tempItemString[20];
+    char origTempItemString[35], tempItemString[35];
+    u8 origHDDKey[16], HDDKey[16];
 
     for(i = 0; i < 4; i++){
         tempChecksum2 |= eeprom.Checksum2[i] << (i * 8);
@@ -271,6 +269,48 @@ u8 generateStringsForEEPROMChanges(bool genStrings){
 
         tempOrigChecksum2 |= origEeprom.Checksum2[i] << (i * 8);
         tempOrigChecksum3 |= origEeprom.Checksum3[i] << (i * 8);
+    }
+
+    for(i = 0; i < 20; i++){
+    	if(origEeprom.HMAC_SHA1_Hash[i] != eeprom.HMAC_SHA1_Hash[i]){
+    		break;
+    	}
+    }
+
+    if(i < 20){ //Encrypted section has changed
+    	origGameRegion = getGameRegionValue(&origEeprom);
+    	gameRegion = getGameRegionValue(&eeprom);
+    	if(origGameRegion != gameRegion){
+            if(genStrings){
+            	sprintf(tempString, "Game region= \"%s\" -> \"%s\"", Gameregiontext[origGameRegion], Gameregiontext[gameRegion]);
+            	stringLength = strlen(tempString);
+				eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+				strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+				eepromChangesStringArray[nbChanges][stringLength] = '\0';
+    	    }
+            nbChanges += 1;
+    	}
+
+    	BootHddKeyGenerateEepromKeyData(&origEeprom, origHDDKey);
+    	BootHddKeyGenerateEepromKeyData(&eeprom, HDDKey);
+    	for(i = 0; i < 16; i++){
+    		if(origHDDKey[i] != HDDKey[i]){
+    			if(genStrings){
+    				for(stringLength = 0; stringLength < 16; stringLength++){
+    					sprintf(&origTempItemString[i << 1], "%02X", origHDDKey[i]);
+    					sprintf(&tempItemString[i << 1], "%02X", HDDKey[i]);
+    				}
+    				sprintf(tempString, "HDD key= \"%s\" -> \"%s\"", origTempItemString, tempItemString);
+                    stringLength = strlen(tempString);
+                    eepromChangesStringArray[nbChanges] = malloc(stringLength + 1);
+                    strncpy(eepromChangesStringArray[nbChanges], tempString, stringLength);
+                    eepromChangesStringArray[nbChanges][stringLength] = '\0';
+    			}
+    			nbChanges += 1;
+    			break;
+    		}
+    	}
+
     }
 
     if(tempChecksum2 != tempOrigChecksum2){//Change in either Serial number, Video standard and/or MAC Address
@@ -354,7 +394,7 @@ u8 generateStringsForEEPROMChanges(bool genStrings){
         }
         else{
             //List individual changes
-            if(origEeprom.VideoFlags[2] & R480p != eeprom.VideoFlags[2] & R480p){
+            if((origEeprom.VideoFlags[2] & R480p) != (eeprom.VideoFlags[2] & R480p)){
                 if(genStrings){
                     sprintf(tempString, "480p= \"%s\" -> \"%s\"", (origEeprom.VideoFlags[2] & R480p) ? "Yes" : "No", (eeprom.VideoFlags[2] & R480p) ? "Yes" : "No");
                     stringLength = strlen(tempString);
@@ -365,7 +405,7 @@ u8 generateStringsForEEPROMChanges(bool genStrings){
                 nbChanges += 1;
             }
 
-            if(origEeprom.VideoFlags[2] & R720p != eeprom.VideoFlags[2] & R720p){
+            if((origEeprom.VideoFlags[2] & R720p) != (eeprom.VideoFlags[2] & R720p)){
                 if(genStrings){
                     sprintf(tempString, "720p= \"%s\" -> \"%s\"", (origEeprom.VideoFlags[2] & R720p) ? "Yes" : "No", (eeprom.VideoFlags[2] & R720p) ? "Yes" : "No");
                     stringLength = strlen(tempString);
@@ -376,7 +416,7 @@ u8 generateStringsForEEPROMChanges(bool genStrings){
                 nbChanges += 1;
             }
 
-            if(origEeprom.VideoFlags[2] & R1080i != eeprom.VideoFlags[2] & R1080i){
+            if((origEeprom.VideoFlags[2] & R1080i) != (eeprom.VideoFlags[2] & R1080i)){
                 if(genStrings){
                     sprintf(tempString, "1080i= \"%s\" -> \"%s\"", (origEeprom.VideoFlags[2] & R1080i) ? "Yes" : "No", (eeprom.VideoFlags[2] & R1080i) ? "Yes" : "No");
                     stringLength = strlen(tempString);
@@ -387,7 +427,7 @@ u8 generateStringsForEEPROMChanges(bool genStrings){
                 nbChanges += 1;
             }
 
-            if(origEeprom.VideoFlags[2] & 0x11 != eeprom.VideoFlags[2] & 0x11){ //Video format mask
+            if((origEeprom.VideoFlags[2] & 0x11) != (eeprom.VideoFlags[2] & 0x11)){ //Video format mask
                 if(genStrings){
                     if(origEeprom.VideoFlags[2] & WIDESCREEN)
                         sprintf(origTempItemString, "Widescreen");

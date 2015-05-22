@@ -32,7 +32,7 @@ void incrementGameRegion(void * itemStr){
     if(ConfirmDialog("           Confirm change Game region?", 0))
         return;
         
-    int gameRegion = getGameRegionValue();
+    int gameRegion = getGameRegionValue(&eeprom);
     switch(gameRegion){
         case NORTH_AMERICA:
             gameRegion = setGameRegionValue(JAPAN);
@@ -53,7 +53,7 @@ void decrementGameRegion(void * itemStr){
     if(ConfirmDialog("           Confirm change Game region?",0))
         return;
         
-    int gameRegion = getGameRegionValue();
+    int gameRegion = getGameRegionValue(&eeprom);
     switch(gameRegion){
         case NORTH_AMERICA:
             gameRegion = setGameRegionValue(EURO_AUSTRALIA);

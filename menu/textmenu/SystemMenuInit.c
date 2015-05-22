@@ -81,7 +81,7 @@ TEXTMENU *SystemMenuInit(void) {
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Game region : ");
-    sprintf(itemPtr->szParameter, "%s", Gameregiontext[getGameRegionValue()]);
+    sprintf(itemPtr->szParameter, "%s", Gameregiontext[getGameRegionValue(&eeprom)]);
     itemPtr->functionPtr= NULL;
     itemPtr->functionDataPtr = NULL;
     itemPtr->functionLeftPtr=decrementGameRegion;

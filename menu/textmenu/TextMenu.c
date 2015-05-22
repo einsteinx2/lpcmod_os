@@ -112,9 +112,9 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 
     if(uncommittedChanges > 0){
         //There are settings that have changed.
-        VIDEO_CURSOR_POSY = vmode.height - 50;
-        VIDEO_CURSOR_POSX = vmode.width - 400;
-        VIDEO_ATTR=0xffffff;
+        VIDEO_CURSOR_POSY = vmode.height - 40;
+        VIDEO_CURSOR_POSX = vmode.width - 550;
+        VIDEO_ATTR=0xffc8c8c8;
         printk("\1Uncommitted changes: %u", uncommittedChanges);
     }
     textMenuLCDPrint(menu, selectedItem);

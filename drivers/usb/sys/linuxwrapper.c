@@ -127,13 +127,17 @@ int my_device_add(struct device *dev)
 {
     int n,found=0;
 //    printk("drv_num %i %p %p\n",drvs_num,m_drivers[0]->probe,m_drivers[1]->probe);
+    debugSPIPrint("drv_num %i %p %p\n",drvs_num,m_drivers[0]->probe,m_drivers[1]->probe);
     if (dev->driver)
     {
-        if (dev->driver->probe)
+        if (dev->driver->probe){
+        	debugSPIPrint("Probing");
             return dev->driver->probe(dev);
+        }
     }
     else
     {
+    	debugSPIPrint("No driver...");
         for(n=0;n<drvs_num;n++)
         {
             if (m_drivers[n]->probe)
@@ -158,7 +162,7 @@ int my_driver_register(struct device_driver *driver)
 
     if (drvs_num<MAX_DRVS)
     {
-//        printk("driver_register %i: %p %p",drvs_num,driver,driver->probe);
+        debugSPIPrint("driver_register %i: %p %p",drvs_num,driver,driver->probe);
         m_drivers[drvs_num++]=driver;
         return 0;
     }
@@ -192,7 +196,7 @@ int my_schedule_timeout(int x)
 {
     int wait=1;
     x+=10; // safety
-//    printk("schedule_timeout %i\n",x);
+    debugSPIPrint("schedule_timeout %i\n",x);
     while(x>0)
     {
         do_all_timers();
@@ -214,7 +218,7 @@ int my_schedule_timeout(int x)
 void my_wait_for_completion(struct completion *x)
 {
     int n=100;
-//    printk("wait for completion\n");
+    debugSPIPrint("wait for completion\n");
     while(!x->done && (n>0))
     {
         do_all_timers();    
@@ -236,7 +240,7 @@ int my_pci_module_init(struct pci_driver *x)
     const struct pci_device_id *id=NULL;
     if (!pci_probe_dev)
     {
-        printk(KERN_ERR "PCI device not set!\n");
+        debugSPIPrint("PCI device not set!\n");
         return 0;
     }
     x->probe(dev, id);
