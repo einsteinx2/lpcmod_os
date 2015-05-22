@@ -32,6 +32,25 @@ typedef struct {
 
 _settingsPtrStruct settingsPtrStruct;
 
+typedef struct _singleChangeEntry{
+    void *origPtr;
+    void *modifiedOtr;
+    u8 itemVariableSize;
+    short arraySize;    //0 for no array
+    bool isEEPROM;
+    bool isBootScript;
+    bool isString;
+    char *displayString;
+    struct _singleChangeEntry *nextChange;
+}_singleChangeEntry;
+
+typedef struct {
+    unsigned short nbChanges;
+    _singleChangeEntry *firstChangeEntry;
+}_completeChangeList;
+
+_completeChangeList changeList;
+
 void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
 
 u16 LPCMod_HW_rev(void);
@@ -49,6 +68,6 @@ int LPCMod_SaveCFGToHDD(void);
 
 u8 LPCMod_CountNumberOfChangesInSettings(void);
 bool LPCMod_checkForBootScriptChanges(void);
-
+void cleanChangeListStruct(void);
 
 #endif // _BootLPCMod_H_

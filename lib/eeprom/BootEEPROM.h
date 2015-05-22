@@ -133,7 +133,22 @@ EEPROMDATA *editeeprom;
                                         //VideoFlags (1080i)
                                         //DVDPlaybackKitZone
 
+typedef enum {
+    HDDKkey = 0,
+    XBERegion = 1,
+    //Below is checksum2
+    SerialNumber = 2,
+    MACAddress,
+    VideoStandard,
+    //Below is checksum3
+    VideoFlags_Format,
+    VideoFlags_480p,
+    VideoFlags_720p,
+    VideoFlags_1080i,
+    DVDPlaybackKitZone
+} EEPROM_MODIFIABLE_ITEMS;
 
+bool eepromChangesFlag[MAXEDITABLEPARAMSINEEPROM];      //Maybe will be changed for something better
 char *eepromChangesStringArray[MAXEDITABLEPARAMSINEEPROM];
 
 

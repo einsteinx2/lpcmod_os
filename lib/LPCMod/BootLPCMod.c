@@ -558,6 +558,7 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename){
 u8 LPCMod_CountNumberOfChangesInSettings(void)
 {
     int numberOfChanges = 0;
+
     u8 i, j;
     _settingsPtrStruct originalSettingsPtrStruct;
     setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
@@ -619,4 +620,26 @@ bool LPCMod_checkForBootScriptChanges(void){
 
     //Both scripts are identical.
     return false;
+}
+
+void cleanChangeListStruct(void){
+    short i;
+    _singleChangeEntry *tempEntryPtr;
+
+    for(i = 0; i < changeList.nbChanges; i++){
+        if(changeList.firstChangeEntry == NULL)
+            break;
+
+        if(changeList.firstChangeEntry->nextChange != NULL)
+            tempEntryPtr = changeList.firstChangeEntry->nextChange;
+        else
+            tempEntryPtr = NULL;
+
+        if(changeList.firstChangeEntry->displayString != NULL)
+            free(changeList.firstChangeEntry->displayString);
+        free(changeList.firstChangeEntry);
+        changeList.firstChangeEntry = tempEntryPtr;
+    }
+
+    changeList.nbChanges = 0;
 }

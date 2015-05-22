@@ -68,102 +68,171 @@ void InfoHeader(char *title) {
 
 void ShowUncommittedChanges(void *whatever){
 #define MAXITEMSINONESCREEN 20
+#define SELECTEDITEMTEXTMENUCOLOR 0xffef37
+#define NORMALTEXTMENUCOLOR 0xffc8c8c8
+    bool noExit = true, redrawList = true;
     char printString[200];
-    u8 UncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
-    u8 NbOfItemsToList = UncommittedChanges;
-    bool tooMuchItems = false;
+    u8 UncommittedChanges, NbOfItemsToList;
+    bool bootScriptChangedFlag, IPChange;
     u8 i, j, k;
-    u8 numberOfEEPROMChanges;
-    bool IPChange;
+    u8 numberOfEEPROMChanges, selectedEntryItem = 0, firstVisibleEntryItem = 0;
     _settingsPtrStruct originalSettingsPtrStruct;
     setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
-    printk("\n\n");
-    VIDEO_ATTR=0xffffef37;
-    printk("\2Uncommitted change%s information:\2\n\n", UncommittedChanges > 1 ? "s" : "");
-    VIDEO_ATTR=0xffc8c8c8;
+    while(noExit){
+        if(redrawList == true)
+        {
+            UncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
+            cleanChangeListStruct();
+            NbOfItemsToList = UncommittedChanges;
+            redrawList = false;
+            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+            printk("\n\n");
+            VIDEO_ATTR=0xff00ff;
+            printk("\2Uncommitted change%s information:\2\n\n", UncommittedChanges > 1 ? "s" : "");
+            VIDEO_ATTR=NORMALTEXTMENUCOLOR;
 
-    if(UncommittedChanges == 0){
-    	printk("\n           No uncommitted change.");
-    }
-    else{
-    	if(UncommittedChanges > MAXITEMSINONESCREEN){
-    		NbOfItemsToList = MAXITEMSINONESCREEN;
-    		tooMuchItems = true;
-    	}
 
-    	for(i = 0; i < MAXEDITABLEPARAMSINEEPROM; i++){
-    	    eepromChangesStringArray[i] = NULL;
-    	}
+            if(UncommittedChanges == 0){
+                printk("\n           No uncommitted change.");
+            }
+            else{
+                if(selectedEntryItem > MAXITEMSINONESCREEN){
+                    firstVisibleEntryItem = selectedEntryItem - MAXITEMSINONESCREEN;
+                }
+                else{
+                    firstVisibleEntryItem = 0;
+                }
+                if(UncommittedChanges > MAXITEMSINONESCREEN){
+                    NbOfItemsToList = MAXITEMSINONESCREEN;
+                }
 
-    	numberOfEEPROMChanges = generateStringsForEEPROMChanges(true);
+                for(i = 0; i < MAXEDITABLEPARAMSINEEPROM; i++){
+                    if(eepromChangesStringArray[i] != NULL){
+                        free(eepromChangesStringArray[i]);
+                        eepromChangesStringArray[i] = NULL;
+                    }
+                }
 
-    	if(numberOfEEPROMChanges > 0){
-    	    for(i = 0; i < numberOfEEPROMChanges && i < MAXITEMSINONESCREEN; i++){
-    	        if(eepromChangesStringArray[i] != NULL){
-                    printk("\n       %s", eepromChangesStringArray[i]);
-                    free(eepromChangesStringArray[i]);
-    	        }
-    	    }
-            NbOfItemsToList -= numberOfEEPROMChanges > MAXITEMSINONESCREEN ? MAXITEMSINONESCREEN : numberOfEEPROMChanges;
-    	}
+                numberOfEEPROMChanges = generateStringsForEEPROMChanges(true);
 
-        if(LPCMod_checkForBootScriptChanges() && NbOfItemsToList > 0){
-            printk("\n       Boot script in flash modified");
-            NbOfItemsToList -= 1;
+                if(numberOfEEPROMChanges > 0){
+                    for(i = firstVisibleEntryItem; i < numberOfEEPROMChanges && i < MAXITEMSINONESCREEN; i++){
+                        if(eepromChangesStringArray[i] != NULL){
+                            if(selectedEntryItem == i && selectedEntryItem < numberOfEEPROMChanges){
+                                VIDEO_ATTR=SELECTEDITEMTEXTMENUCOLOR;
+                            }
+                            else{
+                                VIDEO_ATTR=NORMALTEXTMENUCOLOR;
+                            }
+                            printk("\n       %s", eepromChangesStringArray[i]);
+                            free(eepromChangesStringArray[i]);
+                            eepromChangesStringArray[i] = NULL;
+                        }
+                    }
+                    NbOfItemsToList -= (numberOfEEPROMChanges > MAXITEMSINONESCREEN ? MAXITEMSINONESCREEN : numberOfEEPROMChanges) - firstVisibleEntryItem;
+                }
+
+                if(LPCMod_checkForBootScriptChanges() && NbOfItemsToList > 0){
+                    if(firstVisibleEntryItem <= numberOfEEPROMChanges){
+                        if(selectedEntryItem == numberOfEEPROMChanges){
+                            VIDEO_ATTR=SELECTEDITEMTEXTMENUCOLOR;
+                        }
+                        else{
+                            VIDEO_ATTR=NORMALTEXTMENUCOLOR;
+                        }
+                        printk("\n       Boot script in flash modified");
+                        NbOfItemsToList -= 1;
+                    }
+                    bootScriptChangedFlag = true;
+                }
+                else{
+                    bootScriptChangedFlag = false;
+                }
+
+                k = 0;
+                for(i = ((int)firstVisibleEntryItem - numberOfEEPROMChanges) > 0 ? (firstVisibleEntryItem - numberOfEEPROMChanges) : 0; (i < NBTXTPARAMS) && (k < NbOfItemsToList); i++){
+                    if(selectedEntryItem > numberOfEEPROMChanges){
+                        VIDEO_ATTR=SELECTEDITEMTEXTMENUCOLOR;
+                    }
+                    else{
+                        VIDEO_ATTR=NORMALTEXTMENUCOLOR;
+                    }
+
+                    if(i < IPTEXTPARAMGROUP){
+                        if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i]){
+                            if(i < NBBOOLEANPARAMS){
+                                printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No", *settingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No");
+                            }
+                            else{
+                                printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i], *settingsPtrStruct.settingsPtrArray[i]);
+                            }
+
+                            k += 1;
+                        }
+                    }
+                    else if(i < TEXTPARAMGROUP){
+                        for(j = 0; j < 4; j++){
+                            if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j]){
+
+                                printk("\n       %s \"%u.%u.%u.%u\" -> \"%u.%u.%u.%u\"", xblastcfgstrings[i],
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3],
+                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
+                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
+                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
+                                            settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3]);
+
+                                k += 1;
+                                break;
+                            }
+                        }
+                    }
+                    else if(i < SPECIALPARAMGROUP){
+                        if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP])){
+                            printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
+
+                            k += 1;
+                        }
+                    }
+                    else{
+                        if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
+                            printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP], *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
+
+                            k += 1;
+                        }
+                    }
+                }
+            }
+            VIDEO_ATTR=0xffc8c8c8;
+            printk("\n\n           Press Button 'B' or 'Back' to return.");
         }
 
-        k = 0;
-		for(i = 0; (i < NBTXTPARAMS) && (k < NbOfItemsToList); i++){
-			if(i < IPTEXTPARAMGROUP){
-				if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i]){
-					if(i < NBBOOLEANPARAMS){
-						printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No", *settingsPtrStruct.settingsPtrArray[i] ? "Yes" : "No");
-					}
-					else{
-						printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.settingsPtrArray[i], *settingsPtrStruct.settingsPtrArray[i]);
-					}
+        if((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1) || (risefall_xpad_BUTTON(XPAD_STATE_BACK) == 1)){
+            noExit = false;
+        }
 
-					k += 1;
-				}
-			}
-			else if(i < TEXTPARAMGROUP){
-				for(j = 0; j < 4; j++){
-					if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j]){
+        if((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) || (risefall_xpad_BUTTON(XPAD_STATE_START) == 1)){
+            redrawList = true;
+            //Print confirm dialog to revert change
+        }
 
-						printk("\n       %s \"%u.%u.%u.%u\" -> \"%u.%u.%u.%u\"", xblastcfgstrings[i],
-										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
-										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
-										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
-										originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3],
-										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
-										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
-										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
-										settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3]);
+        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1) {
+            if(selectedEntryItem > 0 && UncommittedChanges > 1){
+                redrawList = true;
+                selectedEntryItem--;
+                //Move SelectedItem up
+            }
+        }
 
-						k += 1;
-						break;
-					}
-				}
-			}
-			else if(i < SPECIALPARAMGROUP){
-				if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP])){
-					printk("\n       %s \"%s\" -> \"%s\"", xblastcfgstrings[i], originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
-
-					k += 1;
-				}
-			}
-			else{
-				if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
-					printk("\n       %s \"%u\" -> \"%u\"", xblastcfgstrings[i], *originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP], *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
-
-					k += 1;
-				}
-			}
-		}
-
-    	if(tooMuchItems){
-            printk("\n       Too much uncommitted changes to list them all...");
-    	}
+        if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1) {
+            if(selectedEntryItem < UncommittedChanges && UncommittedChanges > 1){
+                redrawList = true;
+                selectedEntryItem++;
+                //Move SelectedItem down
+            }
+        }
+        wait_ms(10);
     }
-    UIFooter();
 }
