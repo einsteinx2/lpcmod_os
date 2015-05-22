@@ -32,7 +32,6 @@ SECTIONS {
         _ram_location = .;
         _start_ramcopy = _end_rom;
         *(.text);
-        *(.text.unlikely);
         _start_checksum = _start_ramcopy - LOW_ROM;
     }
 
