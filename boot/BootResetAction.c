@@ -632,7 +632,7 @@ extern void BootResetAction ( void ) {
                 videosavepage = malloc(FB_SIZE);
                 memcpy(videosavepage,(void*)FB_START,FB_SIZE);
                 char ConfirmDialogString[50];
-                sprintf(ConfirmDialogString, "               Format new drive (%s)?\0", i ? "slave":"master");
+                sprintf(ConfirmDialogString, "               Format new drive (%s)?", i ? "slave":"master");
                 if(!ConfirmDialog(ConfirmDialogString, 1)){
                     debugSPIPrint("Formatting base partitions.");
                     FATXFormatDriveC(i, 0);                     //'0' is for non verbose

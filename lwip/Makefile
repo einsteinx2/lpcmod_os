@@ -1,4 +1,4 @@
-EXTRA_CFLAGS := -DIPv4 -fpack-struct -Ilwip/src/include -Ilwip/src/include/ipv4 -Ixbox/include -O2 -mcpu=pentium -Werror -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
+EXTRA_CFLAGS := -DIPv4 -fpack-struct -Ilwip/src/include -Ilwip/src/include/ipv4 -Ixbox/include -Os -march=pentium3m -m32 -msse -mfpmath=sse -mpc32 -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
 
 LWIPDIR=.
 

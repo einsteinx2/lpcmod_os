@@ -126,7 +126,7 @@ TEXTMENU* RunScriptMenuInit(void) {
                     // AND it's filesize is at least 1 byte.
                     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
                     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption,fnames[i]+strlen(path));
+                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
                     itemPtr->functionPtr = loadRunScript;
                     itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
                     itemPtr->functionDataPtrMemAlloc = true;    //at function return but we'll still get the pointer to the allocated memory location
@@ -219,7 +219,7 @@ TEXTMENU* SaveScriptMenuInit(void) {
                     // AND it's filesize is at least 1 byte.
                     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
                     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption,fnames[i]+strlen(path));
+                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
                     itemPtr->functionPtr = saveScriptToFlash;
                     itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
                     itemPtr->functionDataPtrMemAlloc = true;    //at function return but we'll still get the pointer to the allocated memory location
