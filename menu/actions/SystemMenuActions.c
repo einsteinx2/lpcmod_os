@@ -8,6 +8,39 @@
  ***************************************************************************/
 #include "SystemMenuActions.h"
 #include "boot.h"
+#include "video.h"
+
+void toggleBGColor(void * itemStr)
+{
+	if(LPCmodSettings.OSsettings.backgroundColorPreset == 0)
+	{
+		LPCmodSettings.OSsettings.backgroundColorPreset = 1;
+	}
+	else
+	{
+		LPCmodSettings.OSsettings.backgroundColorPreset = 0;
+	}
+
+	BootVideoInitJPEGBackdropBuffer(&jpegBackdrop);
+	//Screen will be refreched in TextMenu main routine.
+	bgColorString((char *)itemStr);
+}
+
+void bgColorString(char * stringOut)
+{
+	//String enum for BACKGROUND COLOR
+	static const char * const BackgroundColor[] = {
+	    "Blue",
+	    "Purple"
+	};
+
+	if(stringOut == NULL)
+	{
+		return;
+	}
+
+	sprintf(stringOut, BackgroundColor[LPCmodSettings.OSsettings.backgroundColorPreset]);
+}
 
 void incrementFanSpeed(void * itemStr){
     if(LPCmodSettings.OSsettings.fanSpeed < 99)    //Logic

@@ -11,6 +11,7 @@
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "SystemMenuActions.h"
+#include "lpcmod_v1.h"
 
 TEXTMENU *SystemMenuInit(void) {
     TEXTMENUITEM *itemPtr;
@@ -19,6 +20,22 @@ TEXTMENU *SystemMenuInit(void) {
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "System settings");
+
+    if(fSpecialEdition == SYSCON_ID_V1_PRE_EDITION)
+    {
+		//BACKGROUND COLOR SETTINGS MENU
+		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+		strcpy(itemPtr->szCaption, "Background color : ");
+		bgColorString(itemPtr->szParameter);
+		itemPtr->functionPtr= NULL;
+		itemPtr->functionDataPtr = NULL;
+		itemPtr->functionLeftPtr=toggleBGColor;
+		itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+		itemPtr->functionRightPtr=toggleBGColor;
+		itemPtr->functionRightDataPtr = itemPtr->szParameter;
+		TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     //LED SETTINGS MENU
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

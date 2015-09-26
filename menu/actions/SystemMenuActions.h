@@ -9,6 +9,9 @@
  *                                                                         *
  ***************************************************************************/
 
+void toggleBGColor(void * itemStr);
+void bgColorString(char * stringOut);
+
 void incrementFanSpeed(void * itemStr);
 void decrementFanSpeed(void * itemStr);
 

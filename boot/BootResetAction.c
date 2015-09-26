@@ -74,11 +74,21 @@ void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware, u32
 
     VIDEO_ATTR=0xff00ff00;
 #if DEV_FEATURES
-    printk("           Modchip: %s    DEBUG_fHasHardware: 0x%02x\n",modName, fHasHardware);
+    printk("           Modchip: %s    fHasHardware: 0x%02x   fSpecialEdition: %02x\n",modName, fHasHardware, fSpecialEdition);
     VIDEO_ATTR=0xffc8c8c8;
     printk("           THIS IS A WIP BUILD, flash manID= %x  devID= %x\n", of->m_bManufacturerId, of->m_bDeviceId);
 #else
-    printk("           Modchip: %s\n",modName);
+    printk("           Modchip: ");
+
+    switch(fSpecialEdition)
+    {
+    case SYSCON_ID_V1_PRE_EDITION:
+    	VIDEO_ATTR=0xffef37;
+    	break;
+    default:
+    	break;
+    }
+    	printk("%s\n",modName);
 #endif
     VIDEO_ATTR=0xff00ff00;
 
@@ -173,6 +183,7 @@ extern void BootResetAction ( void ) {
 
 
     fHasHardware = 0;
+    fSpecialEdition = 0;
 
 #ifndef SPITRACE        //Do not reset GenPurposeIOs values as they've been updated when "LPCMod_WriteIO(0x4, 0x4)" function was called.
     GenPurposeIOs.GPO3 = 0;
@@ -224,9 +235,19 @@ extern void BootResetAction ( void ) {
     debugSPIPrint("Modchip hardware ID is: 0x%04X", fHasHardware);
 //    }
 
-    if(fHasHardware == SYSCON_ID_V1){
+    switch(fHasHardware)
+    {
+    case SYSCON_ID_V1:
         debugSPIPrint("XBlast Lite V1 detected on LPC bus.");
         sprintf(modName,"%s", "XBlast Lite V1");
+        goto nextStepXBLASTV1;
+    case SYSCON_ID_V1_PRE_EDITION:
+    	debugSPIPrint("XBlast Lite V1 Pre detected on LPC bus.");
+		sprintf(modName,"%s", "XBlast Lite V1 Pre-Edition");
+		fSpecialEdition = SYSCON_ID_V1_PRE_EDITION;
+		//Since Pre-Edition is the same device functionality-wise, we just force fHasHardware back to plain V1 to offer same features in OS.
+		fHasHardware = SYSCON_ID_V1;
+nextStepXBLASTV1:
         //Check which flash chip is detected by system.
         BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
         if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
@@ -241,8 +262,8 @@ extern void BootResetAction ( void ) {
         }
         LPCMod_ReadIO(NULL);
         debugSPIPrint("Read XBlast Lite V1 IO status.");
-    }
-    else if(fHasHardware == SYSCON_ID_XT){
+        break;
+    case SYSCON_ID_XT:
        debugSPIPrint("Aladdin XBlast detected on LPC bus.");
        sprintf(modName,"%s", "Aladdin XBlast");
        //Check which flash chip is detected by system.
@@ -257,8 +278,8 @@ extern void BootResetAction ( void ) {
            fHasHardware = SYSCON_ID_XT_TSOP;
            WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
        }
-    }
-    else {
+       break;
+    default:
         debugSPIPrint("No XBlast OS compatible hardware found.");
         u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
         debugSPIPrint("Probing for X3 EEprom. Result: 0x%08X", x3probe);
@@ -284,6 +305,7 @@ extern void BootResetAction ( void ) {
 
         currentFlashBank = BNKOS;           //Make sure the system knows we're on the right bank.
         TSOPRecoveryMode = 0;               //Whatever happens, it's not possible to recover TSOP on other modchips.
+        break;
     }
 
     LPCmodSettings.OSsettings.migrateSetttings = 0xFF; //Will never be 0xFF
@@ -482,7 +504,7 @@ extern void BootResetAction ( void ) {
 
     BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
     jpegBackdrop.pData =NULL;
-    jpegBackdrop.pBackdrop = NULL;
+    jpegBackdrop.pBackdrop = NULL; //Static memory alloc now.
     if(BootVideoInitJPEGBackdropBuffer(&jpegBackdrop))
     { // decode and malloc backdrop bitmap
         extern int _start_backdrop;

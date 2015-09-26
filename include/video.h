@@ -6,7 +6,7 @@
 // video helpers
 typedef struct {
     u8 * pData;
-    u8 * pBackdrop;
+    u8 *pBackdrop;
     u8 iconCount;
 } JPEG;
 

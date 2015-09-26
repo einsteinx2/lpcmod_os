@@ -90,6 +90,7 @@
 #define SYSCON_REG    0xF701u
 //For XBlast Lite
 #define SYSCON_ID_V1    0x15u    //Spoof SmartXX OPX using lower nibble. Highest nibble is what's different from SmartXX.
+#define SYSCON_ID_V1_PRE_EDITION 0x55u//Special version of SYSCON for the special "Pre-Edition" of the XBlast Lite V1.
 //Other revision will have to be identified here.
 #define SYSCON_ID_V1_TSOP    0x1015u     //Arbitrary value, constant used to specify to program that XBlast mod was
                                         //detected but active flash device detected is not SST49LF080A which suggest a TSOP boot

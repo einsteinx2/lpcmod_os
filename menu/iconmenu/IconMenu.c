@@ -339,6 +339,7 @@ bool IconMenu(void) {
             if (selectedIcon->functionPtr!=NULL) selectedIcon->functionPtr(selectedIcon->functionDataPtr);
             //If we come back to this menu, make sure we are redrawn, and that we replace the saved video page
             changed=1;
+            //TODO: fix background change color when returning to IconMenu.
             memcpy((void*)FB_START,videosavepage,FB_SIZE);
         }
 

@@ -72,7 +72,7 @@ void ShowUncommittedChanges(void *whatever){
 #define NORMALTEXTMENUCOLOR 0xffc8c8c8
     bool noExit = true, redrawList = true;
     char printString[200];
-    u8 UncommittedChanges, NbOfItemsToList;
+    u8 UncommittedChanges = 0, NbOfItemsToList = 0;
     bool bootScriptChangedFlag, IPChange;
     u8 i, j, k;
     u8 numberOfEEPROMChanges, selectedEntryItem = 0, firstVisibleEntryItem = 0;
@@ -82,13 +82,13 @@ void ShowUncommittedChanges(void *whatever){
         if(redrawList == true)
         {
             UncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
-            cleanChangeListStruct();
+            //cleanChangeListStruct(); //TODO: Useful?
             NbOfItemsToList = UncommittedChanges;
             redrawList = false;
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             printk("\n\n");
-            VIDEO_ATTR=0xff00ff;
-            printk("\2Uncommitted change%s information:\2\n\n", UncommittedChanges > 1 ? "s" : "");
+            VIDEO_ATTR=0xffffef37 ;
+            printk("\2 Uncommitted change%s information:\2\n\n", UncommittedChanges > 1 ? "s" : "");
             VIDEO_ATTR=NORMALTEXTMENUCOLOR;
 
 
@@ -149,6 +149,7 @@ void ShowUncommittedChanges(void *whatever){
                     bootScriptChangedFlag = false;
                 }
 
+                //Normal OS paramters listing.
                 k = 0;
                 for(i = ((int)firstVisibleEntryItem - numberOfEEPROMChanges) > 0 ? (firstVisibleEntryItem - numberOfEEPROMChanges) : 0; (i < NBTXTPARAMS) && (k < NbOfItemsToList); i++){
                     if(selectedEntryItem > numberOfEEPROMChanges){

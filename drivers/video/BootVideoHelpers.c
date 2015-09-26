@@ -17,6 +17,7 @@ int sprintf(char * buf, const char *fmt, ...);
 #include  "boot.h"
 #include "video.h"
 #include "memory_layout.h"
+#include "lpcmod_v1.h"
 #include "fontx16.h"  // brings in font struct
 #include <stdarg.h>
 #define WIDTH_SPACE_PIXELS 5
@@ -206,15 +207,38 @@ int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLi
 bool BootVideoInitJPEGBackdropBuffer(JPEG * pJpeg){
     int i;
     
-    pJpeg->pBackdrop = malloc(3 * 1024 * (832 - ICON_HEIGHT)); //1024x768x24bpp
+    if(pJpeg->pBackdrop == NULL)
+    	pJpeg->pBackdrop = malloc(3 * 1024 * (832 - ICON_HEIGHT)); //1024x768x24bpp
+
     if(pJpeg->pBackdrop == NULL)
     	return false;
     
-    //Blue-ish background you've all grew so found of!
-    for(i = 0; i < 3 * 1024 * (832 - ICON_HEIGHT); i += 3){
-        *(pJpeg->pBackdrop + i) = 0x01;
-        *(pJpeg->pBackdrop + i + 1) = 0x2F;
-        *(pJpeg->pBackdrop + i + 2) = 0x53;
+    switch(fSpecialEdition)
+    {
+    case SYSCON_ID_V1_PRE_EDITION:
+    	if(LPCmodSettings.OSsettings.backgroundColorPreset == 1)
+    	{
+			//Purple-ish background for Pre-Edition
+			for(i = 0; i < 3 * 1024 * (832 - ICON_HEIGHT); i += 3){
+				pJpeg->pBackdrop[i] = 0x33;
+				pJpeg->pBackdrop[i + 1] = 0x01;
+				pJpeg->pBackdrop[i + 2] = 0x55;
+			}
+    	}
+    	else
+    	{
+    		goto blueColorDraw;
+    	}
+		break;
+    default:
+blueColorDraw:
+		//Blue-ish background you've all grew so fond of!
+		for(i = 0; i < 3 * 1024 * (832 - ICON_HEIGHT); i += 3){
+			*(pJpeg->pBackdrop + i) = 0x01;
+			*(pJpeg->pBackdrop + i + 1) = 0x2F;
+			*(pJpeg->pBackdrop + i + 2) = 0x53;
+		}
+    break;
     }
         
     return true;

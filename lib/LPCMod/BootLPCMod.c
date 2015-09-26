@@ -21,6 +21,7 @@ char *xblastcfgstrings[NBTXTPARAMS] = {
 	"displaybiosnameboot=",
 
 	//Contains numerical values
+	"bgcolor=",
 	"fanspeed=",
 	"boottimeout=",
 	"nblines=",
@@ -69,6 +70,15 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
     LPCmodSettings->OSsettings.TSOPhide = 0;
     LPCmodSettings->OSsettings.runBankScript = 0;
     LPCmodSettings->OSsettings.runBootScript = 0;
+	switch(fSpecialEdition)
+	{
+	case SYSCON_ID_V1_PRE_EDITION:
+		LPCmodSettings->OSsettings.backgroundColorPreset = 1;
+		break;
+	default:
+		LPCmodSettings->OSsettings.backgroundColorPreset = 0;
+		break;
+	}
     LPCmodSettings->OSsettings.enableNetwork = 1;
     LPCmodSettings->OSsettings.useDHCP = 1;
     LPCmodSettings->OSsettings.staticIP[0] = 192;
@@ -127,7 +137,9 @@ void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings){
 
 //Probes CPLD for chip revision and return a single byte ID.
 u16 LPCMod_HW_rev(void){
-    return ReadFromIO(SYSCON_REG);
+	u16 returnValue = ReadFromIO(SYSCON_REG);
+
+    return returnValue;
 }
 
 void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct){
@@ -263,16 +275,18 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStr
 
         //Numerical values
         settingsStruct->settingsPtrArray[11] =
-        &(tempLPCmodSettings->OSsettings.fanSpeed);
+        &(tempLPCmodSettings->OSsettings.backgroundColorPreset);
         settingsStruct->settingsPtrArray[12] =
-        &(tempLPCmodSettings->OSsettings.bootTimeout);
+        &(tempLPCmodSettings->OSsettings.fanSpeed);
         settingsStruct->settingsPtrArray[13] =
-        &(tempLPCmodSettings->LCDsettings.nbLines);
+        &(tempLPCmodSettings->OSsettings.bootTimeout);
         settingsStruct->settingsPtrArray[14] =
-        &(tempLPCmodSettings->LCDsettings.lineLength);
+        &(tempLPCmodSettings->LCDsettings.nbLines);
         settingsStruct->settingsPtrArray[15] =
-        &(tempLPCmodSettings->LCDsettings.backlight);
+        &(tempLPCmodSettings->LCDsettings.lineLength);
         settingsStruct->settingsPtrArray[16] =
+        &(tempLPCmodSettings->LCDsettings.backlight);
+        settingsStruct->settingsPtrArray[17] =
         &(tempLPCmodSettings->LCDsettings.contrast);
         
 

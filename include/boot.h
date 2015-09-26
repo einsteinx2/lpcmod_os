@@ -370,7 +370,8 @@ typedef struct _OSsettings {
     u8    TSOPhide;           //Hide boot from TSOP option in icon menu when set.
     u8    runBankScript;      //Will execute script at BIOS bank boot.
     u8    runBootScript;      //Will execute script at OS boot.
-    u8    reserved1[9];
+    u8	  backgroundColorPreset;
+    u8    reserved1[8];
     char    biosName0[21];        //512KB bank name. 20 characters max to properly display on LCD.
     char    biosName1[21];        //256KB bank name
     char    biosName2[21];        //Reserved for future use.
@@ -472,6 +473,7 @@ u8 mbVersion;
 
 //Global to hide code when running in XBE without modchip detected.
 u16 fHasHardware;
+u8 fSpecialEdition;
 
 
 //Globals to save value of LPC register
