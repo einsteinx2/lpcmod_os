@@ -21,6 +21,7 @@
 #include "consts.h"
 #include "stdint.h"
 #include "cromwell_types.h"
+#include "memory_layout.h"
 
 
 unsigned int cromwell_config;
@@ -503,6 +504,7 @@ bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash to
 
 //Global for convenience.
 unsigned char *videosavepage;
+unsigned char refreshIconMenu;
 //void * gobalGenericPtr;
 
 u8 * scriptSavingPtr;

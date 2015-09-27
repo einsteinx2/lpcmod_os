@@ -54,9 +54,9 @@ void toggleEN5V(u8 value){
 }
 
 void setLCDContrast(u8 value){
-    float fBackLight=((float)value)/100.0f;
-    fBackLight*=127.0f;
-    u8 newValue=(u8)fBackLight;
+    float fContrast=((float)value)/100.0f;
+    fContrast*=127.0f;
+    u8 newValue=(u8)fContrast;
     if (newValue==63) newValue=64;
     WriteToIO(LCD_CT, newValue);
 }

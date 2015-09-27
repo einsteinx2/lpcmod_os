@@ -147,7 +147,7 @@ extern void BootResetAction ( void ) {
     int bootScriptSize = -1, res, dcluster;
     u32 cpuSpeed;
     _LPCmodSettings *tempLPCmodSettings;
-    OBJECT_FLASH of;
+    OBJECT_FLASH bootFlash;
     FATXPartition *partition;
     FATXFILEINFO fileinfo;
     // A bit hacky, but easier to maintain.
@@ -170,7 +170,7 @@ extern void BootResetAction ( void ) {
     //gobalGenericPtr = NULL;
     scriptSavingPtr = NULL;
 
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    bootFlash.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
     
     xF70ELPCRegister = 0x03;       //Assume no control over the banks but we are booting from bank3
     x00FFLPCRegister = ReadFromIO(XODUS_CONTROL);       //Read A15 and D0 states.
@@ -249,8 +249,8 @@ extern void BootResetAction ( void ) {
 		fHasHardware = SYSCON_ID_V1;
 nextStepXBLASTV1:
         //Check which flash chip is detected by system.
-        BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
-        if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
+        BootFlashGetDescriptor(&bootFlash, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
+        if(bootFlash.m_bManufacturerId == 0xbf && bootFlash.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
             debugSPIPrint("XBlast Lite V1 flash chip detected. We booted from LPC indeed.");
             //Make sure we'll be reading from OS Bank
             switchOSBank(BNKOS);
@@ -267,8 +267,8 @@ nextStepXBLASTV1:
        debugSPIPrint("Aladdin XBlast detected on LPC bus.");
        sprintf(modName,"%s", "Aladdin XBlast");
        //Check which flash chip is detected by system.
-       BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
-       if(of.m_bManufacturerId == 0xbf && of.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
+       BootFlashGetDescriptor(&bootFlash, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]);
+       if(bootFlash.m_bManufacturerId == 0xbf && bootFlash.m_bDeviceId == 0x5b){     //If we detected a SST49LF080A
            debugSPIPrint("Aladdin XBlast flash chip detected. We booted from LPC indeed.");
            //Make sure we'll be reading from OS Bank
            switchOSBank(BNKOS);
@@ -516,7 +516,7 @@ nextStepXBLASTV1:
         );
     }
     // paint the backdrop
-    printMainMenuHeader(&of, modName, fHasHardware, cpuSpeed);
+    printMainMenuHeader(&bootFlash, modName, fHasHardware, cpuSpeed);
 
     // set Ethernet MAC address from EEPROM
     {
@@ -555,7 +555,7 @@ nextStepXBLASTV1:
             debugSPIPrint("\"ìcons.jpg\" loaded. Moving on to \"backdrop.jpg\".");
         if(!LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg")){
             debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.");
-            printMainMenuHeader(&of, modName, fHasHardware, cpuSpeed);
+            printMainMenuHeader(&bootFlash, modName, fHasHardware, cpuSpeed);
     	}
 
         if(cromwell_config==XROMWELL && fHasHardware != SYSCON_ID_V1 && fHasHardware != SYSCON_ID_XT){
@@ -627,7 +627,7 @@ nextStepXBLASTV1:
 
 
     //Debug routine to (hopefully) identify the i2c eeprom on a Xecuter 3.
-//    u8 *videosavepage = malloc(FB_SIZE);
+    videosavepage = malloc(FB_SIZE);
 //    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
 //    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 //    printk("\n\n\n\n");
@@ -651,7 +651,7 @@ nextStepXBLASTV1:
             if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS){
                 debugSPIPrint("No FATX detected on %s HDD.", i ? "Slave" : "Master");
                 // We save the complete framebuffer to memory (we restore at exit)
-                videosavepage = malloc(FB_SIZE);
+                //videosavepage = malloc(FB_SIZE);
                 memcpy(videosavepage,(void*)FB_START,FB_SIZE);
                 char ConfirmDialogString[50];
                 sprintf(ConfirmDialogString, "               Format new drive (%s)?", i ? "slave":"master");
@@ -671,7 +671,7 @@ nextStepXBLASTV1:
                     debugSPIPrint("HDD format done.");
                 }
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
-                free(videosavepage);
+                //free(videosavepage);
             }
         }
     }
@@ -680,10 +680,16 @@ nextStepXBLASTV1:
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     debugSPIPrint("Starting IconMenu.");
+
     while(IconMenu())
-        IconMenuInit();
+    {
+		ClearScreen();
+		printMainMenuHeader(&bootFlash, modName, fHasHardware, cpuSpeed);
+        //IconMenuInit();
+        //repositionIconPtrs();
+    }
     //Good practice.
-    free(videosavepage);
+    //free(videosavepage);
 
     //Should never come back here.
     while(1);

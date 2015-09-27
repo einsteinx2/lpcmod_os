@@ -213,8 +213,10 @@ bool IconMenu(void) {
     nTempCursorX=VIDEO_CURSOR_POSX;
     nTempCursorY=vmode.height-80;
     
+    refreshIconMenu = false;
+
     // We save the complete framebuffer to memory (we restore at exit)
-    videosavepage = malloc(FB_SIZE);
+    //videosavepage = malloc(FB_SIZE);
     memcpy(videosavepage,(void*)FB_START,FB_SIZE);
     
     VIDEO_CURSOR_POSX=((252+nModeDependentOffset)<<2);
@@ -271,8 +273,6 @@ bool IconMenu(void) {
                     if(lastVisibleIcon->nextIcon != NULL) {
                         firstVisibleIcon = firstVisibleIcon->nextIcon;    
                     }
-                    //As all the icons have moved, we need to refresh the entire page.
-                    memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 }
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 selectedIcon = selectedIcon->nextIcon;
@@ -288,8 +288,6 @@ bool IconMenu(void) {
                     if(firstVisibleIcon->previousIcon != NULL) {
                         firstVisibleIcon = firstVisibleIcon->previousIcon;
                     }
-                    //As all the icons have moved, we need to refresh the entire page.
-                    memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 }
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 selectedIcon = selectedIcon->previousIcon;
@@ -337,6 +335,13 @@ bool IconMenu(void) {
             }
             //Icon selected - invoke function pointer.
             if (selectedIcon->functionPtr!=NULL) selectedIcon->functionPtr(selectedIcon->functionDataPtr);
+
+            if(refreshIconMenu)
+            {
+            	//reloadUI = 0;
+            	goto reloadIconMenu;
+            }
+
             //If we come back to this menu, make sure we are redrawn, and that we replace the saved video page
             changed=1;
             //TODO: fix background change color when returning to IconMenu.
@@ -344,7 +349,10 @@ bool IconMenu(void) {
         }
 
         if (changed) {
-            BootVideoClearScreen(&jpegBackdrop, nTempCursorY, VIDEO_CURSOR_POSY+1);
+        	if(changed == 1)
+        	{
+        		BootVideoClearScreen(&jpegBackdrop, nTempCursorY, VIDEO_CURSOR_POSY+1);
+        	}
             IconMenuDraw(nModeDependentOffset, nTempCursorY);
             //LCD string print.
             if(xLCD.enable == 1){
@@ -367,6 +375,9 @@ bool IconMenu(void) {
         }
         
     }
+reloadIconMenu:
+    //freeIconMenuAllocMem();
+    //free(videosavepage);
     return 1;   //Always return 1 to stay in while loop in BootResetAction.
 }
 

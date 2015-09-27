@@ -24,6 +24,9 @@ void toggleBGColor(void * itemStr)
 	BootVideoInitJPEGBackdropBuffer(&jpegBackdrop);
 	//Screen will be refreched in TextMenu main routine.
 	bgColorString((char *)itemStr);
+
+	//Refresh IconMenu too
+	refreshIconMenu = 1;
 }
 
 void bgColorString(char * stringOut)
