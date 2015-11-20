@@ -2,6 +2,8 @@
 
 This is the code repository for the LPCMod's Xbox Modchip "OS".
 This code is based on the excellent Gentoox Loader software which is based on Cromwell.
+#### This software contains no copyrighted code ####
+#### This software cannot circumvent security mechanism of an Xbox console ####
 
 ### Required setup to build ###
 
