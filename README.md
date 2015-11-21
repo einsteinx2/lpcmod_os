@@ -1,6 +1,6 @@
 # README #
 
-This is the code repository for the LPCMod's Xbox Modchip "OS".
+This is the code repository for the XBlast's Xbox Legal "OS".
 This code is based on the excellent Gentoox Loader software which is based on Cromwell.
 #### This software contains no copyrighted code ####
 #### This software cannot circumvent security mechanism of an Xbox console ####
@@ -32,20 +32,20 @@ There is no code size protection inside the 256KB range. When building the image
 
 This project is available in both "BIOS" and "XBE"(Xbox executable) form. The features for the 2 versions are not all the same. Generally speaking, the XBE version contains less feature. 
 
-Also note that this software can detect if a modchip is inserted onto the LPC port. Certain options specifically related to XBlast Mod will not be available if the proper hardware is not detected. However, HD44780 LCD ouput is supported on the whole range of SmartXX modchips and on Xecuter 3(CE).
+Also note that this software can detect if a firmware replacement device is inserted onto the LPC port. Certain options specifically related to XBlast Mod will not be available if the proper hardware is not detected. However, HD44780 LCD ouput is supported on the whole range of SmartXX devices and on Xecuter 3(CE).
 
 Notable feature available on both versions are:
 
 * Change video settings (includes DVD,Game and Video region).
 * 128MB RAM tester
 * Reset user settings in Xbox EEPROM
-* Flash modchip/TSOP with image from HDD/CD/HTTP (limited to current bank on non XBlast mod)
+* Flash LPC/TSOP with image from HDD/CD/HTTP (limited to current bank on non XBlast mod)
 * Lock/Unlock HDD, Display HDD info, format drives (64KB clusters supported)
 
 Notable features only available in BIOS version
 
 * LCD ouput supported on all SmartXX/Xecuter3 and XBlast mod
-* Save modchip settings and backup eeprom to flash (not supported on SmartXX)
+* Save OS settings and backup eeprom to flash (not supported on SmartXX)
 
 Notable features only available on XBlast mod
 
