@@ -1,5 +1,3 @@
-#ifndef _BFMBOOTMENUACTIONS_H_
-#define _BFMBOOTMENUACTIONS_H_
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -8,6 +6,9 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+ 
+#ifndef _BFMBOOTMENUACTIONS_H_
+#define _BFMBOOTMENUACTIONS_H_
 
 #define METOOBFM_MAGIC1 0x314d4642
 
