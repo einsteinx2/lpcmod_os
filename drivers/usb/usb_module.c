@@ -94,7 +94,9 @@ static int test_thread(void *x)
     } while (!signal_pending(current));
 
     usbprintk("hub_thread exiting\n");
-    complete_and_exit(&testd_exited, 0);    
+    complete_and_exit(&testd_exited, 0);
+
+    return 0;
 }
 /*------------------------------------------------------------------------*/ 
 

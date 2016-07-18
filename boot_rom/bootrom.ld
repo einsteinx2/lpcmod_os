@@ -32,6 +32,7 @@ SECTIONS {
         _ram_location = .;
         _start_ramcopy = _end_rom;
         *(.text);
+        *(.text.unlikely);
         _start_checksum = _start_ramcopy - LOW_ROM;
     }
 
@@ -58,6 +59,8 @@ SECTIONS {
         _ebss = . ;
         _heap = . ;
     }
+    
+    /DISCARD/ : { *(.eh_frame) }
 
         /* We need to copy the .data section to to upper memory */
 

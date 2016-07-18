@@ -212,7 +212,7 @@ void BootInterruptsWriteIdt() {
             ptspmi[n].m_wHandlerLinearAddressHigh16=(u16)(((u32)isrprep[n1].m_dwpVector)>>16);
             n1++;
         } else { // otherwise default handler (pretty useless, but will catch it)
-            ptspmi[n].m_wHandlerHighAddressLow16=(u16)IntHandlerUnused;
+            ptspmi[n].m_wHandlerHighAddressLow16=(u16)((u32)IntHandlerUnused);
             ptspmi[n].m_wHandlerLinearAddressHigh16=(u16)(((u32)IntHandlerUnused)>>16);
         }
     }

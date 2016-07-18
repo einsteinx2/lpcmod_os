@@ -202,7 +202,7 @@ void BootMenuEntry(void *entry) {
 */
 void DrawChildTextMenu(void *menu) {
     TEXTMENU * menuPtr = (TEXTMENU*)menu;
-    TextMenu((TEXTMENU*)menu);
+    TextMenu(menuPtr, menuPtr->firstMenuItem);
     //freeTextMenuAllocMem(menuPtr);
 }
 

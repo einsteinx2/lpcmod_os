@@ -48,5 +48,5 @@ typedef struct {
 xbox_tv_encoding DetectVideoStd(void);
 xbox_av_type DetectAvType(void);
 
-void SetGPURegister(const GPU_PARAMETER* gpu, unsigned char *pbRegs);
+void SetGPURegister(const GPU_PARAMETER* gpu, volatile unsigned char * pbRegs);
 #endif

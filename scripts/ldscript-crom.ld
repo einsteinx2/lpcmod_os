@@ -22,6 +22,7 @@ SECTIONS {
 	.text LOW_ROM : AT ( 0 ){
 		_start_low_rom = . ;
 		*(.text);
+		*(.text.unlikely);
 		_end_low_rom = . ;
 	}
 
@@ -64,6 +65,8 @@ SECTIONS {
 		_ebss = . ;
 		_heap = . ;
 	}
+	
+	/DISCARD/ : { *(.eh_frame) }
 	
 	_end_complete_rom = SIZEOF(.text) + SIZEOF(.rodata) + SIZEOF(.data) + SIZEOF(.bss);
 

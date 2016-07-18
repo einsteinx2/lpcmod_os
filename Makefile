@@ -1,9 +1,11 @@
-CC	= gcc-3.3.gcc-opt
-
-#CC	= gcc-3.3
+#CC	= gcc-3.3 #Left for legacy purpose
+PREFIX = i686-linux-gnu-
+CC	= ${PREFIX}gcc  #Builds find using gcc 5.4.0 on a x86 Ubuntu system 
 
 # prepare check for gcc 3.3, $(GCC_3.3) will either be 0 or 1
 GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)
+
+GCC_4.2 := $(shell expr `$(CC) -dumpversion` \>= 4.2)
 
 ETHERBOOT := yes
 INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/cdrom \
@@ -20,16 +22,20 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 CROM_CFLAGS=$(INCLUDE)
 
 #You can override these if you wish.
-CFLAGS= -O2 -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type
-#CFLAGS= -Os -march=pentium -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type
+CFLAGS= -Os -march=pentium -m32 -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type
 
 # add the option for gcc 3.3 only, again, non-overridable
 ifeq ($(GCC_3.3), 1)
 CROM_CFLAGS += -fno-zero-initialized-in-bss
 endif
 
-LD      = ld
-OBJCOPY = objcopy
+# add the option for gcc 4.2 only, again, non-overridable
+ifeq ($(GCC_4.2), 1)
+CFLAGS += -fno-stack-protector
+endif
+
+LD      = ${PREFIX}ld
+OBJCOPY = ${PREFIX}objcopy
 
 export CC
 
@@ -40,8 +46,11 @@ ifeq ($(ETHERBOOT), yes)
 ETH_SUBDIRS = etherboot
 CROM_CFLAGS	+= -DETHERBOOT
 ETH_INCLUDE = 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include	
-ETH_CFLAGS  = 	-O2 -march=pentium -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
-#ETH_CFLAGS  = 	-Os -march=pentium -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -Ui386
+ETH_CFLAGS  = 	-Os -march=pentium -m32 -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe
+# add the option for gcc 4.2 only, again, non-overridable
+ifeq ($(GCC_4.2), 1)
+ETH_CFLAGS += -fno-stack-protector
+endif
 endif
 
 LDFLAGS-ROM     = -s -S -T $(TOPDIR)/scripts/ldscript-crom.ld
@@ -201,7 +210,9 @@ OBJECTS-CROM += $(TOPDIR)/obj/elf.o
 endif
 
 #SUBDIRS += networktools #tcpListener
-OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,dns.o ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+#New stack WIP
+#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o def.o inet_chksum.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
 OBJECTS-CROM += $(OBJECTS-LWIP)
 
 RESOURCES = $(TOPDIR)/obj/backdrop.elf
@@ -254,7 +265,7 @@ clean:
 	mkdir -p $(TOPDIR)/bin
 
 obj/image-crom.bin:
-	${LD} -o obj/image-crom.elf ${OBJECTS-CROM} ${RESOURCES} ${LDFLAGS-ROM}
+	${LD} -o obj/image-crom.elf ${OBJECTS-CROM} ${RESOURCES} ${LDFLAGS-ROM} -Map $(TOPDIR)/obj/image-crom.map
 	${OBJCOPY} --output-target=binary --strip-all obj/image-crom.elf $@
 
 vmlboot: ${OBJECTS-VML}
@@ -263,7 +274,7 @@ vmlboot: ${OBJECTS-VML}
 
 ifeq ($(ETHERBOOT), yes)
 boot_eth/ethboot: ${OBJECTS-ETH} obj/image-crom.bin
-	${LD} -o obj/ethboot.elf ${OBJECTS-ETH} -b binary obj/image-crom.bin ${LDFLAGS-ETHBOOT}
+	${LD} -o obj/ethboot.elf ${OBJECTS-ETH} -b binary obj/image-crom.bin ${LDFLAGS-ETHBOOT} -Map $(TOPDIR)/obj/ethboot.map
 	${OBJCOPY} --output-target=binary --strip-all obj/ethboot.elf obj/ethboot.bin
 	perl -I boot_eth boot_eth/mknbi.pl --output=$@ obj/ethboot.bin
 endif
@@ -273,7 +284,7 @@ xromwell.xbe: ${OBJECTS-XBE}
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/xbeboot.elf $(TOPDIR)/xbe/XBlast\ OS.xbe
 
 cromwell.bin:
-	${LD} -o $(TOPDIR)/obj/2lbimage.elf ${OBJECTS-ROMBOOT} ${LDFLAGS-ROMBOOT}
+	${LD} -o $(TOPDIR)/obj/2lbimage.elf ${OBJECTS-ROMBOOT} ${LDFLAGS-ROMBOOT} -Map $(TOPDIR)/obj/2lbimage.map
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/2lbimage.elf $(TOPDIR)/obj/2blimage.bin
 
 # This is a local executable, so don't use a cross compiler...

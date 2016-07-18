@@ -42,7 +42,7 @@ void bgColorString(char * stringOut)
 		return;
 	}
 
-	sprintf(stringOut, BackgroundColor[LPCmodSettings.OSsettings.backgroundColorPreset]);
+	sprintf(stringOut, "%s", BackgroundColor[LPCmodSettings.OSsettings.backgroundColorPreset]);
 }
 
 void incrementFanSpeed(void * itemStr){
