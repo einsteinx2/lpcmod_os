@@ -504,10 +504,10 @@ err_t dhcp_start(struct netif *netif)
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_start(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
 
   if (dhcp == NULL) {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
+    /*LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("*/printk("\n     dhcp_start(): starting new DHCP client\n")/*)*/;
     dhcp = mem_malloc(sizeof(struct dhcp));
     if (dhcp == NULL) {
-      LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): could not allocate dhcp\n"));
+      /*LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("*/printk("\n     dhcp_start(): could not allocate dhcp\n")/*)*/;
       netif->flags &= ~NETIF_FLAG_DHCP;
       return ERR_MEM;
     }
@@ -516,7 +516,7 @@ err_t dhcp_start(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): allocated dhcp"));
     dhcp->pcb = udp_new();
     if (dhcp->pcb == NULL) {
-      LWIP_DEBUGF(DHCP_DEBUG  | DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
+     /* LWIP_DEBUGF(DHCP_DEBUG  | DBG_TRACE, ("*/printk("\n     dhcp_start(): could not obtain pcb\n")/*)*/;
       mem_free((void *)dhcp);
       dhcp = NULL;
       netif->flags &= ~NETIF_FLAG_DHCP;
@@ -527,12 +527,13 @@ err_t dhcp_start(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): created new udp pcb\n"));
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
   } else {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE | 3, ("dhcp_start(): restarting DHCP configuration\n"));
+    /*LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE | 3, ("*/printk("\n     dhcp_start(): restarting DHCP configuration\n")/*)*/;
   }
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
   if (result != ERR_OK) {
     /* free resources allocated above */
+	  printk("\n     dhcp_start(): dhcp_discover failed.");
     dhcp_stop(netif);
   }
   return result;

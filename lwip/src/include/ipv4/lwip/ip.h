@@ -114,12 +114,12 @@ struct ip_hdr {
 #define IP_MF 0x2000        /* more fragments flag */
 #define IP_OFFMASK 0x1fff   /* mask for fragmenting bits */
   /* time to live / protocol*/
-  PACK_STRUCT_FIELD(u16_t _ttl_proto);
+  u16_t _ttl_proto;
   /* checksum */
-  PACK_STRUCT_FIELD(u16_t _chksum);
+  u16_t _chksum;
   /* source and destination IP addresses */
-  PACK_STRUCT_FIELD(struct ip_addr src);
-  PACK_STRUCT_FIELD(struct ip_addr dest); 
+  struct ip_addr src;
+  struct ip_addr dest;
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES

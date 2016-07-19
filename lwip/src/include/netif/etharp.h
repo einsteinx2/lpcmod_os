@@ -43,37 +43,37 @@
 #endif
 PACK_STRUCT_BEGIN
 struct eth_addr {
-  PACK_STRUCT_FIELD(u8_t addr[6]);
+  u8_t addr[6];
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 
 PACK_STRUCT_BEGIN
 struct eth_hdr {
-  PACK_STRUCT_FIELD(struct eth_addr dest);
-  PACK_STRUCT_FIELD(struct eth_addr src);
-  PACK_STRUCT_FIELD(u16_t type);
+  struct eth_addr dest;
+  struct eth_addr src;
+  u16_t type;
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 
 PACK_STRUCT_BEGIN
 /** the ARP message */
 struct etharp_hdr {
-  PACK_STRUCT_FIELD(struct eth_hdr ethhdr);
-  PACK_STRUCT_FIELD(u16_t hwtype);
-  PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FIELD(u16_t _hwlen_protolen);
-  PACK_STRUCT_FIELD(u16_t opcode);
-  PACK_STRUCT_FIELD(struct eth_addr shwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr sipaddr);
-  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr dipaddr);
+  struct eth_hdr ethhdr;
+  u16_t hwtype;
+  u16_t proto;
+  u16_t _hwlen_protolen;
+  u16_t opcode;
+  struct eth_addr shwaddr;
+  struct ip_addr sipaddr;
+  struct eth_addr dhwaddr;
+  struct ip_addr dipaddr;
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 
 PACK_STRUCT_BEGIN
 struct ethip_hdr {
-  PACK_STRUCT_FIELD(struct eth_hdr eth);
-  PACK_STRUCT_FIELD(struct ip_hdr ip);
+  struct eth_hdr eth;
+  struct ip_hdr ip;
 };
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
