@@ -1,7 +1,9 @@
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "netif/etharp.h"
-#include "lwip/tcp.h"
+#include "lwip/tcp.h" //old stack
+//#include "lwip/tcp_impl.h" //new stack WIP
+#include "lwip/dhcp.h"
 #include "boot.h"
 
 struct eth_addr ethaddr = { 0, 0x0d, 0xff, 0xff, 0, 0 };
@@ -147,7 +149,7 @@ run_lwip (unsigned char flashType) {
     netif = netif_find("eb");   //Trying to find previously configured network interface
 
     if(netif == NULL){
-        debugSPIPrint("No configured network interface found. Creating one.");
+        /*debugSPIPrint(*/printk("\n       No configured network interface found. Creating one.");
         netif = (struct netif *)malloc(sizeof(struct netif));
         //Will never be removed for entire duration of program execution so no free()...
 
@@ -159,7 +161,7 @@ run_lwip (unsigned char flashType) {
         netif_add (netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
     }
     else{
-        debugSPIPrint("Found previously configured network interface.");
+        /*debugSPIPrint*/printk("\n       Found previously configured network interface.");
     }
     if (LPCmodSettings.OSsettings.useDHCP){
         //Re-run DHCP discover anyways just in case lease was revoked.
