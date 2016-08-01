@@ -34,13 +34,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <SPI.h>
 
-char buf;
-//volatile byte posCurrentLine;
-//No circular buffer for now.
-//volatile byte posSPIin;
-//volatile byte posSerialout;
-//volatile boolean sendNewLine;
-volatile boolean sendCharacter;
+#define ringBufferSize 1536  //1.5KB buffer
+unsigned char buf[ringBufferSize];
+
+unsigned short dataInPos = 0;
+unsigned short dataOutPos = 0;
 
 void setup (void)
 {
@@ -54,13 +52,6 @@ void setup (void)
   
   // turn on SPI in slave mode
   SPCR |= _BV(SPE);
-  
-  // get ready for an interrupt 
-  //posCurrentLine = 0;   // buffer empty
-  //posSPIin = 0;
-  //posSerialout = 0;
-  //sendNewLine = false;
-  sendCharacter = false;
 
   // now turn on interrupts
   SPI.attachInterrupt();
@@ -71,21 +62,29 @@ void setup (void)
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-    buf = SPDR;  // grab byte from SPI Data Register
-    sendCharacter = true;
+    buf[dataInPos] = SPDR == '\0' ? '\n' : SPDR;  // grab byte from SPI Data Register
+    dataInPos = (dataInPos + 1) % ringBufferSize;
 }
 
 // main loop - wait for flag set in interrupt routine
 void loop (void)
 {
-  if (sendCharacter)
+  unsigned short writeLength;
+  if(dataOutPos != dataInPos)
   {
-    Serial.print(buf);
-    if(buf == '\0'){
-        Serial.println();
+    if(dataInPos < dataOutPos) //Roll over occured since last occurence
+    {
+      writeLength = ringBufferSize - dataOutPos;
+      dataOutPos = 0;
     }
-    sendCharacter = false;
-  }
+    else
+    {
+      writeLength = dataInPos - dataOutPos;
+      dataOutPos = dataInPos;
+    }
     
+    Serial.write(buf + dataOutPos, writeLength);   
+    
+  } 
 }
 
