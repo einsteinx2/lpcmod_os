@@ -34,15 +34,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <SPI.h>
 
-#define ringBufferSize 1536  //1.5KB buffer
+#define ringBufferSize 1024  //1.5KB buffer
 unsigned char buf[ringBufferSize];
 
 unsigned short dataInPos = 0;
 unsigned short dataOutPos = 0;
+bool ringBufRollOver = false;
 
 void setup (void)
 {
-  Serial.begin(115200);   // print on terminal
+  Serial.begin(250000);   // print on terminal
   Serial.println("XBlast SPI debugger");
   // have to send on master in, *slave out*
   pinMode(MISO, OUTPUT);
@@ -62,16 +63,38 @@ void setup (void)
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-    buf[dataInPos] = SPDR == '\0' ? '\n' : SPDR;  // grab byte from SPI Data Register
-    dataInPos = (dataInPos + 1) % ringBufferSize;
+    if(SPDR == '\0')
+    {
+      buf[dataInPos] = '\r';
+      dataInPos++;
+      if(dataInPos == ringBufferSize)
+      {
+        dataInPos = 0;
+        ringBufRollOver = true;
+      }
+      buf[dataInPos] = '\n';
+    }
+    else
+    {
+      buf[dataInPos] = SPDR;
+    }
+    dataInPos++;
+    if(dataInPos == ringBufferSize)
+    {
+        dataInPos = 0;
+        ringBufRollOver = true;
+    }
 }
 
 // main loop - wait for flag set in interrupt routine
 void loop (void)
 {
   unsigned short writeLength;
-  if(dataOutPos != dataInPos)
+  unsigned short tempPos;
+  if((dataOutPos != dataInPos) || (dataOutPos == 0 && dataInPos == 0 && ringBufRollOver == true))
   {
+    ringBufRollOver = false;
+    tempPos = dataOutPos;
     if(dataInPos < dataOutPos) //Roll over occured since last occurence
     {
       writeLength = ringBufferSize - dataOutPos;
@@ -83,7 +106,7 @@ void loop (void)
       dataOutPos = dataInPos;
     }
     
-    Serial.write(buf + dataOutPos, writeLength);   
+    Serial.write(buf + tempPos, writeLength);   
     
   } 
 }
