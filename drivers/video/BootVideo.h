@@ -14,19 +14,19 @@ enum {
 typedef struct {
         // fill on entry
     int m_nVideoModeIndex; // fill on entry to BootVgaInitializationKernel(), eg, VIDEO_MODE_800x600
-    u8 m_fForceEncoderLumaAndChromaToZeroInitially; // fill on entry to BootVgaInitializationKernel(), 0=mode change visible immediately, !0=initially forced to black raster
-    u32 m_dwFrameBufferStart; // frame buffer start address, set to zero to use default
-    u8 * volatile m_pbBaseAddressVideo; // base address of video, usually 0xfd000000
+    unsigned char m_fForceEncoderLumaAndChromaToZeroInitially; // fill on entry to BootVgaInitializationKernel(), 0=mode change visible immediately, !0=initially forced to black raster
+    unsigned int m_dwFrameBufferStart; // frame buffer start address, set to zero to use default
+    unsigned char * volatile m_pbBaseAddressVideo; // base address of video, usually 0xfd000000
         // filled on exit
-    u32 width; // everything else filled by BootVgaInitializationKernel() on return
-    u32 height;
-    u32 xmargin;
-    u32 ymargin;
-    u8 m_bAvPack;
-    u32 m_dwVideoFadeupTimer;
+    unsigned int width; // everything else filled by BootVgaInitializationKernel() on return
+    unsigned int height;
+    unsigned int xmargin;
+    unsigned int ymargin;
+    unsigned char m_bAvPack;
+    unsigned int m_dwVideoFadeupTimer;
     double hoc;
     double voc;
-    u8 m_bBPP;
+    unsigned char m_bBPP;
 } CURRENT_VIDEO_MODE_DETAILS;
 
 void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode);

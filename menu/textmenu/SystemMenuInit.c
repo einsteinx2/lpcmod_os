@@ -7,11 +7,13 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
+#include "MenuInits.h"
+#include "boot.h"
 #include "BootIde.h"
-#include "TextMenu.h"
 #include "SystemMenuActions.h"
 #include "lpcmod_v1.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 TEXTMENU *SystemMenuInit(void) {
     TEXTMENUITEM *itemPtr;

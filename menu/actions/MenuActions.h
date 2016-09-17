@@ -15,7 +15,7 @@ void AdvancedMenu(void *menu);
 //Used to display child menus
 void DrawChildTextMenu(void *menu);
 void ResetDrawChildTextMenu(void *menu);
-void DrawLargeHDDTextMenu(u8 drive);
+void DrawLargeHDDTextMenu(unsigned char drive);
 
 void SetWidescreen(void *);
 void SetVideoStandard(void *);
@@ -39,10 +39,12 @@ void BootFromEtherboot(void *);
 
 // Booting Original Bios
 void assertBankScriptExecTSOPBoot(void * data);
-void BootOriginalBios(u8 bank);
+void BootOriginalBios(unsigned char bank);
 
 // Booting 256k Modbios
 void assertBankScriptExecBankBoot(void * data);
-void BootModBios(u8 bank);
+void BootModBios(unsigned char bank);
+
+void UIFooter(void);
 
 #endif

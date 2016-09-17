@@ -17,7 +17,7 @@
 #ifndef _SHA1_H_
 #define _SHA1_H_  
 
-#include <stdint.h>
+#include "stdint.h"
 /*
  * If you do not have the ISO standard stdint.h header file, then you
  * must typdef the following:
@@ -55,9 +55,9 @@ typedef struct SHA1Context
     int_least16_t Message_Block_Index;
     uint8_t Message_Block[64];      /* 512-bit message blocks      */
 
-    int Computed;               /* Is the digest computed?         */
-    int Corrupted;             /* Is the message digest corrupted? */
-} SHA1Context;
+    int32_t Computed;               /* Is the digest computed?         */
+    int32_t Corrupted;             /* Is the message digest corrupted? */
+}__attribute__ ((packed)) SHA1Context;
 
 /*
  *  Function Prototypes

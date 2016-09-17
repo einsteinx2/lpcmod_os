@@ -1,7 +1,7 @@
 #include "boot.h"
 #include "config.h"
 #include "cpu.h"
-
+#include "lib/time/timeManagement.h"
 
 extern void cpuid(int op, int *eax, int *ebx, int *ecx, int *edx)
 {
@@ -71,7 +71,7 @@ double RDTSC(void){
 
 extern unsigned long getCPUFreq(void){
     double Tcpu_fsb, Tcpu_result, Fcpu;
-    u32 Twin_fsb, Twin_result;
+    unsigned int Twin_fsb, Twin_result;
     unsigned long finalResult;
 
     Tcpu_fsb = RDTSC();

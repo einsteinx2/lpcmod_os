@@ -6,14 +6,18 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#include "MenuInits.h"
 #include "ModchipMenuActions.h"
-#include "TextMenu.h"
+#include "ResetMenuActions.h"
 #include "IconMenu.h"
 #include "lpcmod_v1.h"
 #include "boot.h"
 #include "LEDMenuActions.h"
 #include "lib/LPCMod/BootLCD.h"
-
+#include "string.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "menu/misc/OnScreenKeyboard.h"
+#include "menu/misc/ConfirmDialog.h"
 
 void decrementActiveBank(void * itemStr) {
     switch(LPCmodSettings.OSsettings.activeBank){
@@ -168,11 +172,11 @@ void resetSettings(void *whatever){
         return;
     //initialLPCModOSBoot(&LPCmodSettings);
     memset(&LPCmodSettings, 0xFF, sizeof(_LPCmodSettings));
-    SlowReboot();
+    SlowReboot(NULL);
 }
 
 void editBIOSName(void *bankID){
-    switch(*(u8 *)bankID){
+    switch(*(unsigned char *)bankID){
         case BNK512:
             OnScreenKeyboard(LPCmodSettings.OSsettings.biosName0, BIOSNAMEMAXLENGTH, 3, FULL_KEYBOARD);
             break;

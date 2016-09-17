@@ -104,11 +104,11 @@ typedef struct _riva_hw_state
   } RIVA_HW_STATE;
 
 struct riva_regs {
-           u8 attr[NUM_ATC_REGS];
-           u8 crtc[NUM_CRT_REGS];
-           u8 gra[NUM_GRC_REGS];
-           u8 seq[NUM_SEQ_REGS];
-           u8 misc_output;
+           unsigned char attr[NUM_ATC_REGS];
+           unsigned char crtc[NUM_CRT_REGS];
+           unsigned char gra[NUM_GRC_REGS];
+           unsigned char seq[NUM_SEQ_REGS];
+           unsigned char misc_output;
           RIVA_HW_STATE ext;
     void *encoder_regs;
 };

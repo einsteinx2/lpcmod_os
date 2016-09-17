@@ -88,11 +88,11 @@ static long bytes_out = 0;
 static uch *output_data;
 static unsigned long output_ptr = 0;
 
-static void *gzip_malloc(int size);
-static void gzip_free(void *where);
+void *gzip_malloc(int size);
+void gzip_free(void *where);
 
-static long free_mem_ptr;
-static long free_mem_end_ptr;
+long free_mem_ptr;
+long free_mem_end_ptr;
 
 #define INPLACE_MOVE_ROUTINE  0x1000
 #define LOW_BUFFER_START      0x2000
@@ -101,7 +101,7 @@ static long free_mem_end_ptr;
 
 #include "inflate.c"
 
-static void *gzip_malloc(int size)
+void *gzip_malloc(int size)
 {
     void *p;
 
@@ -119,7 +119,7 @@ static void *gzip_malloc(int size)
     return p;
 }
 
-static void gzip_free(void *where)
+void gzip_free(void *where)
 {    /* Don't care */
 }
 

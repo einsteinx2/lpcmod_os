@@ -38,8 +38,11 @@
 #include "../usb_wrapper.h"
 #include "hcd.h"
 #include "hub.h"
+#include "string.h"
 #define DEBUG
 #endif
+
+#include "lib/LPCMod/BootLPCMod.h"
 
 /* Wakes up khubd */
 //static spinlock_t hub_event_lock = SPIN_LOCK_UNLOCKED;
@@ -176,7 +179,7 @@ resubmit:
 
 /* USB 2.0 spec Section 11.24.2.3 */
 static inline int
-hub_clear_tt_buffer (struct usb_device *hub, u16 devinfo, u16 tt)
+hub_clear_tt_buffer (struct usb_device *hub, unsigned short devinfo, unsigned short tt)
 {
     return usb_control_msg (hub, usb_rcvctrlpipe (hub, 0),
         HUB_CLEAR_TT_BUFFER, USB_DIR_IN | USB_RECIP_OTHER,
@@ -285,7 +288,7 @@ static void hub_power_on(struct usb_hub *hub)
 }
 
 static int hub_hub_status(struct usb_hub *hub,
-        u16 *status, u16 *change)
+        unsigned short *status, unsigned short *change)
 {
     struct usb_device *dev = interface_to_usbdev (hub->intf);
     int ret;
@@ -307,7 +310,7 @@ static int hub_configure(struct usb_hub *hub,
 {
     struct usb_device *dev = interface_to_usbdev (hub->intf);
     struct device *hub_dev;
-    u16 hubstatus, hubchange;
+    unsigned short hubstatus, hubchange;
     unsigned int pipe;
     int maxp, ret;
     char *message;
@@ -699,7 +702,7 @@ static void hub_start_disconnect(struct usb_device *dev)
 }
 
 static int hub_port_status(struct usb_device *dev, int port,
-                   u16 *status, u16 *change)
+                   unsigned short *status, unsigned short *change)
 {
     struct usb_hub *hub = usb_get_intfdata (dev->actconfig->interface);
     int ret;
@@ -727,8 +730,8 @@ static int hub_port_wait_reset(struct usb_device *hub, int port,
                 struct usb_device *dev, unsigned int delay)
 {
     int delay_time, ret;
-    u16 portstatus;
-    u16 portchange;
+    unsigned short portstatus;
+    unsigned short portchange;
 
     for (delay_time = 0;
             delay_time < HUB_RESET_TIMEOUT;
@@ -843,7 +846,7 @@ static int hub_port_debounce(struct usb_device *hub, int port)
 {
     int ret;
     int delay_time, stable_count;
-    u16 portchange, portstatus;
+    unsigned short portchange, portstatus;
     unsigned connection;
 
     connection = 0;
@@ -879,7 +882,7 @@ static int hub_port_debounce(struct usb_device *hub, int port)
 }
 
 static void hub_port_connect_change(struct usb_hub *hubstate, int port,
-                    u16 portstatus, u16 portchange)
+                    unsigned short portstatus, unsigned short portchange)
 {
     struct usb_device *hub = interface_to_usbdev(hubstate->intf);
     struct usb_device *dev;
@@ -1007,10 +1010,10 @@ static void hub_events(void)
     struct list_head *tmp;
     struct usb_device *dev;
     struct usb_hub *hub;
-    u16 hubstatus;
-    u16 hubchange;
-    u16 portstatus;
-    u16 portchange;
+    unsigned short hubstatus;
+    unsigned short hubchange;
+    unsigned short portstatus;
+    unsigned short portchange;
     int i, ret;
     int m=0;
     /*

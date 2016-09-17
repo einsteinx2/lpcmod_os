@@ -7,9 +7,6 @@
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #include "little_bswap.h"
 #endif
-#if __BYTE_ORDER == __BIG_ENDIAN
-#include "big_bswap.h"
-#endif
 
 /* Make routines available to all */
 #define swap32(x)	__bswap_32(x)

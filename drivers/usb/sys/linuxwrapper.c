@@ -18,6 +18,7 @@
  */
 
 #include "../usb_wrapper.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 /* internal state */
 
@@ -127,7 +128,7 @@ int my_device_add(struct device *dev)
 {
     int n,found=0;
 //    printk("drv_num %i %p %p\n",drvs_num,m_drivers[0]->probe,m_drivers[1]->probe);
-    debugSPIPrint("drv_num %i %p %p\n",drvs_num,m_drivers[0]->probe,m_drivers[1]->probe);
+    debugSPIPrint("drv_num %i %p %p",drvs_num,m_drivers[0]->probe,m_drivers[1]->probe);
     if (dev->driver)
     {
         if (dev->driver->probe){
@@ -196,7 +197,7 @@ int my_schedule_timeout(int x)
 {
     int wait=1;
     x+=10; // safety
-    debugSPIPrint("schedule_timeout %i\n",x);
+    debugSPIPrint("schedule_timeout %i",x);
     while(x>0)
     {
         do_all_timers();
@@ -218,7 +219,7 @@ int my_schedule_timeout(int x)
 void my_wait_for_completion(struct completion *x)
 {
     int n=100;
-    debugSPIPrint("wait for completion\n");
+    debugSPIPrint("wait for completion");
     while(!x->done && (n>0))
     {
         do_all_timers();    
@@ -240,7 +241,7 @@ int my_pci_module_init(struct pci_driver *x)
     const struct pci_device_id *id=NULL;
     if (!pci_probe_dev)
     {
-        debugSPIPrint("PCI device not set!\n");
+        debugSPIPrint("PCI device not set!");
         return 0;
     }
     x->probe(dev, id);

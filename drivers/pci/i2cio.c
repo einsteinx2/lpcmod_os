@@ -7,16 +7,19 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "i2c.h"
 #include "boot.h"
 #include "BootFlash.h"
 #include "memory_layout.h"
+#include "lib/time/timeManagement.h"
+#include "string.h"
 
 /*
     WriteToSMBus()    by Lehner Franz (franz@caos.at)
     ReadfromSMBus() by Lehner Franz (franz@caos.at)
 */
 
-int WriteToSMBus(u8 Address,u8 bRegister,u8 Size,u32 Data_to_smbus)
+int WriteToSMBus(unsigned char Address,unsigned char bRegister,unsigned char Size,unsigned int Data_to_smbus)
 {
     int nRetriesToLive=50;
 
@@ -24,7 +27,7 @@ int WriteToSMBus(u8 Address,u8 bRegister,u8 Size,u32 Data_to_smbus)
 
     while(nRetriesToLive--) {
         
-        u8 b;
+        unsigned char b;
         unsigned int temp;
         
         IoOutputByte(I2C_IO_BASE+4, (Address<<1)|0);
@@ -52,13 +55,13 @@ int WriteToSMBus(u8 Address,u8 bRegister,u8 Size,u32 Data_to_smbus)
     
         switch (Size) {
             case 4:
-                IoOutputByte(I2C_IO_BASE+2, 0x1d);    // u32 modus
+                IoOutputByte(I2C_IO_BASE+2, 0x1d);    // unsigned int modus
                 break;
             case 2:
-                IoOutputByte(I2C_IO_BASE+2, 0x1b);    // u16 modus
+                IoOutputByte(I2C_IO_BASE+2, 0x1b);    // unsigned short modus
                 break;
             default:    // 1
-                IoOutputByte(I2C_IO_BASE+2, 0x1a);    // u8 modus
+                IoOutputByte(I2C_IO_BASE+2, 0x1a);    // unsigned char modus
                 break;
         }
 
@@ -80,14 +83,14 @@ int WriteToSMBus(u8 Address,u8 bRegister,u8 Size,u32 Data_to_smbus)
 
 
 
-int ReadfromSMBus(u8 Address,u8 bRegister,u8 Size,u32 *Data_to_smbus)
+int ReadfromSMBus(unsigned char Address,unsigned char bRegister,unsigned char Size,unsigned int *Data_to_smbus)
 {
     int nRetriesToLive=50;
     
     while(IoInputWord(I2C_IO_BASE+0)&0x0800) ;  // Franz's spin while bus busy with any master traffic
 
     while(nRetriesToLive--) {
-        u8 b;
+        unsigned char b;
         int temp;
         
         IoOutputByte(I2C_IO_BASE+4, (Address<<1)|1);
@@ -98,13 +101,13 @@ int ReadfromSMBus(u8 Address,u8 bRegister,u8 Size,u32 *Data_to_smbus)
                 
         switch (Size) {
             case 4:    
-                IoOutputByte(I2C_IO_BASE+2, 0x0d);    // u32 modus ?
+                IoOutputByte(I2C_IO_BASE+2, 0x0d);    // unsigned int modus ?
                 break;
             case 2:
-                IoOutputByte(I2C_IO_BASE+2, 0x0b);    // u16 modus
+                IoOutputByte(I2C_IO_BASE+2, 0x0b);    // unsigned short modus
                 break;
             default:
-                IoOutputByte(I2C_IO_BASE+2, 0x0a);    // u8
+                IoOutputByte(I2C_IO_BASE+2, 0x0a);    // unsigned char
                 break;
         }
 
@@ -150,18 +153,10 @@ int ReadfromSMBus(u8 Address,u8 bRegister,u8 Size,u32 *Data_to_smbus)
 /* ************************************************************************************************************* */
 
 
-
-int I2CWriteWordtoRegister(u8 bPicAddressI2cFormat,u8 bRegister ,u16 wDataToWrite)
-{
-    // int WriteToSMBus(u8 Address,u8 bRegister,u8 Size,u32 Data_to_smbus)
-    return WriteToSMBus(bPicAddressI2cFormat,bRegister,2,wDataToWrite);    
-}
-
-
 /* --------------------- Normal 8 bit operations -------------------------- */
 
 
-int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite)
+int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char bDataToWrite)
 {
     unsigned int temp;
     if (ReadfromSMBus(bPicAddressI2cFormat,bDataToWrite,1,&temp) != ERR_SUCCESS)
@@ -172,28 +167,28 @@ int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite)
 
 // transmit a word, no returned data from I2C device
 
-int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite)
+int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWrite)
 {
     return WriteToSMBus(bPicAddressI2cFormat,(wDataToWrite>>8)&0xff,1,(wDataToWrite&0xff));
 }
 
 
-int I2CWriteBytetoRegister(u8 bPicAddressI2cFormat, u8 bRegister, u8 wDataToWrite)
+int I2CWriteBytetoRegister(unsigned char bPicAddressI2cFormat, unsigned char bRegister, unsigned char wDataToWrite)
 {
     return WriteToSMBus(bPicAddressI2cFormat,bRegister,1,(wDataToWrite&0xff));
     
 }
 
 
-void I2CModifyBits(u8 bAds, u8 bReg, u8 bData, u8 bMask)
+void I2CModifyBits(unsigned char bAds, unsigned char bReg, unsigned char bData, unsigned char bMask)
 {
-    u8 b=I2CTransmitByteGetReturn(0x45, bReg)&(~bMask);
+    unsigned char b=I2CTransmitByteGetReturn(0x45, bReg)&(~bMask);
     I2CTransmitWord(0x45, (bReg<<8)|((bData)&bMask)|b);
 }
 
 // ----------------------------  PIC challenge/response -----------------------------------------------------------
 
-extern int I2cSetFrontpanelLed(u8 b)
+int I2cSetFrontpanelLed(unsigned char b)
 {
     I2CTransmitWord( 0x10, 0x800 | b);  // sequencing thanks to Jarin the Penguin!
     I2CTransmitWord( 0x10, 0x701);
@@ -204,8 +199,8 @@ extern int I2cSetFrontpanelLed(u8 b)
 
 bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp)
 {
-    u8 cpuTempCount = 0;
-    u8 cpu, cpudec;
+    unsigned char cpuTempCount = 0;
+    unsigned char cpu, cpudec;
     float temp1, cpuFrac = 0.0;
 
     //Motherboard temp.
@@ -278,13 +273,13 @@ void I2CPowerOff(void) {
     while (1);
 }
 
-u8 I2CGetFanSpeed(void){
-    //ReadfromSMBus(0x10, 0x10, 1, (u32 *)&temp);
+unsigned char I2CGetFanSpeed(void){
+    //ReadfromSMBus(0x10, 0x10, 1, (unsigned int *)&temp);
     return (I2CTransmitByteGetReturn(0x10, 0x10) << 1);
 }
 
-void I2CSetFanSpeed(u8 speed){
-/*    u8 giveUp = 0;
+void I2CSetFanSpeed(unsigned char speed){
+/*    unsigned char giveUp = 0;
     do {
         WriteToSMBus(0x10,0x05,1,1);             //Activate manual fan speed control
         wait_us(5);
@@ -302,9 +297,9 @@ void I2CSetFanSpeed(u8 speed){
 //Return coded Xbox revision. Check enum in boot.h
 //Thanks XBMC team for the code.
 //TODO: switch case for cleaner look?
-u8 I2CGetXboxMBRev(void){
-    u8 result = REVUNKNOWN;
-    u32 temp[3];
+unsigned char I2CGetXboxMBRev(void){
+    unsigned char result = REVUNKNOWN;
+    unsigned int temp[3];
     char ver[4];
     ver[3] = 0;        //Terminator.
     I2CTransmitWord(0x10, 0x0100);                //Reset ID counter.
@@ -316,6 +311,7 @@ u8 I2CGetXboxMBRev(void){
     ver[2] = (char)temp[2];
 #if 0
 #ifdef DEV_FEATURES
+#include "cromwell.h"
     //TODO: remove once fixed
     printk("           Debug MB_string: %s\n", ver);
 #endif

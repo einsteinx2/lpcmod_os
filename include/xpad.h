@@ -16,6 +16,7 @@ struct xpad_data
 };
 
 int risefall_xpad_BUTTON(unsigned char selected_Button);
+int risefall_xpad_STATE(unsigned char selected_Button);
 
 #define XPAD_PAD_UP 1
 #define XPAD_PAD_DOWN 2

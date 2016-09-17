@@ -1,5 +1,5 @@
-#ifndef _LEDMENUACTIONS_H_
-#define _LEDMENUACTIONS_H_
+#ifndef _GENTOOX_H_
+#define _GENTOOX_H_
 /**
  * Gentoox loader includes.
  * Copyright (C) Thomas "ShALLaX" Pedley (gentoox@shallax.com)

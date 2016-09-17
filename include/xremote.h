@@ -1,8 +1,8 @@
 #ifndef _XREMOTE_H_
 #define _XREMOTE_H_
 
-extern u16 current_remote_key;
-extern u8 remotekeyIsRepeat;
+extern unsigned short current_remote_key;
+extern unsigned char remotekeyIsRepeat;
 
 #define RC_KEY_SELECT    0x0b0a
 #define RC_KEY_UP    0xa60a

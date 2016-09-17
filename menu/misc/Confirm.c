@@ -1,5 +1,6 @@
 #include "Confirm.h"
 #include "TextMenu.h"
+#include "string.h"
 
 int Confirm_Result;
 static void Confirm_Yes(void*);

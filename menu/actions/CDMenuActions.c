@@ -7,10 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "boot.h"
-#include "video.h"
-#include "xbox.h"
-#include "BootEEPROM.h"
+#include "i2c.h"
 #include "CDMenuActions.h"
 
 void CDEject(void *whatever) {

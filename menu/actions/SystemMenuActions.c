@@ -8,7 +8,11 @@
  ***************************************************************************/
 #include "SystemMenuActions.h"
 #include "boot.h"
+#include "i2c.h"
 #include "video.h"
+#include "string.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "menu/misc/ConfirmDialog.h"
 
 void toggleBGColor(void * itemStr)
 {

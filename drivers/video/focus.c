@@ -14,6 +14,8 @@
 #include "focus.h"
 #include "encoder.h"
 #include "boot.h"
+#include "string.h"
+
 
 typedef struct _focus_pll_settings{
     long dotclock;
@@ -22,6 +24,8 @@ typedef struct _focus_pll_settings{
     int tv_htotal;
     int tv_vtotal;
 } focus_pll_settings;
+
+int focus_calc_pll_settings(focus_pll_settings *settings, char *regs);
 
 static const unsigned char focus_defaults[0xc4] = {
     /*0x00*/ 0x00,0x00,0x00,0x00,0x80,0x02,0xaa,0x0a,

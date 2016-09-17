@@ -12,9 +12,7 @@
 #include "boot.h"
 #include "video.h"
 #include "memory_layout.h"
-#include <shared.h>
 #include "BootFATX.h"
-#include "xbox.h"
 #include "cpu.h"
 #include "BootIde.h"
 #include "MenuActions.h"
@@ -51,7 +49,7 @@ typedef struct TEXTMENUITEM {
     void (*functionRTPtr) (void *);
     void *functionLTDataPtr;
     void *functionRTDataPtr;
-    u8 noSelect;
+    unsigned char noSelect;
     //Next / previous menu items within this menu
     struct TEXTMENUITEM *previousMenuItem;
     struct TEXTMENUITEM *nextMenuItem;
@@ -63,12 +61,14 @@ typedef struct TEXTMENU {
     //A pointer to the first item of the linked list of menuitems that
     //make up this menu.
     TEXTMENUITEM* firstMenuItem;
-    u32 timeout;
+    unsigned int timeout;
     int longTitle;
     int visibleCount;
 } TEXTMENU;
 
 extern char bypassConfirmDialog[50];
 
+void TextMenuAddItem(TEXTMENU *menu, TEXTMENUITEM *newMenuItem);
 void textMenuLCDPrint(TEXTMENU *menu, TEXTMENUITEM *selectedItem);
+void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem);
 #endif

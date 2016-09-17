@@ -18,6 +18,8 @@
  */
 
 #include "boot.h"
+#include "cromwell.h"
+#include "lib/time/timeManagement.h"
 
 void errorLED(void) {
     setLED("rxxx");

@@ -44,24 +44,24 @@ struct ed {
      * usually:  OPER --> UNLINK --> (IDLE | OPER) --> ...
      * some special cases :  OPER --> IDLE ...
      */
-    u8            state;        /* ED_{IDLE,UNLINK,OPER} */
+    unsigned char            state;        /* ED_{IDLE,UNLINK,OPER} */
 #define ED_IDLE     0x00        /* NOT linked to HC */
 #define ED_UNLINK     0x01        /* being unlinked from hc */
 #define ED_OPER        0x02        /* IS linked to hc */
 
-    u8            type;         /* PIPE_{BULK,...} */
+    unsigned char            type;         /* PIPE_{BULK,...} */
 
     /* periodic scheduling params (for intr and iso) */
-    u8            branch;
-    u16            interval;
-    u16            load;
-    u16            last_iso;    /* iso only */
+    unsigned char            branch;
+    unsigned short            interval;
+    unsigned short            load;
+    unsigned short            last_iso;    /* iso only */
 
     /* HC may see EDs on rm_list until next frame (frame_no == tick) */
-    u16            tick;
+    unsigned short            tick;
 } __attribute__ ((aligned(16)));
 
-#define ED_MASK    ((u32)~0x0f)        /* strip hw status in low addr bits */
+#define ED_MASK    ((unsigned int)~0x0f)        /* strip hw status in low addr bits */
 
  
 /*
@@ -121,7 +121,7 @@ struct td {
     struct list_head td_list;    /* "shadow list", TDs on same ED */
 } __attribute__ ((aligned(32)));    /* c/b/i need 16; only iso needs 32 */
 
-#define TD_MASK    ((u32)~0x1f)        /* strip hw status in low addr bits */
+#define TD_MASK    ((unsigned int)~0x1f)        /* strip hw status in low addr bits */
 
 /*
  * Hardware transfer status codes -- CC from td->hwINFO or td->hwPSW
@@ -175,8 +175,8 @@ struct ohci_hcca {
     __u16    frame_no;        /* current frame number */
     __u16    pad1;            /* set to 0 on each frame_no change */
     __u32    done_head;        /* info returned for an interrupt */
-    u8    reserved_for_hc [116];
-    u8    what [4];        /* spec only identifies 252 bytes :) */
+    unsigned char    reserved_for_hc [116];
+    unsigned char    what [4];        /* spec only identifies 252 bytes :) */
 } __attribute__ ((aligned(256)));
 
   
@@ -368,7 +368,7 @@ struct ohci_hcd {
     int            disabled;    /* e.g. got a UE, we're hung */
     int            sleeping;
     int            load [NUM_INTS];
-    u32             hc_control;    /* copy of hc control reg */
+    unsigned int             hc_control;    /* copy of hc control reg */
 
     unsigned long        flags;        /* for HC bugs */
 #define    OHCI_QUIRK_AMD756    0x01            /* erratum #4 */

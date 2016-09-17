@@ -6,8 +6,8 @@
  */
 
 #include "boot.h"
-#include <stdarg.h>
 #include "video.h"
+#include "stdio.h"
 
 /*------------------------------------------------------------------------*/ 
 // Output window for USB messages

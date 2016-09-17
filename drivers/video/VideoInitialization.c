@@ -22,10 +22,10 @@
 
 #include "VideoInitialization.h"
 
-extern u8 VIDEO_AV_MODE;
+extern unsigned char VIDEO_AV_MODE;
 // functions defined elsewhere
-int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite);
-//int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite);
+int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char bDataToWrite);
+//int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWrite);
 
 // internally used structures
 
@@ -45,19 +45,19 @@ static double fabs(double d) {
 #endif
 #endif
 
-static u8 NvGetCrtc(volatile u8 * pbRegs, int nIndex) {
+static unsigned char NvGetCrtc(volatile unsigned char * pbRegs, int nIndex) {
     pbRegs[0x6013d4]=nIndex;
     return pbRegs[0x6013d5];
 }
 
-static void NvSetCrtc(volatile u8 * pbRegs, int nIndex, u8 b) {
+static void NvSetCrtc(volatile unsigned char * pbRegs, int nIndex, unsigned char b) {
     pbRegs[0x6013d4]=nIndex;
     pbRegs[0x6013d5]=b;
 }
 
 xbox_tv_encoding DetectVideoStd(void) {
     xbox_tv_encoding videoStd;
-    u8 b=I2CTransmitByteGetReturn(0x54, 0x5A); // the eeprom defines the TV standard for the box
+    unsigned char b=I2CTransmitByteGetReturn(0x54, 0x5A); // the eeprom defines the TV standard for the box
 
     if(b == 0x40) {
         videoStd = TV_ENC_NTSC;
@@ -83,23 +83,23 @@ xbox_av_type DetectAvType(void) {
     return avType;
 }
 
-void SetGPURegister(const GPU_PARAMETER* gpu, volatile u8 * pbRegs) {
-    u8 b;
-    u32 m = 0;
+void SetGPURegister(const GPU_PARAMETER* gpu, volatile unsigned char * pbRegs) {
+    unsigned char b;
+    unsigned int m = 0;
     // NVHDISPEND
-    *((volatile u32 *)&pbRegs[0x680820]) = gpu->crtchdispend - 1;
+    *((volatile unsigned int *)&pbRegs[0x680820]) = gpu->crtchdispend - 1;
     // NVHTOTAL
-    *((volatile u32 *)&pbRegs[0x680824]) = gpu->nvhtotal;
+    *((volatile unsigned int *)&pbRegs[0x680824]) = gpu->nvhtotal;
     // NVHCRTC
-    *((volatile u32 *)&pbRegs[0x680828]) = gpu->xres - 1;
+    *((volatile unsigned int *)&pbRegs[0x680828]) = gpu->xres - 1;
     // NVHVALIDSTART
-    *((volatile u32 *)&pbRegs[0x680834]) = 0;
+    *((volatile unsigned int *)&pbRegs[0x680834]) = 0;
     // NVHSYNCSTART
-    *((volatile u32 *)&pbRegs[0x68082c]) = gpu->nvhstart;
+    *((volatile unsigned int *)&pbRegs[0x68082c]) = gpu->nvhstart;
     // NVHSYNCEND = NVHSYNCSTART + 32
-    *((volatile u32 *)&pbRegs[0x680830]) = gpu->nvhstart+32;
+    *((volatile unsigned int *)&pbRegs[0x680830]) = gpu->nvhstart+32;
     // NVHVALIDEND
-    *((volatile u32 *)&pbRegs[0x680838]) = gpu->xres - 1;
+    *((volatile unsigned int *)&pbRegs[0x680838]) = gpu->xres - 1;
     // CRTC_HSYNCSTART = h_total - 32 (heuristic)
     m = gpu->nvhtotal - 32;
     NvSetCrtc(pbRegs, 4, m/8);
@@ -122,19 +122,19 @@ void SetGPURegister(const GPU_PARAMETER* gpu, volatile u8 * pbRegs) {
     NvSetCrtc(pbRegs, 0x19, (NvGetCrtc(pbRegs, 0x19)&0x1f) | ((m >> 3) & 0xe0));
     NvSetCrtc(pbRegs, 0x13, (m & 0xff));
     // NVVDISPEND
-    *((volatile u32 *)&pbRegs[0x680800]) = gpu->yres - 1;
+    *((volatile unsigned int *)&pbRegs[0x680800]) = gpu->yres - 1;
     // NVVTOTAL
-    *((volatile u32 *)&pbRegs[0x680804]) = gpu->nvvtotal;
+    *((volatile unsigned int *)&pbRegs[0x680804]) = gpu->nvvtotal;
     // NVVCRTC
-    *((volatile u32 *)&pbRegs[0x680808]) = gpu->yres - 1;
+    *((volatile unsigned int *)&pbRegs[0x680808]) = gpu->yres - 1;
     // NVVVALIDSTART
-    *((volatile u32 *)&pbRegs[0x680814]) = 0;
+    *((volatile unsigned int *)&pbRegs[0x680814]) = 0;
     // NVVSYNCSTART
-    *((volatile u32 *)&pbRegs[0x68080c])=gpu->nvvstart;
+    *((volatile unsigned int *)&pbRegs[0x68080c])=gpu->nvvstart;
     // NVVSYNCEND = NVVSYNCSTART + 3
-    *((volatile u32 *)&pbRegs[0x680810])=(gpu->nvvstart+3);
+    *((volatile unsigned int *)&pbRegs[0x680810])=(gpu->nvvstart+3);
     // NVVVALIDEND
-    *((volatile u32 *)&pbRegs[0x680818]) = gpu->yres - 1;
+    *((volatile unsigned int *)&pbRegs[0x680818]) = gpu->yres - 1;
     // CRTC_VSYNCSTART
     b = NvGetCrtc(pbRegs, 7) & 0x7b;
     NvSetCrtc(pbRegs, 7, b | ((gpu->crtcvstart >> 2) & 0x80) | ((gpu->crtcvstart >> 6) & 0x04));

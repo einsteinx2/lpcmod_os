@@ -33,7 +33,14 @@
 #include "lwip/debug.h"
 #include "include/lpcmod_v1.h"
 #include "lwip/stats.h"
-
+#include "string.h"
+#include "stdlib.h"
+#include "lib/cromwell/cromString.h"
+#include "HDDMenuActions.h"
+#include "EepromEditMenuActions.h"
+#include "Gentoox.h"
+#include "MenuActions.h"
+#include "BootFlash.h"
 /*#include "httpd.h"*/
 
 #include "lwip/tcp.h"
@@ -120,7 +127,7 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
   tcp_arg(pcb, NULL);
   tcp_sent(pcb, NULL);
   tcp_recv(pcb, NULL);
-  u8 * fileBuf;
+  unsigned char * fileBuf;
 
   if (hs->bios_start) {
         extern void ClearScreen (void);
@@ -129,9 +136,9 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         //printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
         switch(pcb->flashType){
             case BIOS_NETFLASH:
-                fileBuf = (u8 *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
-                memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
-                memcpy (fileBuf, hs->bios_start, hs->bios_len);
+                fileBuf = (unsigned char *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
+                memset(fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
+                memcpy(fileBuf, hs->bios_start, hs->bios_len);
                 netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
                 free(fileBuf);
                 break;
@@ -142,19 +149,19 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 break;
             case HDD0LOCK_NETFLASH:
                 if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-                    UnlockHDD(0, 1, (u8 *)hs->bios_start, false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
+                    UnlockHDD(0, 1, (unsigned char *)hs->bios_start, false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
                 }
                 else {
-                    LockHDD(0, 1, (u8 *)hs->bios_start);
+                    LockHDD(0, 1, (unsigned char *)hs->bios_start);
                 }
                 netFlashOver = 1;
                 break;
             case HDD1LOCK_NETFLASH:
                 if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
-                    UnlockHDD(1, 1, (u8 *)hs->bios_start,false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
+                    UnlockHDD(1, 1, (unsigned char *)hs->bios_start,false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
                 }
 		else {
-		    LockHDD(1, 1, (u8 *)hs->bios_start);
+		    LockHDD(1, 1, (unsigned char *)hs->bios_start);
 		}
                 netFlashOver = 1;
                 break;
@@ -248,10 +255,10 @@ http_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
 static int
 handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 {
-    u8 fileSelect;
+    unsigned char fileSelect;
 	if (!hs->gotfirst) {
 		if (strncmp (hs->lineBuf, "GET /", 4) == 0) {
-			unsigned long fno = simple_strtoul (&hs->lineBuf[5], NULL, NULL);
+			unsigned long fno = strtoul (&hs->lineBuf[5], NULL, 0);
 			if (fno > 2) {
 				fno = 3; /* 404 */
 			}
@@ -288,7 +295,7 @@ handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 		}
 
 		if (strncmp (hs->lineBuf, "Content-Length:", 15) == 0) {
-			unsigned long len = simple_strtoul (&hs->lineBuf[16], NULL, NULL);
+			unsigned long len = strtoul (&hs->lineBuf[16], NULL, 0);
 
 			hs->postlen = len;
 		}

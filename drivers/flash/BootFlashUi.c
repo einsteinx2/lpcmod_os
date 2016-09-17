@@ -16,22 +16,36 @@
 #include "video.h"
 #include "include/lpcmod_v1.h"
 #include "md5.h"
+#include "i2c.h"
+#include "cromwell.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "Gentoox.h"
+#include "FlashMenuActions.h"
+#include "menu/misc/ConfirmDialog.h"
+#include "menu/misc/ProgressBar.h"
 
 //Selects which function should be called for flashing.
-bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm){
+bool FlashFileFromBuffer(unsigned char *fileBuf, unsigned int fileSize, bool askConfirm){
     int res;
     char * stringTemp;
     int offset = 0;
     if (fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT ||
         (LPCmodSettings.OSsettings.TSOPcontrol && fHasHardware == SYSCON_ID_V1_TSOP)) {
         if (currentFlashBank == BNKOS) {
-            if (!askConfirm || !ConfirmDialog ("               Confirm update XBlast OS?", 1)) {
+            if (!askConfirm || !ConfirmDialog ("               Confirm update XBlast OS?", 1))
+            {
+            	debugSPIPrint("User confirmed. Flashing operation begining.");
                 res = BootReflashAndReset (fileBuf, offset, fileSize);
             }
             else
+            {
+            	debugSPIPrint("User declined flash operation.");
                 res = -1;
+            }
         }
-        else {
+        else
+        {
             if (currentFlashBank == BNK512)
                 stringTemp = "             Confirm flash bank0(512KB)?";
             else if (currentFlashBank == BNK256)
@@ -45,11 +59,17 @@ bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm){
                 stringTemp = "                Confirm TSOP (whole)?";
             else
                 stringTemp = "                 Confirm flash bank?";
+            if (!askConfirm)
+            	debugSPIPrint("Waiting For confirmation from user");
+            else
+            	debugSPIPrint("No user confirmation required for current flash operation.");
             if (!askConfirm || !ConfirmDialog (stringTemp, 1)) {
                 res = BootReflash(fileBuf, offset, fileSize);
             }
             else
+            {
                 res = -1;
+            }
         }
     }
     else { //If no XBlast mod or XBlast detected, from full(not split) TSOP.
@@ -65,7 +85,7 @@ bool FlashFileFromBuffer(u8 *fileBuf, u32 fileSize, bool askConfirm){
 
 
  // callback to show progress
-bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, u32 dwPos, u32 dwExtent) {
+bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, unsigned int dwPos, unsigned int dwExtent) {
     if(ee==EE_ERASE_UPDATE){
         DisplayProgressBar(dwPos,dwExtent,0xffffff00);
     }
@@ -78,12 +98,12 @@ bool BootFlashUserInterface(void * pvoidObjectFlash, ENUM_EVENTS ee, u32 dwPos, 
     return true;
 }
 
-int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
+int BootReflashAndReset(unsigned char *pbNewData, unsigned int dwStartOffset, unsigned int dwLength)
 {
     OBJECT_FLASH of;
     bool fMore=true;
     int i;
-    u8 md5result[16];
+    unsigned char md5result[16];
     MD5_CTX hashcontext;
 
     // A bit hacky, but easier to maintain.
@@ -91,8 +111,10 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
         #include "flashtypes.h"
     };
 
+    debugSPIPrint("XBlast OS update initiated.");
+
     // prep our flash object with start address and params
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
     of.m_dwStartOffset=dwStartOffset;           //Must always be 0!
     of.m_dwLengthUsedArea=dwLength;
     of.m_pcallbackFlash=BootFlashUserInterface;
@@ -106,20 +128,32 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 */
     // check device type and parameters are sane
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
+    {
+    	debugSPIPrint("Unable to get flash ID. Aborting.");
         return 1; // unable to ID device - fail
+    }
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
+    {
+    	debugSPIPrint("Flash is write protected. Aborting.");
         return 2; // seems to be write-protected - fail
+    }
     if((of.m_dwLengthInBytes<(dwStartOffset+dwLength)) ||
        ((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && of.m_dwLengthUsedArea != 262144) ||
         (dwLength % 262144) != 0 || dwLength == 0)                       //Image size is not a multiple of 256KB or is 0.
+    {
+    	debugSPIPrint("Incorrect image file size. Aborting.");
         return 3; // requested layout won't fit device - sanity check fail
+    }
     if((fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) && currentFlashBank == BNKOS){ //Only check when on a XBlast mod. For the rest, I don't care.
 
-        //if(crc32buf(pbNewData,0x3F000) != *(u32 *)&pbNewData[0x3FDFC])
+        //if(crc32buf(pbNewData,0x3F000) != *(unsigned int *)&pbNewData[0x3FDFC])
         //    return 5;
 
         if(strncmp(&pbNewData[dwLength - 16 - 32], PROG_NAME, 9))
+        {
+        	debugSPIPrint("Detected device not XBlast Mod compatible. Aborting.");
             return 4;
+        }
 
         MD5Init(&hashcontext);
         MD5Update(&hashcontext, pbNewData, dwLength-0x1000);
@@ -188,7 +222,7 @@ int BootReflashAndReset(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 }
 
 /*Will only be used when XBlast Mod is detected*/
-int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
+int BootReflash(unsigned char *pbNewData, unsigned int dwStartOffset, unsigned int dwLength)
 {
     OBJECT_FLASH of;
     bool fMore=true;
@@ -199,14 +233,17 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     };
 
     // prep our flash object with start address and params
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
     of.m_dwStartOffset=dwStartOffset;
     of.m_dwLengthUsedArea=dwLength;
     of.m_pcallbackFlash=BootFlashUserInterface;
 
     // check device type and parameters are sane
     if(!BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0]))
+    {
+    	debugSPIPrint("Unable to get flash ID. Aborting.");
         return 1; // unable to ID device - fail
+    }
     if(!of.m_fIsBelievedCapableOfWriteAndErase)
         return 2; // seems to be write-protected - fail
     //512KB image mirror if necessary. BNK512 and split TSOP make use of this. Other cases are treated in the "else" portion.
@@ -264,7 +301,7 @@ int BootReflash(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     return 0;
 }
 
-int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
+int BootFlashSettings(unsigned char *pbNewData, unsigned int dwStartOffset, unsigned int dwLength)
 {
     OBJECT_FLASH of;
     bool fMore=true;
@@ -276,7 +313,7 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
     };
 
     // prep our flash object with start address and params
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
     of.m_dwStartOffset=dwStartOffset;
     of.m_dwLengthUsedArea=dwLength;
     of.m_pcallbackFlash=NULL;
@@ -315,8 +352,8 @@ int BootFlashSettings(u8 *pbNewData, u32 dwStartOffset, u32 dwLength)
 }
 
 void BootShowFlashDevice(void){
-    //u8 class, subclass;
-    //u16 vendorid, deviceid;
+    //unsigned char class, subclass;
+    //unsigned short vendorid, deviceid;
     //int i, j;
     // A bit hacky, but easier to maintain.
     OBJECT_FLASH of;
@@ -325,7 +362,7 @@ void BootShowFlashDevice(void){
         #include "flashtypes.h"
     };
 
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
 /*
     if(fHasHardware == SYSCON_ID_XX1 ||
        fHasHardware == SYSCON_ID_XX2 ||
@@ -368,7 +405,7 @@ void BootShowFlashDevice(void){
     return;
 }
 
-bool BootFlashPrintResult(int res, u32 fileSize) {
+bool BootFlashPrintResult(int res, unsigned int fileSize) {
     if (res > 0) {
             cromwellError ();
             printk ("\n\n\n\n\n           Flash failed...");
@@ -429,7 +466,7 @@ bool BootFlashPrintResult(int res, u32 fileSize) {
         return true; //Flashing is over.
 }
 
-void mirrorImage(u8 *pbNewData, u32 dwLength, OBJECT_FLASH* of){
+void mirrorImage(unsigned char *pbNewData, unsigned int dwLength, OBJECT_FLASH* of){
     if(dwLength < of->m_dwLengthInBytes                          //If image size is smaller than detected flash size.
        && dwLength < 1048576){                                  //and image size is smaller than 1MB.
         if(of->m_dwLengthInBytes >= 524288 &&        //Flash is at least 512KB in space

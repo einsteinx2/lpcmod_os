@@ -38,7 +38,7 @@ static unsigned int amd_clock;
 static char *amd_dma[] = { "16", "25", "33", "44", "66", "100", "133" };
 static unsigned char amd_cyc2udma[] = { 6, 6, 5, 4, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 7 };
 
-static inline u8 amd_offset(struct pci_dev *dev)
+static inline unsigned char amd_offset(struct pci_dev *dev)
 {
 	return (dev->vendor == PCI_VENDOR_ID_NVIDIA) ? 0x10 : 0;
 }
@@ -47,10 +47,10 @@ static inline u8 amd_offset(struct pci_dev *dev)
  * amd_set_speed() writes timing values to the chipset registers
  */
 
-static void amd_set_speed(struct pci_dev *dev, u8 dn, u8 udma_mask,
+static void amd_set_speed(struct pci_dev *dev, unsigned char dn, unsigned char udma_mask,
 			  struct ide_timing *timing)
 {
-	u8 t = 0, offset = amd_offset(dev);
+	unsigned char t = 0, offset = amd_offset(dev);
 
 	pci_read_config_byte(dev, AMD_ADDRESS_SETUP + offset, &t);
 	t = (t & ~(3 << ((3 - dn) << 1))) | ((clamp_val(timing->setup, 1, 4) - 1) << ((3 - dn) << 1));
@@ -85,8 +85,8 @@ static void amd_set_drive(ide_hwif_t *hwif, ide_drive_t *drive)
 	ide_drive_t *peer = ide_get_pair_dev(drive);
 	struct ide_timing t, p;
 	int T, UT;
-	u8 udma_mask = hwif->ultra_mask;
-	const u8 speed = drive->dma_mode;
+	unsigned char udma_mask = hwif->ultra_mask;
+	const unsigned char speed = drive->dma_mode;
 
 	T = 1000000000 / amd_clock;
 	UT = (udma_mask == ATA_UDMA2) ? T : (T / 2);
@@ -123,8 +123,8 @@ static void amd7409_cable_detect(struct pci_dev *dev)
 static void amd7411_cable_detect(struct pci_dev *dev)
 {
 	int i;
-	u32 u = 0;
-	u8 t = 0, offset = amd_offset(dev);
+	unsigned int u = 0;
+	unsigned char t = 0, offset = amd_offset(dev);
 
 	pci_read_config_byte(dev, AMD_CABLE_DETECT + offset, &t);
 	pci_read_config_dword(dev, AMD_UDMA_TIMING + offset, &u);
@@ -144,7 +144,7 @@ static void amd7411_cable_detect(struct pci_dev *dev)
 
 static int init_chipset_amd74xx(struct pci_dev *dev)
 {
-	u8 t = 0, offset = amd_offset(dev);
+	unsigned char t = 0, offset = amd_offset(dev);
 
 /*
  * Check 80-wire cable presence.
@@ -177,7 +177,7 @@ static int init_chipset_amd74xx(struct pci_dev *dev)
 	return 0;
 }
 
-static u8 amd_cable_detect(ide_hwif_t *hwif)
+static unsigned char amd_cable_detect(ide_hwif_t *hwif)
 {
 	if ((amd_80w >> hwif->channel) & 1)
 		return ATA_CBL_PATA80;
@@ -238,7 +238,7 @@ static const struct ide_port_info amd74xx_chipsets[] = {
 static int amd74xx_probe(struct pci_dev *dev, const struct pci_device_id *id)
 {
 	struct ide_port_info d;
-	u8 idx = id->driver_data;
+	unsigned char idx = id->driver_data;
 
 	d = amd74xx_chipsets[idx];
 

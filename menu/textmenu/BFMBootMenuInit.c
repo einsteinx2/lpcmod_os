@@ -7,12 +7,13 @@
  *                                                                         *
  ***************************************************************************/
  
+#include "MenuInits.h"
 #include "boot.h"
 #include "BootIde.h"
-#include "TextMenu.h"
 #include "memory_layout.h"
 #include "BootFATX.h"
 #include "BFMBootMenuActions.h"
+#include "string.h"
 
 TEXTMENU* BFMBootMenuInit(void) {
     TEXTMENUITEM *itemPtr;

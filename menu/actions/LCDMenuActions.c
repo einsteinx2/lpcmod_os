@@ -12,6 +12,9 @@
 #include "lpcmod_v1.h"
 #include "lib/LPCMod/BootLCD.h"
 #include "TextMenu.h"
+#include "string.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "menu/misc/OnScreenKeyboard.h"
 
 void LCDToggleEN5V(void * itemStr){
     LPCmodSettings.LCDsettings.enable5V = LPCmodSettings.LCDsettings.enable5V? 0 : 1;
@@ -74,7 +77,7 @@ void LCDToggledisplayCustomTextBoot(void * itemStr){
 }
 
 void editCustomString0(void *whatever){
-    u8 line = 3;
+    unsigned char line = 3;
     if(LPCmodSettings.LCDsettings.customTextBoot){
         line = 0;
     }
@@ -89,7 +92,7 @@ void editCustomString0(void *whatever){
 }
 
 void editCustomString1(void *whatever){
-    u8 line = 3;
+    unsigned char line = 3;
     if(LPCmodSettings.LCDsettings.customTextBoot){
         line = 1;
     }
@@ -104,7 +107,7 @@ void editCustomString1(void *whatever){
 }
 
 void editCustomString2(void *whatever){
-    u8 line = 3;
+    unsigned char line = 3;
     if(LPCmodSettings.LCDsettings.customTextBoot){
         line = 2;
     }
@@ -119,7 +122,7 @@ void editCustomString2(void *whatever){
 }
 
 void editCustomString3(void *whatever){
-    u8 line = 3;
+    unsigned char line = 3;
     OnScreenKeyboard(LPCmodSettings.LCDsettings.customString3, LPCmodSettings.LCDsettings.lineLength, line, FULL_KEYBOARD);
     BootLCDUpdateLinesOwnership(3, 0);
     if(LPCmodSettings.LCDsettings.customTextBoot && xLCD.LineOwner[3] != SCRIPT_OWNER){

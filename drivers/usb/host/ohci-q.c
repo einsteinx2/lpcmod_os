@@ -115,7 +115,7 @@ static void periodic_link (struct ohci_hcd *ohci, struct ed *ed)
 
     for (i = ed->branch; i < NUM_INTS; i += ed->interval) {
         struct ed    **prev = &ohci->periodic [i];
-        u32        *prev_p = &ohci->hcca->int_table [i];
+        unsigned int        *prev_p = &ohci->hcca->int_table [i];
         struct ed    *here = *prev;
 
         /* sorting each branch by period (slow before fast)
@@ -228,7 +228,7 @@ static void periodic_unlink (struct ohci_hcd *ohci, struct ed *ed)
     for (i = ed->branch; i < NUM_INTS; i += ed->interval) {
         struct ed    *temp;
         struct ed    **prev = &ohci->periodic [i];
-        u32        *prev_p = &ohci->hcca->int_table [i];
+        unsigned int        *prev_p = &ohci->hcca->int_table [i];
 
         while (*prev && (temp = *prev) != ed) {
             prev_p = &temp->hwNextED;
@@ -381,7 +381,7 @@ static struct ed *ed_get (
      * enumeration (after set_address, or if ep0 maxpacket >8).
      */
       if (ed->state == ED_IDLE) {
-        u32    info;
+        unsigned int    info;
 
         info = usb_pipedevice (pipe);
         info |= (ep >> 1) << 7;
@@ -454,7 +454,7 @@ static void start_urb_unlink (struct ohci_hcd *ohci, struct ed *ed)
 /* enqueue next TD for this URB (OHCI spec 5.2.8.2) */
 
 static void
-td_fill (struct ohci_hcd *ohci, u32 info,
+td_fill (struct ohci_hcd *ohci, unsigned int info,
     dma_addr_t data, int len,
     struct urb *urb, int index)
 {
@@ -536,7 +536,7 @@ static void td_submit_urb (
     dma_addr_t    data;
     int        data_len = urb->transfer_buffer_length;
     int        cnt = 0;
-    u32        info = 0;
+    unsigned int        info = 0;
     int        is_out = usb_pipeout (urb->pipe);
 
     /* OHCI handles the bulk/interrupt data toggles itself.  We just
@@ -650,14 +650,14 @@ static void td_submit_urb (
  */
 static void td_done (struct ohci_hcd *ohci, struct urb *urb, struct td *td)
 {
-    u32    tdINFO = le32_to_cpup (&td->hwINFO);
+    unsigned int    tdINFO = le32_to_cpup (&td->hwINFO);
     int    cc = 0;
 
     list_del (&td->td_list);
 
     /* ISO ... drivers see per-TD length/status */
       if (tdINFO & TD_ISO) {
-         u16    tdPSW = le16_to_cpu (td->hwPSW [0]);
+         unsigned short    tdPSW = le16_to_cpu (td->hwPSW [0]);
         int    dlen = 0;
 
         /* NOTE:  assumes FC in tdINFO == 0 (and MAXPSW == 1) */
@@ -689,7 +689,7 @@ static void td_done (struct ohci_hcd *ohci, struct urb *urb, struct td *td)
      */
     } else {
         int    type = usb_pipetype (urb->pipe);
-        u32    tdBE = le32_to_cpup (&td->hwBE);
+        unsigned int    tdBE = le32_to_cpup (&td->hwBE);
 
           cc = TD_CC_GET (tdINFO);
 
@@ -737,7 +737,7 @@ ed_halted (struct ohci_hcd *ohci, struct td *td, int cc, struct td *rev)
       struct urb        *urb = td->urb;
     struct ed        *ed = td->ed;
     struct list_head    *tmp = td->td_list.next;
-    u32            toggle = ed->hwHeadP & ED_C;
+    unsigned int            toggle = ed->hwHeadP & ED_C;
 
     /* clear ed halt; this is the td that caused it, but keep it inactive
      * until its urb->complete() has a chance to clean up.
@@ -752,7 +752,7 @@ ed_halted (struct ohci_hcd *ohci, struct td *td, int cc, struct td *rev)
      */
     while (tmp != &ed->td_list) {
         struct td    *next;
-        u32        info;
+        unsigned int        info;
 
         next = list_entry (tmp, struct td, td_list);
         tmp = next->td_list.next;
@@ -801,7 +801,7 @@ ed_halted (struct ohci_hcd *ohci, struct td *td, int cc, struct td *rev)
  */
 static struct td *dl_reverse_done_list (struct ohci_hcd *ohci)
 {
-    u32        td_dma;
+    unsigned int        td_dma;
     struct td    *td_rev = NULL;
     struct td    *td = NULL;
       unsigned long    flags;
@@ -847,7 +847,7 @@ static struct td *dl_reverse_done_list (struct ohci_hcd *ohci)
 
 /* there are some urbs/eds to unlink; called in_irq(), with HCD locked */
 static void
-finish_unlinks (struct ohci_hcd *ohci, u16 tick, struct pt_regs *regs)
+finish_unlinks (struct ohci_hcd *ohci, unsigned short tick, struct pt_regs *regs)
 {
     struct ed    *ed, **last;
 
@@ -855,7 +855,7 @@ rescan_all:
     for (last = &ohci->ed_rm_list, ed = *last; ed != NULL; ed = *last) {
         struct list_head    *entry, *tmp;
         int            completed, modified;
-        u32            *prev;
+        unsigned int            *prev;
 
         /* only take off EDs that the HC isn't using, accounting for
          * frame counter wraps.
@@ -884,7 +884,7 @@ rescan_this:
             struct td    *td;
             struct urb    *urb;
             urb_priv_t    *urb_priv;
-            u32        savebits;
+            unsigned int        savebits;
 
             td = list_entry (entry, struct td, td_list);
             urb = td->urb;
@@ -937,7 +937,7 @@ rescan_this:
 
     /* maybe reenable control and bulk lists */ 
     if (!ohci->disabled && !ohci->ed_rm_list) {
-        u32    command = 0, control = 0;
+        unsigned int    command = 0, control = 0;
 
         if (ohci->ed_controltail) {
             command |= OHCI_CLF;

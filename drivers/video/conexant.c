@@ -16,6 +16,7 @@
 
 #include "conexant.h"
 #include "focus.h"
+#include "string.h"
 
 #define ADR(x) (x / 2 - 0x17)
 
@@ -31,6 +32,7 @@ typedef struct {
     long vscale;
     double clk_ratio;
 } xbox_tv_mode_parameter;
+
 
 
     // and here is all the video timing for every standard

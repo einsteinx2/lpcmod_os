@@ -7,9 +7,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "TextMenu.h"
+#include "MenuInits.h"
 #include "ToolsMenuActions.h"
 #include "lpcmod_v1.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "xblast/settings/xblastSettingsDefs.h"
 
 TEXTMENU *ToolsMenuInit(void) {
     TEXTMENUITEM *itemPtr;

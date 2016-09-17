@@ -1,8 +1,10 @@
+#include "MenuInits.h"
 #include "lpcmod_v1.h"
-#include "include/config.h"
-#include "TextMenu.h"
-#include "include/boot.h"
+#include "config.h"
+#include "boot.h"
 #include "ModchipMenuActions.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 TEXTMENU *ModchipMenuInit(void) {
 

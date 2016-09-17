@@ -1,4 +1,4 @@
 
-O_TARGET := nfs.o nic.o proto_tftm.o xbox_misc.o xbox_pci.o etherboot_config.o xbox_main.o #osloader.o
+O_TARGET := nic.o xbox_pci.o etherboot_config.o
 
 include $(TOPDIR)/Rules.make

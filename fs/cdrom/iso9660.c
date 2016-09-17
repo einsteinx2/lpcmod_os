@@ -10,23 +10,11 @@
     2004-07-22 "Edgar Hucek"<hostmaster@ed-soft.at>  Created
 */
 
-#include "boot.h"
+#include "lib/cromwell/cromString.h"
+#include "BootIde.h"
 #include "iso_fs.h"
-int isupper( int ch )
-{
-    return (unsigned int)(ch - 'A') < 26u;
-}
-
-void strip_blank(char *buffer, unsigned char len) {
-    unsigned char i;
-    for(i = len; i > 0; i--) {
-        if(buffer[i] != ' ') {
-            break;
-        } else {
-            buffer[i] = 0;
-        }
-    }
-}
+#include "string.h"
+#include "stdlib.h"
 
 int iso9660_name_translate(char *translated, char *old, unsigned len) {
   int i;

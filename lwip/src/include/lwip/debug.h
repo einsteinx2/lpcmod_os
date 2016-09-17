@@ -33,6 +33,9 @@
 #define __LWIP_DEBUG_H__
 
 #include "arch/cc.h"
+#include "lib/LPCMod/BootLPCMod.h"
+
+#define LWIP_DEBUG
 
 /** lower two bits indicate debug level
  * - 0 off

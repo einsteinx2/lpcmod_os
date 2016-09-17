@@ -86,7 +86,7 @@ urb_print (struct urb * urb, char * str, int small)
 static void ohci_dump_intr_mask (
     struct ohci_hcd *ohci,
     char *label,
-    u32 mask,
+    unsigned int mask,
     char **next,
     unsigned *size)
 {
@@ -108,7 +108,7 @@ static void ohci_dump_intr_mask (
 static void maybe_print_eds (
     struct ohci_hcd *ohci,
     char *label,
-    u32 value,
+    unsigned int value,
     char **next,
     unsigned *size)
 {
@@ -132,7 +132,7 @@ static void
 ohci_dump_status (struct ohci_hcd *controller, char **next, unsigned *size)
 {
     struct ohci_regs    *regs = controller->regs;
-    u32            temp;
+    unsigned int            temp;
 
     temp = readl (&regs->revision) & 0xff;
     ohci_dbg_sw (controller, next, size,
@@ -217,10 +217,10 @@ ohci_dump_roothub (
     char **next,
     unsigned *size)
 {
-    u32            temp, ndp, i;
+    unsigned int            temp, ndp, i;
 
     temp = roothub_a (controller);
-    if (temp == ~(u32)0)
+    if (temp == ~(unsigned int)0)
         return;
     ndp = (temp & RH_A_NDP);
 
@@ -278,7 +278,7 @@ static const char data1 [] = "DATA1";
 
 static void ohci_dump_td (struct ohci_hcd *ohci, char *label, struct td *td)
 {
-    u32    tmp = le32_to_cpup (&td->hwINFO);
+    unsigned int    tmp = le32_to_cpup (&td->hwINFO);
 
     ohci_dbg (ohci, "%s td %p%s; urb %p index %d; hw next td %08x",
         label, td,
@@ -287,7 +287,7 @@ static void ohci_dump_td (struct ohci_hcd *ohci, char *label, struct td *td)
         le32_to_cpup (&td->hwNextTD));
     if ((tmp & TD_ISO) == 0) {
         const char    *toggle, *pid;
-        u32    cbp, be;
+        unsigned int    cbp, be;
 
         switch (tmp & TD_T) {
         case TD_T_DATA0: toggle = data0; break;
@@ -320,7 +320,7 @@ static void ohci_dump_td (struct ohci_hcd *ohci, char *label, struct td *td)
             le32_to_cpup (&td->hwCBP) & ~0x0fff,
             le32_to_cpup (&td->hwBE));
         for (i = 0; i < MAXPSW; i++) {
-            u16    psw = le16_to_cpup (&td->hwPSW [i]);
+            unsigned short    psw = le16_to_cpup (&td->hwPSW [i]);
             int    cc = (psw >> 12) & 0x0f;
             ohci_dbg (ohci, "       psw [%d] = %2x, CC=%x %s=%d", i,
                 psw, cc,
@@ -334,7 +334,7 @@ static void ohci_dump_td (struct ohci_hcd *ohci, char *label, struct td *td)
 static void __attribute__((unused))
 ohci_dump_ed (struct ohci_hcd *ohci, char *label, struct ed *ed, int verbose)
 {
-    u32    tmp = ed->hwINFO;
+    unsigned int    tmp = ed->hwINFO;
     char    *type = "";
 
     ohci_dbg (ohci, "%s, ed %p state 0x%x type %s; next ed %08x",
@@ -413,8 +413,8 @@ show_list (struct ohci_hcd *ohci, char *buf, size_t count, struct ed *ed)
 
     /* dump a snapshot of the bulk or control schedule */
     while (ed) {
-        u32            info = ed->hwINFO;
-        u32            scratch = cpu_to_le32p (&ed->hwINFO);
+        unsigned int            info = ed->hwINFO;
+        unsigned int            scratch = cpu_to_le32p (&ed->hwINFO);
         struct list_head    *entry;
         struct td        *td;
 
@@ -434,7 +434,7 @@ show_list (struct ohci_hcd *ohci, char *buf, size_t count, struct ed *ed)
         buf += temp;
 
         list_for_each (entry, &ed->td_list) {
-            u32        cbp, be;
+            unsigned int        cbp, be;
 
             td = list_entry (entry, struct td, td_list);
             scratch = cpu_to_le32p (&td->hwINFO);
@@ -531,8 +531,8 @@ show_periodic (struct device *dev, char *buf)
 
             /* show more info the first time around */
             if (temp == seen_count) {
-                u32    info = ed->hwINFO;
-                u32    scratch = cpu_to_le32p (&ed->hwINFO);
+                unsigned int    info = ed->hwINFO;
+                unsigned int    scratch = cpu_to_le32p (&ed->hwINFO);
 
                 temp = snprintf (next, size,
                     " (%cs dev%d%s ep%d%s"
@@ -586,7 +586,7 @@ show_registers (struct device *dev, char *buf)
     unsigned long        flags;
     unsigned        temp, size;
     char            *next;
-    u32            rdata;
+    unsigned int            rdata;
 
     ohci = dev_to_ohci(dev);
     regs = ohci->regs;

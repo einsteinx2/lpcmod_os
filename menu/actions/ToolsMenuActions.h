@@ -8,7 +8,8 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-
+#include "BootEEPROM.h"
+#include <stdbool.h>
 
 void saveEEPromToFlash(void *whatever);
 void restoreEEPromFromFlash(void *whatever);
@@ -29,5 +30,6 @@ void loadXBlastcfg(void * ignored);
 void prevA19controlModBootValue(void * itemPtr);
 void nextA19controlModBootValue(void * itemPtr);
 
+bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr);
 
 #endif

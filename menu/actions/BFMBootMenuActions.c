@@ -7,6 +7,7 @@
  *                                                                         *
  ***************************************************************************/
  
+#include <lib/cromwell/cromString.h>
 #include "BFMBootMenuActions.h"
 #include "boot.h"
 #include "BootIde.h"
@@ -14,6 +15,8 @@
 #include "video.h"
 #include "lpcmod_v1.h"
 #include "memory_layout.h"
+#include "lib/time/timeManagement.h"
+#include "string.h"
 
 int evoxrom_detect(void *rom, unsigned long rom_size);
 void *evoxrom_prepare(void *rom, unsigned long rom_size);
@@ -22,23 +25,23 @@ void *metoobfm_prepare(void *rom, unsigned long rom_size);
 char *strh_dnzcpy(char *d, const char *s, size_t n);
 
 struct metoobfm_footer {
-    u32 reserved;
-    u16 loader_ofs;
-    u16 kernel_param_size;
-    u16 kernel_param_ofs;
-    u16 size_2bl;
-    u32 base_2bl;
-    u32 magic;          /* BFM1 */
+    unsigned int reserved;
+    unsigned short loader_ofs;
+    unsigned short kernel_param_size;
+    unsigned short kernel_param_ofs;
+    unsigned short size_2bl;
+    unsigned int base_2bl;
+    unsigned int magic;          /* BFM1 */
 };
 
 void bootBFMBios(void *fname){
     int res;
-    u8 * fileBuf;
+    unsigned char * fileBuf;
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
 
     partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    fileBuf = (u8 *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
+    fileBuf = (unsigned char *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
     memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
     
     //res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
@@ -61,8 +64,8 @@ void bootBFMBios(void *fname){
 }
 
 void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
-    u8 *shadowRomPos;
-    u32 EntryPoint2BL, PhysicalRomPos;
+    unsigned char *shadowRomPos;
+    unsigned int EntryPoint2BL, PhysicalRomPos;
 
     switch(fileSize){
         case 262144:
@@ -82,21 +85,18 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
         return;
     }
 
-    shadowRomPos = (u8 *)MmAllocateContiguousMemoryEx((unsigned long)SHADOW_ROM_SIZE,
-                                          MIN_SHADOW_ROM, MAX_SHADOW_ROM,
-                                          0, PAGE_READWRITE);
 
     memcpy(shadowRomPos, fileBuf, fileSize);
     PhysicalRomPos = MmGetPhysicalAddress((void *)shadowRomPos);
     //Evox M8+ is also a metoobfm BIOS.
     if (metoobfm_detect((void *)shadowRomPos, SHADOW_ROM_SIZE)) {
         //dprintf("Metoo BFM 2bl footer detected\n");
-        EntryPoint2BL = (u32)metoobfm_prepare((void *)shadowRomPos, SHADOW_ROM_SIZE);
+        EntryPoint2BL = (unsigned int)metoobfm_prepare((void *)shadowRomPos, SHADOW_ROM_SIZE);
         printk("\n              metoo BFM detected.");
     //Only M8 (non plus) is EvoxRom.
     } else if (evoxrom_detect((void *)shadowRomPos, SHADOW_ROM_SIZE)) {
         //dprintf("EvoX M8 2bl type detected\n");
-        EntryPoint2BL = (u32)evoxrom_prepare((void *)shadowRomPos, SHADOW_ROM_SIZE);
+        EntryPoint2BL = (unsigned int)evoxrom_prepare((void *)shadowRomPos, SHADOW_ROM_SIZE);
         printk("\n              EvoxM8 BFM detected.");
     //Need RC4 decrypt for all the others.
     } else {
@@ -106,7 +106,7 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
         goto nobfm;
     }
 
-    printk("\n              EntryPoint2BL addr = 0x%08X.    0 contains 0x%02X vs 0xFA", EntryPoint2BL, *(u8*)EntryPoint2BL);
+    printk("\n              EntryPoint2BL addr = 0x%08X.    0 contains 0x%02X vs 0xFA", EntryPoint2BL, *(unsigned char*)EntryPoint2BL);
     printk("\n              shadowRomPos addr = 0x%08X.    0 contains 0x%02X vs 0x09", shadowRomPos, *(shadowRomPos + 0x80000000));
     printk("\n              PhysicalRomPos addr = 0x%08X.", PhysicalRomPos);
     printk("\n\n           Press Button 'B' or 'Back' to continue.");
@@ -152,7 +152,7 @@ void *evoxrom_prepare(void *rom, unsigned long rom_size){
 
     //dprintf("Allocate 2bl mem\n");
 
-    virt2bl = (u32 *)MIN_2BL;
+    virt2bl = (unsigned int *)MIN_2BL;
 
     /* Copy the 2bl to the appropriate location */
 
@@ -162,11 +162,11 @@ void *evoxrom_prepare(void *rom, unsigned long rom_size){
 
     //dprintf("Calculating 2bl entry point\n");
 
-    return (void *)(*(u32 *)virt2bl - 0x90000 + 0x80400000);
+    return (void *)(*(unsigned int *)virt2bl - 0x90000 + 0x80400000);
 }
 
 int metoobfm_detect(void *rom, unsigned long rom_size){
-    if (*(u32 *)(rom + rom_size - 4) == METOOBFM_MAGIC1)
+    if (*(unsigned int *)(rom + rom_size - 4) == METOOBFM_MAGIC1)
         return true;
 
     return false;
@@ -182,10 +182,6 @@ void *metoobfm_prepare(void *rom, unsigned long rom_size){
 
     //dprintf("Allocate 2bl mem\n");
 
-    base = (u8 *)MmAllocateContiguousMemoryEx(ft->size_2bl,
-                                            ft->base_2bl,
-                                            ft->base_2bl + ft->size_2bl - 1,
-                                            0, PAGE_READWRITE);
 
     /* Copy the 2bl to the appropriate location */
 

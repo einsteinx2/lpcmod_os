@@ -1,4 +1,5 @@
 #include "boot.h"
+#include "string.h"
 
 CONFIGENTRY *ParseConfig(char *szBuffer, unsigned int fileLen, char *szPath) {
     char *linePtr;

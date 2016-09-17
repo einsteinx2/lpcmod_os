@@ -9,10 +9,15 @@
 
 
 #include "boot.h"
+#include "menu/misc/ConfirmDialog.h"
 #include "BootFlash.h"
-#include <stdio.h>
-#include "memory_layout.h"
 #include "lpcmod_v1.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "xblast/scriptEngine/xblastScriptEngine.h"
+#include "string.h"
+#include "cromwell.h"
+#include "FlashMenuActions.h"
+#include <stddef.h>
 
 int sprintf(char * buf, const char *fmt, ...);
 
@@ -22,7 +27,7 @@ int sprintf(char * buf, const char *fmt, ...);
 bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft )
 {
     bool fSeen=false;
-    u8 baNormalModeFirstTwoBytes[2];
+    unsigned char baNormalModeFirstTwoBytes[2];
     int nPos=0;
 
     pof->m_fIsBelievedCapableOfWriteAndErase=true;
@@ -91,9 +96,9 @@ bool BootFlashGetDescriptor( OBJECT_FLASH *pof, KNOWN_FLASH_TYPE * pkft )
  
 bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
 {
-    u32 dw=pof->m_dwStartOffset;
-    u32 dwLen=pof->m_dwLengthUsedArea;
-    u32 dwLastEraseAddress=0xffffffff;
+    unsigned int dw=pof->m_dwStartOffset;
+    unsigned int dwLen=pof->m_dwLengthUsedArea;
+    unsigned int dwLastEraseAddress=0xffffffff;
     int nCountEraseRetryIn4KBlock=MAX_ERASE_RETRIES_IN_4KBLOCK_BEFORE_FAILING;
 
     pof->m_szAdditionalErrorInfo[0]='\0';
@@ -107,7 +112,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
 
         if(pof->m_pbMemoryMappedStartAddress[dw]!=0xff) { // something needs erasing
 
-            u8 b;
+            unsigned char b;
 
             if((dwLastEraseAddress & 0xfffff000)==(dw & 0xfffff000)) { // same 4K block?
                 nCountEraseRetryIn4KBlock--;
@@ -125,7 +130,7 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
                 dwLastEraseAddress=dw;
             }
 
-            u32 dwCountTries=0;
+            unsigned int dwCountTries=0;
 
             pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
             pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
@@ -213,9 +218,9 @@ bool BootFlashEraseMinimalRegion( OBJECT_FLASH *pof)
 
 bool BootFlashErase4KSector( OBJECT_FLASH *pof)
 {
-    u32 dw=pof->m_dwStartOffset;
-    u32 dwLen=0x1000;                   //4KB length
-    u32 dwLastEraseAddress=0xffffffff;
+    unsigned int dw=pof->m_dwStartOffset;
+    unsigned int dwLen=0x1000;                   //4KB length
+    unsigned int dwLastEraseAddress=0xffffffff;
 
     pof->m_szAdditionalErrorInfo[0]='\0';
 
@@ -228,9 +233,9 @@ bool BootFlashErase4KSector( OBJECT_FLASH *pof)
 
         if(pof->m_pbMemoryMappedStartAddress[dw]!=0xff) { // something needs erasing
 
-            u8 b;
+            unsigned char b;
 
-            u32 dwCountTries=0;
+            unsigned int dwCountTries=0;
 
             pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
             pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
@@ -275,12 +280,12 @@ bool BootFlashErase4KSector( OBJECT_FLASH *pof)
     // program the flash from the data in pba
     // length of valid data in pba held in pof->m_dwLengthUsedArea
 
-bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
+bool BootFlashProgram( OBJECT_FLASH *pof, unsigned char *pba)
 {
-    u32 dw=pof->m_dwStartOffset;
-    u32 dwLen=pof->m_dwLengthUsedArea;
-    u32 dwSrc=0;
-    u32 dwLastProgramAddress=0xffffffff;
+    unsigned int dw=pof->m_dwStartOffset;
+    unsigned int dwLen=pof->m_dwLengthUsedArea;
+    unsigned int dwSrc=0;
+    unsigned int dwLastProgramAddress=0xffffffff;
     int nCountProgramRetries=4;
 
     pof->m_szAdditionalErrorInfo[0]='\0';
@@ -300,7 +305,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
                 nCountProgramRetries--;
                 if(nCountProgramRetries==0) {
                     if(pof->m_pcallbackFlash!=NULL) {
-                        (pof->m_pcallbackFlash)(pof, EE_PROGRAM_ERROR, dw, (((u32)pba[dwSrc])<<8) |pof->m_pbMemoryMappedStartAddress[dw] );
+                        (pof->m_pcallbackFlash)(pof, EE_PROGRAM_ERROR, dw, (((unsigned int)pba[dwSrc])<<8) |pof->m_pbMemoryMappedStartAddress[dw] );
                         (pof->m_pcallbackFlash)(pof, EE_PROGRAM_END, 0, 0);
                     }
                     sprintf(pof->m_szAdditionalErrorInfo, "           Program failed for byte at +0x%x; wrote 0x%02X, read 0x%02X", dw, pba[dwSrc], pof->m_pbMemoryMappedStartAddress[dw]);
@@ -313,7 +318,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
             }
 
 
-            u8 b;
+            unsigned char b;
             pof->m_pbMemoryMappedStartAddress[0x5555]=0xaa;
             pof->m_pbMemoryMappedStartAddress[0x2aaa]=0x55;
             pof->m_pbMemoryMappedStartAddress[0x5555]=0xa0;
@@ -351,7 +356,7 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
 
         if(pof->m_pbMemoryMappedStartAddress[dw]!=pba[dwSrc]) { // verify error
             if(pof->m_pcallbackFlash!=NULL){
-                if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_ERROR, dw, (((u32)pba[dwSrc])<<8) |pof->m_pbMemoryMappedStartAddress[dw]))
+                if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_ERROR, dw, (((unsigned int)pba[dwSrc])<<8) |pof->m_pbMemoryMappedStartAddress[dw]))
                     return false;
 
                 if(!(pof->m_pcallbackFlash)(pof, EE_VERIFY_END, 0, 0))
@@ -387,24 +392,12 @@ bool BootFlashProgram( OBJECT_FLASH *pof, u8 *pba)
 }
 
 
-//Not needed right now.
-/*
-u8 GetByteFromFlash(int myaddress) {
-  OBJECT_FLASH of;
-  of.m_pbMemoryMappedStartAddress = (u8 *)LPCFlashadress;
-  return xGetByteFromFlash(&of, myaddress);
-}
-
-u8 xGetByteFromFlash(OBJECT_FLASH *myflash, int myaddress) {
-  return myflash->m_pbMemoryMappedStartAddress[myaddress]; }
-*/
-
-void WriteToIO(u16 _port, u8 _data)
+void WriteToIO(unsigned short _port, unsigned char _data)
 {
    __asm__ ("out %%al, %%dx" : : "a" (_data), "d" (_port));
 }
 
-u8 ReadFromIO(u16 address)
+unsigned char ReadFromIO(unsigned short address)
 {
    unsigned char data;
    __asm__ __volatile__ ("inb %w1,%0":"=a" (data):"Nd" (address));
@@ -416,9 +409,9 @@ void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
     int i;
     if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
         //memset(&of,0xFF,sizeof(of));
-        of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;               //Only thing we need really.
+        of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;               //Only thing we need really.
         for (i = 0; i < sizeof(_LPCmodSettings); i++){        //Length of reserved flash space for persistent setting data.
-            *((u8*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
+            *((unsigned char*)LPCmodSettings + i) = of.m_pbMemoryMappedStartAddress[0x3f000 + i];        //Starts at 0x3f000 in flash
         }
     }
 }
@@ -426,8 +419,8 @@ void BootFlashGetOSSettings(_LPCmodSettings *LPCmodSettings) {
 //Saves persistent settings at 0x3f000 offset on flash.
 void BootFlashSaveOSSettings(void) {
     OBJECT_FLASH of;
-    u8 * lastBlock;
-    u32 blocksize;
+    unsigned char * lastBlock;
+    unsigned int blocksize;
 
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -436,7 +429,7 @@ void BootFlashSaveOSSettings(void) {
     if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
     			
         memset(&of,0xFF,sizeof(of));
-        of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+        of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
  
 /*       
         if(fHasHardware == SYSCON_ID_XX1 ||
@@ -454,19 +447,19 @@ void BootFlashSaveOSSettings(void) {
                 blocksize = 64 * 1024;
             }
 
-            lastBlock = (u8 *)malloc(blocksize);
+            lastBlock = (unsigned char *)malloc(blocksize);
     
             if(currentFlashBank != BNKOS)              //Just to be sure, can only be true on a XBlast mod.
                 switchOSBank(BNKOS);
 
 
-            memcpy(lastBlock,(const u8*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
+            memcpy(lastBlock,(const unsigned char*)((&of)->m_pbMemoryMappedStartAddress) + (0x40000 - blocksize), blocksize);    //Copy content of flash into temp memory allocation.
 
-            if(memcmp(&(lastBlock[blocksize-(4*1024)]),(u8*)&LPCmodSettings,sizeof(_LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
+            if(memcmp(&(lastBlock[blocksize-(4*1024)]),(unsigned char*)&LPCmodSettings,sizeof(_LPCmodSettings))) {            //At least one setting changed from what's currently in flash.
                 if(fHasHardware == SYSCON_ID_X3)	//Extra warning for X3 user.
     		    if(ConfirmDialog("           Are you on the same flash bank?", 1))
     		        return;
-                memcpy(&(lastBlock[blocksize-(4*1024)]),(const u8*)&LPCmodSettings,sizeof(_LPCmodSettings));    //Copy settings at the start of the 4KB block.
+                memcpy(&(lastBlock[blocksize-(4*1024)]),(const unsigned char*)&LPCmodSettings,sizeof(_LPCmodSettings));    //Copy settings at the start of the 4KB block.
                 if(scriptSavingPtr != NULL){    //There's a script to save
                     memcpy(&(lastBlock[blocksize-(4*1024) + sizeof(_LPCmodSettings)]), scriptSavingPtr, LPCmodSettings.firstScript.nextEntryPosition - 1 - sizeof(_LPCmodSettings));
                     free(scriptSavingPtr);
@@ -487,7 +480,7 @@ void BootFlashSaveOSSettings(void) {
     }
 }
 
-int assertOSUpdateValidInput(u8 * inputFile) {
+int assertOSUpdateValidInput(unsigned char * inputFile) {
     int result = 1;    //Start off assuming image file is not XBlast OS.
     int i;
     char * compareString = "XBlast OS";
@@ -495,7 +488,7 @@ int assertOSUpdateValidInput(u8 * inputFile) {
     OBJECT_FLASH of;
     
     memset(&of,0xFF,sizeof(of));
-    of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
     
     for(i = 0x3FFD0; i < 0x3FFD8; i++) {
         if(compareString[i] != inputFile[i])
@@ -547,10 +540,10 @@ bool assert4KBErase(OBJECT_FLASH *pof){
     return false;
 }
 
-int fetchBootScriptFromFlash(u8 ** buffer){
+int fetchBootScriptFromFlash(unsigned char ** buffer){
     int bufferSize = 0;
     OBJECT_FLASH of;
-    u8 * lastBlock;
+    unsigned char * lastBlock;
 
     // A bit hacky, but easier to maintain.
     const KNOWN_FLASH_TYPE aknownflashtypesDefault[] = {
@@ -562,12 +555,12 @@ int fetchBootScriptFromFlash(u8 ** buffer){
             if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || cromwell_config==CROMWELL){
 
                 memset(&of,0xFF,sizeof(of));
-                of.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+                of.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
 
                 if(BootFlashGetDescriptor(&of, (KNOWN_FLASH_TYPE *)&aknownflashtypesDefault[0])) {        //Still got flash to interface?
 
-                    *buffer = (u8 *)malloc(bufferSize);
-                    memcpy(*buffer,(const u8*)&(of.m_pbMemoryMappedStartAddress[0x3f000 + sizeof(_LPCmodSettings)]), bufferSize);
+                    *buffer = (unsigned char *)malloc(bufferSize);
+                    memcpy(*buffer,(const unsigned char*)&(of.m_pbMemoryMappedStartAddress[0x3f000 + sizeof(_LPCmodSettings)]), bufferSize);
                 }
             }
         }

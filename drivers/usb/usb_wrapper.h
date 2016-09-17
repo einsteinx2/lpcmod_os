@@ -4,3 +4,4 @@
 #define CONFIG_PCI
 
 #include "linux/usb.h"
+#include "cromwell.h"

@@ -7,7 +7,10 @@
  *                                                                         *
  ***************************************************************************/
 #include "ResetMenuActions.h"
-//#include "boot.h"
+#include "BootEEPROM.h"
+#include "BootFlash.h"
+#include "boot.h"
+#include "i2c.h"
 
 void SlowReboot(void *ignored){
     assertWriteEEPROM();

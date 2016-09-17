@@ -6,7 +6,10 @@
 #include <asm/byteorder.h>
 #else
 #include "../usb_wrapper.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "string.h"
 #endif
+
 
 #define USB_MAXALTSETTING        128    /* Hard limit */
 #define USB_MAXENDPOINTS        30    /* Hard limit */

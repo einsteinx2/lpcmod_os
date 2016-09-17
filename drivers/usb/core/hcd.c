@@ -22,9 +22,6 @@
  * Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-int strlen(const char * s);
-
-
 #if 0
 #include <linux/config.h>
 
@@ -45,7 +42,7 @@ int strlen(const char * s);
 #include <linux/usb.h>
 #else
 #include "../usb_wrapper.h"
-//#define DEBUG
+#include "string.h"
 #endif
 
 #include "hcd.h"
@@ -117,7 +114,7 @@ static spinlock_t hcd_data_lock = SPIN_LOCK_UNLOCKED;
 #define KERNEL_VER    ((LINUX_VERSION_CODE >> 8) & 0x0ff)
 
 /* usb 2.0 root hub device descriptor */
-static const u8 usb2_rh_dev_descriptor [18] = {
+static const unsigned char usb2_rh_dev_descriptor [18] = {
     0x12,       /*  __u8  bLength; */
     0x01,       /*  __u8  bDescriptorType; Device */
     0x00, 0x02, /*  __u16 bcdUSB; v2.0 */
@@ -140,7 +137,7 @@ static const u8 usb2_rh_dev_descriptor [18] = {
 /* no usb 2.0 root hub "device qualifier" descriptor: one speed only */
 
 /* usb 1.1 root hub device descriptor */
-static const u8 usb11_rh_dev_descriptor [18] = {
+static const unsigned char usb11_rh_dev_descriptor [18] = {
     0x12,       /*  __u8  bLength; */
     0x01,       /*  __u8  bDescriptorType; Device */
     0x10, 0x01, /*  __u16 bcdUSB; v1.1 */
@@ -165,7 +162,7 @@ static const u8 usb11_rh_dev_descriptor [18] = {
 
 /* Configuration descriptors for our root hubs */
 
-static const u8 fs_rh_config_descriptor [] = {
+static const unsigned char fs_rh_config_descriptor [] = {
 
     /* one configuration */
     0x09,       /*  __u8  bLength; */
@@ -212,7 +209,7 @@ static const u8 fs_rh_config_descriptor [] = {
     0xff        /*  __u8  ep_bInterval; (255ms -- usb 2.0 spec) */
 };
 
-static const u8 hs_rh_config_descriptor [] = {
+static const unsigned char hs_rh_config_descriptor [] = {
 
     /* one configuration */
     0x09,       /*  __u8  bLength; */
@@ -265,7 +262,7 @@ static const u8 hs_rh_config_descriptor [] = {
  * helper routine for returning string descriptors in UTF-16LE
  * input can actually be ISO-8859-1; ASCII is its 7-bit subset
  */
-static int ascii2utf (char *s, u8 *utf, int utfmax)
+static int ascii2utf (char *s, unsigned char *utf, int utfmax)
 {
     int retval;
 
@@ -290,7 +287,7 @@ static int ascii2utf (char *s, u8 *utf, int utfmax)
 static int rh_string (
     int        id,
     struct usb_hcd    *hcd,
-    u8        *data,
+    unsigned char        *data,
     int        len
 ) {
     char buf [100];
@@ -328,9 +325,9 @@ static int rh_string (
 static int rh_call_control (struct usb_hcd *hcd, struct urb *urb)
 {
     struct usb_ctrlrequest *cmd = (struct usb_ctrlrequest *) urb->setup_packet;
-     u16        typeReq, wValue, wIndex, wLength;
-    const u8    *bufp = 0;
-    u8        *ubuf = urb->transfer_buffer;
+     unsigned short        typeReq, wValue, wIndex, wLength;
+    const unsigned char    *bufp = 0;
+    unsigned char        *ubuf = urb->transfer_buffer;
     int        len = 0;
     //unsigned long    flags;
 

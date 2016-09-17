@@ -7,10 +7,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
-#include "TextMenu.h"
+#include "MenuInits.h"
+#include "boot.h"
 #include "VideoMenuActions.h"
 #include "VideoInitialization.h"
+#include "string.h"
 
 TEXTMENU *VideoMenuInit(void) {
     TEXTMENUITEM *itemPtr;
@@ -22,7 +23,7 @@ TEXTMENU *VideoMenuInit(void) {
 
 //    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
 //    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-//    if(((u8 *)&eeprom)[0x96]&0x01) {
+//    if(((unsigned char *)&eeprom)[0x96]&0x01) {
 //        strcpy(itemPtr->szCaption, "Display Size: Widescreen");
 //    }
 //    else {

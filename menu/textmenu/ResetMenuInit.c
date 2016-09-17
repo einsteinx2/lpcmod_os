@@ -7,9 +7,10 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
-#include "TextMenu.h"
+#include "MenuInits.h"
+#include "boot.h"
 #include "ResetMenuActions.h"
+#include "string.h"
 
 TEXTMENU* ResetMenuInit(void) {
     TEXTMENUITEM *itemPtr;

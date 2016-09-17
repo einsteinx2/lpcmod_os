@@ -1,6 +1,9 @@
 #ifndef stdio_h
 #define stdio_h
 
-#include "sys/types.h"
+#include <stdarg.h>
+
+int sprintf(char * buf, const char *fmt, ...);
+int vsprintf(char *buf, const char *fmt, va_list args);
 
 #endif /* #ifndef stdio_h */

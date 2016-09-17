@@ -1,10 +1,10 @@
 #ifndef _BootFATX_H_
 #define _BootFATX_H_
 
-#include <sys/types.h>
-
 // Definitions for FATX on-disk structures
 // (c) 2001 Andrew de Quincey
+
+#include <stdbool.h>
 
 
 #define STORE_SIZE    (0x131F00000ULL)
@@ -85,108 +85,111 @@ typedef struct {
   int nDriveIndex;
  
   // The starting byte of the partition
-  u_int64_t partitionStart;
+  unsigned long long partitionStart;
 
   // The size of the partition in bytes
-  u_int64_t partitionSize;
+  unsigned long long partitionSize;
 
   // The cluster size of the partition
-  u_int32_t clusterSize;
+  unsigned long clusterSize;
 
   // Number of clusters in the partition
-  u_int32_t clusterCount;
+  unsigned long clusterCount;
 
   // Size of entries in the cluster chain map
-  u_int32_t chainMapEntrySize;
+  unsigned long chainMapEntrySize;
 
   // The cluster chain map table (which may be in words OR dwords)
   union {
-    u_int16_t *words;
-    u_int32_t *dwords;
+    unsigned short *words;
+    unsigned long *dwords;
   } clusterChainMap;
   
   // Address of cluster 1
-  u_int64_t cluster1Address;
+  unsigned long long cluster1Address;
   
 } FATXPartition;
 
 typedef struct {                                        //Also known as FATX SuperBlock.
-    u32 magic;
-    u32 volumeID;
-    u32 clusterSize;
-    u16 nbFAT;
-    u32 unknown;
-    u8  unused[0xfee];
+    unsigned int magic;
+    unsigned int volumeID;
+    unsigned int clusterSize;
+    unsigned short nbFAT;
+    unsigned int unknown;
+    unsigned char  unused[0xfee];
 }__attribute__((packed)) PARTITIONHEADER;               //For a total of 4096(0x1000) bytes.
 
 typedef struct {
     char filename[FATX_FILENAME_MAX];
     int clusterId;
-    u_int32_t fileSize;
-    u_int32_t fileRead;
-    u8 *buffer;
+    unsigned long fileSize;
+    unsigned long fileRead;
+    unsigned char *buffer;
 } FATXFILEINFO;
 
 
 //Taken from ReactOS' vfat.h source and Xbox-Linux archives.
 typedef struct {
-    u8 FilenameLength;
-    u8 Attrib;
+    unsigned char FilenameLength;
+    unsigned char Attrib;
     char Filename[42];
-    u32 FirstCluster;
-    u32 FileSize;
-    u16 UpdateTime;
-    u16 UpdateDate;
-    u16 CreationTime;
-    u16 CreationDate;
-    u16 AccessTime;
-    u16 AccessDate;
+    unsigned int FirstCluster;
+    unsigned int FileSize;
+    unsigned short UpdateTime;
+    unsigned short UpdateDate;
+    unsigned short CreationTime;
+    unsigned short CreationDate;
+    unsigned short AccessTime;
+    unsigned short AccessDate;
 }__attribute__((packed)) FATXDIRINFO;                   //For a total of 64 bytes.
 
 typedef struct
 {
-        u8 Name[16];
-        u32 Flags;
-        u32 LBAStart;
-        u32 LBASize;
-        u32 Reserved;
+        unsigned char Name[16];
+        unsigned int Flags;
+        unsigned int LBAStart;
+        unsigned int LBASize;
+        unsigned int Reserved;
 } XboxPartitionTableEntry;
 
 typedef struct
 {
-        u8   Magic[16];
+        unsigned char   Magic[16];
         char    Res0[32];
         XboxPartitionTableEntry TableEntries[14];
 } XboxPartitionTable;
 
 //TODO: One of the 2 functions below will need to be removed.
-//LoadFATXFilefixed requires you to specify pointer (u8* Position) for allocated memory.
-//LoadFATXFile allocates memory and point to it using the "buffer" u8 pointer in fileinfo struct.
-//int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position);
+//LoadFATXFilefixed requires you to specify pointer (unsigned char* Position) for allocated memory.
+//LoadFATXFile allocates memory and point to it using the "buffer" unsigned char pointer in fileinfo struct.
+//int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,unsigned char* Position);
 //A decision has been made. Left it commented for "legacy" purposes.
 int LoadFATXFile(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo);
+int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen, char *prefix);
+int FATXFindDir(FATXPartition *partition, int clusterId, char *dir);
 void PrintFATXPartitionTable(int nDriveIndex);
 int FATXSignature(int nDriveIndex,unsigned int block);
 FATXPartition *OpenFATXPartition(int nDriveIndex,unsigned int partitionOffset,
-                        u_int64_t partitionSize);
+                        unsigned long long partitionSize);
 int FATXRawRead (int drive, int sector, unsigned long long byte_offset, int byte_len, char *buf);
 void DumpFATXTree(FATXPartition *partition);
 void _DumpFATXTree(FATXPartition* partition, int clusterId, int nesting);
 void LoadFATXCluster(FATXPartition* partition, int clusterId, unsigned char* clusterData);
-u_int32_t getNextClusterInChain(FATXPartition* partition, int clusterId);
+unsigned long getNextClusterInChain(FATXPartition* partition, int clusterId);
 void CloseFATXPartition(FATXPartition* partition);
 int FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int _FATXFindFile(FATXPartition* partition,char* filename,int clusterId, FATXFILEINFO *fileinfo);
 int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo);
-void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster);
-//bool FATXCheckBRFR(u8 drive);
-void FATXSetBRFR(u8 drive);
-bool FATXCheckMBR(u8 driveId);
-void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table);
-void FATXSetInitMBR(u8 driveId);
+void FATXCreateDirectoryEntry(unsigned char * buffer, char *entryName, unsigned int entryNumber, unsigned int cluster);
+int FATXCheckFATXMagic(unsigned char driveId);
+//bool FATXCheckBRFR(unsigned char drive);
+void FATXSetBRFR(unsigned char drive);
+bool FATXCheckMBR(unsigned char driveId);
+void FATXSetMBR(unsigned char driveId, XboxPartitionTable *p_table);
+void FATXSetInitMBR(unsigned char driveId);
 void FATXFormatCacheDrives(int nIndexDrive, bool verbose);
 void FATXFormatDriveC(int nIndexDrive, bool verbose);
 void FATXFormatDriveE(int nIndexDrive, bool verbose);
-void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize);
+void FATXFormatExtendedDrive(unsigned char driveId, unsigned char partition, unsigned int lbaStart, unsigned int lbaSize);
 
 #endif //    _BootFATX_H_

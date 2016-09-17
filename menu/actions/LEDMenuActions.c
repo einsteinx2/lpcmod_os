@@ -9,9 +9,10 @@
 
 #include "boot.h"
 #include "video.h"
-#include "xbox.h"
 #include "BootEEPROM.h"
 #include "LEDMenuActions.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include <stddef.h>
 
 void LEDGreen(void *whatever) {
     setLED("gggg");

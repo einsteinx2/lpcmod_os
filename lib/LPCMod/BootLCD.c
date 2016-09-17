@@ -7,11 +7,15 @@
  *                                                                         *
  ***************************************************************************/
 
- #include "boot.h"
+ #include "lib/cromwell/cromString.h"
+#include "lib/time/timeManagement.h"
+#include "boot.h"
 #include "VideoInitialization.h"
 #include "BootLCD.h"
 #include "lpcmod_v1.h"
 #include "BootLPCMod.h"
+#include "BootFlash.h"
+#include "string.h"
 
 void BootLCDInit(void){
     xLCD.enable = 0;            //Set it unintialized for now.
@@ -57,29 +61,29 @@ void BootLCDSwitchType(void){
         }
 }
 
-void toggleEN5V(u8 value){
+void toggleEN5V(unsigned char value){
     GenPurposeIOs.EN_5V = value;
     LPCMod_WriteGenPurposeIOs();     //Write to LPC register
 }
 
-void setLCDContrast(u8 value){
+void setLCDContrast(unsigned char value){
     float fContrast=((float)value)/100.0f;
     fContrast*=127.0f;
-    u8 newValue=(u8)fContrast;
+    unsigned char newValue=(unsigned char)fContrast;
     if (newValue==63) newValue=64;
     WriteToIO(LCD_CT, newValue);
 }
 
-void setLCDBacklight(u8 value){
+void setLCDBacklight(unsigned char value){
     if(fHasHardware != SYSCON_ID_X3){                  //Everything but Xecuter 3
         float fBackLight=((float)value)/100.0f;
         fBackLight*=127.0f;
-        u8 newValue=(u8)fBackLight;
+        unsigned char newValue=(unsigned char)fBackLight;
         if (newValue==63) newValue=64;
         WriteToIO(LCD_BL, newValue);
     }
     else                                               //Xecuter 3
-        WriteToIO(X3_DISP_O_LIGHT, (u8)(2.55*(double)value) );
+        WriteToIO(X3_DISP_O_LIGHT, (unsigned char)(2.55*(double)value) );
 }
 
 void assertInitLCD(void){
@@ -145,21 +149,21 @@ void WriteLCDInit(void){
     
 }
 
-void WriteLCDCommand(u8 value){
+void WriteLCDCommand(unsigned char value){
     if(xLCD.enable != 1)
         return;
     xLCD.WriteIO(value, 0, xLCD.TimingCMD);        //RS=0 for commands.
 }
 
-void WriteLCDData(u8 value){
+void WriteLCDData(unsigned char value){
     if(xLCD.enable != 1)
         return;
     xLCD.WriteIO(value, (fHasHardware == SYSCON_ID_X3)?X3_DISPLAY_RS:DISPLAY_RS, xLCD.TimingData);
 }
 
-void WriteLCDIO(u8 data, bool RS, u16 wait){
-    u8 lsbNibble = 0;
-    u8 msbNibble = 0;
+void WriteLCDIO(unsigned char data, bool RS, unsigned short wait){
+    unsigned char lsbNibble = 0;
+    unsigned char msbNibble = 0;
     
     if(xLCD.enable != 1)
         return;
@@ -200,9 +204,9 @@ void WriteLCDIO(u8 data, bool RS, u16 wait){
     wait_us(wait);
 }
 
-void X3WriteLCDIO(u8 data, bool RS, u16 wait){
-        u8 lsbNibble = 0;
-        u8 msbNibble = 0;
+void X3WriteLCDIO(unsigned char data, bool RS, unsigned short wait){
+        unsigned char lsbNibble = 0;
+        unsigned char msbNibble = 0;
 
         if(xLCD.enable != 1)
             return;
@@ -356,7 +360,7 @@ void WriteLCDCenterString(char * StringOut, char * stringIn){
     //String length is shorter than what can be displayed on a single line of the LCD unit.
     if (i < xLCD.LineSize) {
         char szTemp1[xLCD.LineSize];
-        u8 rest = (xLCD.LineSize-i) / 2;
+        unsigned char rest = (xLCD.LineSize-i) / 2;
 
         //Print "space"(0x20 in ascii) in the whole array.
         memset(szTemp1,0x20,xLCD.LineSize);
@@ -393,8 +397,8 @@ void WriteLCDFitString(char * StringOut, char * stringIn){
     }
 }
 
-void WriteLCDSetPos(u8 pos, u8 line) {
-    u8 cursorPtr = pos % xLCD.LineSize;
+void WriteLCDSetPos(unsigned char pos, unsigned char line) {
+    unsigned char cursorPtr = pos % xLCD.LineSize;
 
   if(xLCD.enable != 1)
         return;    
@@ -416,7 +420,7 @@ void WriteLCDSetPos(u8 pos, u8 line) {
     
 }
 
-void WriteLCDClearLine(u8 line) {
+void WriteLCDClearLine(unsigned char line) {
     char empty[xLCD.LineSize];
     
     if(xLCD.enable != 1)
@@ -441,7 +445,7 @@ void initialLCDPrint(void){
     }
 }
 
-void BootLCDUpdateLinesOwnership(u8 line, u8 fromScript){
+void BootLCDUpdateLinesOwnership(unsigned char line, unsigned char fromScript){
     char customStringsFirstCharacterArray[4] = {LPCmodSettings.LCDsettings.customString0[0], LPCmodSettings.LCDsettings.customString1[0], LPCmodSettings.LCDsettings.customString2[0], LPCmodSettings.LCDsettings.customString3[0]};
 
     if (fromScript == SCRIPT_OWNER){

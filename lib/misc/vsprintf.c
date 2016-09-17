@@ -9,59 +9,9 @@
  * Wirzenius wrote this portably, Torvalds fucked it up :-)
  */
 
-
-#include <stdarg.h>
-#include <sys/types.h>
-#include <string.h>
-#include "config.h"
-
-/* haha, don't need ctype.c */
-#define isdigit(c)    ((c) >= '0' && (c) <= '9')
-#define is_digit isdigit
-#define isxdigit(c)    (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
-#define islower(c)    ((c) >= 'a' && (c) <= 'z')
-#define toupper(c) __toupper(c)
-#define ETH_ALEN 6
-
-static inline unsigned char __toupper(unsigned char c)
-{
-        if (islower(c))
-                c -= 'a'-'A';
-        return c;
-}
-
-
-unsigned long simple_strtoul(const char *cp,char **endp,unsigned int base)
-{
-    unsigned long result = 0,value;
-
-    if (!base) {
-        base = 10;
-        if (*cp == '0') {
-            base = 8;
-            cp++;
-            if ((*cp == 'x') && isxdigit(cp[1])) {
-                cp++;
-                base = 16;
-            }
-        }
-    }
-    while (isxdigit(*cp) && (value = isdigit(*cp) ? *cp-'0' : (islower(*cp)
-        ? toupper(*cp) : *cp)-'A'+10) < base) {
-        result = result*base + value;
-        cp++;
-    }
-    if (endp)
-        *endp = (char *)cp;
-    return result;
-}
-
-long simple_strtol(const char *cp,char **endp,unsigned int base)
-{
-    if(*cp=='-')
-        return -simple_strtoul(cp+1,endp,base);
-    return simple_strtoul(cp,endp,base);
-}
+#include <stddef.h>
+#include "stdlib.h"
+#include "stdio.h"
 
 
 static int skip_atoi(const char **s)
@@ -80,6 +30,8 @@ static int skip_atoi(const char **s)
 #define LEFT    16        /* left justified */
 #define SPECIAL    32        /* 0x */
 #define LARGE    64        /* use 'ABCDEF' instead of 'abcdef' */
+
+#define ETH_ALEN 6
 
 #define do_div(n,base) ({ \
 int __res; \
@@ -153,9 +105,6 @@ static char * number(char * str, long num, int base, int size, int precision
         *str++ = ' ';
     return str;
 }
-
-/* Forward decl. needed for IP address printing stuff... */
-int sprintf(char * buf, const char *fmt, ...);
 
 int vsprintf(char *buf, const char *fmt, va_list args)
 {
@@ -359,40 +308,3 @@ int sprintf(char * buf, const char *fmt, ...)
     va_end(args);
     return i;
 }
-
-#ifdef SPITRACE
-void printTextSPI(const char * functionName, char * buffer, ...){
-    unsigned char pos;
-    char i;
-    int stringLength;
-    char tempBuf[200];
-    char outputBuf[200];
-
-    va_list args;
-    LPCMod_FastWriteIO(0x2, 0); //CLK to '0'
-    if(buffer != NULL){
-        va_start(args, buffer);
-        vsprintf(tempBuf,buffer,args);
-        sprintf(outputBuf, "%s: %s", functionName, tempBuf);
-    }
-    else{
-        sprintf(outputBuf, "%s", functionName);
-    }
-
-    stringLength = strlen(outputBuf);
-    if(stringLength > 200)
-        stringLength = 200;
-
-    //Will send null terminating character at the end.
-    for(pos = 0; pos <= stringLength; pos++){
-        LPCMod_FastWriteIO(0x4, 0); // /CS to '0'
-        for(i = 7; i >= 0; i--){
-            LPCMod_FastWriteIO(0x3, (outputBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
-            LPCMod_FastWriteIO(0x2, 0x2); //CLK to '1'
-        }
-        LPCMod_FastWriteIO(0x2, 0); //CLK to '0'.
-        LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
-    }
-    //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
-}
-#endif

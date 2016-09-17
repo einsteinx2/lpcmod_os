@@ -6,7 +6,6 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include "include/config.h"
 
 void FlashBiosFromHDD512(void *fname);
 void FlashBiosFromHDD256(void *fname);
@@ -19,4 +18,7 @@ void enableNetflash(void *flashType);
 void enableWebupdate(void *whatever);
 
 void switchBank(char bank);
+void switchOSBank(unsigned char bank);
+void switchBootBank(unsigned char bank);
+
 void FlashFooter(void);

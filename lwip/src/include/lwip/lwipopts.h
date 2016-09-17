@@ -32,6 +32,9 @@
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
 
+#include "string.h"
+#include "lib/cromwell/cromString.h"
+
 #define NO_SYS 1
 /* #define LWIP_EVENT_API 1 */
 
@@ -68,14 +71,8 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_NETBUF         0
 /* MEMP_NUM_NETCONN: the number of struct netconns. */
 #define MEMP_NUM_NETCONN        0
-/* MEMP_NUM_APIMSG: the number of struct api_msg, used for
-   communication between the TCP/IP stack and the sequential
-   programs. */
-#define MEMP_NUM_API_MSG        0
-/* MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which is used
-   for sequential API communication and incoming packets. Used in
-   src/api/tcpip.c. */
-#define MEMP_NUM_TCPIP_MSG      0
+
+
 /* MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active
    timeouts. */
 #define MEMP_NUM_SYS_TIMEOUT    0
@@ -121,15 +118,6 @@ a lot of data that needs to be copied, this should be set high. */
 /* ---------- ARP options ---------- */
 #define ARP_TABLE_SIZE 64
 #define ARP_QUEUEING 0
-/**
- * - If enabled, cache entries are generated for every kind of ARP traffic or
- * broadcast IP traffic. This enhances behaviour for sending to a dynamic set
- * of hosts, for example if acting as a gateway.
- * - If disabled, cache entries are generated only for IP destination addresses
- * in use by lwIP or applications. This enhances performance if sending to a small,
- * reasonably static number of hosts. Typically for embedded devices.
- */
-#define ETHARP_ALWAYS_INSERT 1
 
 /* ---------- IP options ---------- */
 /* Define IP_FORWARD to 1 if you wish to have the ability to forward

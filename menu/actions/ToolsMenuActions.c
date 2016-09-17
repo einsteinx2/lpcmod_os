@@ -6,23 +6,27 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+#include "MenuInits.h"
+#include "MenuActions.h"
 #include "ToolsMenuActions.h"
-#include "LEDMenuActions.h"
+#include "EepromEditMenuActions.h"
 #include "NetworkMenuActions.h"
+#include "HDDMenuActions.h"
+#include "ResetMenuActions.h"
 #include "lpcmod_v1.h"
-#include "boot.h"
-#include "BootIde.h"
-#include "video.h"
-#include "BootFATX.h"
+#include "BootHddKey.h"
 #include "lib/LPCMod/BootLPCMod.h"
-
-bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr);
+#include "lib/cromwell/cromString.h"
+#include "xblast/settings/xblastSettingsImportExport.h"
+#include "string.h"
+#include "menu/misc/ConfirmDialog.h"
+#include "menu/misc/ProgressBar.h"
 
 void saveEEPromToFlash(void *whatever){
-    u8 unusedBuf[0x30];
+    unsigned char unusedBuf[0x30];
     int version;
 
-    version = decryptEEPROMData((u8 *)&(LPCmodSettings.bakeeprom), unusedBuf);
+    version = decryptEEPROMData((unsigned char *)&(LPCmodSettings.bakeeprom), unusedBuf);
     if(version >= V1_0 && version <= V1_6){   //Current content in eeprom is valid.
         if(ConfirmDialog("       Overwrite back up EEProm content?", 1)){
             return;
@@ -36,7 +40,7 @@ void saveEEPromToFlash(void *whatever){
 void restoreEEPromFromFlash(void *whatever){
 
     editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
-    if(!updateEEPROMEditBufferFromInputBuffer(&(LPCmodSettings.bakeeprom), sizeof(EEPROMDATA), false)){
+    if(!updateEEPROMEditBufferFromInputBuffer((unsigned char *)&(LPCmodSettings.bakeeprom), sizeof(EEPROMDATA), false)){
         if(replaceEEPROMContentFromBuffer(editeeprom)){
             ToolHeader("No valid EEPROM backup on modchip.");
             printk("\n           Nothing to restore. Xbox EEPROM is unchanged.");
@@ -53,7 +57,7 @@ void warningDisplayEepromEditMenu(void *ignored){
             return;
     editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
     memcpy(editeeprom, &eeprom, sizeof(EEPROMDATA));   //Initial copy into edition buffer.
-    ResetDrawChildTextMenu(eepromEditMenuInit());
+    ResetDrawChildTextMenu((void*)eepromEditMenuInit());
     free(editeeprom);
     editeeprom = NULL;
 }
@@ -74,7 +78,7 @@ void showMemTest(void *whatever){
 }
 
 void memtest(void){
-    u8 bank = 0;
+    unsigned char bank = 0;
 //    char Bank1Text[20];
 //    char Bank2Text[20];
 //    char Bank3Text[20];
@@ -121,10 +125,10 @@ void ToolHeader(char *title) {
 }
 
 int testBank(int bank){
-    u32 counter, subCounter, lastValue;
-    u32 *membasetop = (u32*)((64*1024*1024));
-//    u32 startBad = 0, stopBad = 0;
-    u8 result=0;    //Start assuming everything is good.
+    unsigned int counter, subCounter, lastValue;
+    unsigned int *membasetop = (unsigned int*)((64*1024*1024));
+//    unsigned int startBad = 0, stopBad = 0;
+    unsigned char result=0;    //Start assuming everything is good.
 
     lastValue = 1;
     //Clear Upper 64MB
@@ -246,11 +250,11 @@ void prevA19controlModBootValue(void * itemPtr){
 }
 
 bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr){
-    u8 i, eepromVersion = 0, unlockConfirm[2];
+    unsigned char i, eepromVersion = 0, unlockConfirm[2];
     bool cancelChanges = false;
     char unused[20];
 
-    eepromVersion = BootHddKeyGenerateEepromKeyData(eepromPtr, unused);
+    eepromVersion = BootHddKeyGenerateEepromKeyData((unsigned char *)eepromPtr, unused);
     if(eepromVersion >= V1_0 && eepromVersion <= V1_6){            //Make sure eeprom is properly decrypted.
         for(i = 0; i < 2; i++){               //Probe 2 possible drives
             if(tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi){      //If there's a HDD plugged on specified port

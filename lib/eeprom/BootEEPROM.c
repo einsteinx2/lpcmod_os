@@ -8,12 +8,16 @@
  ***************************************************************************/
 
 #include "boot.h"
+#include "BootHddKey.h"
 #include "BootEEPROM.h"
+#include "i2c.h"
 #include "rc4.h"
+#include "cromwell.h"
+#include "string.h"
 
 void BootEepromReadEntireEEPROM() {
     int i;
-    u8 *pb=(u8 *)&eeprom;
+    unsigned char *pb=(unsigned char *)&eeprom;
     for(i = 0; i < 256; i++) {
         *pb++ = I2CTransmitByteGetReturn(0x54, i);
     }
@@ -31,8 +35,8 @@ void BootEepromReloadEEPROM(EEPROMDATA * realeeprom) {
 
 void BootEepromCompareAndWriteEEPROM(EEPROMDATA * realeeprom){
     int i;
-    u8 *pb = (u8 *)&eeprom;
-    u8 *pc = (u8 *)realeeprom;
+    unsigned char *pb = (unsigned char *)&eeprom;
+    unsigned char *pc = (unsigned char *)realeeprom;
     for(i = 0; i < sizeof(EEPROMDATA); i++){
         if(memcmp(pb + i,pc + i,1)){                //Compare byte by byte.
             WriteToSMBus(0x54,i,1,pb[i]);           //Physical EEPROM's content is different from what's held in memory.
@@ -88,7 +92,7 @@ void BootEepromPrintInfo() {
 
 void BootEepromWriteEntireEEPROM(void){
     int i;
-    u8 *pb=(u8 *)&eeprom;
+    unsigned char *pb=(unsigned char *)&eeprom;
     for(i = 0; i < 256; i++) {
         WriteToSMBus(0x54,i,1,pb[i]);
     }
@@ -140,11 +144,11 @@ void assertWriteEEPROM(void){
 
 int getGameRegionValue(EEPROMDATA * eepromPtr){
     int result = -1;
-    u8 baEepromDataLocalCopy[0x30];
+    unsigned char baEepromDataLocalCopy[0x30];
     int version = 0;
-    u32 gameRegion=0;
+    unsigned int gameRegion=0;
 
-    version = decryptEEPROMData((u8 *)eepromPtr, baEepromDataLocalCopy);
+    version = decryptEEPROMData((unsigned char *)eepromPtr, baEepromDataLocalCopy);
 
     if(version > V1_6)
         result = XBE_INVALID;
@@ -162,17 +166,17 @@ int getGameRegionValue(EEPROMDATA * eepromPtr){
     return result;
 }
 
-int setGameRegionValue(u8 value){
+int setGameRegionValue(unsigned char value){
     int result = -1;
-    u8 baKeyHash[20];
-    u8 baDataHashConfirm[20];
-    u8 baEepromDataLocalCopy[0x30];
+    unsigned char baKeyHash[20];
+    unsigned char baDataHashConfirm[20];
+    unsigned char baEepromDataLocalCopy[0x30];
     struct rc4_key RC4_key;
     int version = 0;
     int counter;
-    u32 gameRegion = value;
+    unsigned int gameRegion = value;
 
-    version = decryptEEPROMData((u8 *)&eeprom, baEepromDataLocalCopy);
+    version = decryptEEPROMData((unsigned char *)&eeprom, baEepromDataLocalCopy);
 
     if (version > V1_6) return (-1);    //error, let's not do something stupid here. Leave with dignity.
     //else we know the version
@@ -201,13 +205,13 @@ int setGameRegionValue(u8 value){
 
 }
 
-u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf){
+unsigned char decryptEEPROMData(unsigned char* eepromPtr, unsigned char* decryptedBuf){
    struct rc4_key RC4_key;
    int version = 0;
    int counter;
-   u8 baEepromDataLocalCopy[0x30];
-   u8 baKeyHash[20];
-   u8 baDataHashConfirm[20];
+   unsigned char baEepromDataLocalCopy[0x30];
+   unsigned char baKeyHash[20];
+   unsigned char baDataHashConfirm[20];
 
         // Static Version change not included yet
 
@@ -244,13 +248,13 @@ u8 decryptEEPROMData(u8* eepromPtr, u8* decryptedBuf){
         return version;
 }
 
-u8 generateStringsForEEPROMChanges(bool genStrings){
-    u32 tempOrigChecksum2 = 0, tempOrigChecksum3 = 0, tempChecksum2 = 0, tempChecksum3 = 0;
+unsigned char generateStringsForEEPROMChanges(bool genStrings){
+    unsigned int tempOrigChecksum2 = 0, tempOrigChecksum3 = 0, tempChecksum2 = 0, tempChecksum3 = 0;
     int origGameRegion, gameRegion;
-    u8 i, nbChanges = 0, stringLength;
+    unsigned char i, nbChanges = 0, stringLength;
     char tempString[200];
     char origTempItemString[35], tempItemString[35];
-    u8 origHDDKey[16], HDDKey[16];
+    unsigned char origHDDKey[16], HDDKey[16];
 
     for(i = 0; i < 4; i++){
         tempChecksum2 |= eeprom.Checksum2[i] << (i * 8);
@@ -268,8 +272,8 @@ u8 generateStringsForEEPROMChanges(bool genStrings){
 
     if(i < 20){ //Encrypted section has changed
 
-    	BootHddKeyGenerateEepromKeyData(&origEeprom, origHDDKey);
-    	BootHddKeyGenerateEepromKeyData(&eeprom, HDDKey);
+    	BootHddKeyGenerateEepromKeyData((unsigned char *)&origEeprom, origHDDKey);
+    	BootHddKeyGenerateEepromKeyData((unsigned char *)&eeprom, HDDKey);
     	for(i = 0; i < 16; i++){
             if(origHDDKey[i] != HDDKey[i]){
                 if(genStrings){

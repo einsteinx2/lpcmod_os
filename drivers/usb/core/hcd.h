@@ -81,7 +81,7 @@ struct usb_hcd {    /* usb_bus.hcpriv points to this */
     struct pci_dev        *pdev;        /* pci is typical */
 #ifdef    CONFIG_PCI
     int            region;        /* pci region for regs */
-    u32            pci_state [16];    /* for PM state save */
+    unsigned int            pci_state [16];    /* for PM state save */
     atomic_t        resume_count;    /* multiple resumes issue */
 #endif
 
@@ -176,7 +176,7 @@ struct hc_driver {
     int    (*start) (struct usb_hcd *hcd);
 
     /* called after all devices were suspended */
-    int    (*suspend) (struct usb_hcd *hcd, u32 state);
+    int    (*suspend) (struct usb_hcd *hcd, unsigned int state);
 
     /* called before any devices get resumed */
     int    (*resume) (struct usb_hcd *hcd);
@@ -203,8 +203,8 @@ struct hc_driver {
     /* root hub support */
     int        (*hub_status_data) (struct usb_hcd *hcd, char *buf);
     int        (*hub_control) (struct usb_hcd *hcd,
-                u16 typeReq, u16 wValue, u16 wIndex,
-                char *buf, u16 wLength);
+                unsigned short typeReq, unsigned short wValue, unsigned short wIndex,
+                char *buf, unsigned short wLength);
 };
 
 extern void usb_hcd_giveback_urb (struct usb_hcd *hcd, struct urb *urb, struct pt_regs *regs);
@@ -220,10 +220,10 @@ extern void usb_hcd_pci_remove (struct pci_dev *dev);
 
 #ifdef CONFIG_PM
 // FIXME:  see Documentation/power/pci.txt (2.4.6 and later?)
-// extern int usb_hcd_pci_save_state (struct pci_dev *dev, u32 state);
-extern int usb_hcd_pci_suspend (struct pci_dev *dev, u32 state);
+// extern int usb_hcd_pci_save_state (struct pci_dev *dev, unsigned int state);
+extern int usb_hcd_pci_suspend (struct pci_dev *dev, unsigned int state);
 extern int usb_hcd_pci_resume (struct pci_dev *dev);
-// extern int usb_hcd_pci_enable_wake (struct pci_dev *dev, u32 state, int flg);
+// extern int usb_hcd_pci_enable_wake (struct pci_dev *dev, unsigned int state, int flg);
 #endif /* CONFIG_PM */
 
 #endif /* CONFIG_PCI */

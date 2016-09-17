@@ -512,19 +512,19 @@ a lot of data that needs to be copied, this should be set high. */
 /* Debugging options all default to off */
 
 #ifndef DBG_TYPES_ON
-#define DBG_TYPES_ON                    0
+#define DBG_TYPES_ON                    1
 #endif
 
 #ifndef ETHARP_DEBUG
-#define ETHARP_DEBUG                    DBG_OFF
+#define ETHARP_DEBUG                    DBG_ON
 #endif
 
 #ifndef NETIF_DEBUG
-#define NETIF_DEBUG                     DBG_OFF
+#define NETIF_DEBUG                     DBG_ON
 #endif
 
 #ifndef PBUF_DEBUG
-#define PBUF_DEBUG                      DBG_OFF
+#define PBUF_DEBUG                      DBG_ON
 #endif
 
 #ifndef API_LIB_DEBUG
@@ -548,7 +548,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef IP_DEBUG
-#define IP_DEBUG                        DBG_OFF
+#define IP_DEBUG                        DBG_ON
 #endif
 
 #ifndef IP_REASS_DEBUG
@@ -556,7 +556,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef RAW_DEBUG
-#define RAW_DEBUG                       DBG_OFF
+#define RAW_DEBUG                       DBG_ON
 #endif
 
 #ifndef MEM_DEBUG
@@ -628,7 +628,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef DHCP_DEBUG 
-#define DHCP_DEBUG                      DBG_OFF
+#define DHCP_DEBUG                      DBG_ON
 #endif
 
 

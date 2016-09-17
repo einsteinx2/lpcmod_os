@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "boot.h"
+#include "i2c.h"
 #include "BootEEPROM.h"
 #include "config.h"
 #include "BootVideo.h"
@@ -25,7 +26,11 @@
 #include "VideoInitialization.h"
 #include "BootVgaInitialization.h"
 #include "encoder.h"
+#include "conexant.h"
+#include "focus.h"
 #include "xcalibur.h"
+#include "string.h"
+#include "lib/time/timeManagement.h"
 
 void DetectVideoEncoder(void) {
     if (I2CTransmitByteGetReturn(0x45,0x00) != ERR_I2C_ERROR_BUS) video_encoder = ENCODER_CONEXANT;
@@ -33,11 +38,11 @@ void DetectVideoEncoder(void) {
     else video_encoder = ENCODER_XCALIBUR;
 }
 
-char *VideoEncoderName(void) {
-    char *focus_name="Focus";
-    char *conexant_name="Conexant";
-    char *xcalibur_name="Xcalibur";
-    char *unknown_name="Unknown";
+const char *VideoEncoderName(void) {
+    const char *focus_name="Focus";
+    const char *conexant_name="Conexant";
+    const char *xcalibur_name="Xcalibur";
+    const char *unknown_name="Unknown";
 
     switch (video_encoder) {
         case ENCODER_CONEXANT:
@@ -51,14 +56,14 @@ char *VideoEncoderName(void) {
     }
 }
 
-char *AvCableName(void) {
-    char *composite_name="Composite";
-    char *svideo_name="SVideo";
-    char *rgb_name="RGB SCART";
-    char *hdtv_name="HDTV";
-    char *vga_name="VGA";
-    char *vgasog_name="VGA SoG";
-    char *unknown_name="Unknown";
+const char *AvCableName(void) {
+	const char *composite_name="Composite";
+	const char *svideo_name="SVideo";
+	const char *rgb_name="RGB SCART";
+	const char *hdtv_name="HDTV";
+	const char *vga_name="VGA";
+	const char *vgasog_name="VGA SoG";
+	const char *unknown_name="Unknown";
     
     xbox_av_type av_type = DetectAvType();
     switch (av_type) {
@@ -83,7 +88,7 @@ char *AvCableName(void) {
 void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode) {
     xbox_tv_encoding tv_encoding; 
     xbox_av_type av_type;
-    u8 b;
+    unsigned char b;
     RIVA_HW_INST riva;
         struct riva_regs newmode;
     int encoder_ok = 0;
@@ -102,7 +107,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode) {
        memset((void *)pvmode,0,sizeof(CURRENT_VIDEO_MODE_DETAILS));
 
     //Focus driver (presumably XLB also) doesnt do widescreen yet - only blackscreens otherwise.
-    if((((u8 *)&eeprom)[0x96]&0x01) && video_encoder == ENCODER_CONEXANT) { // 16:9 widescreen TV
+    if((((unsigned char *)&eeprom)[0x96]&0x01) && video_encoder == ENCODER_CONEXANT) { // 16:9 widescreen TV
         pvmode->m_nVideoModeIndex=VIDEO_MODE_1024x576;
     } else { // 4:3 TV
         pvmode->m_nVideoModeIndex=VIDEO_PREFERRED_MODE;
@@ -116,7 +121,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode) {
         (*(unsigned int*)0xFD600800) = (FB_START & 0x0fffffff);
 
     pvmode->m_bAvPack=I2CTransmitByteGetReturn(0x10, 0x04);
-    pvmode->m_pbBaseAddressVideo=(u8 *)0xfd000000;
+    pvmode->m_pbBaseAddressVideo=(unsigned char *)0xfd000000;
     pvmode->m_fForceEncoderLumaAndChromaToZeroInitially=1;
     pvmode->m_bBPP = 32;
 
@@ -439,7 +444,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode) {
 }
 
 
-static void NVSetFBStart (RIVA_HW_INST *riva, int head, u32 dwFBStart) {
+static void NVSetFBStart (RIVA_HW_INST *riva, int head, unsigned int dwFBStart) {
        MMIO_H_OUT32 (riva->PCRTC, head, 0x8000, dwFBStart);
        MMIO_H_OUT32 (riva->PMC, head, 0x8000, dwFBStart);
 }
@@ -467,13 +472,13 @@ static inline void unlockCrtNv (RIVA_HW_INST *riva, int head)
 
 
 
-static void writeCrtNv (RIVA_HW_INST *riva, int head, int reg, u8 val)
+static void writeCrtNv (RIVA_HW_INST *riva, int head, int reg, unsigned char val)
 {
         VGA_WR08(riva->PCIO, CRT_INDEX(head), reg);
         VGA_WR08(riva->PCIO, CRT_DATA(head), val);
 }
 
-static void mapNvMem (RIVA_HW_INST *riva, u8 *IOAddress)
+static void mapNvMem (RIVA_HW_INST *riva, unsigned char *IOAddress)
 {
     riva->PMC     = IOAddress+0x000000;
     riva->PFB     = IOAddress+0x100000;

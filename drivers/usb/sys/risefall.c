@@ -4,7 +4,7 @@
 
 // This is for the Xpad
 extern unsigned char xpad_button_history[7];
-extern u8 xpad_state_history;
+extern unsigned char xpad_state_history;
 
 // This is for the Keyboard
 // extern unsigned int current_keyboard_key;

@@ -109,6 +109,7 @@
 
 #include "../usb_wrapper.h"
 #include "../core/hcd.h"
+#include "string.h"
 
 //#define OHCI_VERBOSE_DEBUG
 #endif
@@ -244,10 +245,10 @@ static int ohci_urb_enqueue (
         if (retval < 0)
             goto fail;
         if (ed->type == PIPE_ISOCHRONOUS) {
-            u16    frame = le16_to_cpu (ohci->hcca->frame_no);
+            unsigned short    frame = le16_to_cpu (ohci->hcca->frame_no);
 
             /* delay a few frames before the first TD */
-            frame += max_t (u16, 8, ed->interval);
+            frame += max_t (unsigned short, 8, ed->interval);
             frame &= ~(ed->interval - 1);
             frame |= ed->branch;
             urb->start_frame = frame;
@@ -390,9 +391,9 @@ static int ohci_get_frame (struct usb_hcd *hcd)
 
 static int hc_reset (struct ohci_hcd *ohci)
 {
-    u32 temp;
-    u32 ints;
-    u32 control;
+    unsigned int temp;
+    unsigned int ints;
+    unsigned int control;
     
     /* Disable HC interrupts */
     writel (OHCI_INTR_MIE, &ohci->regs->intrdisable);
@@ -456,7 +457,7 @@ static int hc_reset (struct ohci_hcd *ohci)
  */
 static int hc_start (struct ohci_hcd *ohci)
 {
-      u32            mask, tmp;
+      unsigned int            mask, tmp;
       struct usb_device    *udev;
       struct usb_bus        *bus;
 
@@ -470,7 +471,7 @@ static int hc_start (struct ohci_hcd *ohci)
     writel (0, &ohci->regs->ed_bulkhead);
 
     /* a reset clears this */
-    writel ((u32) ohci->hcca_dma, &ohci->regs->hcca);
+    writel ((unsigned int) ohci->hcca_dma, &ohci->regs->hcca);
 //    usbprintk("HCCA: %p \n",ohci->regs->hcca);
 
     /* force default fmInterval (we won't adjust it); init thresholds
@@ -564,7 +565,7 @@ static void ohci_irq (struct usb_hcd *hcd, struct pt_regs *ptregs)
         ints =  OHCI_INTR_WDH;
 
     /* cardbus/... hardware gone before remove() */
-    } else if ((ints = readl (&regs->intrstatus)) == ~(u32)0) {
+    } else if ((ints = readl (&regs->intrstatus)) == ~(unsigned int)0) {
         disable (ohci);
         ohci_dbg (ohci, "device removed!\n");
         return;

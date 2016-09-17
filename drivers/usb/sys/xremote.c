@@ -35,8 +35,8 @@
 #include "../usb_wrapper.h"
 
 
-u16 current_remote_key;
-u8 remotekeyIsRepeat;
+unsigned short current_remote_key;
+unsigned char remotekeyIsRepeat;
 
 struct xremote_info 
 {

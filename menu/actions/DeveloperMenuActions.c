@@ -12,12 +12,17 @@
 #include "boot.h"
 #include "video.h"
 #include "lpcmod_v1.h"
+#include "BootFlash.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "lib/cromwell/cromString.h"
+#include "lib/time/timeManagement.h"
+#include "MenuActions.h"
+#include "string.h"
 
 void LPCIOWrite(void * ignored){
-    u16 address = 0x00FF;
-    u8 data = 0x00;
-    u8 line = 0;
+    unsigned short address = 0x00FF;
+    unsigned char data = 0x00;
+    unsigned char line = 0;
     bool refresh = true;
     while((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) &&
           (risefall_xpad_STATE(XPAD_STATE_BACK) != 1)){
@@ -98,9 +103,9 @@ void LPCIOWrite(void * ignored){
 }
 
 void LPCIORead(void * ignored){
-    u16 address = 0x00FF;
-    u8 data = 0x00;
-    u8 line = 0;
+    unsigned short address = 0x00FF;
+    unsigned char data = 0x00;
+    unsigned char line = 0;
     bool refresh = true;
     while((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) &&
           (risefall_xpad_STATE(XPAD_STATE_BACK) != 1)){
@@ -183,10 +188,10 @@ void GPIORead(void * ignored){
 }
 
 void settingsPrintData(void * ignored){
-    u8 i;
+    unsigned char i;
     char specialCasesBuf[15];
     char spaceCountBuf[31];
-    u8 stringLength;
+    unsigned char stringLength;
     VIDEO_ATTR=0xffffef37;
     printk("\n           Persistent settings\n");
     VIDEO_ATTR=0xffc8c8c8;

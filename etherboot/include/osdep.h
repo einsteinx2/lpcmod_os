@@ -16,22 +16,6 @@
 #include "byteswap.h"
 #include "setjmp.h"
 #include "latch.h"
-#include "hooks.h"
-
-/* We should not depend on any system header files except possibly
- * compiler supplied std c headers.  Copy headers if you need them.
- */
-#if defined(FREEBSD_PXEEMU) && 0
-#include "/sys/boot/i386/libi386/pxe.h"
-#include "/sys/boot/i386/btx/lib/btxv86.h"
-#endif
-
-
-
-/* within 1MB of 4GB is too close. 
- * MAX_ADDR is the maximum address we can easily do DMA to.
- */
-#define MAX_ADDR (0xfff00000UL)
 
 typedef	unsigned long Address;
 
@@ -43,9 +27,3 @@ typedef	unsigned long Address;
 #endif
 
 #endif
-
-/*
- * Local variables:
- *  c-basic-offset: 8
- * End:
- */

@@ -10,17 +10,24 @@
 #include "ToolsMenuActions.h"
 #include "BootFATX.h"
 #include "lpcmod_v1.h"
+#include "BootHddKey.h"
 #include "rc4.h"
+#include "lib/cromwell/cromString.h"
+#include "MenuActions.h"
+#include "string.h"
+#include "boot.h"
+#include "menu/misc/OnScreenKeyboard.h"
+#include "menu/misc/ConfirmDialog.h"
 
 void displayEditEEPROMBuffer(void *ignored){
     int i;
-    u8 decryptedConfounder[8];
-    u8 decryptedGameRegion[4];
-    u8 decryptedWholeBuffer[0x30];
-    u8 version;
+    unsigned char decryptedConfounder[8];
+    unsigned char decryptedGameRegion[4];
+    unsigned char decryptedWholeBuffer[0x30];
+    unsigned char version;
     char serialString[13];
 
-    version = decryptEEPROMData((u8 *)editeeprom, decryptedWholeBuffer);
+    version = decryptEEPROMData((unsigned char *)editeeprom, decryptedWholeBuffer);
     ToolHeader("Modified EEPROM buffer content");
     printk("\n\n           EEPROM version: %u", version);
     if(version < V1_0 || version > V1_6){
@@ -61,7 +68,7 @@ void displayEditEEPROMBuffer(void *ignored){
 
 void LastResortRecovery(void *ignored){
 //Generic 1.0 revision eeprom image. Thanks bunnie!
-    const u8 EEPROMimg[] = {
+    const unsigned char EEPROMimg[] = {
         0x47, 0x83, 0xa2, 0x7d, 0x6a, 0x69, 0x10, 0x8b, 0x2d, 0xb2, 0xe8, 0x90, 0xe1, 0x60, 0xde, 0xed,
         0x02, 0xc2, 0xaa, 0x79, 0x21, 0x47, 0xcd, 0xb0, 0xb7, 0xa8, 0x7a, 0x77, 0x44, 0x9c, 0x5e, 0x6e,
         0xd0, 0xf5, 0xf9, 0xe6, 0x94, 0x68, 0x39, 0xe0, 0xca, 0xa5, 0xd2, 0xe5, 0xfa, 0x02, 0xb9, 0xb7,
@@ -87,10 +94,10 @@ void LastResortRecovery(void *ignored){
 }
 
 void bruteForceFixDisplayresult(void *ignored){
-    u8 eepromVersion;
+    unsigned char eepromVersion;
     char unused[20];
     ToolHeader("Brute Force Fix EEPROM");
-    eepromVersion = BootHddKeyGenerateEepromKeyData(editeeprom,unused);
+    eepromVersion = BootHddKeyGenerateEepromKeyData((unsigned char *)editeeprom,unused);
 
     if(eepromVersion < V1_0 && eepromVersion > V1_6){
         if(bruteForceFixEEprom()){
@@ -108,9 +115,9 @@ void bruteForceFixDisplayresult(void *ignored){
 }
 
 bool bruteForceFixEEprom(void){
-    u8 ver, bytepos;
+    unsigned char ver, bytepos;
     int bytecombinations;
-    u8 *teeprom;
+    unsigned char *teeprom;
     char unused[20];
     teeprom = malloc(sizeof(EEPROMDATA));
 
@@ -147,9 +154,9 @@ void confirmSaveToEEPROMChip(void *ignored){
 }
 
 void editMACAddress(void *ignored){
-    u8 i, j;
+    unsigned char i, j;
     char macString[13];
-    u8 nibble[2];
+    unsigned char nibble[2];
     sprintf(macString, "%02X%02X%02X%02X%02X%02X",
     editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
     editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
@@ -233,12 +240,13 @@ void restoreEEPROMFromFile(void *fname) {
     UIFooter();
 }
 
-int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size, bool verbose){
+int updateEEPROMEditBufferFromInputBuffer(unsigned char *buffer, unsigned int size, bool verbose)
+{
     int res = 0, version;
-    u8 decryptedData[0x30];
-    u8 tempBuffer[256];
-    u8 confirmHash[20];
-    u8 baKeyHash[20];
+    unsigned char decryptedData[0x30];
+    unsigned char tempBuffer[256];
+    unsigned char confirmHash[20];
+    unsigned char baKeyHash[20];
     struct rc4_key RC4_key;
     
     memcpy(tempBuffer, buffer, size);
@@ -279,11 +287,11 @@ int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size, bool verbose){
             rc4_crypt(&tempBuffer[20],28,&RC4_key);
 
             // Save back to EEprom
-            memcpy((u8 *)editeeprom, tempBuffer, sizeof(EEPROMDATA));
+            memcpy((unsigned char *)editeeprom, tempBuffer, sizeof(EEPROMDATA));
             
             //Recalculate checksums to be nice.
-            EepromCRC((u8 *)editeeprom->Checksum2,(u8 *)editeeprom->SerialNumber,0x28);
-            EepromCRC((u8 *)editeeprom->Checksum3,(u8 *)editeeprom->TimeZoneBias,0x5b);
+            EepromCRC((unsigned char *)editeeprom->Checksum2,(unsigned char *)editeeprom->SerialNumber,0x28);
+            EepromCRC((unsigned char *)editeeprom->Checksum3,(unsigned char *)editeeprom->TimeZoneBias,0x5b);
             
             res = 0;
     

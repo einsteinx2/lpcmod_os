@@ -13,7 +13,7 @@
 
 #include "stdint.h"
 
-void * memcpy(void * to, const void * from, size_t n)
+void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n)
 {
     int d0, d1, d2;
     __asm__ __volatile__(
@@ -26,21 +26,21 @@ void * memcpy(void * to, const void * from, size_t n)
              "movsb\n"
                "2:"
              : "=&c" (d0), "=&D" (d1), "=&S" (d2)
-        :"0" (n/4), "q" (n),"1" ((long) to),"2" ((long) from)
+        :"0" (__n/4), "q" (__n),"1" ((long) __dest),"2" ((long) __src)
                : "memory");
-    return (to);
+    return (__dest);
 }
 
-void * memset(void *s, int c,  size_t count)
+void *memset (void *__s, int __c, size_t __n)
 {
       int d0, d1;
     __asm__ __volatile__(
             "rep\n\t"
             "stosb"
             : "=&c" (d0), "=&D" (d1)
-            :"a" (c),"1" (s),"0" (count)
+            :"a" (__c),"1" (__s),"0" (__n)
             :"memory");
-    return s;
+    return __s;
 }
                 
 

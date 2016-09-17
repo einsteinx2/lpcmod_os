@@ -1,5 +1,6 @@
 #include "boot.h"
 #include "memory_layout.h"
+#include "string.h"
 //char * strncpy(char * dest,const char *src,int count);
 
 /* parameters to be passed to the kernel */

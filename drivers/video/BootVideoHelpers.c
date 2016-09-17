@@ -19,12 +19,19 @@ int sprintf(char * buf, const char *fmt, ...);
 #include "memory_layout.h"
 #include "lpcmod_v1.h"
 #include "fontx16.h"  // brings in font struct
+#include "cromwell.h"
+#include "string.h"
+#include "nanojpegHelper.h"
 #include <stdarg.h>
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "lib/LPCMod/BootLPCMod.h"
+
+
 #define WIDTH_SPACE_PIXELS 5
 
 // returns number of x pixels taken up by ascii character bCharacter
 
-unsigned int BootVideoGetCharacterWidth(u8 bCharacter, bool fDouble)
+unsigned int BootVideoGetCharacterWidth(unsigned char bCharacter, bool fDouble)
 {
     unsigned int nStart, nWidth;
     int nSpace=WIDTH_SPACE_PIXELS;
@@ -66,12 +73,12 @@ unsigned int BootVideoFontWidthToBitmapBytecount(unsigned int uiWidth)
 }
 
 void BootVideoJpegBlitBlend(
-    u8 *pDst,
-    u32 dst_width,
+    unsigned char *pDst,
+    unsigned int dst_width,
     JPEG * pJpeg,
-    u8 *pFront,
+    unsigned char *pFront,
     RGBA m_rgbaTransparent,
-    u8 *pBack,
+    unsigned char *pBack,
     int x,
     int y
 ) {
@@ -79,7 +86,7 @@ void BootVideoJpegBlitBlend(
 
     int nTransAsByte=m_rgbaTransparent>>24;
     int nBackTransAsByte=255-nTransAsByte;
-    u32 dw;
+    unsigned int dw;
 
     m_rgbaTransparent|=0xff000000;
     m_rgbaTransparent&=0xff80c080;      //Loosen tolerance from 0xffc0c0c0
@@ -88,7 +95,7 @@ void BootVideoJpegBlitBlend(
 
         for(n=0;n<x;n++) {
             
-            dw = ((*((u32 *)pFront))|0xff000000)&0xff80c080;      //Loosen tolerance from 0xffc0c0c0
+            dw = ((*((unsigned int *)pFront))|0xff000000)&0xff80c080;      //Loosen tolerance from 0xffc0c0c0
 
             if(dw!=m_rgbaTransparent) {
                 pDst[2]=((pFront[0]*nTransAsByte)+(pBack[0]*nBackTransAsByte))>>8;
@@ -110,10 +117,10 @@ void BootVideoJpegBlitBlend(
 // RGBA .. full-on RED is opaque --> 0xFF0000FF <-- red
 
 int BootVideoOverlayCharacter(
-    u32 * pdwaTopLeftDestination,
-    u32 m_dwCountBytesPerLineDestination,
+    unsigned int * pdwaTopLeftDestination,
+    unsigned int m_dwCountBytesPerLineDestination,
     RGBA rgbaColourAndOpaqueness,
-    u8 bCharacter,
+    unsigned char bCharacter,
     bool fDouble
 ) {
     int nSpace;
@@ -121,14 +128,14 @@ int BootVideoOverlayCharacter(
 //        nOpaquenessMultiplied,
 //        nTransparentnessMultiplied
     ;
-    u8 b=0, b1; // *pbColour=(u8 *)&rgbaColourAndOpaqueness;
-    u8 * pbaDestStart;
+    unsigned char b=0, b1; // *pbColour=(unsigned char *)&rgbaColourAndOpaqueness;
+    unsigned char * pbaDestStart;
 
         // we only have glyphs for 0x21 through 0x7e inclusive
 
     if(bCharacter=='\t') {
-        u32 dw=((u32)pdwaTopLeftDestination) % m_dwCountBytesPerLineDestination;
-        u32 dw1=((dw+1)%(32<<2));  // distance from previous boundary
+        unsigned int dw=((unsigned int)pdwaTopLeftDestination) % m_dwCountBytesPerLineDestination;
+        unsigned int dw1=((dw+1)%(32<<2));  // distance from previous boundary
         return ((32<<2)-dw1)>>2;
     }
     nSpace=WIDTH_SPACE_PIXELS;
@@ -145,10 +152,10 @@ int BootVideoOverlayCharacter(
 //    nStart=0;
 //    nWidth=300;
 
-    pbaDestStart=((u8 *)pdwaTopLeftDestination);
+    pbaDestStart=((unsigned char *)pdwaTopLeftDestination);
 
     for(y=0;y<nHeight;y++) {
-        u8 * pbaDest=pbaDestStart;
+        unsigned char * pbaDest=pbaDestStart;
         int n1=nStart;
 
         for(n=0;n<nWidth;n++) {
@@ -165,9 +172,9 @@ int BootVideoOverlayCharacter(
             }
 
         if(b1) {
-                *pbaDest=(u8)((b1*(rgbaColourAndOpaqueness&0xff))>>4); pbaDest++;
-                *pbaDest=(u8)((b1*((rgbaColourAndOpaqueness>>8)&0xff))>>4); pbaDest++;
-                *pbaDest=(u8)((b1*((rgbaColourAndOpaqueness>>16)&0xff))>>4); pbaDest++;
+                *pbaDest=(unsigned char)((b1*(rgbaColourAndOpaqueness&0xff))>>4); pbaDest++;
+                *pbaDest=(unsigned char)((b1*((rgbaColourAndOpaqueness>>8)&0xff))>>4); pbaDest++;
+                *pbaDest=(unsigned char)((b1*((rgbaColourAndOpaqueness>>16)&0xff))>>4); pbaDest++;
                 *pbaDest++=0xff;
             } else {
                 pbaDest+=4;
@@ -187,7 +194,7 @@ int BootVideoOverlayCharacter(
 // usable for direct write or for prebuffered write
 // returns width of string in pixels
 
-int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLineDestination, RGBA rgbaOpaqueness, const char * szString)
+int BootVideoOverlayString(unsigned int * pdwaTopLeftDestination, unsigned int m_dwCountBytesPerLineDestination, RGBA rgbaOpaqueness, const char * szString)
 {
     unsigned int uiWidth=0;
     bool fDouble=0;
@@ -244,9 +251,9 @@ blueColorDraw:
     return true;
 }
 
-bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg, int size) {
+bool BootVideoJpegUnpackAsRgb(unsigned char *pbaJpegFileImage, JPEG * pJpeg, int size) {
     int i;
-    u8 *tempPtr;
+    unsigned char *tempPtr;
 /*
     char temp[200];
 
@@ -264,7 +271,7 @@ bool BootVideoJpegUnpackAsRgb(u8 *pbaJpegFileImage, JPEG * pJpeg, int size) {
 	printk("Error decode picture\n");
 	return true;
     }
-    tempPtr = (u8 *)njGetImage();
+    tempPtr = (unsigned char *)njGetImage();
     if(njGetWidth() % ICON_WIDTH)
         return true;
     
@@ -293,9 +300,9 @@ void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
 
     {
         if(pJpeg->pData!=NULL) {
-            volatile u32 *pdw=((u32 *)FB_START)+vmode.width*nStartLine;
+            volatile unsigned int *pdw=((unsigned int *)FB_START)+vmode.width*nStartLine;
             int n1=3 * 1024 * nStartLine;
-            u8 *pbJpegBitmapAdjustedDatum=pJpeg->pBackdrop;
+            unsigned char *pbJpegBitmapAdjustedDatum=pJpeg->pBackdrop;
 
             while(nStartLine++<nEndLine) {
                 int n;
@@ -309,17 +316,17 @@ void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
                     n1+=3;
                 }
                 n1+=3 * (1024 - vmode.width);
-                pdw+=vmode.width; // adding u32 footprints
+                pdw+=vmode.width; // adding unsigned int footprints
             }
         }
     }
 }
 
-int VideoDumpAddressAndData(u32 dwAds, const u8 * baData, u32 dwCountBytesUsable) { // returns bytes used
+int VideoDumpAddressAndData(unsigned int dwAds, const unsigned char * baData, unsigned int dwCountBytesUsable) { // returns bytes used
     int nCountUsed=0;
     while(dwCountBytesUsable) {
 
-        u32 dw=(dwAds & 0xfffffff0);
+        unsigned int dw=(dwAds & 0xfffffff0);
         char szAscii[17];
         char sz[256];
         int n=sprintf(sz, "%08X: ", dw);
@@ -331,7 +338,7 @@ int VideoDumpAddressAndData(u32 dwAds, const u8 * baData, u32 dwCountBytesUsable
                 n+=sprintf(&sz[n], "   ");
                 szAscii[nBytes]=' ';
             } else {
-                u8 b=*baData++;
+                unsigned char b=*baData++;
                 n+=sprintf(&sz[n], "%02X ", b);
                 if((b<32) || (b>126)) szAscii[nBytes]='.'; else szAscii[nBytes]=b;
                 nCountUsed++;
@@ -360,7 +367,7 @@ void BootVideoChunkedPrint(const char * szBuffer) {
     {
         if(szBuffer[n]=='\n') {
             BootVideoOverlayString(
-                (u32 *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
+                (unsigned int *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
                 vmode.width*4, VIDEO_ATTR, &szBuffer[nDone]
             );
             nDone=n+1;
@@ -372,7 +379,7 @@ void BootVideoChunkedPrint(const char * szBuffer) {
     if (n != nDone)
     {
         VIDEO_CURSOR_POSX+=BootVideoOverlayString(
-            (u32 *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
+            (unsigned int *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
             vmode.width*4, VIDEO_ATTR, &szBuffer[nDone]
         )<<2;
         if (VIDEO_CURSOR_POSX > (vmode.width - 
@@ -384,24 +391,6 @@ void BootVideoChunkedPrint(const char * szBuffer) {
         
     }
 
-}
-
-int printk(const char *szFormat, ...) {  // printk displays to video
-    char szBuffer[512*2];
-    u16 wLength=0;
-    va_list argList;
-    va_start(argList, szFormat);
-    wLength=(u16) vsprintf(szBuffer, szFormat, argList);
-//    wLength=strlen(szFormat); // temp!
-//    memcpy(szBuffer, szFormat, wLength);
-    va_end(argList);
-
-    szBuffer[sizeof(szBuffer)-1]=0;
-        if (wLength>(sizeof(szBuffer)-1)) wLength = sizeof(szBuffer)-1;
-    szBuffer[wLength]='\0';
-            
-    BootVideoChunkedPrint(szBuffer);
-    return wLength;
 }
 
 int console_putchar(int c)

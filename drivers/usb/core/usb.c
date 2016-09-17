@@ -54,6 +54,7 @@
 #include "hcd.h"
 #endif
 
+#include "lib/LPCMod/BootLPCMod.h"
 
 extern int  usb_hub_init(void);
 extern void usb_hub_cleanup(void);
@@ -91,7 +92,7 @@ int usb_device_probe(struct device *dev)
     const struct usb_device_id *id;
     int error = -ENODEV;
 
-    debugSPIPrint("Entering usb_device_probe");
+    //debugSPIPrint("Entering usb_device_probe");
 
     if (!driver->probe){
     	debugSPIPrint("Error in usb_device_probe!");
@@ -167,7 +168,7 @@ int usb_register(struct usb_driver *new_driver)
     retval = driver_register(&new_driver->driver);
 
     if (!retval) {
-        debugSPIPrint("registered new driver %s", new_driver->name);
+        //debugSPIPrint("registered new driver %s", new_driver->name);
         usbfs_update_special();
     } else {
     	debugSPIPrint("problem %d when registering driver %s",
@@ -224,91 +225,6 @@ struct usb_interface *usb_ifnum_to_if(struct usb_device *dev, unsigned ifnum)
 
     return NULL;
 }
-
-/**
- * usb_epnum_to_ep_desc - get the endpoint object with a given endpoint number
- * @dev: the device whose current configuration is considered
- * @epnum: the desired endpoint
- *
- * This walks the device descriptor for the currently active configuration,
- * and returns a pointer to the endpoint with that particular endpoint
- * number, or null.
- *
- * Note that interface descriptors are not required to assign endpont
- * numbers sequentially, so that it would be incorrect to assume that
- * the first endpoint in that descriptor corresponds to interface zero.
- * This routine helps device drivers avoid such mistakes.
- */
-struct usb_endpoint_descriptor *
-usb_epnum_to_ep_desc(struct usb_device *dev, unsigned epnum)
-{
-    int i, j, k;
-
-    for (i = 0; i < dev->actconfig->desc.bNumInterfaces; i++)
-        for (j = 0; j < dev->actconfig->interface[i].num_altsetting; j++)
-            for (k = 0; k < dev->actconfig->interface[i]
-                .altsetting[j].desc.bNumEndpoints; k++)
-                if (epnum == dev->actconfig->interface[i]
-                        .altsetting[j].endpoint[k]
-                        .desc.bEndpointAddress)
-                    return &dev->actconfig->interface[i]
-                        .altsetting[j].endpoint[k]
-                        .desc;
-
-    return NULL;
-}
-
-/**
- * usb_driver_claim_interface - bind a driver to an interface
- * @driver: the driver to be bound
- * @iface: the interface to which it will be bound
- * @priv: driver data associated with that interface
- *
- * This is used by usb device drivers that need to claim more than one
- * interface on a device when probing (audio and acm are current examples).
- * No device driver should directly modify internal usb_interface or
- * usb_device structure members.
- *
- * Few drivers should need to use this routine, since the most natural
- * way to bind to an interface is to return the private data from
- * the driver's probe() method.  Any driver that does use this must
- * first be sure that no other driver has claimed the interface, by
- * checking with usb_interface_claimed().
- */
-void usb_driver_claim_interface(struct usb_driver *driver, struct usb_interface *iface, void* priv)
-{
-    if (!iface || !driver)
-        return;
-
-    // FIXME change API to report an error in this case
-    if (iface->driver)
-        debugSPIPrint ("%s driver booted %s off interface %p",
-            driver->name, iface->driver->name, iface);
-    else
-        dbg("%s driver claimed interface %p", driver->name, iface);
-
-    iface->driver = driver;
-    usb_set_intfdata(iface, priv);
-}
-
-/**
- * usb_interface_claimed - returns true iff an interface is claimed
- * @iface: the interface being checked
- *
- * This should be used by drivers to check other interfaces to see if
- * they are available or not.  If another driver has claimed the interface,
- * they may not claim it.  Otherwise it's OK to claim it using
- * usb_driver_claim_interface().
- *
- * Returns true (nonzero) iff the interface is claimed, else false (zero).
- */
-int usb_interface_claimed(struct usb_interface *iface)
-{
-    if (!iface)
-        return 0;
-
-    return (iface->driver != NULL);
-} /* usb_interface_claimed() */
 
 /**
  * usb_driver_release_interface - unbind a driver from an interface
@@ -515,7 +431,7 @@ static int usb_device_match (struct device *dev, struct device_driver *drv)
 
     /* check for generic driver, which we don't match any device with */
     if (drv == &usb_generic_driver){
-    	debugSPIPrint("Generic driver loaded. No matching to occur...");
+    	//debugSPIPrint("Generic driver loaded. No matching to occur...");
         return 0;
     }
 
@@ -649,6 +565,7 @@ static int usb_hotplug (struct device *dev, char **envp, int num_envp,
 static int usb_hotplug (struct device *dev, char **envp,
             int num_envp, char *buffer, int buffer_size)
 {
+	debugSPIPrint("USB hotplug event");
     return -ENODEV;
 }
 
@@ -755,7 +672,7 @@ static void usb_release_dev(struct device *dev)
 
 
 static struct usb_device *match_device(struct usb_device *dev,
-                       u16 vendor_id, u16 product_id)
+                       unsigned short vendor_id, unsigned short product_id)
 {
     struct usb_device *ret_dev = NULL;
     int child;
@@ -785,85 +702,6 @@ exit:
     return ret_dev;
 }
 
-/**
- * usb_find_device - find a specific usb device in the system
- * @vendor_id: the vendor id of the device to find
- * @product_id: the product id of the device to find
- *
- * Returns a pointer to a struct usb_device if such a specified usb
- * device is present in the system currently.  The usage count of the
- * device will be incremented if a device is found.  Make sure to call
- * usb_put_dev() when the caller is finished with the device.
- *
- * If a device with the specified vendor and product id is not found,
- * NULL is returned.
- */
-struct usb_device *usb_find_device(u16 vendor_id, u16 product_id)
-{
-    struct list_head *buslist;
-    struct usb_bus *bus;
-    struct usb_device *dev = NULL;
-    
-    down(&usb_bus_list_lock);
-    for (buslist = usb_bus_list.next;
-         buslist != &usb_bus_list; 
-         buslist = buslist->next) {
-        bus = container_of(buslist, struct usb_bus, bus_list);
-        dev = match_device(bus->root_hub, vendor_id, product_id);
-        if (dev)
-            goto exit;
-    }
-exit:
-    up(&usb_bus_list_lock);
-    return dev;
-}
-
-/**
- * usb_get_current_frame_number - return current bus frame number
- * @dev: the device whose bus is being queried
- *
- * Returns the current frame number for the USB host controller
- * used with the given USB device.  This can be used when scheduling
- * isochronous requests.
- *
- * Note that different kinds of host controller have different
- * "scheduling horizons".  While one type might support scheduling only
- * 32 frames into the future, others could support scheduling up to
- * 1024 frames into the future.
- */
-int usb_get_current_frame_number(struct usb_device *dev)
-{
-    return dev->bus->op->get_frame_number (dev);
-}
-
-/*-------------------------------------------------------------------*/
-/*
- * __usb_get_extra_descriptor() finds a descriptor of specific type in the
- * extra field of the interface and endpoint descriptor structs.
- */
-
-int __usb_get_extra_descriptor(char *buffer, unsigned size, unsigned char type, void **ptr)
-{
-    struct usb_descriptor_header *header;
-
-    while (size >= sizeof(struct usb_descriptor_header)) {
-        header = (struct usb_descriptor_header *)buffer;
-
-        if (header->bLength < 2) {
-            debugSPIPrint("invalid descriptor length of %d", header->bLength);
-            return -1;
-        }
-
-        if (header->bDescriptorType == type) {
-            *ptr = header;
-            return 0;
-        }
-
-        buffer += header->bLength;
-        size -= header->bLength;
-    }
-    return -1;
-}
 
 /**
  * usb_disconnect - disconnect a device (usbcore-internal)
@@ -1253,6 +1091,8 @@ int usb_new_device(struct usb_device *dev, struct device *parent)
     /* add a /proc/bus/usb entry */
     usbfs_add_device(dev);
 
+    usb_show_device(dev);
+
     return 0;
 }
 
@@ -1311,192 +1151,6 @@ void usb_buffer_free (
             return;
     dev->bus->op->buffer_free (dev->bus, size, addr, dma);
 }
-
-/**
- * usb_buffer_map - create DMA mapping(s) for an urb
- * @urb: urb whose transfer_buffer will be mapped
- *
- * Return value is either null (indicating no buffer could be mapped), or
- * the parameter.  URB_NO_DMA_MAP is added to urb->transfer_flags if the
- * operation succeeds.  If the device is connected to this system through
- * a non-DMA controller, this operation always succeeds.
- *
- * This call would normally be used for an urb which is reused, perhaps
- * as the target of a large periodic transfer, with usb_buffer_dmasync()
- * calls to synchronize memory and dma state.  It may not be used for
- * control requests.
- *
- * Reverse the effect of this call with usb_buffer_unmap().
- */
-struct urb *usb_buffer_map (struct urb *urb)
-{
-    struct usb_bus        *bus;
-    struct device        *controller;
-
-    if (!urb
-            || usb_pipecontrol (urb->pipe)
-            || !urb->dev
-            || !(bus = urb->dev->bus)
-            || !(controller = bus->controller))
-        return 0;
-
-    if (controller->dma_mask) {
-        urb->transfer_dma = dma_map_single (controller,
-            urb->transfer_buffer, urb->transfer_buffer_length,
-            usb_pipein (urb->pipe)
-                ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-    // FIXME generic api broken like pci, can't report errors
-    // if (urb->transfer_dma == DMA_ADDR_INVALID) return 0;
-    } else
-        urb->transfer_dma = ~0;
-    urb->transfer_flags |= URB_NO_DMA_MAP;
-    return urb;
-}
-
-/**
- * usb_buffer_dmasync - synchronize DMA and CPU view of buffer(s)
- * @urb: urb whose transfer_buffer will be synchronized
- */
-void usb_buffer_dmasync (struct urb *urb)
-{
-    struct usb_bus        *bus;
-    struct device        *controller;
-
-    if (!urb
-            || !(urb->transfer_flags & URB_NO_DMA_MAP)
-            || !urb->dev
-            || !(bus = urb->dev->bus)
-            || !(controller = bus->controller))
-        return;
-
-    if (controller->dma_mask)
-        dma_sync_single (controller,
-            urb->transfer_dma, urb->transfer_buffer_length,
-            usb_pipein (urb->pipe)
-                ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-}
-
-/**
- * usb_buffer_unmap - free DMA mapping(s) for an urb
- * @urb: urb whose transfer_buffer will be unmapped
- *
- * Reverses the effect of usb_buffer_map().
- */
-void usb_buffer_unmap (struct urb *urb)
-{
-    struct usb_bus        *bus;
-    struct device        *controller;
-
-    if (!urb
-            || !(urb->transfer_flags & URB_NO_DMA_MAP)
-            || !urb->dev
-            || !(bus = urb->dev->bus)
-            || !(controller = bus->controller))
-        return;
-
-    if (controller->dma_mask)
-        dma_unmap_single (controller,
-            urb->transfer_dma, urb->transfer_buffer_length,
-            usb_pipein (urb->pipe)
-                ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-    urb->transfer_flags &= ~URB_NO_DMA_MAP;
-}
-
-/**
- * usb_buffer_map_sg - create scatterlist DMA mapping(s) for an endpoint
- * @dev: device to which the scatterlist will be mapped
- * @pipe: endpoint defining the mapping direction
- * @sg: the scatterlist to map
- * @nents: the number of entries in the scatterlist
- *
- * Return value is either < 0 (indicating no buffers could be mapped), or
- * the number of DMA mapping array entries in the scatterlist.
- *
- * The caller is responsible for placing the resulting DMA addresses from
- * the scatterlist into URB transfer buffer pointers, and for setting the
- * URB_NO_DMA_MAP transfer flag in each of those URBs.
- *
- * Top I/O rates come from queuing URBs, instead of waiting for each one
- * to complete before starting the next I/O.   This is particularly easy
- * to do with scatterlists.  Just allocate and submit one URB for each DMA
- * mapping entry returned, stopping on the first error or when all succeed.
- * Better yet, use the usb_sg_*() calls, which do that (and more) for you.
- *
- * This call would normally be used when translating scatterlist requests,
- * rather than usb_buffer_map(), since on some hardware (with IOMMUs) it
- * may be able to coalesce mappings for improved I/O efficiency.
- *
- * Reverse the effect of this call with usb_buffer_unmap_sg().
- */
-int usb_buffer_map_sg (struct usb_device *dev, unsigned pipe,
-        struct scatterlist *sg, int nents)
-{
-    struct usb_bus        *bus;
-    struct device        *controller;
-
-    if (!dev
-            || usb_pipecontrol (pipe)
-            || !(bus = dev->bus)
-            || !(controller = bus->controller)
-            || !controller->dma_mask)
-        return -1;
-
-    // FIXME generic api broken like pci, can't report errors
-    return dma_map_sg (controller, sg, nents,
-            usb_pipein (pipe) ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-}
-
-/**
- * usb_buffer_dmasync_sg - synchronize DMA and CPU view of scatterlist buffer(s)
- * @dev: device to which the scatterlist will be mapped
- * @pipe: endpoint defining the mapping direction
- * @sg: the scatterlist to synchronize
- * @n_hw_ents: the positive return value from usb_buffer_map_sg
- *
- * Use this when you are re-using a scatterlist's data buffers for
- * another USB request.
- */
-void usb_buffer_dmasync_sg (struct usb_device *dev, unsigned pipe,
-        struct scatterlist *sg, int n_hw_ents)
-{
-    struct usb_bus        *bus;
-    struct device        *controller;
-
-    if (!dev
-            || !(bus = dev->bus)
-            || !(controller = bus->controller)
-            || !controller->dma_mask)
-        return;
-
-    dma_sync_sg (controller, sg, n_hw_ents,
-            usb_pipein (pipe) ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-}
-
-/**
- * usb_buffer_unmap_sg - free DMA mapping(s) for a scatterlist
- * @dev: device to which the scatterlist will be mapped
- * @pipe: endpoint defining the mapping direction
- * @sg: the scatterlist to unmap
- * @n_hw_ents: the positive return value from usb_buffer_map_sg
- *
- * Reverses the effect of usb_buffer_map_sg().
- */
-void usb_buffer_unmap_sg (struct usb_device *dev, unsigned pipe,
-        struct scatterlist *sg, int n_hw_ents)
-{
-    struct usb_bus        *bus;
-    struct device        *controller;
-
-    if (!dev
-            || !(bus = dev->bus)
-            || !(controller = bus->controller)
-            || !controller->dma_mask)
-        return;
-
-    dma_unmap_sg (controller, sg, n_hw_ents,
-            usb_pipein (pipe) ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
-}
-
 
 struct bus_type usb_bus_type = {
     .name =        "usb",

@@ -24,6 +24,8 @@
 #endif
 #endif
 
+#include "string.h"
+
 #ifndef CONFIG_PCI
 #error "This file is PCI bus glue.  CONFIG_PCI must be defined."
 #endif
@@ -110,11 +112,11 @@ ohci_pci_start (struct usb_hcd *hcd)
 
 #ifdef    CONFIG_PM
 
-static int ohci_pci_suspend (struct usb_hcd *hcd, u32 state)
+static int ohci_pci_suspend (struct usb_hcd *hcd, unsigned int state)
 {
     struct ohci_hcd        *ohci = hcd_to_ohci (hcd);
     unsigned long        flags;
-    u16            cmd;
+    unsigned short            cmd;
 
     if ((ohci->hc_control & OHCI_CTRL_HCFS) != OHCI_USB_OPER) {
         ohci_dbg (ohci, "can't suspend (state is %s)\n",

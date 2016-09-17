@@ -10,64 +10,6 @@
 #ifdef CONFIG_PCI
 #include	"pci.h"
 #endif
-#ifdef CONFIG_ISA
-#include	"isa.h"
-#endif
-
-void print_config(void)
-{
-	printf("Etherboot " VERSION " (GPL) http://etherboot.org "
-#ifdef	TAGGED_IMAGE
-		"Tagged "
-#endif
-#ifdef	ELF64_IMAGE
-		"ELF64 "
-#endif
-#ifdef	ELF_IMAGE
-		"ELF "
-#endif
-#ifdef	COFF_IMAGE
-		"COFF "
-#endif
-#ifdef	IMAGE_FREEBSD
-		"(FreeBSD) "
-#endif
-#ifdef	IMAGE_MULTIBOOT
-		"(Multiboot) "
-#endif
-#ifdef	AOUT_IMAGE
-		"a.out "
-#endif
-#ifdef	WINCE_IMAGE
-		"WINCE "
-#endif
-#ifdef	SAFEBOOTMODE
-		"SafeBoot "
-#endif
-		"for ");
-#ifdef CONFIG_PCI
-{
-	const struct pci_driver *driver;
-	for(driver = pci_drivers; driver < pci_drivers_end; driver++) {
-		printf("[%s]", driver->name);
-	}
-}
-#endif	
-#ifdef CONFIG_ISA
-{
-	const struct isa_driver *driver;
-	for(driver = isa_drivers; driver < isa_drivers_end; driver++) {
-		printf("[%s]", driver->name);
-	}
-
-}
-#endif	
-	putchar('\n');
-#if	(BOOTP_SERVER != 67) || (BOOTP_CLIENT != 68)
-	printf("This Etherboot uses non-standard ports %d and %d\n",
-		BOOTP_SERVER, BOOTP_CLIENT);
-#endif
-}
 
 #ifdef CONFIG_PCI
 static int pci_probe(struct dev *dev, const char *type_name)
@@ -129,53 +71,7 @@ static int pci_probe(struct dev *dev, const char *type_name)
 #define pci_probe(d, tn) (PROBE_FAILED)
 #endif
 
-#ifdef CONFIG_ISA
-static int isa_probe(struct dev *dev, const char *type_name)
-{
-/*
- *	NIC probing is in the order the drivers were linked togeter.
- *	If for some reason you want to change the order,
- *	just change the order you list the drivers in.
- */
-	struct isa_probe_state *state = &dev->state.isa;
-	printf("Probing isa %s...\n", type_name);
-	if (dev->how_probe == PROBE_FIRST) {
-		state->advance = 0;
-		state->driver  = isa_drivers;
-		dev->index     = -1;
-	}
-	for(;;)
-	{
-		if ((dev->how_probe != PROBE_AWAKE) && state->advance) {
-			state->driver++;
-			dev->index = -1;
-		}
-		state->advance = 1;
-		
-		if (state->driver >= isa_drivers_end)
-			break;
-
-		if (state->driver->type != dev->type)
-			continue;
-
-		if (dev->how_probe != PROBE_AWAKE) {
-			dev->type_index++;
-		}
-		printf("[%s]", state->driver->name);
-		dev->devid.bus_type = ISA_BUS_TYPE;
-		/* FIXME how do I handle dev->index + PROBE_AGAIN?? */
-		/* driver will fill in vendor and device IDs */
-		if (state->driver->probe(dev, state->driver->ioaddrs)) {
-			state->advance = (dev->index == -1);
-			return PROBE_WORKED;
-		}
-		putchar('\n');
-	}
-	return PROBE_FAILED;
-}
-#else
 #define isa_probe(d, tn) (PROBE_FAILED)
-#endif
 
 static const char *driver_name[] = {
 	"nic", 

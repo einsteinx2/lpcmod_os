@@ -11,68 +11,44 @@
 #ifndef _BootLPCMod_H_
 #define _BootLPCMod_H_
 
-#include "VideoInitialization.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "xblastDebug.h"
+#include "config.h"
+#include <stdbool.h>
 
-#define HDD4780_DEFAULT_NBLINES    4
-#define HDD4780_DEFAULT_LINELGTH    20
-#define DEFAULT_FANSPEED    20
+//Global to hide code when running in XBE without modchip detected.
+unsigned short fHasHardware;
+unsigned char fSpecialEdition;
 
-#define NBTXTPARAMS 35
-#define MINPARAMLENGTH 7
-#define IPTEXTPARAMGROUP 18
-#define TEXTPARAMGROUP (IPTEXTPARAMGROUP + 5)
-#define SPECIALPARAMGROUP (TEXTPARAMGROUP + 8)
 
-#define NBBOOLEANPARAMS 11
-#define NBNUMERICVALUEPARAMS (IPTEXTPARAMGROUP - NBBOOLEANPARAMS)
+//Globals to save value of LPC register
+unsigned char xF70ELPCRegister;
+unsigned char x00FFLPCRegister;
 
-extern char *xblastcfgstrings[NBTXTPARAMS];
+bool TSOPRecoveryMode;
 
-typedef struct {
-    unsigned char *settingsPtrArray[IPTEXTPARAMGROUP];
-    unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP];
-    char *textSettingsPtrArray[SPECIALPARAMGROUP - TEXTPARAMGROUP];
-    unsigned char *specialCasePtrArray[NBTXTPARAMS - SPECIALPARAMGROUP];
-}_settingsPtrStruct;
+unsigned char currentFlashBank;
+unsigned char A19controlModBoot;
 
-_settingsPtrStruct settingsPtrStruct;
+struct _GenPurposeIOs{
+    bool GPO3;
+    bool GPO2;
+    bool GPO1;
+    bool GPO0;
 
-typedef struct _singleChangeEntry{
-    void *origPtr;
-    void *modifiedOtr;
-    u8 itemVariableSize;
-    short arraySize;    //0 for no array
-    bool isEEPROM;
-    bool isBootScript;
-    bool isString;
-    char *displayString;
-    struct _singleChangeEntry *nextChange;
-}_singleChangeEntry;
+    bool GPI1;
+    bool GPI0;
 
-typedef struct {
-    unsigned short nbChanges;
-    _singleChangeEntry *firstChangeEntry;
-}_completeChangeList;
+    bool A19BufEn;
 
-_completeChangeList changeList;
+    bool EN_5V;
+}__attribute__((packed))GenPurposeIOs;  //byte-long struct.
 
-void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
-
-u16 LPCMod_HW_rev(void);
-
+unsigned short LPCMod_HW_rev(void);
 void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct);
-void LPCMod_WriteIO(u8 port, u8 value);
-void LPCMod_FastWriteIO(u8 port, u8 value);
-
+int LPCMod_ReadJPGFromHDD(const char *jpgFilename);
+void LPCMod_WriteIO(unsigned char port, unsigned char value);
+void LPCMod_FastWriteIO(unsigned char port, unsigned char value);
 void LPCMod_WriteGenPurposeIOs(void);
-
-void LPCMod_LCDBankString(char * string, u8 bankID);
-
-int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct *settingsStruct);
-int LPCMod_SaveCFGToHDD(void);
-
-u8 LPCMod_CountNumberOfChangesInSettings(void);
-bool LPCMod_checkForBootScriptChanges(void);
-void cleanChangeListStruct(void);
 
 #endif // _BootLPCMod_H_

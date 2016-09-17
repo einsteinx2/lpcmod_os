@@ -1,3 +1,2 @@
-EXTRA_CFLAGS := -I$(TOPDIR)/menu/textmenu -I$(TOPDIR)/menu/actions 
-O_TARGET := Confirm.o
+O_TARGET := Confirm.o ConfirmDialog.o OnScreenKeyboard.o ProgressBar.o
 include $(TOPDIR)/Rules.make

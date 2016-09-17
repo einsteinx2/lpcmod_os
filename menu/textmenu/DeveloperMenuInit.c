@@ -7,10 +7,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <XBlastScriptMenuActions.h>
-#include "TextMenu.h"
+#include "MenuInits.h"
+#include "XBlastScriptMenuActions.h"
 #include "DeveloperMenuActions.h"
 #include "lpcmod_v1.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 TEXTMENU *DeveloperMenuInit(void) {
     TEXTMENUITEM *itemPtr;

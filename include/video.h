@@ -2,41 +2,52 @@
 #define video_h
 
 #include "stdlib.h"
+#include <stdbool.h>
+
+typedef unsigned long RGBA; // LSB=R -> MSB = A
 
 // video helpers
 typedef struct {
-    u8 * pData;
-    u8 *pBackdrop;
-    u8 iconCount;
+    unsigned char * pData;
+    unsigned char *pBackdrop;
+    unsigned char iconCount;
 } JPEG;
 
-int BootVideoOverlayString(u32 * pdwaTopLeftDestination, u32 m_dwCountBytesPerLineDestination, RGBA rgbaOpaqueness, const char * szString);
+
+int BootVideoOverlayString(unsigned int * pdwaTopLeftDestination, unsigned int m_dwCountBytesPerLineDestination, RGBA rgbaOpaqueness, const char * szString);
 void BootVideoChunkedPrint(const char * szBuffer);
-int VideoDumpAddressAndData(u32 dwAds, const u8 * baData, u32 dwCountBytesUsable);
+int VideoDumpAddressAndData(unsigned int dwAds, const unsigned char * baData, unsigned int dwCountBytesUsable);
 unsigned int BootVideoGetStringTotalWidth(const char * szc);
 void BootVideoClearScreen(JPEG * pJpeg, int nStartLine, int nEndLine);
 
 void BootVideoJpegBlitBlend(
-    u8 *pDst,
-    u32 dst_width,
+    unsigned char *pDst,
+    unsigned int dst_width,
     JPEG * pJpeg,
-    u8 *pFront,
+    unsigned char *pFront,
     RGBA m_rgbaTransparent,
-    u8 *pBack,
+    unsigned char *pBack,
     int x,
     int y
 );
 
+bool BootVideoInitJPEGBackdropBuffer(JPEG * pJpeg);
+
 bool BootVideoJpegUnpackAsRgb(
-    u8 *pbaJpegFileImage,
+    unsigned char *pbaJpegFileImage,
     JPEG * pJpeg,
 	int size
 );
 
-void BootVideoEnableOutput(u8 bAvPack);
-u8 * BootVideoGetPointerToEffectiveJpegTopLeft(JPEG * pJpeg);
+void BootVideoEnableOutput(unsigned char bAvPack);
+unsigned char * BootVideoGetPointerToEffectiveJpegTopLeft(JPEG * pJpeg);
+void BootVideoChunkedPrint(const char * szBuffer);
 
-extern u8 baBackdrop[60*72*4];
+// Helpers
+const char *VideoEncoderName(void);
+const char *AvCableName(void);
+
+extern unsigned char baBackdrop[60*72*4];
 extern JPEG jpegBackdrop;
 
 #endif /* #ifndef video_h */

@@ -16,12 +16,9 @@
 #include "boot.h"
 #include "video.h"
 #include "memory_layout.h"
-#include <shared.h>
-#include <filesys.h>
 #include "rc4.h"
 #include "sha1.h"
 #include "BootFATX.h"
-#include "xbox.h"
 //#include "BootFlash.h"
 #include "cpu.h"
 #include "BootIde.h"
@@ -29,7 +26,13 @@
 #include "config.h"
 #include "IconMenu.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "lib/time/timeManagement.h"
 #include "lpcmod_v1.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "xblast/settings/xblastSettings.h"
+#include "xblast/settings/xblastSettingsChangeTracker.h"
+#include "lib/cromwell/cromString.h"
+#include "string.h"
 
 #define TRANSPARENTNESS 0x30
 #define SELECTED 0xff
@@ -40,7 +43,7 @@ ICON *firstVisibleIcon=NULL;    //Could also have been named rightIcon
 ICON *lastVisibleIcon=NULL;        //and leftIcon since only 3 icons are shown on the iconMenu.
 int timedOut=0;
 int iconTimeRemain = 0;
-u32 temp=1;
+unsigned int temp=1;
 
 
 
@@ -67,10 +70,10 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
     ICON *iconPtr;            //Icon the code is currently working on.
     ICON *iconSeeker;        //Pointer to the icon we want to be selected at boot.
     int iconcount;
-    u8 opaqueness;
+    unsigned char opaqueness;
     int tempX, tempY;
 
-    u8 uncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
+    unsigned char uncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
 
     //Seeking icon with desired bankID value must be done when both firstVisibleIcon and selectedIcon are NULL.
     //This way, seeking desired icon will only occur at initial draw.
@@ -125,12 +128,12 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
         else opaqueness = TRANSPARENTNESS;
         
         BootVideoJpegBlitBlend(
-            (u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(140*(iconcount+1))) * 4),
+            (unsigned char *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(140*(iconcount+1))) * 4),
             vmode.width, // dest bytes per line
             &jpegBackdrop, // source jpeg object
-            (u8 *)(jpegBackdrop.pData+(iconPtr->iconSlot * 3)),
-            0xff00ff|(((u32)opaqueness)<<24),
-            (u8 *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(140*(iconcount+1))) * 3),
+            (unsigned char *)(jpegBackdrop.pData+(iconPtr->iconSlot * 3)),
+            0xff00ff|(((unsigned int)opaqueness)<<24),
+            (unsigned char *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(140*(iconcount+1))) * 3),
             ICON_WIDTH, ICON_HEIGHT
         );
         lastVisibleIcon = iconPtr;
@@ -142,12 +145,12 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
         //opaqueness = TRANSPARENTNESS;
         opaqueness = SELECTED;
         BootVideoJpegBlitBlend(
-            (u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(50)) * 4),
+            (unsigned char *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(50)) * 4),
             vmode.width, // dest bytes per line
             &jpegBackdrop, // source jpeg object
-            (u8 *)(jpegBackdrop.pData),
-            0xff00ff|(((u32)opaqueness)<<24),
-            (u8 *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(50)) * 3),
+            (unsigned char *)(jpegBackdrop.pData),
+            0xff00ff|(((unsigned int)opaqueness)<<24),
+            (unsigned char *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(50)) * 3),
             ICON_WIDTH, ICON_HEIGHT
         );
     }
@@ -157,12 +160,12 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
         //opaqueness = TRANSPARENTNESS;
         opaqueness = SELECTED;
         BootVideoJpegBlitBlend(
-            (u8 *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(510)) * 4),
+            (unsigned char *)(FB_START+((vmode.width * (nYOffset-74))+nXOffset+(510)) * 4),
             vmode.width, // dest bytes per line
             &jpegBackdrop, // source jpeg object
-            (u8 *)(jpegBackdrop.pData+(ICON_WIDTH * 3)),
-            0xff00ff|(((u32)opaqueness)<<24),
-            (u8 *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(510)) * 3),
+            (unsigned char *)(jpegBackdrop.pData+(ICON_WIDTH * 3)),
+            0xff00ff|(((unsigned int)opaqueness)<<24),
+            (unsigned char *)(jpegBackdrop.pBackdrop + ((1024 * (nYOffset-74)) + nXOffset+(510)) * 3),
             ICON_WIDTH, ICON_HEIGHT
         );
     }
@@ -194,7 +197,7 @@ static void IconMenuDraw(int nXOffset, int nYOffset) {
 bool IconMenu(void) {
 
     bool reloadUI = true;
-    u32 COUNT_start;
+    unsigned int COUNT_start;
     int oldIconTimeRemain = 0;
     ICON *iconPtr=NULL;
     char bankString[20];
@@ -203,7 +206,7 @@ bool IconMenu(void) {
     int nTempCursorResumeX, nTempCursorResumeY ;
     int nTempCursorX, nTempCursorY;
     int nModeDependentOffset=(vmode.width-640)/2;  
-    u8 varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;        //Just to have a default value.
+    unsigned char varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;        //Just to have a default value.
     char timeoutString[21];                            //To display timeout countdown on xLCD
     timeoutString[20] = 0;
     
@@ -249,7 +252,7 @@ bool IconMenu(void) {
             xLCD.ClearLine(3);
         }
     }
-    COUNT_start = IoInputDword(0x8008);
+    COUNT_start = getMS();
     //Main menu event loop.
     while(reloadUI)
     {
@@ -297,9 +300,9 @@ bool IconMenu(void) {
         }
         //If anybody has toggled the xpad left/right, disable the timeout.
         if(temp != 0) {
-            temp = IoInputDword(0x8008) - COUNT_start;
+            temp = getMS() - COUNT_start;
             oldIconTimeRemain = iconTimeRemain;
-            iconTimeRemain = varBootTimeWait - temp/0x369E99;
+            iconTimeRemain = varBootTimeWait - temp/1000;
             if(oldIconTimeRemain != iconTimeRemain) {
                 changed = 1;
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
@@ -307,7 +310,7 @@ bool IconMenu(void) {
         }
         
         if ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) || risefall_xpad_STATE(XPAD_STATE_START) == 1 || 
-            (u32)(temp>(0x369E99*varBootTimeWait))) {
+            (unsigned int)(temp>(0x369E99*varBootTimeWait))) {
             memcpy((void*)FB_START,videosavepage,FB_SIZE);
             VIDEO_CURSOR_POSX=nTempCursorResumeX;
             VIDEO_CURSOR_POSY=nTempCursorResumeY;

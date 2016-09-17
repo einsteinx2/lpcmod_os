@@ -47,15 +47,15 @@
 #include "nic.h"
 /* to get the PCI support functions, if this is a PCI NIC */
 #include "pci.h"
-/* Include timer support functions */
-#include "timer.h"
+
+#include "lib/LPCMod/xblastDebug.h"
 
 #define drv_version "v1.1"
 #define drv_date "02-03-2004"
 
-//#define TFTM_DEBUG
+#define TFTM_DEBUG
 #ifdef TFTM_DEBUG
-#define dprintf(x) printf x
+#define dprintf(x) debugSPIPrint x
 #else
 #define dprintf(x)
 #endif
@@ -392,7 +392,7 @@ static int reg_delay(int offset, u32 mask,
 static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 		  int value)
 {
-	u8 *base = (u8 *) BASE;
+	volatile u8 *base = (u8 *) BASE;
 	int was_running;
 	u32 reg;
 	int retval;
@@ -421,23 +421,23 @@ static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 
 	if (reg_delay(NvRegMIIControl, NVREG_MIICTL_INUSE, 0,
 		      NV_MIIPHY_DELAY, NV_MIIPHY_DELAYMAX, NULL)) {
-		dprintf(("mii_rw of reg %d at PHY %d timed out.\n",
+		dprintf(("mii_rw of reg %d at PHY %d timed out.",
 			 miireg, addr));
 		retval = -1;
 	} else if (value != MII_READ) {
 		/* it was a write operation - fewer failures are detectable */
-		dprintf(("mii_rw wrote 0x%x to reg %d at PHY %d\n",
+		dprintf(("mii_rw wrote 0x%x to reg %d at PHY %d",
 			 value, miireg, addr));
 		retval = 0;
 	} else if (readl(base + NvRegMIIStatus) & NVREG_MIISTAT_ERROR) {
-		dprintf(("mii_rw of reg %d at PHY %d failed.\n",
+		dprintf(("mii_rw of reg %d at PHY %d failed.",
 			 miireg, addr));
 		retval = -1;
 	} else {
 		/* FIXME: why is that required? */
 		udelay(50);
 		retval = readl(base + NvRegMIIData);
-		dprintf(("mii_rw read from reg %d at PHY %d: 0x%x.\n",
+		dprintf(("mii_rw read from reg %d at PHY %d: 0x%x.",
 			 miireg, addr, retval));
 	}
 	if (was_running) {
@@ -452,7 +452,7 @@ static void start_rx(struct nic *nic __unused)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("start_rx\n"));
+	dprintf(("start_rx"));
 	/* Already running? Stop it. */
 	if (readl(base + NvRegReceiverControl) & NVREG_RCVCTL_START) {
 		writel(0, base + NvRegReceiverControl);
@@ -468,7 +468,7 @@ static void stop_rx(void)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("stop_rx\n"));
+	dprintf(("stop_rx"));
 	writel(0, base + NvRegReceiverControl);
 	reg_delay(NvRegReceiverStatus, NVREG_RCVSTAT_BUSY, 0,
 		  NV_RXSTOP_DELAY1, NV_RXSTOP_DELAY1MAX,
@@ -482,7 +482,7 @@ static void start_tx(struct nic *nic __unused)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("start_tx\n"));
+	dprintf(("start_tx"));
 	writel(NVREG_XMITCTL_START, base + NvRegTransmitterControl);
 	pci_push(base);
 }
@@ -491,7 +491,7 @@ static void stop_tx(void)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("stop_tx\n"));
+	dprintf(("stop_tx"));
 	writel(0, base + NvRegTransmitterControl);
 	reg_delay(NvRegTransmitterStatus, NVREG_XMITSTAT_BUSY, 0,
 		  NV_TXSTOP_DELAY1, NV_TXSTOP_DELAY1MAX,
@@ -506,7 +506,7 @@ static void txrx_reset(struct nic *nic __unused)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("txrx_reset\n"));
+	dprintf(("txrx_reset"));
 	writel(NVREG_TXRXCTL_BIT2 | NVREG_TXRXCTL_RESET,
 	       base + NvRegTxRxControl);
 	pci_push(base);
@@ -532,7 +532,7 @@ static int alloc_rx(struct nic *nic __unused)
 		rx_ring[i].Length = cpu_to_le16(RX_NIC_BUFSIZE);
 		wmb();
 		rx_ring[i].Flags = cpu_to_le16(NV_RX_AVAIL);
-		/*      printf("alloc_rx: Packet  %d marked as Available\n",
+		/*      printf("alloc_rx: Packet  %d marked as Available",
 		   refill_rx); */
 		refill_rx++;
 	}
@@ -548,7 +548,7 @@ static int update_linkspeed(struct nic *nic)
 	u32 newls;
 	adv = mii_rw(nic, np->phyaddr, MII_ADVERTISE, MII_READ);
 	lpa = mii_rw(nic, np->phyaddr, MII_LPA, MII_READ);
-	dprintf(("update_linkspeed: PHY advertises 0x%hX, lpa 0x%hX.\n",
+	dprintf(("update_linkspeed: PHY advertises 0x%hX, lpa 0x%hX.",
 		 adv, lpa));
 
 	/* FIXME: handle parallel detection properly, handle gigabit ethernet */
@@ -566,7 +566,7 @@ static int update_linkspeed(struct nic *nic)
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 	} else {
-		printf("bad ability %hX - falling back to 10HD.\n", lpa);
+		printf("bad ability %hX - falling back to 10HD.", lpa);
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 	}
@@ -638,7 +638,7 @@ static int forcedeth_reset(struct nic *nic)
 	u8 *base = (u8 *) BASE;
 	int ret, oom, i;
 	ret = 0;
-	dprintf(("forcedeth: open\n"));
+	dprintf(("forcedeth: open"));
 
 	/* 1) erase previous misconfiguration */
 	/* 4.1-1: stop adapter: ignored, 4.3 seems to be overkill */
@@ -696,7 +696,7 @@ static int forcedeth_reset(struct nic *nic)
 		id2 = mii_rw(nic, i, MII_PHYSID2, MII_READ);
 		if (id2 < 0)
 			continue;
-		dprintf(("open: Found PHY %04x:%04x at address %d.\n",
+		dprintf(("open: Found PHY %04x:%04x at address %d.",
 			 id1, id2, i));
 		np->phyaddr = i;
 
@@ -705,12 +705,12 @@ static int forcedeth_reset(struct nic *nic)
 		break;
 	}
 	if (i == 32) {
-		printf("open: failing due to lack of suitable PHY.\n");
+		printf("open: failing due to lack of suitable PHY.");
 		ret = -1;
 		goto out_drain;
 	}
 
-	printf("           %d-Mbs Link, %s-Duplex\n",
+	printf("           %d-Mbs Link, %s-Duplex",
 	       np->linkspeed & NVREG_LINKSPEED_10 ? 10 : 100,
 	       np->duplex ? "Full" : "Half");
 	/* 6) continue setup */
@@ -784,7 +784,7 @@ static int forcedeth_reset(struct nic *nic)
 	if (!
 	    (mii_rw(nic, np->phyaddr, MII_BMSR, MII_READ) &
 	     BMSR_ANEGCOMPLETE)) {
-		printf("no link during initialization.\n");
+		printf("no link during initialization.");
 	}
 
 	udelay(10000);
@@ -896,7 +896,7 @@ static void forcedeth_disable(struct dev *dev __unused)
 	/* disable interrupts on the nic or we will lock up */
 	writel(0, base + NvRegIrqMask);
 	pci_push(base);
-	dprintf(("Irqmask is zero again\n"));
+	dprintf(("Irqmask is zero again"));
 
 	/* specia op:o write back the misordered MAC address - otherwise
 	 * the next probe_nic would see a wrong address.
@@ -939,7 +939,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 	if (pci->ioaddr == 0)
 		return 0;
 
-/*	printf("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX\n",
+/*	printf("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX",
 	       pci->name, pci->vendor, pci->dev_id);
 */
 	/* point to private storage */
@@ -976,9 +976,9 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		 * Bad mac address. At least one bios sets the mac address
 		 * to 01:23:45:67:89:ab
 		 */
-		printf("Invalid Mac address detected: %!\n",
+		printf("Invalid Mac address detected: %!",
 		       nic->node_addr);
-		printf("Please complain to your hardware vendor.\n");
+		printf("Please complain to your hardware vendor.");
 		return 0;
 	}
 	printf("\n\n\n           MAC Address %!",nic->node_addr);
@@ -1002,7 +1002,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		np->irqmask |= NVREG_IRQ_TIMER;
 
 	}
-	dprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s\n",
+	dprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s",
 		 pci->name, pci->vendor, pci->dev_id, pci->name));
 
 	forcedeth_reset(nic);

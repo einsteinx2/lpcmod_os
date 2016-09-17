@@ -9,9 +9,9 @@
 
 #include "boot.h"
 #include "video.h"
-#include "xbox.h"
 #include "VideoInitialization.h"
 #include "BootEEPROM.h"
+#include "string.h"
 
 void incrementVideoStandard(void * itemStr){
     switch(*((VIDEO_STANDARD *)&eeprom.VideoStandard)) {

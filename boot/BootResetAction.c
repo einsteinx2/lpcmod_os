@@ -16,15 +16,26 @@
 #include "BootEEPROM.h"
 #include "BootFlash.h"
 #include "BootFATX.h"
+#include "i2c.h"
 #include "lib/LPCMod/BootLPCMod.h"
-#include "xbox.h"
+#include "lib/LPCMod/BootLCD.h"
+#include "xblast/settings/xblastSettingsImportExport.h"
 #include "cpu.h"
 #include "config.h"
 #include "video.h"
 #include "memory_layout.h"
 #include "lpcmod_v1.h"
-#include "lib/LPCMod/BootLPCMod.h"
-#include "lib/scriptEngine/xblastScriptEngine.h"
+#include "xblast/scriptEngine/xblastScriptEngine.h"
+#include "xblast/settings/xblastSettings.h"
+#include "cromwell.h"
+#include "IconMenu.h"
+#include "MenuActions.h"
+#include "MenuInits.h"
+#include "menu/misc/ConfirmDialog.h"
+#include "XBlastScriptMenuActions.h"
+#include "LEDMenuActions.h"
+#include "FlashMenuActions.h"
+#include "string.h"
 
 const char *xbox_mb_rev[8] = {
         "DevKit",
@@ -50,7 +61,7 @@ void ClearScreen (void) {
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 }
 
-void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware, u32 cpuSpeed){
+void printMainMenuHeader(OBJECT_FLASH *of, char *modName, bool fHasHardware, unsigned int cpuSpeed){
     //Length of array is set depending on how many revision can be uniquely identified.
     //Modify this enum if you modify the "XBOX_REVISION" enum in boot.h
 
@@ -143,9 +154,9 @@ extern void BootResetAction ( void ) {
     int nTempCursorX, nTempCursorY;
     int n, nx, i, returnValue = 255;
     char modName[30] = "Unsupported modchip!";
-    u8 tempFanSpeed = 20;
+    unsigned char tempFanSpeed = 20;
     int bootScriptSize = -1, res, dcluster;
-    u32 cpuSpeed;
+    unsigned int cpuSpeed;
     _LPCmodSettings *tempLPCmodSettings;
     OBJECT_FLASH bootFlash;
     FATXPartition *partition;
@@ -155,7 +166,7 @@ extern void BootResetAction ( void ) {
         #include "flashtypes.h"
     };
 
-    u8 EjectButtonPressed=0;
+    unsigned char EjectButtonPressed=0;
 
 #ifdef SPITRACE
     //Required to populate GenPurposeIOs before toggling GPIOs.
@@ -170,7 +181,7 @@ extern void BootResetAction ( void ) {
     //gobalGenericPtr = NULL;
     scriptSavingPtr = NULL;
 
-    bootFlash.m_pbMemoryMappedStartAddress=(u8 *)LPCFlashadress;
+    bootFlash.m_pbMemoryMappedStartAddress=(unsigned char *)LPCFlashadress;
     
     xF70ELPCRegister = 0x03;       //Assume no control over the banks but we are booting from bank3
     x00FFLPCRegister = ReadFromIO(XODUS_CONTROL);       //Read A15 and D0 states.
@@ -229,7 +240,7 @@ extern void BootResetAction ( void ) {
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
     
     if(cromwell_config==CROMWELL)
-        LEDRed();        //Signal the user to press Eject button to avoid Quickboot.
+        LEDRed(NULL);        //Signal the user to press Eject button to avoid Quickboot.
 //    if(cromwell_config==CROMWELL){              //Only check if booted from ROM.
     fHasHardware = LPCMod_HW_rev();         //Will output 0xff if no supported modchip detected.
     debugSPIPrint("Modchip hardware ID is: 0x%04X", fHasHardware);
@@ -281,7 +292,7 @@ nextStepXBLASTV1:
        break;
     default:
         debugSPIPrint("No XBlast OS compatible hardware found.");
-        u32 x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
+        unsigned int x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
         debugSPIPrint("Probing for X3 EEprom. Result: 0x%08X", x3probe);
         if(x3probe != 0xff && x3probe != 0x80000002){       //Another (hacky) way to detect is to probe SMBus at addresses
             fHasHardware = SYSCON_ID_X3;                    //normally unused by the Xbox. By my own experimentation, address
@@ -370,7 +381,7 @@ nextStepXBLASTV1:
 
     if(fHasHardware == SYSCON_ID_V1_TSOP){
     	//LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20) >> 5;     //A19ctrl maps to bit5
-        LPCmodSettings.OSsettings.TSOPcontrol = (u8)GenPurposeIOs.A19BufEn;
+        LPCmodSettings.OSsettings.TSOPcontrol = (unsigned char)GenPurposeIOs.A19BufEn;
         debugSPIPrint("Buffer enable for A19 control : %sabled.", GenPurposeIOs.A19BufEn? "En" : "Dis");
     }
 
@@ -510,7 +521,7 @@ nextStepXBLASTV1:
         extern int _start_backdrop;
         extern int _end_backdrop;
         BootVideoJpegUnpackAsRgb(
-            (u8 *)&_start_backdrop,
+            (unsigned char *)&_start_backdrop,
              &jpegBackdrop,
 	    _end_backdrop - _start_backdrop
         );
@@ -520,7 +531,7 @@ nextStepXBLASTV1:
 
     // set Ethernet MAC address from EEPROM
     {
-        volatile u8 * pb=(u8 *)0xfef000a8;  // Ethernet MMIO base + MAC register offset (<--thanks to Anders Gustafsson)
+        volatile unsigned char * pb=(unsigned char *)0xfef000a8;  // Ethernet MMIO base + MAC register offset (<--thanks to Anders Gustafsson)
         int n;
         for(n=5;n>=0;n--) { *pb++=    eeprom.MACAddress[n]; } // send it in backwards, its reversed by the driver
     }

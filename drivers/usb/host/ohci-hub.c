@@ -20,7 +20,7 @@
  * till some bits (mostly reserved) are clear; ok for all revs.
  */
 #define read_roothub(hc, register, mask) ({ \
-    u32 temp = readl (&hc->regs->roothub.register); \
+    unsigned int temp = readl (&hc->regs->roothub.register); \
     if (temp == -1) \
         disable (hc); \
     else if (hc->flags & OHCI_QUIRK_AMD756) \
@@ -28,13 +28,13 @@
             temp = readl (&hc->regs->roothub.register); \
     temp; })
 
-static u32 roothub_a (struct ohci_hcd *hc)
+static unsigned int roothub_a (struct ohci_hcd *hc)
     { return read_roothub (hc, a, 0xfc0fe000); }
-static inline u32 roothub_b (struct ohci_hcd *hc)
+static inline unsigned int roothub_b (struct ohci_hcd *hc)
     { return readl (&hc->regs->roothub.b); }
-static inline u32 roothub_status (struct ohci_hcd *hc)
+static inline unsigned int roothub_status (struct ohci_hcd *hc)
     { return readl (&hc->regs->roothub.status); }
-static u32 roothub_portstatus (struct ohci_hcd *hc, int i)
+static unsigned int roothub_portstatus (struct ohci_hcd *hc, int i)
     { return read_roothub (hc, portstatus [i], 0xffe0fce0); }
 
 /*-------------------------------------------------------------------------*/
@@ -93,7 +93,7 @@ ohci_hub_status_data (struct usb_hcd *hcd, char *buf)
 
     /* look at each port */
     for (i = 0; i < ports; i++) {
-        u32    status = roothub_portstatus (ohci, i);
+        unsigned int    status = roothub_portstatus (ohci, i);
 
         status &= RH_PS_CSC | RH_PS_PESC | RH_PS_PSSC
                 | RH_PS_OCIC | RH_PS_PRSC;
@@ -115,9 +115,9 @@ ohci_hub_descriptor (
     struct ohci_hcd            *ohci,
     struct usb_hub_descriptor    *desc
 ) {
-    u32        rh = roothub_a (ohci);
+    unsigned int        rh = roothub_a (ohci);
     int        ports = rh & RH_A_NDP; 
-    u16        temp;
+    unsigned short        temp;
 
     desc->bDescriptorType = 0x29;
     desc->bPwrOn2PwrGood = (rh & RH_A_POTPGT) >> 24;
@@ -150,15 +150,15 @@ ohci_hub_descriptor (
 
 static int ohci_hub_control (
     struct usb_hcd    *hcd,
-    u16        typeReq,
-    u16        wValue,
-    u16        wIndex,
+    unsigned short        typeReq,
+    unsigned short        wValue,
+    unsigned short        wIndex,
     char        *buf,
-    u16        wLength
+    unsigned short        wLength
 ) {
     struct ohci_hcd    *ohci = hcd_to_ohci (hcd);
     int        ports = hcd_to_bus (hcd)->root_hub->maxchild;
-    u32        temp;
+    unsigned int        temp;
     int        retval = 0;
 
     switch (typeReq) {
@@ -213,17 +213,17 @@ static int ohci_hub_control (
         break;
     case GetHubStatus:
         temp = roothub_status (ohci) & ~(RH_HS_CRWE | RH_HS_DRWE);
-        *(u32 *) buf = cpu_to_le32 (temp);
+        *(unsigned int *) buf = cpu_to_le32 (temp);
         break;
     case GetPortStatus:
         if (!wIndex || wIndex > ports)
             goto error;
         wIndex--;
         temp = roothub_portstatus (ohci, wIndex);
-        *(u32 *) buf = cpu_to_le32 (temp);
+        *(unsigned int *) buf = cpu_to_le32 (temp);
 
 #ifndef    OHCI_VERBOSE_DEBUG
-    if (*(u16*)(buf+2))    /* only if wPortChange is interesting */
+    if (*(unsigned short*)(buf+2))    /* only if wPortChange is interesting */
 #endif
         dbg_port (ohci, "GetStatus", wIndex + 1, temp);
         break;

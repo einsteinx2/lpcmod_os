@@ -3,15 +3,17 @@
 
 #include "boot.h"
 #include "BootFATX.h"
-#include <sys/types.h>
-#include <stdlib.h>
-#include <ctype.h>
-
+#include "BootIde.h"
+#include "stdlib.h"
+#include "string.h"
+#include "Gentoox.h"
+#include "string.h"
+#include "cromwell.h"
+#include "sortHelpers.h"
 
 #undef FATX_DEBUG
 
 //#define FATX_INFO
-
 
 XboxPartitionTable BackupPartTbl =
 {
@@ -54,8 +56,8 @@ int FATXListDir(FATXPartition *partition, int clusterId, char **res, int reslen,
     int i = 0;
     int c = 0;
     int sortResult;
-    u_int32_t filenameSize;
-    u_int32_t entryClusterId;
+    unsigned long filenameSize;
+    unsigned long entryClusterId;
     char foundFilename[50];
     int sortNotOver = 1;
 
@@ -135,9 +137,9 @@ int FATXFindDir(FATXPartition *partition, int clusterId, char *dir){
     unsigned char* curEntry;
     unsigned char clusterData[partition->clusterSize];
     int i = 0;
-    u_int32_t filenameSize;
-    u_int32_t flags;
-    u_int32_t entryClusterId;
+    unsigned long filenameSize;
+    unsigned long flags;
+    unsigned long entryClusterId;
     char seekFilename[50];
     char foundFilename[50];
 
@@ -178,7 +180,7 @@ int FATXFindDir(FATXPartition *partition, int clusterId, char *dir){
 
             // get rest of data
             flags = curEntry[1];
-            entryClusterId = *((u_int32_t*) (curEntry + 0x2c));
+            entryClusterId = *((unsigned long*) (curEntry + 0x2c));
 
             // is it what we're looking for...  We use _strncasecmp since fatx
             // isnt case sensitive.
@@ -198,7 +200,7 @@ int FATXFindDir(FATXPartition *partition, int clusterId, char *dir){
 
 #if 0
 //Your services are no longer needed my friend.
-int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,u8* Position) {
+int LoadFATXFilefixed(FATXPartition *partition,char *filename, FATXFILEINFO *fileinfo,unsigned char* Position) {
 
     if(partition == NULL) {
         VIDEO_ATTR=0xffe8e8e8;
@@ -291,7 +293,7 @@ void PrintFATXPartitionTable(int nDriveIndex) {
 }
 
 int FATXSignature(int nDriveIndex,unsigned int block) {
-    u8 ba[512];
+    unsigned char ba[512];
 
     if(BootIdeReadSector(0, &ba[0], block, 0, 512)) {
         VIDEO_ATTR=0xffe8e8e8;
@@ -310,7 +312,7 @@ int FATXSignature(int nDriveIndex,unsigned int block) {
 
 FATXPartition *OpenFATXPartition(int nDriveIndex,
     unsigned int partitionOffset,
-    u_int64_t partitionSize) {
+    unsigned long long partitionSize) {
     unsigned char partitionInfo[FATX_PARTITION_HEADERSIZE];
     FATXPartition *partition;
     int readSize;
@@ -332,7 +334,7 @@ FATXPartition *OpenFATXPartition(int nDriveIndex,
     }
 
     // check the magic
-    if (*((u_int32_t*) &partitionInfo) != FATX_PARTITION_MAGIC) {
+    if (*((unsigned long*) &partitionInfo) != FATX_PARTITION_MAGIC) {
         VIDEO_ATTR=0xffe8e8e8;
 #ifdef FATX_INFO
         printk("OpenFATXPartition : No FATX partition found at requested offset\n");
@@ -376,7 +378,7 @@ FATXPartition *OpenFATXPartition(int nDriveIndex,
     printk("OpenFATXPartition : Allocating chaintable struct\n");
 #endif
       // Load the cluster chain map table
-    partition->clusterChainMap.words = (u_int16_t*) malloc(chainTableSize);
+    partition->clusterChainMap.words = (unsigned short*) malloc(chainTableSize);
         if (partition->clusterChainMap.words == NULL) {
         VIDEO_ATTR=0xffe8e8e8;
 #ifdef FATX_INFO
@@ -421,9 +423,9 @@ void _DumpFATXTree(FATXPartition* partition, int clusterId, int nesting) {
     int i,j;
     char writeBuf[512];
     char filename[50];
-    u_int32_t filenameSize;
-    u_int32_t fileSize;
-    u_int32_t entryClusterId;
+    unsigned long filenameSize;
+    unsigned long fileSize;
+    unsigned long entryClusterId;
     unsigned char flags;
     char flagsStr[5];
 
@@ -465,8 +467,8 @@ void _DumpFATXTree(FATXPartition* partition, int clusterId, int nesting) {
 
             // get rest of data
             flags = curEntry[1];
-            entryClusterId = *((u_int32_t*) (curEntry + 0x2c));
-            fileSize = *((u_int32_t*) (curEntry + 0x30));
+            entryClusterId = *((unsigned long*) (curEntry + 0x2c));
+            fileSize = *((unsigned long*) (curEntry + 0x30));
 
             // wipe fileSize
             if (flags & FATX_FILEATTR_DIRECTORY) {
@@ -528,7 +530,7 @@ int FATXLoadFromDisk(FATXPartition* partition, FATXFILEINFO *fileinfo) {
     int fileSize = fileinfo->fileSize;
     int written;
     int clusterId = fileinfo->clusterId;
-    u8 *ptr;
+    unsigned char *ptr;
 
     fileinfo->fileRead = 0;
     ptr = fileinfo->buffer;
@@ -595,10 +597,10 @@ int _FATXFindFile(FATXPartition* partition,
     unsigned char clusterData[partition->clusterSize];
     int i = 0;
     int endOfDirectory;
-    u_int32_t filenameSize;
-    u_int32_t flags;
-    u_int32_t entryClusterId;
-    u_int32_t fileSize;
+    unsigned long filenameSize;
+    unsigned long flags;
+    unsigned long entryClusterId;
+    unsigned long fileSize;
     char seekFilename[50];
     char foundFilename[50];
     char* slashPos;
@@ -683,8 +685,8 @@ int _FATXFindFile(FATXPartition* partition,
 
             // get rest of data
             flags = curEntry[1];
-            entryClusterId = *((u_int32_t*) (curEntry + 0x2c));
-            fileSize = *((u_int32_t*) (curEntry + 0x30));
+            entryClusterId = *((unsigned long*) (curEntry + 0x2c));
+            fileSize = *((unsigned long*) (curEntry + 0x30));
 
             // is it what we're looking for...
             if (strlen(seekFilename)==strlen(foundFilename) && _strncasecmp(foundFilename, seekFilename,strlen(seekFilename)) == 0) {
@@ -736,11 +738,11 @@ int _FATXFindFile(FATXPartition* partition,
 
 
 
-u_int32_t getNextClusterInChain(FATXPartition* partition, int clusterId) {
+unsigned long getNextClusterInChain(FATXPartition* partition, int clusterId) {
     int nextClusterId = 0;
-    u_int32_t eocMarker = 0;
-    u_int32_t rootFatMarker = 0;
-    u_int32_t maxCluster = 0;
+    unsigned long eocMarker = 0;
+    unsigned long rootFatMarker = 0;
+    unsigned long maxCluster = 0;
 
     // check
     if (clusterId < 1) {
@@ -783,8 +785,8 @@ u_int32_t getNextClusterInChain(FATXPartition* partition, int clusterId) {
 }
 
 void LoadFATXCluster(FATXPartition* partition, int clusterId, unsigned char* clusterData) {
-    u_int64_t clusterAddress;
-    u_int64_t readSize;
+    unsigned long long clusterAddress;
+    unsigned long long readSize;
     
     // work out the address of the cluster
     clusterAddress = partition->cluster1Address + ((unsigned long long)(clusterId - 1) * partition->clusterSize);
@@ -814,7 +816,7 @@ int FATXRawRead(int drive, int sector, unsigned long long byte_offset, int byte_
         int nThisTime=512;
         if(byte_len<512) nThisTime=byte_len;
                 if(byte_offset) {
-                    //u8 ba[512];
+                    //unsigned char ba[512];
             if(BootIdeReadSector(drive, buf, sector, 0, 512)) {
                 VIDEO_ATTR=0xffe8e8e8;
                 printk("Unable to get first sector\n");
@@ -848,8 +850,8 @@ void CloseFATXPartition(FATXPartition* partition) {
     }
 }
 
-void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32 cluster){
-    u32 offset = entryNumber * 0x40;
+void FATXCreateDirectoryEntry(unsigned char * buffer, char *entryName, unsigned int entryNumber, unsigned int cluster){
+    unsigned int offset = entryNumber * 0x40;
 
     FATXDIRINFO *dirEntry = (FATXDIRINFO *)&buffer[offset];
     memset(&buffer[offset],0xff,0x40);
@@ -872,8 +874,8 @@ void FATXCreateDirectoryEntry(u8 * buffer, char *entryName, u32 entryNumber, u32
 }
 
 /********** Old way, Done at drive Init now. Leave for legacy. **********
-bool FATXCheckBRFR(u8 drive){
-    u8 ba[512];
+bool FATXCheckBRFR(unsigned char drive){
+    unsigned char ba[512];
     if(BootIdeReadSector(drive, &ba[0], 0x03, 0, 512)) {
         VIDEO_ATTR=0xffe8e8e8;
 //#ifdef FATX_INFO
@@ -893,9 +895,9 @@ bool FATXCheckBRFR(u8 drive){
 }
 */
 
-void FATXSetBRFR(u8 drive){
-	u8 buffer[512];
-	u32 counter;
+void FATXSetBRFR(unsigned char drive){
+	unsigned char buffer[512];
+	unsigned int counter;
 	
 	memset(buffer, 0, 512);
         for(counter = 1; counter < 1024; counter++){             //Set first 512KB of HDD to 0x00.
@@ -915,10 +917,11 @@ void FATXSetBRFR(u8 drive){
 	
 }
 
-int FATXCheckMBR(u8 driveId){
-    u8 *sourceTable = (u8 *)&BackupPartTbl;
-    u8 i;
-    u8 ba[512];
+bool FATXCheckMBR(unsigned char driveId)
+{
+    unsigned char *sourceTable = (unsigned char *)&BackupPartTbl;
+    unsigned char i;
+    unsigned char ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x00, 0, 512)) {
         printk("\n\n\n           FATXCheckMBR : Unable to read MBR sector\n");
         //debugSPIPrint("Unable to read MBR sector (0).");
@@ -942,8 +945,9 @@ int FATXCheckMBR(u8 driveId){
     return 1;
 }
 
-int FATXCheckFATXMagic(u8 driveId){
-    u8 ba[512];
+int FATXCheckFATXMagic(unsigned char driveId)
+{
+    unsigned char ba[512];
     if(BootIdeReadSector(driveId, &ba[0], 0x03, 0, 512)) {
         printk("\n\n\n           FATXCheckFATXMagic : Unable to read MBR sector\n");
         //debugSPIPrint("Unable to read FATX sector (3).");
@@ -957,8 +961,8 @@ int FATXCheckFATXMagic(u8 driveId){
 }
 
 
-void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table){
-    u8 *sourceTable = (u8 *)p_table;
+void FATXSetMBR(unsigned char driveId, XboxPartitionTable *p_table){
+    unsigned char *sourceTable = (unsigned char *)p_table;
     if(BootIdeWriteSector(driveId,sourceTable, 0, DEFAULT_WRITE_RETRY)){    //Write on sector 0
         printk("\n           FATXSetMBR: Write error, sector %u   ", 0);
         cromwellWarning();
@@ -967,8 +971,8 @@ void FATXSetMBR(u8 driveId, XboxPartitionTable *p_table){
     tsaHarddiskInfo[driveId].m_fHasMbr = 1;
 }
 
-void FATXSetInitMBR(u8 driveId){
-    if(BootIdeWriteSector(driveId,(u8 *)&BackupPartTbl, 0, DEFAULT_WRITE_RETRY)){   //Write on sector 0
+void FATXSetInitMBR(unsigned char driveId){
+    if(BootIdeWriteSector(driveId,(unsigned char *)&BackupPartTbl, 0, DEFAULT_WRITE_RETRY)){   //Write on sector 0
         printk("\n           FATXSetInitMBR: Write error, sector %u   ", 0);
         cromwellWarning();
         return;
@@ -977,13 +981,13 @@ void FATXSetInitMBR(u8 driveId){
 }
 
 void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
-    u8 buffer[512], headerBuf[0x1000], driveLetter[3];
+    unsigned char buffer[512], headerBuf[0x1000], driveLetter[3];
 /********** Old way, sector by sector. Leave for legacy. **********
-    u8 chainmapBuf[512];
+    unsigned char chainmapBuf[512];
 **********************************************************************/
-    u8 *ptrBuffer;
-    u32 counter;
-    u32 whichpartition;
+    unsigned char *ptrBuffer;
+    unsigned int counter;
+    unsigned int whichpartition;
     PARTITIONHEADER *header;
 
     if(tsaHarddiskInfo[nIndexDrive].m_enumDriveType != EDT_XBOXFS)
@@ -992,7 +996,7 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
     header = (PARTITIONHEADER *)headerBuf;
     header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
-    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->volumeID = 'X';					    //Goes with the HDD.
     header->clusterSize = 0x20;                 //16KB cluster, so 32 clusters per sector.
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
@@ -1008,7 +1012,7 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
     chainmapBuf[2]=0xff;
     chainmapBuf[3]=0xff;
 **********************************************************************/
-    ptrBuffer = (u8 *)malloc(192 * 512);    //chainmap buffer total length.
+    ptrBuffer = (unsigned char *)malloc(192 * 512);    //chainmap buffer total length.
     memset(ptrBuffer,0x0,512 * 192);
     ptrBuffer[0]=0xf8;                        //First 2 clusters are 0xFFF8 in word mode (FATX16).
     ptrBuffer[1]=0xff;
@@ -1093,14 +1097,14 @@ void FATXFormatCacheDrives(int nIndexDrive, bool verbose){
 }
 
 void FATXFormatDriveC(int nIndexDrive, bool verbose){
-    u8 buffer[512], headerBuf[0x1000];
+    unsigned char buffer[512], headerBuf[0x1000];
 /********** Old way, sector by sector. Leave for legacy. **********
-    u8 chainmapBuf[512];
+    unsigned char chainmapBuf[512];
 **********************************************************************/
-    u8 *ptrBuffer;
+    unsigned char *ptrBuffer;
 
 
-    u32 counter;
+    unsigned int counter;
     PARTITIONHEADER *header;
 
     if(tsaHarddiskInfo[nIndexDrive].m_enumDriveType != EDT_XBOXFS)
@@ -1109,7 +1113,7 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
     header = (PARTITIONHEADER *)headerBuf;
     header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
-    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->volumeID = 'C';    					//Goes with the HDD.
     header->clusterSize = 0x20;                 //16KB cluster, so 32 clusters per sector.
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
@@ -1118,7 +1122,7 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
     //It's not necessary to fill unused area up to 0x1000 because we'll only write the first 512 bytes of headerBuf
     //onto the HDD. Let's do it for the exercise OK? A few wasted cycles isn't going to hurt anybody.
 
-    ptrBuffer = (u8 *)malloc(128 * 512);    //chainmap buffer total length.
+    ptrBuffer = (unsigned char *)malloc(128 * 512);    //chainmap buffer total length.
     memset(ptrBuffer,0x0,512 * 128);
 /********** Old way, sector by sector. Leave for legacy. **********
     memset(chainmapBuf,0x0,512);                //First sector of the Cluster chain map area.
@@ -1208,12 +1212,12 @@ void FATXFormatDriveC(int nIndexDrive, bool verbose){
 }
 
 void FATXFormatDriveE(int nIndexDrive, bool verbose){
-    u8 buffer[512], headerBuf[0x1000], i;
+    unsigned char buffer[512], headerBuf[0x1000], i;
 /********** Old way, sector by sector. Leave for legacy. **********
-    u8 chainmapBuf[512];
+    unsigned char chainmapBuf[512];
 **********************************************************************/
-    u8 *ptrBuffer;
-    u32 counter;
+    unsigned char *ptrBuffer;
+    unsigned int counter;
     PARTITIONHEADER *header;
 
     if(tsaHarddiskInfo[nIndexDrive].m_enumDriveType != EDT_XBOXFS)
@@ -1222,7 +1226,7 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
     header = (PARTITIONHEADER *)headerBuf;
     header->magic = FATX_PARTITION_MAGIC;       //Whooo, magic!
-    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->volumeID = 'E';					    //Goes with the HDD.
     header->clusterSize = 0x20;                 //16KB cluster, so 32 clusters per sector.
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
@@ -1236,7 +1240,7 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     memset(chainmapBuf,0xff,4*7);               //We'll use 5 clusters for base folders.
     chainmapBuf[0]=0xf8;                        //First cluster is 0xFFFFFFF8 in 4 byte mode cluster.
 **********************************************************************/
-    ptrBuffer = (u8 *)malloc(256 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
+    ptrBuffer = (unsigned char *)malloc(256 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
     memset(ptrBuffer,0x0,512 * 256);
 
     memset(buffer,0xff,512);                    //Killer buffer.
@@ -1307,7 +1311,7 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
     // Root Dir (from 512*2456 = 0x133000 to 0x1d000 = 512*232)
     //memset(buffer,0xff,512);
     //Format 6 first clusters
-    ptrBuffer = (u8 *)malloc(224 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
+    ptrBuffer = (unsigned char *)malloc(224 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
     memset(ptrBuffer,0x00,512 * 224);
 /********** Old way, sector by sector. Leave for legacy. **********
     for (counter=(SECTOR_STORE+2456);counter<(SECTOR_STORE+2456+(32*6)); counter++) {
@@ -1361,16 +1365,16 @@ void FATXFormatDriveE(int nIndexDrive, bool verbose){
         cromwellSuccess();
 }
 
-void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize){
-    u8 buffer[512], headerBuf[0x1000];
-    u32 i;
+void FATXFormatExtendedDrive(unsigned char driveId, unsigned char partition, unsigned int lbaStart, unsigned int lbaSize){
+    unsigned char buffer[512], headerBuf[0x1000];
+    unsigned int i;
 /********** Old way, sector by sector. Leave for legacy. **********
-    u8 chainmapBuf[512];
+    unsigned char chainmapBuf[512];
 **********************************************************************/
-    u8 *ptrBuffer;
+    unsigned char *ptrBuffer;
     unsigned long counter, chainmapSize = 0;
     PARTITIONHEADER *header;
-    u8 clusterSize = 32;                //16KB cluster by default(32 sectors * 512 bytes)
+    unsigned char clusterSize = 32;                //16KB cluster by default(32 sectors * 512 bytes)
 
 
     XboxPartitionTable * mbr = (XboxPartitionTable *)buffer;
@@ -1424,7 +1428,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
     memset(headerBuf,0xff,0x1000);              //First sector(and only one used) of the Partition header area.
     header = (PARTITIONHEADER *)headerBuf;
     header->magic = FATX_PARTITION_MAGIC;       //Whoop, magic!
-    header->volumeID = IoInputDword(0x8008);    //Goes with the HDD.
+    header->volumeID = partition <= 5 ? 'F' : 'G';    //Goes with the HDD.
     header->clusterSize = clusterSize;   //16KB = 32 sector/cluster. 32KB = 64 sector/cluster. 64KB = 128 sector/cluster.
     header->nbFAT = 1;                          //Always 1.
     header->unknown = 0;                        //Always 0.
@@ -1446,7 +1450,7 @@ void FATXFormatExtendedDrive(u8 driveId, u8 partition, u32 lbaStart, u32 lbaSize
         chainmapBuf[8]=0xff;
     }
 **********************************************************************/
-    ptrBuffer = (u8 *)malloc(256 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
+    ptrBuffer = (unsigned char *)malloc(256 * 512);    //chainmap buffer. Length is of a single MULTIPLE WRITE ATA command.
     memset(ptrBuffer,0x0,512 * 256);
 
     if((chainmapSize % 256) == 0){          //If we'll only issue WRITE MULTIPLE ATA commands with full 256 sectors writes.
@@ -1548,7 +1552,7 @@ if(partition != 6){
         }
     }
 **********************************************************************/
-    ptrBuffer = (u8 *)malloc(clusterSize*2 * 512);    //2 first clusters.
+    ptrBuffer = (unsigned char *)malloc(clusterSize*2 * 512);    //2 first clusters.
     memset(ptrBuffer,0xff,512 * clusterSize*2);
 
     if(BootIdeWriteMultiple(driveId, ptrBuffer, lbaStart+8+chainmapSize, clusterSize*2, DEFAULT_WRITE_RETRY)){   //Format 6 first clusters.
@@ -1572,57 +1576,3 @@ int compare(const void *p1, const void *p2) {
     return strcmpbynum(*ps1, *ps2);
 }
 */
-
-/*Function taken from : http://www.acnenomor.com/2430019p1/natural-sort-in-c-array-of-strings-containing-numbers-and-letters */
-/* like strcmp but compare sequences of digits numerically */
-/* Return +int if s1 should come after s2. -int if s2 should come after s1.*/
-/* Return 0 if equals, shouldn't happen since you can't have 2 files with the same name!*/
-int strcmpbynum(const char *s1, const char *s2) 
-{
-    const char to_caps = 32;
-    const char symbol_adjust = 49;
-    int temps1, temps2;
-    char *lim1, *lim2;
-    unsigned long n1;
-    unsigned long n2;
-    for (;;) {
-        if (*s2 == '\0')                //End of string for s2
-            return *s1 != '\0';         //return 1 if s1 is longer.
-        else if (*s1 == '\0')           //It's not the end of s2 but it is for s1
-            return -1;                   //They are different and s1 is shorter.
-        else if (!((*s1 >= '0' && *s1 <= '9') && (*s2 >= '0' && *s2 <= '9'))){  //If one of the 2 characters is not a ascii number
-            if(*s1 >= 'a' && *s1 <= 'z')
-		temps1 = *s1 - to_caps;
-            else if(*s1 >= '[' && *s1 <= '`')
-                temps1 = *s1 - symbol_adjust;
-            else
-                temps1 = *s1;
-                
-            if(*s2 >= 'a' && *s2 <= 'z')
-		temps2 = *s2 - to_caps;
-            else if(*s2 >= '[' && *s2 <= '`')
-                temps2 = *s2 - symbol_adjust;
-            else
-                temps2 = *s2;    
-                
-            if (temps1 != temps2)             //If both characters aren't the same
-                return temps1 - temps2;     //Return difference between s1 and s2, asci-wise
-            else
-                (++s1, ++s2);           //If they are equals, move on to the next set of numbers/characters
-        }                               //Go back to start of forever loop
-
-        else {                          //both characters are numbers
-            n1 = strtoul(s1, &lim1, 10);//Convert partial string to number
-            n2 = strtoul(s2, &lim2, 10);//Will return 0 if no numerical string can be converted.
-                                        //This is useful to skip letters during string comparison.
-            if (n1 > n2)                //if s1 contains a bigger value
-                return 1;
-            else if (n1 < n2)           //Opposite
-                return -1;
-            s1 = lim1;                  //Move pointers after converter number values.
-            s2 = lim2;
-        }                               //Go back to start of forever loop
-    }
-    return 0;
-}
-

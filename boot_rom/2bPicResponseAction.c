@@ -20,7 +20,7 @@
 // get a value from a given device address
 // errors will have b31 set, ie, will be negative, otherwise fetched byte in LSB of return
 
-int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite)
+int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char bDataToWrite)
 {
     int nRetriesToLive=400;
 
@@ -35,7 +35,7 @@ int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite)
         IoOutputByte(I2C_IO_BASE+2, 0x0a);
 
         {
-            u8 b=0x0;
+            unsigned char b=0x0;
             while( (b&0x36)==0 ) { b=IoInputByte(I2C_IO_BASE+0); }
 
             if(b&0x24) {
@@ -54,7 +54,7 @@ int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite)
 
 // transmit a word, no returned data from I2C device
 
-int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite)
+int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWrite)
 {
     int nRetriesToLive=400;
 
@@ -63,13 +63,13 @@ int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite)
     while(nRetriesToLive--) {
         IoOutputByte(I2C_IO_BASE+4, (bPicAddressI2cFormat<<1)|0);
 
-        IoOutputByte(I2C_IO_BASE+8, (u8)(wDataToWrite>>8));
-        IoOutputByte(I2C_IO_BASE+6, (u8)wDataToWrite);
+        IoOutputByte(I2C_IO_BASE+8, (unsigned char)(wDataToWrite>>8));
+        IoOutputByte(I2C_IO_BASE+6, (unsigned char)wDataToWrite);
         IoOutputWord(I2C_IO_BASE+0, 0xffff);  // clear down all preexisting errors
         IoOutputByte(I2C_IO_BASE+2, 0x1a);
 
         {
-            u8 b=0x0;
+            unsigned char b=0x0;
             while( (b&0x36)==0 ) { b=IoInputByte(I2C_IO_BASE+0); }
 
             if(b&0x24) {
@@ -87,12 +87,12 @@ int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite)
 
 // ----------------------------  PIC challenge/response -----------------------------------------------------------
 //
-// given four bytes, returns a u16
+// given four bytes, returns a unsigned short
 // LSB of return is the 'first' byte, MSB is the 'second' response byte
 
-u16 BootPicManipulation(u8 bC, u8 bD, u8 bE,    u8 bF) {
+unsigned short BootPicManipulation(unsigned char bC, unsigned char bD, unsigned char bE,    unsigned char bF) {
     int n=4;
-    u8
+    unsigned char
         b1 = 0x33,
         b2 = 0xed,
         b3 = ((bC<<2) ^ (bD +0x39) ^ (bE >>2) ^ (bF +0x63)),
@@ -104,7 +104,7 @@ u16 BootPicManipulation(u8 bC, u8 bD, u8 bE,    u8 bF) {
         b2 += b1 ^ b4;
     }
 
-    return (u16) ((((u16)b2)<<8) | b1);
+    return (unsigned short) ((((unsigned short)b2)<<8) | b1);
 }
 
 // actual business of getting I2C data from PIC and reissuing munged version
@@ -112,7 +112,7 @@ u16 BootPicManipulation(u8 bC, u8 bD, u8 bE,    u8 bF) {
 
 int BootPerformPicChallengeResponseAction()
 {
-    u8 bC, bD, bE, bF;
+    unsigned char bC, bD, bE, bF;
 
     bC=I2CTransmitByteGetReturn( 0x10, 0x1c );
     bD=I2CTransmitByteGetReturn( 0x10, 0x1d );
@@ -121,7 +121,7 @@ int BootPerformPicChallengeResponseAction()
     if ((bC==0) && (bD==0) && (bE==0) && (bF==0)) I2CTransmitWord(0x10, 0x0240);
 
     {
-        u16 w=BootPicManipulation(bC, bD, bE, bF);
+        unsigned short w=BootPicManipulation(bC, bD, bE, bF);
 
         I2CTransmitWord( 0x10, 0x2000 | (w&0xff));
         I2CTransmitWord( 0x10, 0x2100 | (w>>8) );
@@ -132,7 +132,7 @@ int BootPerformPicChallengeResponseAction()
     return ERR_SUCCESS;
 }
 #if 0
-extern int I2cSetFrontpanelLed(u8 b)
+extern int I2cSetFrontpanelLed(unsigned char b)
 {
     I2CTransmitWord( 0x10, 0x800 | b);  // sequencing thanks to Jarin the Penguin!
     I2CTransmitWord( 0x10, 0x701);

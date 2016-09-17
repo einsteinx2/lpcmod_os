@@ -1,9 +1,12 @@
 
-#include "boot.h"
+#include "BootHddKey.h"
+#include "lib/cromwell/cromString.h"
+#include "cromwell_types.h"
 #include "sha1.h"
 #include "rc4.h"
+#include "string.h"
+#include "BootEEPROM.h"
 #include <stdarg.h>
-//#include <string.h>
 
 void HMAC_hdd_calculation(int version,unsigned char *HMAC_result, ... );
 
@@ -158,13 +161,13 @@ void HMAC_hdd_calculation(int version,unsigned char *HMAC_result, ... )
 }
 
 
-u32 BootHddKeyGenerateEepromKeyData(
-        u8 *pbEeprom_data,
-        u8 *pbResult
+unsigned int BootHddKeyGenerateEepromKeyData(
+        unsigned char *pbEeprom_data,
+        unsigned char *pbResult
         
 ) {
 
-   u8 baEepromDataLocalCopy[0x30];
+   unsigned char baEepromDataLocalCopy[0x30];
    int version = 0;
         
     version = decryptEEPROMData(pbEeprom_data, baEepromDataLocalCopy);

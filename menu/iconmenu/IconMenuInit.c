@@ -10,11 +10,15 @@
 /* This is where you should customise the menu, by adding your own icons.
  * The code in IconMenu.c should normally be left alone.
  */
-#include "include/config.h"
+
+#include "MenuInits.h"
+#include "config.h"
 #include "BootIde.h"
 #include "IconMenu.h"
 #include "MenuActions.h"
 #include "lpcmod_v1.h"
+#include <stddef.h>
+#include "lib/LPCMod/BootLPCMod.h"
 /*
 void InitFatXIcons(void);
 void InitNativeIcons(void);
@@ -67,8 +71,8 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
         iconPtr->szCaption = "Boot 512KB bank";
         iconPtr->bankID = BNK512;
         iconPtr->functionPtr = assertBankScriptExecBankBoot;
-        iconPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)iconPtr->functionDataPtr = BNK512;
+        iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)iconPtr->functionDataPtr = BNK512;
             iconPtr->dataPtrAlloc = true;
         AddIcon(iconPtr);
 
@@ -77,8 +81,8 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
         iconPtr->szCaption = "Boot 256KB bank";
         iconPtr->bankID = BNK256;
         iconPtr->functionPtr = assertBankScriptExecBankBoot;
-        iconPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)iconPtr->functionDataPtr = BNK256;
+        iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)iconPtr->functionDataPtr = BNK256;
             iconPtr->dataPtrAlloc = true;
         AddIcon(iconPtr);
     }
@@ -90,8 +94,8 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
                 iconPtr->szCaption = "Boot OnBoard Bank0";
                 iconPtr->bankID = BNKTSOPSPLIT0;
                 iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
-                iconPtr->functionDataPtr = malloc(sizeof(u8));
-                        *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT0;
+                iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
+                        *(unsigned char*)iconPtr->functionDataPtr = BNKTSOPSPLIT0;
                         iconPtr->dataPtrAlloc = true;
                 AddIcon(iconPtr);
 
@@ -100,8 +104,8 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
                 iconPtr->szCaption = "Boot OnBoard Bank1";
                 iconPtr->bankID = BNKTSOPSPLIT1;
                 iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
-                iconPtr->functionDataPtr = malloc(sizeof(u8));
-                        *(u8*)iconPtr->functionDataPtr = BNKTSOPSPLIT1;
+                iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
+                        *(unsigned char*)iconPtr->functionDataPtr = BNKTSOPSPLIT1;
                         iconPtr->dataPtrAlloc = true;
                 AddIcon(iconPtr);
         }
@@ -111,8 +115,8 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
             iconPtr->szCaption = "Boot OnBoard BIOS";
             iconPtr->bankID = BNKFULLTSOP;
             iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
-            iconPtr->functionDataPtr = malloc(sizeof(u8));
-                    *(u8*)iconPtr->functionDataPtr = BNKFULLTSOP;
+            iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
+                    *(unsigned char*)iconPtr->functionDataPtr = BNKFULLTSOP;
                     iconPtr->dataPtrAlloc = true;
             AddIcon(iconPtr);
         }
@@ -146,7 +150,7 @@ if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
 /*
 void InitFatXIcons(void) {
     ICON *iconPtr=NULL;
-    u8 ba[512];
+    unsigned char ba[512];
     int driveId=0;
     
     if (tsaHarddiskInfo[driveId].m_fDriveExists && !tsaHarddiskInfo[driveId].m_fAtapi) {
@@ -194,12 +198,12 @@ void InitNetBootIcons(void) {
 
 void InitNativeIcons(void) {
     ICON *iconPtr=NULL;
-    u8 ba[512];
+    unsigned char ba[512];
     int driveId;    
 
     for (driveId=0; driveId<2; driveId++) {
         if (tsaHarddiskInfo[driveId].m_fDriveExists && !tsaHarddiskInfo[driveId].m_fAtapi) {
-            volatile u8 *pb;
+            volatile unsigned char *pb;
             int n=0, nPos=0;
             
             memset(ba,0x00,512);

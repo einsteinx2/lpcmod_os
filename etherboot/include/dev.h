@@ -1,7 +1,6 @@
 #ifndef DEV_H
 #define DEV_H
 
-#include "isa.h"
 #include "pci.h"
 
 /* Need to check the packing of this struct if Etherboot is ported */
@@ -61,10 +60,6 @@ struct dev
 
 
 #define NIC_DRIVER    0
-#define DISK_DRIVER   1
-#define FLOPPY_DRIVER 2
-
-#define BRIDGE_DRIVER 1000
 
 #define PROBE_FIRST  (-1)
 #define PROBE_NEXT   0
@@ -79,48 +74,5 @@ struct dev
 
 extern int probe(struct dev *dev);
 extern void disable(struct dev *dev);
-
-/* Boot option values
- * option & BOOT_TYPE_MASK should equal a driver for probing
- */
-
-#define BOOT_NIC      0x0	/* Boot from a nic */
-#define BOOT_DISK     0x1	/* Boot from disk */
-#define BOOT_FLOPPY   0x2	/* Boot from a floppy */
-
-#define BOOT_NOTHING  0x3	/* Last valid boot choice */
-
-/* Do magic failsafe boot processing */
-#define BOOT_FAILSAFE 0x8
-
-#define BOOT_BITS       4
-#define BOOT_MASK      ((1 << (BOOT_BITS)) - 1)
-#define BOOT_TYPE_MASK ((1 << (BOOT_BITS - 1)) - 1)
-
-#define MAX_BOOT_ENTRIES 3
-
-#define	BOOT_ALL_VALUE	(1<<BOOT_FIRST|1<<BOOT_SECOND|1<<BOOT_THIRD)
-
-/* These could be customised for different languages perhaps */
-#if	BOOT_ALL_VALUE&(1<<BOOT_DISK)
-#define	BOOT_DISK_PROMPT	"(D)isk "
-#else
-#define	BOOT_DISK_PROMPT
-#endif
-
-#if	BOOT_ALL_VALUE&(1<<BOOT_FLOPPY)
-#define	BOOT_FLOPPY_PROMPT	"(F)loppy "
-#else
-#define	BOOT_FLOPPY_PROMPT
-#endif
-
-#define	ASK_PROMPT	\
-	"Boot from (N)etwork " BOOT_DISK_PROMPT BOOT_FLOPPY_PROMPT "or (Q)uit? "
-
-#define	ANS_NETWORK	'N'
-#define ANS_DISK	'D'
-#define ANS_FLOPPY	'F'
-#define	ANS_QUIT	'Q'
-#define ANS_DEFAULT	'\n'
 
 #endif /* DEV_H */

@@ -20,15 +20,6 @@
 #include <linux/sched.h>    /* for current && schedule_timeout */
 
 
-static __inline__ void wait_ms(unsigned int ms)
-{
-    if(!in_interrupt()) {
-        current->state = TASK_UNINTERRUPTIBLE;
-        schedule_timeout(1 + ms * HZ / 1000);
-    }
-    else
-        mdelay(ms);
-}
 #endif
 struct usb_device;
 
@@ -278,7 +269,7 @@ extern void usb_put_dev(struct usb_device *dev);
 /* mostly for devices emulating SCSI over USB */
 extern int usb_reset_device(struct usb_device *dev);
 
-extern struct usb_device *usb_find_device(u16 vendor_id, u16 product_id);
+extern struct usb_device *usb_find_device(unsigned short vendor_id, unsigned short product_id);
 
 /* for drivers using iso endpoints */
 extern int usb_get_current_frame_number (struct usb_device *usb_dev);

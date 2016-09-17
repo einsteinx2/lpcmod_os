@@ -19,9 +19,9 @@ void editStaticGateway(void * itemStr);
 void editStaticDNS1(void * itemStr);
 void editStaticDNS2(void * itemStr);
 
-bool editIPfield(u8 * addr);
+bool editIPfield(unsigned char * addr);
 
-u16 myAtoi(char *str);
-bool assertCorrectIPString(u8 *out, char *in);
+unsigned short myAtoi(char *str);
+bool assertCorrectIPString(unsigned char *out, char *in);
 
 #endif

@@ -12,10 +12,12 @@
 
 #include "../usb_wrapper.h"
 #include "config.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 // history for the Rising - falling events
 unsigned char xpad_button_history[7];
-u8 xpad_state_history;
+unsigned char xpad_state_history;
 
 /* Stores time and XPAD state */
 struct xpad_data XPAD_current[4];

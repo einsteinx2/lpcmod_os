@@ -7,11 +7,13 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/boot.h"
-#include "TextMenu.h"
+#include "MenuInits.h"
+#include "boot.h"
 #include "NetworkMenuActions.h"
+#include "string.h"
+#include "xblast/settings/xblastSettingsDefs.h"
 
-TEXTMENU * NetworkMenuInit (void) {
+TEXTMENU * NetworkMenuInit(void) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
 

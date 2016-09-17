@@ -14,20 +14,25 @@
 #include "boot.h"
 #include "memory_layout.h"
 #include "BootFATX.h"
+#include "BootFlash.h"
 #include "Gentoox.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "lib/cromwell/cromString.h"
+#include "LEDMenuActions.h"
 
-extern void cromwellError (void);
-extern void dots (void);
+extern int etherboot(unsigned char flashType);
+extern int BootLoadFlashCD(int cdromId);
 
 void FlashBiosFromHDD (void *fname) {
 #ifdef FLASH
     int res;
-    u8 * fileBuf;
+    unsigned char * fileBuf;
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
 
     partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    fileBuf = (u8 *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
+    fileBuf = (unsigned char *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
     memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
     
     //res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
@@ -60,17 +65,17 @@ void FlashBiosFromCD (void *cdromId) {
 void enableNetflash (void *flashType) {
 #ifdef FLASH
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    printk ("\n\n\n\n\n\n\n");
+    printk ("\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
 
-    etherboot(*(u8 *)flashType);
+    etherboot(*(unsigned char *)flashType);
 #endif
 }
 
 void enableWebupdate (void *whatever) {
 #ifdef FLASH
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    printk ("\n\n\n\n\n\n");
+    printk ("\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
 
     //initialiseNetwork ();
@@ -79,7 +84,7 @@ void enableWebupdate (void *whatever) {
 }
 
 //Use this function only for in OS operations.
-void switchOSBank (u8 bank) {
+void switchOSBank(unsigned char bank) {
     currentFlashBank = bank;
     xF70ELPCRegister = bank;
     WriteToIO (XBLAST_CONTROL, bank);    // switch to proper bank
@@ -87,15 +92,17 @@ void switchOSBank (u8 bank) {
 }
 
 //Use this function only when you're about to boot into another bank.
-void switchBootBank (u8 bank) {
-    u8 resultBank = bank;
+void switchBootBank(unsigned char bank)
+{
+    unsigned char resultBank = bank;
     //currentFlashBank = NOBNKID;         //We won't be coming back from this!
     if(bank > BOOTFROMTSOP)       //We're asked to boot from XBlast's flash
         resultBank |= A19controlModBoot;  //Apply custom A19 control (if need be).
     WriteToIO (XBLAST_CONTROL, resultBank); // switch to proper bank from booting register
 }
 
-void FlashFooter (void) {
+void FlashFooter(void)
+{
     UIFooter();
     initialSetLED (LPCmodSettings.OSsettings.LEDColor);
 }

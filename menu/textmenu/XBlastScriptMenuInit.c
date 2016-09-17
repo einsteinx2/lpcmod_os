@@ -7,13 +7,16 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "MenuInits.h"
 #include "XBlastScriptMenuActions.h"
 #include "boot.h"
 #include "BootIde.h"
-#include "TextMenu.h"
 #include "memory_layout.h"
 #include "BootFATX.h"
 #include "lpcmod_v1.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "BootFATX.h"
 
 TEXTMENU* RunScriptMenuInit(void);
 TEXTMENU* SaveScriptMenuInit(void);

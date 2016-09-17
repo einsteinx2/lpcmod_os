@@ -4,13 +4,16 @@
  *    Copyright (C) 2000 Universal Talkware Inc.
  */
 
-int sprintf(char * buf, const char *fmt, ...);
-//char * strncpy(char * dest,const char *src,int count);
-
 #include "boot.h"
-#include "shared.h"
+//#include "shared.h"
 #include "BootEEPROM.h"
+#include "BootFATX.h"
 #include "BootIde.h"
+#include "cromwell.h"
+#include "string.h"
+#include "video.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "lib/time/timeManagement.h"
 
 #undef sprintf
 
@@ -103,7 +106,7 @@ const char * const szaSenseKeys[] = {
 
 int BootIdeWaitNotBusy(unsigned uIoBase)
 {
-    u8 b = 0x80;                                //Start being busy
+    unsigned char b = 0x80;                                //Start being busy
     //debugSPIPrint("Waiting for drive to return to not busy state.");
     while ((b & 0x80) && !(b & 0x08)) {         //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
         b=IoInputByte(IDE_REG_STATUS(uIoBase));
@@ -119,7 +122,7 @@ int BootIdeWaitNotBusy(unsigned uIoBase)
 int BootIdeWaitDataReady(unsigned uIoBase)
 {
     int i = 0x800000;
-//    wait_smalldelay();
+//    wait_us(1);
 
     //Assuming that the while assertion, i decrementing and if condition assertion all
     //take only a single cycle per operation(very unlikely), it would take around 34ms
@@ -181,7 +184,7 @@ int BootIdeIssueAtaCommand(
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), params->m_bDrivehead);		//DEVICE REG
 
     IoOutputByte(IDE_REG_COMMAND(uIoBase), command);				//COMMAND REG
-//    wait_smalldelay();
+//    wait_us(1);
 
     n=BootIdeWaitNotBusy(uIoBase);
     if(n){
@@ -197,7 +200,7 @@ int BootIdeIssueAtaCommand(
 
 int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 {
-    u16 * ptr = (u16 *) buf;
+    unsigned short * ptr = (unsigned short *) buf;
     //debugSPIPrint("Reading %u bytes.", size);
     if (BootIdeWaitDataReady(uIoBase)) {
         debugSPIPrint("Data not ready..");
@@ -231,7 +234,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 
 // issues a block of data ATA-style
 
-int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
+int BootIdeWriteData(unsigned uIoBase, void * buf, unsigned int size)
 {
     register unsigned short * ptr = (unsigned short *) buf;
     int n;
@@ -241,7 +244,7 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
 //        printk("BootIdeWriteData timeout or error from BootIdeWaitDataReady ret %d\n", n);
 //        return 1;
 //    }
-    //wait_smalldelay();
+    //wait_us(1);
 
     while (size > 1) {
 
@@ -258,10 +261,10 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
         ptr += 2;
     }
 */
-//    wait_smalldelay();
+//    wait_us(1);
     
     n=BootIdeWaitNotBusy(uIoBase);
-    //wait_smalldelay();
+    //wait_us(1);
     if(n) {
         //printk("BootIdeWriteData timeout or error from BootIdeWaitNotBusy ret %d\n", n);
         debugSPIPrint("Waiting for good status reg returned error : %d", n);
@@ -281,8 +284,8 @@ int BootIdeWriteData(unsigned uIoBase, void * buf, u32 size)
 
 int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 {
-    u16 * ptr = (unsigned short *) buf;
-    u16 w;
+    unsigned short * ptr = (unsigned short *) buf;
+    unsigned short w;
     int n;
 
     n=BootIdeWaitDataReady(uIoBase);
@@ -290,7 +293,7 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 //        printk("BootIdeWriteAtapiData error before data ready ret %d\n", n);
 //        return 1;
 //    }
-    wait_smalldelay();
+    wait_us(1);
 
     w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
     w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;
@@ -313,16 +316,16 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 //        printk("BootIdeWriteAtapiData Error after writing data err=0x%X\n", n);
         return 1;
     }
-    wait_smalldelay();
+    wait_us(1);
     n=BootIdeWaitNotBusy(uIoBase);
     if(n) {
 //        printk("BootIdeWriteAtapiData timeout or error before not busy ret %d\n", n);
         debugSPIPrint("Waiting for good status reg returned error : %d", n);
         return n;
     }
-    wait_smalldelay();
+    wait_us(1);
 
-       if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) return 2;
+   if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) return 2;
     
     return 0;
 }
@@ -330,7 +333,7 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 
 /* -------------------------------------------------------------------------------- */
 
-int BootIdeIssueAtapiPacketCommandAndPacket(int nDriveIndex, u8 *pAtapiCommandPacket12Bytes)
+int BootIdeIssueAtapiPacketCommandAndPacket(int nDriveIndex, unsigned char *pAtapiCommandPacket12Bytes)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned     uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
@@ -389,9 +392,9 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned short* drive_info;
-    u8 baBuffer[512];
+    unsigned char baBuffer[512];
     int n = 0;
-    u8 cl, ch;
+    unsigned char cl, ch;
      
     tsaHarddiskInfo[nIndexDrive].m_fwPortBase = uIoBase;
     tsaHarddiskInfo[nIndexDrive].m_wCountHeads = 0u;
@@ -494,13 +497,13 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     /* End 48-bit LBA */   
     
     { 
-        u16 * pw=(u16 *)&(drive_info[10]);
+        unsigned short * pw=(unsigned short *)&(drive_info[10]);
         tsaHarddiskInfo[nIndexDrive].s_length =
-            copy_swap_trim(tsaHarddiskInfo[nIndexDrive].m_szSerial,(u8*)pw,20);
-        pw=(u16 *)&(drive_info[27]);
+            copy_swap_trim(tsaHarddiskInfo[nIndexDrive].m_szSerial,(unsigned char*)pw,20);
+        pw=(unsigned short *)&(drive_info[27]);
         tsaHarddiskInfo[nIndexDrive].m_length =
-            copy_swap_trim(tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber,(u8 *)pw,40);
-        copy_swap_trim(tsaHarddiskInfo[nIndexDrive].m_szFirmware,(u8 *)&(drive_info[23]),8);
+            copy_swap_trim(tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber,(unsigned char *)pw,40);
+        copy_swap_trim(tsaHarddiskInfo[nIndexDrive].m_szFirmware,(unsigned char *)&(drive_info[23]),8);
 
     }
 
@@ -530,7 +533,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         {
             debugSPIPrint("Reset ATAPI device specific requirement from cold boot.");
               // this is the only way to clear the ATAPI ''I have been reset'' error indication
-            u8 ba[128];
+            unsigned char ba[128];
             ba[2]=0x06;
             while (ba[2]==0x06) 
             {  
@@ -859,10 +862,10 @@ int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, un
 
 int CalculateDrivePassword(int driveId, unsigned char *key, unsigned char *eepromPtr) {
 
-    u8 baMagic[0x200], baKeyFromEEPROM[0x10], baEeprom[0x30];
+    unsigned char baMagic[0x200], baKeyFromEEPROM[0x10], baEeprom[0x30];
     int nVersionHashing=0;
     //Ick - forward decl. Should remove this. 
-    u32 BootHddKeyGenerateEepromKeyData(u8 *eeprom_data,u8 *HDKey);
+    unsigned int BootHddKeyGenerateEepromKeyData(unsigned char *eeprom_data,unsigned char *HDKey);
     
     if(eepromPtr == NULL || key == NULL)
         return 1;
@@ -1014,10 +1017,10 @@ int BootIdeInit(void)
         debugSPIPrint("Reading IDE cable information through Master drive");
         if(!BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) 
         {
-            u16 waBuffer[256];
+            unsigned short waBuffer[256];
             BootIdeWaitDataReady(uIoBase);
             debugSPIPrint("Read data back from Master drive");
-            if(!BootIdeReadData(uIoBase, (u8 *)&waBuffer[0], IDE_SECTOR_SIZE)) 
+            if(!BootIdeReadData(uIoBase, (unsigned char *)&waBuffer[0], IDE_SECTOR_SIZE)) 
             {
 //                printk("%04X ", waBuffer[80]);
                 if( ((waBuffer[93]&0xc000)!=0) && ((waBuffer[93]&0x8000)==0) && ((waBuffer[93]&0xe000)!=0x6000))     
@@ -1063,11 +1066,11 @@ int BootIdeInit(void)
 //
 //  returns the ATAPI extra error info block
 /*
-int BootIdeAtapiModeSense(int nDriveIndex, u8 bCodePage, u8 * pba, int nLengthMaxReturn) 
+int BootIdeAtapiModeSense(int nDriveIndex, unsigned char bCodePage, unsigned char * pba, int nLengthMaxReturn) 
 {
     unsigned uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
 
-    u8 ba[2048];
+    unsigned char ba[2048];
     int nReturn;
 
     if(!tsaHarddiskInfo[nDriveIndex].m_fDriveExists) return 4;
@@ -1076,12 +1079,12 @@ int BootIdeAtapiModeSense(int nDriveIndex, u8 bCodePage, u8 * pba, int nLengthMa
     //memset(&ba[0], 0, 12);
     ba[0]=0x5a;
     ba[2]=bCodePage;
-    ba[7]=(u8)(sizeof(ba)>>8); 
-    ba[8]=(u8)sizeof(ba);
+    ba[7]=(unsigned char)(sizeof(ba)>>8); 
+    ba[8]=(unsigned char)sizeof(ba);
 
     if(BootIdeIssueAtapiPacketCommandAndPacket(nDriveIndex, ba)) 
     {
-//            u8 bStatus=IoInputByte(IDE_REG_STATUS(uIoBase)), bError=IoInputByte(IDE_REG_ERROR(uIoBase));
+//            unsigned char bStatus=IoInputByte(IDE_REG_STATUS(uIoBase)), bError=IoInputByte(IDE_REG_ERROR(uIoBase));
 //            printk("  Drive %d: BootIdeAtapiAdditionalSenseCode FAILED, status=%02X, error=0x%02X, ASC unavailable\n", nDriveIndex, bStatus, bError);
             return 1;
     }
@@ -1101,11 +1104,11 @@ int BootIdeAtapiModeSense(int nDriveIndex, u8 bCodePage, u8 * pba, int nLengthMa
 //
 //  returns the ATAPI extra error info block
 
-int BootIdeAtapiAdditionalSenseCode(int nDriveIndex, u8 * pba, int nLengthMaxReturn) 
+int BootIdeAtapiAdditionalSenseCode(int nDriveIndex, unsigned char * pba, int nLengthMaxReturn) 
 {
     unsigned uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
 
-    u8 ba[2048];
+    unsigned char ba[2048];
     int nReturn;
 
     if(!tsaHarddiskInfo[nDriveIndex].m_fDriveExists) return 4;
@@ -1131,7 +1134,7 @@ int BootIdeAtapiAdditionalSenseCode(int nDriveIndex, u8 * pba, int nLengthMaxRet
 
 bool BootIdeAtapiReportFriendlyError(int nDriveIndex, char * szErrorReturn, int nMaxLengthError)
 {
-    u8 ba[2048];
+    unsigned char ba[2048];
     char szError[512];
     int nReturn;
     bool f=true;
@@ -1199,7 +1202,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
     if(tsaHarddiskInfo[nDriveIndex].m_fAtapi) 
     {
                    // CD - DVD ROM
-        u8 ba[12];
+        unsigned char ba[12];
         int nReturn;
 	
 	//debugSPIPrint("Drive is DVD drive.");
@@ -1389,7 +1392,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 //
 // !!!!! EXPERIMENTAL
 
-int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 retry)
+int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, unsigned char retry)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned uIoBase;
@@ -1498,12 +1501,12 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, u8 
 // "retry" is the number of time to try to write in the event the command would fail the first time.
 //              Value of 3 will write once and retry 2 times if previously failed.
 
-int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, u8 len, u8 retry)
+int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, unsigned short len, unsigned char retry)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
-    u16 remainingLen = (len == 0)? 256 : len;   //Set remainingLen to 256 if len == 0.
-    u16 nbBlocks = remainingLen / tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;    //Calculated number of blocks to transfer.
-    u8 partialBlock = len % tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;     //Size in sector of partial block.
+    unsigned short remainingLen = (len == 0)? 256 : (len > 256) ? 256 : len;   //Set remainingLen to 256 if len == 0.
+    unsigned short nbBlocks = remainingLen / tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;    //Calculated number of blocks to transfer.
+    unsigned char partialBlock = len % tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;     //Size in sector of partial block.
     unsigned uIoBase;
     unsigned int track, bufferPtr = 0;
     int status;
@@ -1573,13 +1576,13 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
     }
 
     while(remainingLen >= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer){
-        status = BootIdeWriteData(uIoBase, (u8 *)pbBuffer + bufferPtr, tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);   //Size in bytes here.
+        status = BootIdeWriteData(uIoBase, (unsigned char *)pbBuffer + bufferPtr, tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);   //Size in bytes here.
         bufferPtr += (tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);
         remainingLen -= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;
     }
 
     if(partialBlock && !status) //We have a last block to send and everything is good up to now
-        status = BootIdeWriteData(uIoBase, (u8 *)pbBuffer + bufferPtr, partialBlock * IDE_SECTOR_SIZE);   //Size in bytes here.
+        status = BootIdeWriteData(uIoBase, (unsigned char *)pbBuffer + bufferPtr, partialBlock * IDE_SECTOR_SIZE);   //Size in bytes here.
 
 /*
     //Send FLUSH CACHE (0xE7)
@@ -1617,16 +1620,16 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 // returns 0 if *pbaResult loaded with (512-byte/Hdd, 2048-byte/Cdrom) boot sector
 //  otherwise nonzero return indicates error type
 /*
-int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
+int BootIdeBootSectorHddOrElTorito(int nDriveIndex, unsigned char * pbaResult)
 {
-    static const u8 baCheck11hFormat[] = {
+    static const unsigned char baCheck11hFormat[] = {
             0x00,0x43,0x44,0x30,0x30,0x31,0x01,0x45,
             0x4C,0x20,0x54,0x4F,0x52,0x49,0x54,0x4F,
             0x20,0x53,0x50,0x45,0x43,0x49,0x46,0x49,
             0x43,0x41,0x54,0x49,0x4F,0x4E
     };
     int n;
-    u32 * pdw;
+    unsigned int * pdw;
 
     if(!tsaHarddiskInfo[nDriveIndex].m_fDriveExists) return 4;
 
@@ -1635,7 +1638,7 @@ int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
 /******   Numbnut's guide to El Torito CD Booting   ********
 
   Sector 11h of a bootable CDROM looks like this (11h is a magic number)
-  The u32 starting at +47h is the sector index of the 'boot catalog'
+  The unsigned int starting at +47h is the sector index of the 'boot catalog'
 
 00000000: 00 43 44 30 30 31 01 45 : 4C 20 54 4F 52 49 54 4F    .CD001.EL TORITO
 00000010: 20 53 50 45 43 49 46 49 : 43 41 54 49 4F 4E 00 00     SPECIFICATION..
@@ -1656,7 +1659,7 @@ int BootIdeBootSectorHddOrElTorito(int nDriveIndex, u8 * pbaResult)
             }
         }
 
-        pdw=(u32 *)&pbaResult[0x47];
+        pdw=(unsigned int *)&pbaResult[0x47];
 */
 /*
 At sector 13h (in this example only), the boot catalog:
@@ -1684,7 +1687,7 @@ At sector 13h (in this example only), the boot catalog:
             return 4;
         }
 
-        pdw=(u32 *)&pbaResult[0x28];
+        pdw=(unsigned int *)&pbaResult[0x28];
 */
 /*
 And so at sector 0x125 (in this example only), we finally see the boot code
@@ -1725,19 +1728,6 @@ And so at sector 0x125 (in this example only), we finally see the boot code
     }
 }
 */
-    // these guys are used by grub
-/* -------------------------------------------------------------------------------- */
-
-int get_diskinfo (int drive, struct geometry *geometry)
-{
-    if(drive>1) return 1; // fail
-    geometry->cylinders=tsaHarddiskInfo[drive].m_wCountCylinders;
-    geometry->heads=tsaHarddiskInfo[drive].m_wCountHeads;
-    geometry->sectors=tsaHarddiskInfo[drive].m_wCountSectorsPerTrack;
-    geometry->total_sectors=tsaHarddiskInfo[drive].m_dwCountSectorsTotal;
-    geometry->flags=0;
-    return 0; // success
-}
 
 /* -------------------------------------------------------------------------------- */
 
@@ -1760,18 +1750,18 @@ int BootIdeSetTransferMode(int nIndexDrive, int nMode)
     }
     {
         int nReturn=0;
-        tsicp.m_bCountSector = (u8)nMode;
+        tsicp.m_bCountSector = (unsigned char)nMode;
         IoOutputByte(IDE_REG_FEATURE(uIoBase), 3); // set transfer mode subcmd
         nReturn=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SET_FEATURES, &tsicp, false);
         return nReturn;
     }
 }
 
-int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
+int BootIdeSetMultimodeSectors(unsigned char nIndexDrive, unsigned char nbSectors){
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned int uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
-    u8 buffer[512];
-    u16 *ptr = (u16 *)buffer;
+    unsigned char buffer[512];
+    unsigned short *ptr = (unsigned short *)buffer;
     
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
@@ -1810,7 +1800,7 @@ int BootIdeSetMultimodeSectors(u8 nIndexDrive, u8 nbSectors){
 /*
 //Set fastest PIO mode supported by HDD. Will probably be Mode4 since it was officially inserted in
 //ATA-2 specs in 1996.
-int BootIdeSetPIOMode(u8 nIndexDrive, u16 cycleTime){
+int BootIdeSetPIOMode(unsigned char nIndexDrive, unsigned short cycleTime){
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned int uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
 
@@ -1848,8 +1838,8 @@ int BootIdeSetPIOMode(u8 nIndexDrive, u16 cycleTime){
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd){
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
-    u8 buffer[512];
-    u16 *ptr = (u16 *)buffer;
+    unsigned char buffer[512];
+    unsigned short *ptr = (unsigned short *)buffer;
 
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
@@ -1891,8 +1881,8 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
     int result = -1;    //Start assuming error.
-    u16 w;
-    u8 error;
+    unsigned short w;
+    unsigned char error;
 
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
@@ -1906,7 +1896,7 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
 
     BootIdeWaitNotBusy(uIoBase);
 
-    wait_smalldelay();
+    wait_us(1);
 
     w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
     w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;
@@ -1951,7 +1941,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     //printk("\n          password length: %u\n          ", strlen(password));
     
     //for(i = 0; i < strlen(password); i++){
-    //   printk(" %02X", (u8)password[i]);
+    //   printk(" %02X", (unsigned char)password[i]);
     //}
     memcpy(&ide_cmd_data[2],password,strlen(password));
 

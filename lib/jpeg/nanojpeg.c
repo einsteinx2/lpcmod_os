@@ -104,16 +104,7 @@
 #ifndef _NANOJPEG_H
 #define _NANOJPEG_H
 
-// nj_result_t: Result codes for njDecode().
-typedef enum _nj_result {
-    NJ_OK = 0,        // no error, decoding successful
-    NJ_NO_JPEG,       // not a JPEG file
-    NJ_UNSUPPORTED,   // unsupported format
-    NJ_OUT_OF_MEM,    // out of memory
-    NJ_INTERNAL_ERR,  // internal error
-    NJ_SYNTAX_ERROR,  // syntax error
-    __NJ_FINISHED,    // used internally, will never be reported
-} nj_result_t;
+#include "nanojpegHelper.h"
 
 // njInit: Initialize NanoJPEG.
 // For safety reasons, this should be called at least one time before using
@@ -260,10 +251,12 @@ int main(int argc, char* argv[]) {
 //    #include <stdlib.h>
 //    #include <string.h>
 #include "boot.h"
-    #define njAllocMem malloc
-    #define njFreeMem  free
-    #define njFillMem  memset
-    #define njCopyMem  memcpy
+#include "string.h"
+
+#define njAllocMem malloc
+#define njFreeMem  free
+#define njFillMem  memset
+#define njCopyMem  memcpy
 #endif
 
 typedef struct _nj_code {

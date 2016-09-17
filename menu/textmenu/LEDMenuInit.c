@@ -7,9 +7,10 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "MenuInits.h"
 #include "include/boot.h"
-#include "TextMenu.h"
 #include "LEDMenuActions.h"
+#include "string.h"
 
 TEXTMENU* LEDMenuInit(void) {
     TEXTMENUITEM *itemPtr;

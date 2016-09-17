@@ -7,10 +7,11 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "MenuInits.h"
 #include "boot.h"
 #include "BootIde.h"
-#include "TextMenu.h"
 #include "HDDMenuActions.h"
+#include "string.h"
 
 TEXTMENU *HDDOperationsMenuInit(void * drive);
 TEXTMENU *LargeHDDMenuInit(void * drive);
@@ -36,8 +37,8 @@ TEXTMENU *HDDMenuInit(void) {
             sprintf(itemPtr->szCaption, "%s",i ? "Slave":"Master");
             sprintf(itemPtr->szParameter, "%s"," HDD");
             itemPtr->functionPtr= (void *)HDDOperationsMenuInit;
-            itemPtr->functionDataPtr = malloc(sizeof(u8));
-                *(u8*)itemPtr->functionDataPtr = i;
+            itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+                *(unsigned char*)itemPtr->functionDataPtr = i;
             itemPtr->functionDataPtrMemAlloc = true;
             TextMenuAddItem(menuPtr, itemPtr);
         }
@@ -50,9 +51,9 @@ TEXTMENU *HDDMenuInit(void) {
 TEXTMENU *HDDOperationsMenuInit(void * drive){
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    u8 nDriveIndex = 1;
+    unsigned char nDriveIndex = 1;
 
-    nDriveIndex = *(u8 *) drive;
+    nDriveIndex = *(unsigned char *) drive;
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
@@ -65,8 +66,8 @@ TEXTMENU *HDDOperationsMenuInit(void * drive){
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Lock/Unlock menu");
         itemPtr->functionPtr= (void *)HDDLockUnlockMenuInit;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -76,8 +77,8 @@ TEXTMENU *HDDOperationsMenuInit(void * drive){
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Display HDD info");
     itemPtr->functionPtr= DisplayHDDInfo;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -87,8 +88,8 @@ TEXTMENU *HDDOperationsMenuInit(void * drive){
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"S.M.A.R.T. menu");
         itemPtr->functionPtr= (void *)HDDSMARTOperationsMenuInit;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -98,8 +99,8 @@ TEXTMENU *HDDOperationsMenuInit(void * drive){
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Partition format menu");
     itemPtr->functionPtr= (void *)HDDFormatMenuInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -114,9 +115,9 @@ TEXTMENU *HDDOperationsMenuInit(void * drive){
 TEXTMENU *LargeHDDMenuInit(void * drive) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    u8 nDriveIndex = 1;
+    unsigned char nDriveIndex = 1;
     
-    nDriveIndex = *(u8 *) drive;
+    nDriveIndex = *(unsigned char *) drive;
 
     //Amount of free sectors after standard partitions
     unsigned long nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
@@ -131,8 +132,8 @@ TEXTMENU *LargeHDDMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"F:, G: Split evenly");
         itemPtr->functionPtr= FormatDriveFG;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8 *)itemPtr->functionDataPtr = nDriveIndex | F_GEQUAL;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char *)itemPtr->functionDataPtr = nDriveIndex | F_GEQUAL;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -143,8 +144,8 @@ TEXTMENU *LargeHDDMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Max F:, G: takes the rest");
         itemPtr->functionPtr= FormatDriveFG;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8 *)itemPtr->functionDataPtr = nDriveIndex | FMAX_G;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char *)itemPtr->functionDataPtr = nDriveIndex | FMAX_G;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -155,8 +156,8 @@ TEXTMENU *LargeHDDMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"F: = 120GB, G: takes the rest");
         itemPtr->functionPtr= FormatDriveFG;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8 *)itemPtr->functionDataPtr = nDriveIndex | F137_G;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char *)itemPtr->functionDataPtr = nDriveIndex | F137_G;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -167,8 +168,8 @@ TEXTMENU *LargeHDDMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"F: take all, no G:");
         itemPtr->functionPtr= FormatDriveFG;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8 *)itemPtr->functionDataPtr = nDriveIndex | F_NOG;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char *)itemPtr->functionDataPtr = nDriveIndex | F_NOG;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -181,9 +182,9 @@ TEXTMENU *LargeHDDMenuInit(void * drive) {
 TEXTMENU *HDDSMARTOperationsMenuInit(void * drive) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    u8 nDriveIndex = 1;
+    unsigned char nDriveIndex = 1;
 
-    nDriveIndex = *(u8 *) drive;
+    nDriveIndex = *(unsigned char *) drive;
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
@@ -209,8 +210,8 @@ TEXTMENU *HDDSMARTOperationsMenuInit(void * drive) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Read S.M.A.R.T. status");
     itemPtr->functionPtr= CheckSMARTRETURNSTATUS;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr = nDriveIndex;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -223,9 +224,9 @@ TEXTMENU *HDDSMARTOperationsMenuInit(void * drive) {
 TEXTMENU *HDDFormatMenuInit(void * drive) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    u8 nDriveIndex = 1;
+    unsigned char nDriveIndex = 1;
 
-    nDriveIndex = *(u8 *) drive;
+    nDriveIndex = *(unsigned char *) drive;
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
@@ -237,8 +238,8 @@ TEXTMENU *HDDFormatMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Format C drive");
         itemPtr->functionPtr= FormatDriveC;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
 
@@ -247,8 +248,8 @@ TEXTMENU *HDDFormatMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Format E drive");
         itemPtr->functionPtr= FormatDriveE;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
 
@@ -257,8 +258,8 @@ TEXTMENU *HDDFormatMenuInit(void * drive) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Format cache drives");
         itemPtr->functionPtr= FormatCacheDrives;
-        itemPtr->functionDataPtr = malloc(sizeof(u8));
-            *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
         itemPtr->functionDataPtrMemAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
 
@@ -269,8 +270,8 @@ TEXTMENU *HDDFormatMenuInit(void * drive) {
             memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
             sprintf(itemPtr->szCaption,"Large HDD format");
             itemPtr->functionPtr= (void *)LargeHDDMenuInit;
-            itemPtr->functionDataPtr = malloc(sizeof(u8));
-                *(u8 *)itemPtr->functionDataPtr = nDriveIndex;
+            itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+                *(unsigned char *)itemPtr->functionDataPtr = nDriveIndex;
             itemPtr->functionDataPtrMemAlloc = true;
             TextMenuAddItem(menuPtr, itemPtr);
         }
@@ -302,9 +303,9 @@ TEXTMENU *HDDFormatMenuInit(void * drive) {
 TEXTMENU *HDDLockUnlockMenuInit(void * drive) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
-    u8 nDriveIndex = 1;
+    unsigned char nDriveIndex = 1;
 
-    nDriveIndex = *(u8 *) drive;
+    nDriveIndex = *(unsigned char *) drive;
 
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
@@ -347,8 +348,8 @@ TEXTMENU *HDDLockUnlockMenuInit(void * drive) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"Display HDD password");
     itemPtr->functionPtr= DisplayHDDPassword;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8*)itemPtr->functionDataPtr = nDriveIndex;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char*)itemPtr->functionDataPtr = nDriveIndex;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 

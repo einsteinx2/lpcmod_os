@@ -1,3 +1,3 @@
-subdir +=  eeprom crypt misc gzip jpeg LPCMod scriptEngine
+subdir +=  eeprom crypt misc gzip jpeg LPCMod xz cromwell time
 
 include $(TOPDIR)/Rules.make

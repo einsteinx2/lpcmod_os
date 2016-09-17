@@ -119,7 +119,7 @@ static inline void iounmap(void *virt_addr __unused)
 #define rmb()	mb()
 #define wmb()	mb();
 
-
+#if 0
 /*
  * Talk about misusing macros..
  */
@@ -242,5 +242,5 @@ __OUTS(l)
 ((__builtin_constant_p((port)) && (port) < 256) ? \
 	__inlc_p(port) : \
 	__inl_p(port))
-
+#endif
 #endif /* ETHERBOOT_IO_H */

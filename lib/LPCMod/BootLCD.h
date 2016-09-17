@@ -62,27 +62,27 @@
 
 void BootLCDInit(void);
 void BootLCDSwitchType(void);
-void BootLCDUpdateLinesOwnership(u8 line, u8 fromScript);
+void BootLCDUpdateLinesOwnership(unsigned char line, unsigned char fromScript);
 
-void toggleEN5V(u8 value);
-void setLCDContrast(u8 value);
-void setLCDBacklight(u8 value);
+void toggleEN5V(unsigned char value);
+void setLCDContrast(unsigned char value);
+void setLCDBacklight(unsigned char value);
 
 void assertInitLCD(void);
 void initialLCDPrint(void);
 
 void WriteLCDInit(void);
-void WriteLCDCommand(u8 value);
-void WriteLCDData(u8 value);
-void WriteLCDIO(u8 data, bool RS, u16 wait);
-void X3WriteLCDIO(u8 data, bool RS, u16 wait);
+void WriteLCDCommand(unsigned char value);
+void WriteLCDData(unsigned char value);
+void WriteLCDIO(unsigned char data, bool RS, unsigned short wait);
+void X3WriteLCDIO(unsigned char data, bool RS, unsigned short wait);
 void WriteLCDLine0(bool centered, char *lineText);
 void WriteLCDLine1(bool centered, char *lineText);
 void WriteLCDLine2(bool centered, char *lineText);
 void WriteLCDLine3(bool centered, char *lineText);
 void WriteLCDCenterString(char * StringOut, char * stringIn);
 void WriteLCDFitString(char * StringOut, char * stringIn);
-void WriteLCDSetPos(u8 pos, u8 line);
-void WriteLCDClearLine(u8 line);
+void WriteLCDSetPos(unsigned char pos, unsigned char line);
+void WriteLCDClearLine(unsigned char line);
 
 #endif // _BootLCD_H_

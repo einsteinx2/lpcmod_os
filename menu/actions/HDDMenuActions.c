@@ -10,13 +10,19 @@
 #include "boot.h"
 #include "TextMenu.h"
 #include "lpcmod_v1.h"
+#include "string.h"
+#include "lib/time/timeManagement.h"
+#include "lib/cromwell/cromString.h"
+#include "FlashMenuActions.h"
+#include "Gentoox.h"
+#include "menu/misc/ConfirmDialog.h"
 
 void AssertLockUnlock(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    u8 nIndexDrive = 1;                                //Toggle master by default.
+    unsigned char nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    nIndexDrive = (u8)tempItemPtr->szParameter[50];
+    nIndexDrive = (unsigned char)tempItemPtr->szParameter[50];
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
         UnlockHDD(nIndexDrive, 1, (unsigned char *)&eeprom, true);                      //1 is for verbose
@@ -36,12 +42,12 @@ void AssertLockUnlock(void *itemPtr){
 
 void AssertLockUnlockFromNetwork(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    u8 nIndexDrive = 1;                                //Toggle slave by default.
+    unsigned char nIndexDrive = 1;                                //Toggle slave by default.
     char temp = HDD1LOCK_NETFLASH;
     unsigned char *eepromPtr;
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
-    nIndexDrive = (u8)tempItemPtr->szParameter[50];
+    nIndexDrive = (unsigned char)tempItemPtr->szParameter[50];
     if(nIndexDrive == 0)
         temp = HDD0LOCK_NETFLASH;
 
@@ -57,7 +63,7 @@ void AssertLockUnlockFromNetwork(void *itemPtr){
 }
 
 bool LockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr) {
-    u8 password[20];
+    unsigned char password[20];
     unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     int i;
 
@@ -109,7 +115,7 @@ endExec:
 }
 
 int UnlockHDD(int nIndexDrive, bool verbose, unsigned char *eepromPtr, bool internalEEPROM) {
-    u8 userPassword[21];
+    unsigned char userPassword[21];
     int result = false; //Start assuming not good.
     int i;
 
@@ -186,7 +192,7 @@ endExec:
 }
 
 bool masterPasswordUnlockSequence(int nIndexDrive){
-    u8 i;
+    unsigned char i;
     const char * MasterPasswordList[] = {
             "TEAMASSEMBLY",
             "XBOXSCENE",
@@ -216,8 +222,8 @@ bool masterPasswordUnlockSequence(int nIndexDrive){
 
 
 void DisplayHDDPassword(void *driveId) {
-    u8 nIndexDrive = *(u8 *)driveId;
-    u8 password[20];
+    unsigned char nIndexDrive = *(unsigned char *)driveId;
+    unsigned char password[20];
     int i;
     
     printk("\n\n\n\n\n           Calculating password");
@@ -246,7 +252,7 @@ void DisplayHDDPassword(void *driveId) {
 }
 
 void FormatCacheDrives(void *driveId){
-    u8 nIndexDrive = *(u8 *)driveId;
+    unsigned char nIndexDrive = *(unsigned char *)driveId;
 
     if(ConfirmDialog("             Confirm format cache drives?", 1))
         return;                                 //Cancel operation.
@@ -257,7 +263,7 @@ void FormatCacheDrives(void *driveId){
 }
 
 void FormatDriveC(void *driveId){
-    u8 nIndexDrive = *(u8 *)driveId;
+    unsigned char nIndexDrive = *(unsigned char *)driveId;
 
     if(ConfirmDialog("                  Confirm format C: drive?", 1))
         return;                                 //Cancel operation.
@@ -268,7 +274,7 @@ void FormatDriveC(void *driveId){
 }
 
 void FormatDriveE(void *driveId){
-    u8 nIndexDrive = *(u8 *)driveId;
+    unsigned char nIndexDrive = *(unsigned char *)driveId;
 
     if(ConfirmDialog("                  Confirm format E: drive?", 1))
         return;                                 //Cancel operation.
@@ -287,12 +293,12 @@ void HDDMenuHeader(char *title) {
 }
 
 void DisplayHDDInfo(void *driveId) {
-    u8 nIndexDrive = *(u8 *)driveId;
-    u8 MBRBuffer[512];
-    u8 i;
+    unsigned char nIndexDrive = *(unsigned char *)driveId;
+    unsigned char MBRBuffer[512];
+    unsigned char i;
     XboxPartitionTable * mbr = (XboxPartitionTable *)MBRBuffer;
-    u8 clusterSize;
-    u32 partSize;
+    unsigned char clusterSize;
+    unsigned int partSize;
     //debugSPIPrint("Display HDD info for %s drive.", nIndexDrive == 0 ? "Master" : "Slave");
 
     printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
@@ -339,13 +345,13 @@ void DisplayHDDInfo(void *driveId) {
 }
 
 void FormatDriveFG(void *driveId) {
-    u8 nDriveIndex = (*(u8 *)driveId) & 0x0f;
-    u8 formatOption = (*(u8 *)driveId) & 0xf0;
-    u32 fsize,gstart = SECTOR_EXTEND,gsize = 0;
-    u8 buffer[512];                                             //Multi purpose
+    unsigned char nDriveIndex = (*(unsigned char *)driveId) & 0x0f;
+    unsigned char formatOption = (*(unsigned char *)driveId) & 0xf0;
+    unsigned int fsize,gstart = SECTOR_EXTEND,gsize = 0;
+    unsigned char buffer[512];                                             //Multi purpose
     XboxPartitionTable * mbr = (XboxPartitionTable *)buffer;
 
-    u32 nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
+    unsigned int nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
 
     switch(formatOption){
         case F_GEQUAL:                                          //Split amount of sectors evenly on 2 partitions
@@ -412,7 +418,7 @@ void FormatDriveFG(void *driveId) {
 
 void AssertSMARTEnableDisable(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
-    u8 nIndexDrive = 1;                                //Toggle master by default.
+    unsigned char nIndexDrive = 1;                                //Toggle master by default.
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
     nIndexDrive = tempItemPtr->szParameter[50];
@@ -434,10 +440,10 @@ void AssertSMARTEnableDisable(void *itemPtr){
 
 void CheckSMARTRETURNSTATUS(void * drive){
 
-    u8 nIndexDrive = 1;                                //Toggle master by default.
+    unsigned char nIndexDrive = 1;                                //Toggle master by default.
     int pollReturn;
 
-    nIndexDrive = *(u8 *)drive;
+    nIndexDrive = *(unsigned char *)drive;
     HDDMenuHeader("Read S.M.A.R.T. status");
 
     if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled) {

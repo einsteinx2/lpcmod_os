@@ -8,13 +8,19 @@
  ***************************************************************************/
 
 #include "boot.h"
+#include "i2c.h"
 #include "video.h"
-#include "xbox.h"
 #include "BootEEPROM.h"
 #include "BootFlash.h"
 #include "InfoMenuActions.h"
 #include "lib/LPCMod/BootLPCMod.h"
-
+#include "lib/time/timeManagement.h"
+#include "lib/cromwell/cromString.h"
+#include "xblast/settings/xblastSettingsChangeTracker.h"
+#include "xblast/settings/xblastSettingsImportExport.h"
+#include "MenuActions.h"
+#include "string.h"
+#include <stddef.h>
 
 void ShowTemperature(void *whatever) {
     int c, cx;
@@ -72,10 +78,10 @@ void ShowUncommittedChanges(void *whatever){
 #define NORMALTEXTMENUCOLOR 0xffc8c8c8
     bool noExit = true, redrawList = true;
     char printString[200];
-    u8 UncommittedChanges = 0, NbOfItemsToList = 0;
+    unsigned char UncommittedChanges = 0, NbOfItemsToList = 0;
     bool bootScriptChangedFlag, IPChange;
-    u8 i, j, k;
-    u8 numberOfEEPROMChanges, selectedEntryItem = 0, firstVisibleEntryItem = 0;
+    unsigned char i, j, k;
+    unsigned char numberOfEEPROMChanges, selectedEntryItem = 0, firstVisibleEntryItem = 0;
     _settingsPtrStruct originalSettingsPtrStruct;
     setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
     while(noExit){

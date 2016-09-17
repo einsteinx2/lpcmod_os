@@ -63,10 +63,10 @@ typedef enum {
 } ide_command_t;
 
 typedef struct {                 //PRD table entry. 8 bytes in length
-    u32 address;
-    u16 byteCount;
-    u16 reserved : 15;
-    u16 endoftable : 1;
+    unsigned int address;
+    unsigned short byteCount;
+    unsigned short reserved : 15;
+    unsigned short endoftable : 1;
 }__attribute__((packed))PRD;    //No filling. SHouldn't matter since its elements makes it already aligned.
 
 typedef struct PRDT{
@@ -85,6 +85,8 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size);
 int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, unsigned char *password);
 int CalculateDrivePassword(int driveId, unsigned char *key, unsigned char *eepromPtr);
 bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master_password);
+int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, unsigned char retry);
+int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, unsigned short len, unsigned char retry);
 
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 int driveSMARTRETURNSTATUS(int nDriveIndex);

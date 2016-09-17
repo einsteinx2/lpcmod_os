@@ -21,15 +21,15 @@
 #include "cromwell_types.h"
 
 typedef unsigned int __u32;
-//typedef __u32 u32;
+//typedef __u32 unsigned int;
 typedef unsigned short __u16;
-//typedef __u16 u16;
+//typedef __u16 unsigned short;
 typedef unsigned char __u8;
-//typedef __u8 u8;
+//typedef __u8 unsigned char;
 
 typedef short s16;
 
-typedef u32 dma_addr_t;
+typedef unsigned int dma_addr_t;
 
 typedef  int spinlock_t;
 typedef int atomic_t;
@@ -71,12 +71,13 @@ __asm__ __volatile__(
 return dest;
 }
 #endif
-extern size_t strlen(const char *);
 
-extern int memcmp(const void *,const void *,unsigned int);
 
 #else
 #include "boot.h"
+#include "../lib/cromwell/cromString.h"
+#include "lib/time/timeManagement.h"
+#include "string.h"
 #include "config.h"
 #endif
 #else
@@ -224,10 +225,10 @@ struct pci_driver {
         const struct pci_device_id *id_table;   /* must be non-NULL for probe to be called */
         int  (*probe)  (struct pci_dev *dev, const struct pci_device_id *id);   /* New device inserted */
         void (*remove) (struct pci_dev *dev);   /* Device removed (NULL if not a hot-plug capable driver) */
-        int  (*save_state) (struct pci_dev *dev, u32 state);    /* Save Device Context */
-        int  (*suspend) (struct pci_dev *dev, u32 state);       /* Device suspended */
+        int  (*save_state) (struct pci_dev *dev, unsigned int state);    /* Save Device Context */
+        int  (*suspend) (struct pci_dev *dev, unsigned int state);       /* Device suspended */
         int  (*resume) (struct pci_dev *dev);                   /* Device woken up */
-        int  (*enable_wake) (struct pci_dev *dev, u32 state, int enable);   /* Enable wake event */
+        int  (*enable_wake) (struct pci_dev *dev, unsigned int state, int enable);   /* Enable wake event */
 };
 
 struct scatterlist
@@ -284,7 +285,7 @@ struct usbdevfs_hub_portinfo
 #define MODULE_AUTHOR(a)
 #define MODULE_DESCRIPTION(a)
 #define MODULE_LICENSE(a)
-#define MODULE_DEVICE_TABLE(type,name) void* module_table_##name=&name
+#define MODULE_DEVICE_TABLE(type,name) const void* module_table_##name=&name
 
 #define __devinit
 #define __exit
@@ -329,7 +330,6 @@ struct usbdevfs_hub_portinfo
 #define kmalloc(x,y) malloc(x)
 #define kfree(x) free(x)
 
-#define sprintf(a,b,format, arg...) zxsprintf((a),(b),format, ## arg)
 #define snprintf(a,b,format, arg...) zxsnprintf((a),(b),format, ##arg)
 #define printk(format, arg...) zxprintf(format, ## arg)
 #define BUG(...) do {} while(0)
@@ -390,9 +390,9 @@ static void  __inline__ *my_pci_pool_alloc(void* pool, size_t size,
     void* a;
     a=kmalloc(size,0); //FIXME
 #ifdef MODULE
-    *dma_handle=((u32)a)&0xfffffff;
+    *dma_handle=((unsigned int)a)&0xfffffff;
 #else
-    *dma_handle=(u32)a;
+    *dma_handle=(unsigned int)a;
 #endif
     return a;
 }
@@ -408,7 +408,7 @@ static void  __inline__ *my_pci_alloc_consistent(struct pci_dev *hwdev, size_t s
 
     a=kmalloc(size+256,0); //FIXME
     a=(void*)(((int)a+255)&~255); // 256 alignment
-    *dma_handle=((u32)a)&0xfffffff;
+    *dma_handle=((unsigned int)a)&0xfffffff;
 
     return a;
 }
@@ -424,7 +424,7 @@ int my_pci_module_init(struct pci_driver *x);
 #define bus_register(a) do {} while(0)
 #define bus_unregister(a) do {} while(0)
 
-#define dma_map_single(a,b,c,d) ((u32)(b)&0xfffffff)
+#define dma_map_single(a,b,c,d) ((unsigned int)(b)&0xfffffff)
 #define dma_unmap_single(a,b,c,d)     do {} while(0)
 #define pci_unmap_single(a,b,c,d)     do {} while(0)
 #define dma_sync_single(a,b,c,d)      do {} while(0)
@@ -434,7 +434,7 @@ int my_pci_module_init(struct pci_driver *x);
 
 #define usb_create_driverfs_dev_files(a) do {} while(0)
 #define usb_create_driverfs_intf_files(a) do {} while(0)
-#define sg_dma_address(x) ((u32)((x)->page*4096 + (x)->offset))
+#define sg_dma_address(x) ((unsigned int)((x)->page*4096 + (x)->offset))
 #define sg_dma_len(x) ((x)->length) 
 
 #define page_address(x) ((void*)(x/4096))
@@ -516,7 +516,7 @@ void my_wait_for_completion(struct completion*);
 #define cpu_to_le32(x) (x)
 #define cpu_to_le32p(x) (*(__u32*)(x))
 #define le32_to_cpup(x) (*(__u32*)(x))
-#define le32_to_cpu(x) ((u32)x)
+#define le32_to_cpu(x) ((unsigned int)x)
 #define le16_to_cpus(x) do {} while (0)
 #define le16_to_cpup(x) (*(__u16*)(x))
 #define cpu_to_le16p(x) (*(__u16*)(x))
@@ -525,13 +525,13 @@ void my_wait_for_completion(struct completion*);
 /* Debug output */
 /*------------------------------------------------------------------------*/ 
 #ifdef DEBUG_MODE
-#define dev_printk(lvl,x,f,arg...) printk(f, ## arg)
-#define dev_dbg(x,f,arg...) do {} while (0) //printk(f, ## arg)
-#define dev_info(x,f,arg...) printk(f,## arg)
-#define dev_warn(x,f,arg...) printk(f,## arg)
-#define dev_err(x,f,arg...) printk(f,## arg)
-#define pr_debug(x,f,arg...) printk(f,## arg)
-#define usbprintk printk
+#define dev_printk(lvl,x,f,arg...) debugSPIPrint(f, ## arg)
+#define dev_dbg(x,f,arg...) debugSPIPrint(f, ## arg)
+#define dev_info(x,f,arg...) debugSPIPrint(f,## arg)
+#define dev_warn(x,f,arg...) debugSPIPrint(f,## arg)
+#define dev_err(x,f,arg...) debugSPIPrint(f,## arg)
+#define pr_debug(x,f,arg...) debugSPIPrint(f,## arg)
+#define usbprintk debugSPIPrint
 #endif
 
 #ifndef DEBUG_MODE

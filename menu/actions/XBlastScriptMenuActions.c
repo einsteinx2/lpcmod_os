@@ -8,15 +8,20 @@
  ***************************************************************************/
 #include "XBlastScriptMenuActions.h"
 #include "ToolsMenuActions.h"
-#include "boot.h"
 #include "BootIde.h"
-#include "BootFATX.h"
+#include "BootFlash.h"
 #include "video.h"
 #include "lpcmod_v1.h"
 #include "memory_layout.h"
-#include "lib/scriptEngine/xblastScriptEngine.h"
+#include "xblast/scriptEngine/xblastScriptEngine.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "lib/cromwell/cromString.h"
+#include "Gentoox.h"
+#include "MenuActions.h"
+#include "string.h"
 
-bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo){
+bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo)
+{
     int res;
     FATXPartition *partition;
 
@@ -83,7 +88,7 @@ void saveScriptToFlash(void *fname){
 }
 
 void loadScriptFromFlash(void * ignored){
-    u8 * buffer;
+    unsigned char * buffer;
     int size;
 
     size = fetchBootScriptFromFlash(&buffer);

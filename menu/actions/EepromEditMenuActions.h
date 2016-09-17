@@ -8,8 +8,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-
-#include "boot.h"
+#include <stdbool.h>
 
 #define HEX_KEYPAD   2
 
@@ -25,6 +24,6 @@ void editMACAddress(void *ignored);
 
 void restoreEEPROMFromFile(void *fname);
 
-int updateEEPROMEditBufferFromInputBuffer(u8 *buffer, u32 size, bool verbose);
+int updateEEPROMEditBufferFromInputBuffer(unsigned char *buffer, unsigned int size, bool verbose);
 
 #endif

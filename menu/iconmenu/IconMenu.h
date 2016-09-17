@@ -24,7 +24,7 @@ struct ICON;
 
 typedef struct ICON {
     int iconSlot;
-    u8    bankID;
+    unsigned char    bankID;
     char *szCaption;
     void (*functionPtr) (void *);
     void *functionDataPtr;

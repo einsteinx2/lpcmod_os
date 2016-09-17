@@ -2,9 +2,7 @@
 #define _XCALIBUR_REGS_H_
 #include "xcalibur.h"
 
-#define u32 unsigned long 
-
-const u32 Composite_XCal_Vals_PAL[] = {
+const unsigned int Composite_XCal_Vals_PAL[] = {
     0x02000000, 0x36005003, 0x00000000, 0x00000000,
     0x04000000, 0x0be58a21, 0x7789c500, 0x10000003,
     0xffffffff, 0x00000000, 0x00000000, 0xffffffff,
@@ -43,7 +41,7 @@ const u32 Composite_XCal_Vals_PAL[] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 };
 
-const u32 Composite_XCal_Vals_NTSC[] = {
+const unsigned int Composite_XCal_Vals_NTSC[] = {
     0x02000000, 0x10804003, 0x00000000, 0x00000000,
     0x04000000, 0xea528255, 0x24c5eb00, 0x00000303,
     0xffffffff, 0x00000000, 0x00000000, 0xffffffff,
@@ -82,7 +80,7 @@ const u32 Composite_XCal_Vals_NTSC[] = {
     0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 };
 
-const u32 HDTV_XCal_Vals_480p[] = {
+const unsigned int HDTV_XCal_Vals_480p[] = {
     0x02000000, 0x30004000, 0x00000000, 0x00000000,
     0x08000000, 0xa6c08324, 0xcf6f4600, 0x00000000,
     0xffffffff, 0x00000000, 0x00000000, 0xffffffff,

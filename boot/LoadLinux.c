@@ -7,36 +7,34 @@
  *                                                                         *
  ***************************************************************************/
 #include "boot.h"
+#include "i2c.h"
 #include "video.h"
 #include "memory_layout.h"
-#include <shared.h>
-#include <filesys.h>
-//#include "rc4.h"
 #include "sha1.h"
-//#include "BootFATX.h"
-#include "xbox.h"
 #include "BootFlash.h"
 #include "cpu.h"
 #include "BootIde.h"
-//#include "BootParser.h"
 #include "config.h"
 #include "iso_fs.h"
+#include "lib/time/timeManagement.h"
+#include "lib/cromwell/cromString.h"
+#include "FlashMenuActions.h"
+#include "string.h"
 #include "Gentoox.h"
 
 
 //Grub bits
 unsigned long saved_drive;
-grub_error_t errnum;
 #if 0
 unsigned long saved_partition;
 unsigned long boot_drive;
 
 static int nRet;
-static u32 dwKernelSize= 0, dwInitrdSize = 0;
+static unsigned int dwKernelSize= 0, dwInitrdSize = 0;
 
 
 void ExittoLinux(CONFIGENTRY *config);
-void ExittoLinuxFromNet(u32 initrdSize, char *append);
+void ExittoLinuxFromNet(unsigned int initrdSize, char *append);
 void startLinux(void* initrdStart, unsigned long initrdSize, const char* appendLine);
 void setup(void* KernelPos, void* PhysInitrdPos, unsigned long InitrdSize, const char* kernel_cmdline);
 void I2CRebootSlow(void);
@@ -68,11 +66,11 @@ void BootPrintConfig(CONFIGENTRY *config) {
 }
 
 
-void memPlaceKernel(const u8* kernelOrg, u32 kernelSize)
+void memPlaceKernel(const unsigned char* kernelOrg, unsigned int kernelSize)
 {
     unsigned int nSizeHeader=((*(kernelOrg + 0x01f1))+1)*512;
-    memcpy((u8 *)KERNEL_SETUP, kernelOrg, nSizeHeader);
-    memcpy((u8 *)KERNEL_PM_CODE,(kernelOrg+nSizeHeader),kernelSize-nSizeHeader);
+    memcpy((unsigned char *)KERNEL_SETUP, kernelOrg, nSizeHeader);
+    memcpy((unsigned char *)KERNEL_PM_CODE,(kernelOrg+nSizeHeader),kernelSize-nSizeHeader);
 }
 
 
@@ -82,12 +80,12 @@ CONFIGENTRY* LoadConfigNative(int drive, int partition) {
     CONFIGENTRY *config;
     CONFIGENTRY *currentConfigItem;
     unsigned int nLen;
-    u32 dwConfigSize=0;
+    unsigned int dwConfigSize=0;
     char *szGrub;
 
     szGrub = (char *) malloc(265+4);
     memset(szGrub,0,256+4);
-    memset((u8 *)KERNEL_SETUP,0,2048);
+    memset((unsigned char *)KERNEL_SETUP,0,2048);
 
     szGrub[0]=0xff;
     szGrub[1]=0xff;
@@ -150,12 +148,12 @@ int LoadKernelNative(CONFIGENTRY *config) {
     printk("\n\n");
 
     char *szGrub;
-    u8* tempBuf;
+    unsigned char* tempBuf;
 
     szGrub = (char *) malloc(265+4);
         memset(szGrub,0,256+4);
         
-    memset((u8 *)KERNEL_SETUP,0,2048);
+    memset((unsigned char *)KERNEL_SETUP,0,2048);
 
     szGrub[0]=0xff;
     szGrub[1]=0xff;
@@ -188,7 +186,7 @@ int LoadKernelNative(CONFIGENTRY *config) {
         while(1);
     }
     // Use INITRD_START as temporary location for loading the Kernel
-    tempBuf = (u8*)INITRD_START;
+    tempBuf = (unsigned char*)INITRD_START;
     dwKernelSize=grub_read(tempBuf, MAX_KERNEL_SIZE);
     memPlaceKernel(tempBuf, dwKernelSize);
     grub_close();
@@ -269,9 +267,9 @@ int LoadKernelFatX(CONFIGENTRY *config) {
     static FATXFILEINFO fileinfo;
     static FATXFILEINFO infokernel;
     static FATXFILEINFO infoinitrd;
-    u8* tempBuf;
+    unsigned char* tempBuf;
 
-    memset((u8 *)KERNEL_SETUP,0,4096);
+    memset((unsigned char *)KERNEL_SETUP,0,4096);
     memset(&fileinfo,0x00,sizeof(fileinfo));
     memset(&infokernel,0x00,sizeof(infokernel));
     memset(&infoinitrd,0x00,sizeof(infoinitrd));
@@ -290,7 +288,7 @@ int LoadKernelFatX(CONFIGENTRY *config) {
     if(partition == NULL) return 0;
 
     // Use INITRD_START as temporary location for loading the Kernel
-    tempBuf = (u8*)INITRD_START;
+    tempBuf = (unsigned char*)INITRD_START;
     printk("           Boot: Loading kernel '%s'", config->szKernel);
     dots();
     if(! LoadFATXFile(partition,config->szKernel,&infokernel)) {
@@ -341,7 +339,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
     int configLoaded=0;
     CONFIGENTRY *config, *currentConfigItem;
 
-    memset((u8 *)KERNEL_SETUP,0,4096);
+    memset((unsigned char *)KERNEL_SETUP,0,4096);
 
     //See if we already have a CDROM in the drive
     //Try for 4 seconds - takes a while to 'spin up'.
@@ -352,7 +350,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
     dots();
 
     for (n=0;n<16;++n) {
-        dwConfigSize = BootIso9660GetFile(cdromId,"/linuxboo.cfg", (u8 *)KERNEL_SETUP, 0x800);
+        dwConfigSize = BootIso9660GetFile(cdromId,"/linuxboo.cfg", (unsigned char *)KERNEL_SETUP, 0x800);
         if (dwConfigSize>0) {
             configLoaded=1;
             break;
@@ -398,7 +396,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
         //printk("Loading linuxboot.cfg from CDROM... \n");
         //Try to load linuxboot.cfg - if we can't after a while, give up.
         for (n=0;n<48;++n) {
-            dwConfigSize = BootIso9660GetFile(cdromId,"/linuxboo.cfg", (u8 *)KERNEL_SETUP, 0x800);
+            dwConfigSize = BootIso9660GetFile(cdromId,"/linuxboo.cfg", (unsigned char *)KERNEL_SETUP, 0x800);
             if (dwConfigSize>0) {
                 configLoaded=1;
                 break;
@@ -433,10 +431,10 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
 
 int LoadKernelCdrom(CONFIGENTRY *config) {
     busyLED();
-    u8* tempBuf;
+    unsigned char* tempBuf;
 
     // Use INITRD_START as temporary location for loading the Kernel
-    tempBuf = (u8*)INITRD_START;
+    tempBuf = (unsigned char*)INITRD_START;
     printk("           Boot: Loading kernel '%s'", config->szKernel);
     dots();
     dwKernelSize=BootIso9660GetFile(config->drive,config->szKernel, tempBuf, MAX_KERNEL_SIZE);
@@ -480,8 +478,8 @@ int BootLoadFlashCD(int cdromId) {
     struct SHA1Context context;
     unsigned char SHA1_result[20];
     unsigned char checksum[20];
-    u8 *fileBuf;
-    fileBuf = (u8 *)malloc(1024 * 1024);
+    unsigned char *fileBuf;
+    fileBuf = (unsigned char *)malloc(1024 * 1024);
     memset(fileBuf,0x0,1024 * 1024);
 
     //See if we already have a CDROM in the drive
@@ -584,7 +582,7 @@ void ExittoLinux(CONFIGENTRY *config) {
     busyLED();
     VIDEO_ATTR=0xff8888a8;
     //BootPrintConfig(config);
-    //printk("     Kernel:  %s\n", (char *)(0x00090200+(*((u16 *)0x9020e)) ));
+    //printk("     Kernel:  %s\n", (char *)(0x00090200+(*((unsigned short *)0x9020e)) ));
     //printk("\n");
     {
         char *sz="\2Starting titlehere\2";
@@ -597,11 +595,11 @@ void ExittoLinux(CONFIGENTRY *config) {
     startLinux((void*)INITRD_START, dwInitrdSize, config->szAppend);
 }
 
-void ExittoLinuxFromNet(u32 initrdSize, char* append) {
+void ExittoLinuxFromNet(unsigned int initrdSize, char* append) {
     busyLED();
     VIDEO_ATTR=0xff8888a8;
     //BootPrintConfig(config);
-    //printk("     Kernel:  %s\n", (char *)(0x00090200+(*((u16 *)0x9020e)) ));
+    //printk("     Kernel:  %s\n", (char *)(0x00090200+(*((unsigned short *)0x9020e)) ));
     //printk("\n");
     {
         char *sz="\2Starting Linux\2";

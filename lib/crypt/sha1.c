@@ -241,7 +241,7 @@ void SHA1ProcessMessageBlock(SHA1Context *context)
                             0x8F1BBCDC,
                             0xCA62C1D6
                             };
-    int           t;                 /* Loop counter                */
+    int32_t       t;                 /* Loop counter                */
     uint32_t      temp;              /* Temporary word value        */
     uint32_t      W[80];             /* Word sequence               */
     uint32_t      A, B, C, D, E;     /* Word buffers                */

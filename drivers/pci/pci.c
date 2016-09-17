@@ -1,4 +1,6 @@
 #include "boot.h"
+#include "i2c.h"
+#include "string.h"
 // by ozpaulb@hotmail.com 2002-07-14
 
 /***************************************************************************
@@ -10,9 +12,9 @@
  *                                                                         *
  ***************************************************************************/
 
-u8 PciReadByte(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
+unsigned char PciReadByte(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
 {
-    u32 base_addr = 0x80000000;
+    unsigned int base_addr = 0x80000000;
     base_addr |= ((bus & 0xFF) << 16);    // bus #
     base_addr |= ((dev & 0x1F) << 11);    // device #
     base_addr |= ((func & 0x07) << 8);    // func #
@@ -24,7 +26,7 @@ u8 PciReadByte(unsigned int bus, unsigned int dev, unsigned int func, unsigned i
 void PciWriteByte (unsigned int bus, unsigned int dev, unsigned int func,
         unsigned int reg_off, unsigned char byteval)
 {
-    u32 base_addr = 0x80000000;
+    unsigned int base_addr = 0x80000000;
     base_addr |= ((bus & 0xFF) << 16);    // bus #
     base_addr |= ((dev & 0x1F) << 11);    // device #
     base_addr |= ((func & 0x07) << 8);    // func #
@@ -34,9 +36,9 @@ void PciWriteByte (unsigned int bus, unsigned int dev, unsigned int func,
 }
 
 
-u16 PciReadWord(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
+unsigned short PciReadWord(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
 {
-    u32 base_addr = 0x80000000;
+    unsigned int base_addr = 0x80000000;
     base_addr |= ((bus & 0xFF) << 16);    // bus #
     base_addr |= ((dev & 0x1F) << 11);    // device #
     base_addr |= ((func & 0x07) << 8);    // func #
@@ -46,9 +48,9 @@ u16 PciReadWord(unsigned int bus, unsigned int dev, unsigned int func, unsigned 
 }
 
 
-void PciWriteWord(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, u16 w)
+void PciWriteWord(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, unsigned short w)
 {
-    u32 base_addr = 0x80000000;
+    unsigned int base_addr = 0x80000000;
     base_addr |= ((bus & 0xFF) << 16);    // bus #
     base_addr |= ((dev & 0x1F) << 11);    // device #
     base_addr |= ((func & 0x07) << 8);    // func #
@@ -58,9 +60,9 @@ void PciWriteWord(unsigned int bus, unsigned int dev, unsigned int func, unsigne
 }
 
 
-u32 PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
+unsigned int PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off)
 {
-    u32 base_addr = 0x80000000;
+    unsigned int base_addr = 0x80000000;
     base_addr |= ((bus & 0xFF) << 16);    // bus #
     base_addr |= ((dev & 0x1F) << 11);    // device #
     base_addr |= ((func & 0x07) << 8);    // func #
@@ -72,10 +74,10 @@ u32 PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned
 }
 
 
-u32 PciWriteDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, unsigned int dw) 
+unsigned int PciWriteDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, unsigned int dw) 
 {
         
-    u32 base_addr = 0x80000000;
+    unsigned int base_addr = 0x80000000;
     base_addr |= ((bus & 0xFF) << 16);    // bus #
     base_addr |= ((dev & 0x1F) << 11);    // device #
     base_addr |= ((func & 0x07) << 8);    // func #
@@ -107,17 +109,17 @@ u32 PciWriteDword(unsigned int bus, unsigned int dev, unsigned int func, unsigne
 
 
 // access to RTC CMOS memory
-u8 CMOS_READ(u8 addr) { 
+unsigned char CMOS_READ(unsigned char addr) { 
     IoOutputByte(0x70,addr); 
     return IoInputByte(0x71); 
 }
 
-void CMOS_WRITE(u8 val, u8 addr) { 
+void CMOS_WRITE(unsigned char val, unsigned char addr) { 
     IoOutputByte(0x70,addr);
     IoOutputByte(0x71,val); 
 }
 
-void BiosCmosWrite(u8 bAds, u8 bData) {
+void BiosCmosWrite(unsigned char bAds, unsigned char bData) {
     IoOutputByte(0x70, bAds);
     IoOutputByte(0x71, bData);
 
@@ -125,7 +127,7 @@ void BiosCmosWrite(u8 bAds, u8 bData) {
     IoOutputByte(0x73, bData);
 }
 
-u8 BiosCmosRead(u8 bAds)
+unsigned char BiosCmosRead(unsigned char bAds)
 {
     IoOutputByte(0x72, bAds);
     return IoInputByte(0x73);
@@ -159,7 +161,7 @@ void rtc_set_checksum(int range_start, int range_end, int cks_loc)
 
 void BootAGPBUSInitialization(void)
 {
-    u32 temp;
+    unsigned int temp;
     PciWriteDword(BUS_0, DEV_1, FUNC_0, 0x54,   PciReadDword(BUS_0, DEV_1, FUNC_0, 0x54) | 0x88000000 );
     
     PciWriteDword(BUS_0, DEV_0, FUNC_0, 0x64,   (PciReadDword(BUS_0, DEV_0, FUNC_0, 0x64))| 0x88000000 );
@@ -239,8 +241,8 @@ void BootPciPeripheralInitialization()
     IoOutputByte(0x92, 0x01);
     IoOutputByte(0xcf9, 0x0);    // Reset Port
         IoOutputByte(0x43, 0x36);             // Timer 0 (system time): mode 3
-        IoOutputByte(0x40, 0xFF);              // 18.2Hz (1.19318MHz/65535)
-        IoOutputByte(0x40, 0xFF);
+        IoOutputByte(0x40, 0xA9);              // 1000.15Hz (1.19318MHz/1193)
+        IoOutputByte(0x40, 0x04);
         IoOutputByte(0x43, 0x54);             // Timer 1 (ISA refresh): mode 2
         IoOutputByte(0x41, 18);                // 64KHz (1.19318MHz/18)
         IoOutputByte(0x00, 0);                 // clear base address 0
@@ -365,7 +367,7 @@ void BootPciPeripheralInitialization()
     PciWriteDword(BUS_0, DEV_3, FUNC_0, 4, PciReadDword(BUS_0, DEV_3, FUNC_0, 4) | 7 );
     PciWriteDword(BUS_0, DEV_3, FUNC_0, 0x10, 0xfed08000);    // memory base address 0xfed08000
     PciWriteDword(BUS_0, DEV_3, FUNC_0, 0x3c, (PciReadDword(BUS_0, DEV_3, FUNC_0, 0x3c) &0xffff0000) | 0x0009 );
-    PciWriteDword(BUS_0, DEV_3, FUNC_0, 0x50, 0x00000030);  // actually u8?
+    PciWriteDword(BUS_0, DEV_3, FUNC_0, 0x50, 0x00000030);  // actually unsigned char?
 
     // Bus 0, Device 6, Function 0 = nForce Audio Codec Interface - verified with kern1.1
     PciWriteDword(BUS_0, DEV_6, FUNC_0, 4, PciReadDword(BUS_0, DEV_6, FUNC_0, 4) | 7 );

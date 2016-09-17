@@ -7,10 +7,12 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "include/config.h"
-#include "TextMenu.h"
+#include "MenuInits.h"
+#include "config.h"
 #include "lpcmod_v1.h"
 #include "VideoInitialization.h"
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 TEXTMENU *TextMenuInit(void) {
     
@@ -75,9 +77,9 @@ TEXTMENU *TextMenuInit(void) {
         strcpy(itemPtr->szCaption, "Flash menu");
         itemPtr->functionPtr=DrawChildTextMenu;
         if(LPCmodSettings.OSsettings.TSOPcontrol)
-            itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit();
+            itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit(NULL);
         else
-            itemPtr->functionDataPtr = (void *)BankSelectInit();
+            itemPtr->functionDataPtr = (void *)BankSelectInit(NULL);
         TextMenuAddItem(menuPtr, itemPtr);
     }
     else if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
@@ -86,7 +88,7 @@ TEXTMENU *TextMenuInit(void) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Flash menu");
         itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)BankSelectMenuInit();
+        itemPtr->functionDataPtr = (void *)BankSelectMenuInit(NULL);
         TextMenuAddItem(menuPtr, itemPtr);
     }
     else {
@@ -95,7 +97,7 @@ TEXTMENU *TextMenuInit(void) {
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Flash menu");
         itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)BankSelectInit();
+        itemPtr->functionDataPtr = (void *)BankSelectInit(NULL);
         TextMenuAddItem(menuPtr, itemPtr);
     }
 #endif

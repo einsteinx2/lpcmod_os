@@ -288,7 +288,7 @@ EXPORT_SYMBOL (usb_hcd_pci_remove);
  *
  * Store this function in the HCD's struct pci_driver as suspend().
  */
-int usb_hcd_pci_suspend (struct pci_dev *dev, u32 state)
+int usb_hcd_pci_suspend (struct pci_dev *dev, unsigned int state)
 {
     struct usb_hcd        *hcd;
     int            retval;

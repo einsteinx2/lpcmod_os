@@ -1,10 +1,14 @@
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "netif/etharp.h"
-#include "lwip/tcp.h" //old stack
-//#include "lwip/tcp_impl.h" //new stack WIP
+#include "lwip/tcp.h"
 #include "lwip/dhcp.h"
+#include "httpd.h"
 #include "boot.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "lib/cromwell/cromString.h"
+#include "string.h"
+#include <stdarg.h>
 
 struct eth_addr ethaddr = { 0, 0x0d, 0xff, 0xff, 0, 0 };
 
@@ -135,6 +139,17 @@ run_lwip (unsigned char flashType) {
     struct netif *netif;
     bool first = 1;
 
+    //Init a couple of Lwip globals because they seem to assume declared pointers are set to NULL by default.
+    //From tcp.c
+    tcp_listen_pcbs.listen_pcbs = NULL;
+    tcp_active_pcbs = NULL;
+    tcp_tw_pcbs = NULL;
+    tcp_tmp_pcb = NULL;
+
+    //from netif.c
+    netif_list = NULL;
+    netif_default = NULL;
+
     mem_init ();
     memp_init ();
     pbuf_init ();
@@ -143,13 +158,14 @@ run_lwip (unsigned char flashType) {
     udp_init ();
     tcp_init ();
     etharp_init ();
-    printk ("\n\n            TCP/IP initialized.\n");
+
+    printk ("\n            TCP/IP initialized.\n");
     netFlashOver = false;
 
     netif = netif_find("eb");   //Trying to find previously configured network interface
 
     if(netif == NULL){
-        /*debugSPIPrint(*/printk("\n       No configured network interface found. Creating one.");
+        debugSPIPrint("No configured network interface found. Creating one.");
         netif = (struct netif *)malloc(sizeof(struct netif));
         //Will never be removed for entire duration of program execution so no free()...
 
@@ -161,7 +177,7 @@ run_lwip (unsigned char flashType) {
         netif_add (netif, &ipaddr, &netmask, &gw, NULL, ebd_init, ip_input);
     }
     else{
-        /*debugSPIPrint*/printk("\n       Found previously configured network interface.");
+        debugSPIPrint("Found previously configured network interface.");
     }
     if (LPCmodSettings.OSsettings.useDHCP){
         //Re-run DHCP discover anyways just in case lease was revoked.
@@ -183,9 +199,7 @@ run_lwip (unsigned char flashType) {
                  LPCmodSettings.OSsettings.staticMask[2],
                  LPCmodSettings.OSsettings.staticMask[3]);
         netif_set_addr(netif, &ipaddr, &netmask, &gw);
-        //netif_set_ipaddr (&netif, &ipaddr);
-        //netif_set_netmask (&netif, &netmask);
-        //netif_set_gw (&netif, &gw);
+
         dhcp_inform (netif);
     }
 
@@ -222,8 +236,6 @@ run_lwip (unsigned char flashType) {
                 dhcp_fine_tmr ();
             }
             tcp_tmr ();
-            //else
-            //	printk("Got packet!! \n");
         }
     }
     return 0;   //Keep compiler happy

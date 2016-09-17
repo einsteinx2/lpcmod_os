@@ -1,3 +1,3 @@
-O_TARGET := BootLibrary.o BootParser.o setup.o vsprintf.o Gentoox.o LED.o ProgressBar.o ConfirmDialog.o OnScreenKeyboard.o crc32.o strtol.o
+O_TARGET := BootLibrary.o setup.o vsprintf.o Gentoox.o LED.o crc32.o sortHelpers.o
 
 include $(TOPDIR)/Rules.make

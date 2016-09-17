@@ -7,20 +7,18 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "boot.h"
+#include "MenuInits.h"
 #include "video.h"
-#include "memory_layout.h"
-#include <shared.h>
-#include <filesys.h>
-#include "rc4.h"
-#include "sha1.h"
+#include "i2c.h"
 #include "BootFATX.h"
-#include "xbox.h"
 #include "BootFlash.h"
-#include "cpu.h"
-#include "VideoInitialization.h"
-#include "TextMenu.h"
 #include "lpcmod_v1.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "lib/cromwell/cromString.h"
+#include "lib/time/timeManagement.h"
+#include "xblast/scriptEngine/xblastScriptEngine.h"
+#include "FlashMenuActions.h"
+#include <stddef.h>
 //CONFIGENTRY *LoadConfigCD(int);
 //TEXTMENU *TextMenuInit(void);
 void freeTextMenuAllocMem(TEXTMENU* menu);
@@ -31,12 +29,12 @@ void AdvancedMenu(void *textmenu) {
 
 void assertBankScriptExecBankBoot(void * data){
     FATXFILEINFO fileinfo;
-    u8 bank = *(u8 *)data;
+    int bank = *(unsigned char *)data;
 
     if(LPCmodSettings.OSsettings.runBankScript){
         extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
         if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
-                runScript(fileinfo.buffer, fileinfo.fileSize, 1, &bank);
+                runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
                 free(fileinfo.buffer);
         }
     }
@@ -46,12 +44,12 @@ void assertBankScriptExecBankBoot(void * data){
 
 void assertBankScriptExecTSOPBoot(void * data){
     FATXFILEINFO fileinfo;
-    u8 bank = *(u8 *)data;
+    int bank = *(unsigned char *)data;
 
     if(LPCmodSettings.OSsettings.runBankScript){
         extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
         if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
-                runScript(fileinfo.buffer, fileinfo.fileSize, 1, &bank);
+                runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
                 free(fileinfo.buffer);
         }
     }
@@ -60,7 +58,7 @@ void assertBankScriptExecTSOPBoot(void * data){
 }
 
 // Booting Original Bios
-void BootOriginalBios(u8 bank) {
+void BootOriginalBios(unsigned char bank) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
     
@@ -83,7 +81,7 @@ void BootOriginalBios(u8 bank) {
 }    
 
 // Booting bank Modbios
-void BootModBios(u8 bank) {
+void BootModBios(unsigned char bank) {
     BootFlashSaveOSSettings();
     assertWriteEEPROM();
     switchBootBank(bank);
@@ -212,7 +210,7 @@ void ResetDrawChildTextMenu(void *menu) {
     //freeTextMenuAllocMem(resetSelection);
 }
 
-void DrawLargeHDDTextMenu(u8 drive){
+void DrawLargeHDDTextMenu(unsigned char drive){
     TEXTMENU *menuPtr;
     breakOutOfMenu = 1;
     menuPtr = (TEXTMENU *)LargeHDDMenuInit((void *)&drive);

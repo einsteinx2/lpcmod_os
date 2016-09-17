@@ -164,7 +164,7 @@ struct usb_tt {
 struct usb_tt_clear {
     struct list_head    clear_list;
     unsigned        tt;
-    u16            devinfo;
+    unsigned short            devinfo;
 };
 
 extern void usb_hub_tt_clear_buffer (struct usb_device *dev, int pipe);

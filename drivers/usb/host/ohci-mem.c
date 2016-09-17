@@ -23,6 +23,8 @@
 
 /*-------------------------------------------------------------------------*/
 
+#include "string.h"
+
 static struct usb_hcd *ohci_hcd_alloc (void)
 {
     struct ohci_hcd *ohci;

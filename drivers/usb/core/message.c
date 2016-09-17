@@ -11,9 +11,11 @@
 #include <asm/byteorder.h>
 #else
 #include "../usb_wrapper.h"
+#include "string.h"
 #endif
 
 #include "hcd.h"    /* for usbcore internals */
+#include "lib/LPCMod/BootLPCMod.h"
 
 struct usb_api_data {
     wait_queue_head_t wqh;
@@ -836,7 +838,7 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
     /* prevent submissions using previous endpoint settings */
     iface_as = iface->altsetting + iface->act_altsetting;
     for (i = 0; i < iface_as->desc.bNumEndpoints; i++) {
-        u8    ep = iface_as->endpoint [i].desc.bEndpointAddress;
+        unsigned char    ep = iface_as->endpoint [i].desc.bEndpointAddress;
         int    out = !(ep & USB_DIR_IN);
 
         /* clear out hcd state, then usbcore state */
@@ -861,7 +863,7 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 
     iface_as = &iface->altsetting[alternate];
     for (i = 0; i < iface_as->desc.bNumEndpoints; i++) {
-        u8    ep = iface_as->endpoint[i].desc.bEndpointAddress;
+        unsigned char    ep = iface_as->endpoint[i].desc.bEndpointAddress;
         int    out = !(ep & USB_DIR_IN);
 
         ep &= USB_ENDPOINT_NUMBER_MASK;

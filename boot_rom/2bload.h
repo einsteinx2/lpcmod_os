@@ -49,22 +49,22 @@ enum {
 /* ----------------------------  IO primitives -----------------------------------------------------------
 */
 
-static __inline void IoOutputByte(u16 wAds, u8 bValue) {
+static __inline void IoOutputByte(unsigned short wAds, unsigned char bValue) {
     __asm__ __volatile__ ("outb %b0,%w1": :"a" (bValue), "Nd" (wAds));
 }
 
-static __inline void IoOutputWord(u16 wAds, u16 wValue) {
+static __inline void IoOutputWord(unsigned short wAds, unsigned short wValue) {
     __asm__ __volatile__ ("outw %0,%w1": :"a" (wValue), "Nd" (wAds));
     }
 
-static __inline u8 IoInputByte(u16 wAds) {
+static __inline unsigned char IoInputByte(unsigned short wAds) {
   unsigned char _v;
   __asm__ __volatile__ ("inb %w1,%0":"=a" (_v):"Nd" (wAds));
   return _v;
 }
 
-static __inline u16 IoInputWord(u16 wAds) {
-  u16 _v;
+static __inline unsigned short IoInputWord(unsigned short wAds) {
+  unsigned short _v;
   __asm__ __volatile__ ("inw %w1,%0":"=a" (_v):"Nd" (wAds));
   return _v;
 }
@@ -72,7 +72,7 @@ static __inline u16 IoInputWord(u16 wAds) {
 // boot process
 int BootPerformPicChallengeResponseAction(void);
 // LED control (see associated enum above)
-//int I2cSetFrontpanelLed(u8 b);
+//int I2cSetFrontpanelLed(unsigned char b);
 
 ////////// BootResetActions.c
 
@@ -80,11 +80,11 @@ void BootStartBiosLoader(void);
 
 ///////// BootPerformPicChallengeResponseAction.c
 
-int I2CTransmitWord(u8 bPicAddressI2cFormat, u16 wDataToWrite);
-int I2CTransmitByteGetReturn(u8 bPicAddressI2cFormat, u8 bDataToWrite);
+int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWrite);
+int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char bDataToWrite);
 
-void *memcpy(void *dest, const void *src,  size_t size);
-void *memset(void *dest, int data,  size_t size);
+void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n);
+void *memset (void *__s, int __c, size_t __n);
 int memcmp(const void *pb, const void *pb1, size_t n);
 
 unsigned char *BufferIN;

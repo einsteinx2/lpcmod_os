@@ -1,6 +1,7 @@
 #include "boot.h"
 #include "config.h"
 #include "cpu.h"
+#include "cromwell.h"
 
 struct ioapicreg {
     unsigned int reg;

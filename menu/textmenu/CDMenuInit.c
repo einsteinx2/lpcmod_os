@@ -7,10 +7,11 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "MenuInits.h"
 #include "include/boot.h"
 #include "BootIde.h"
-#include "TextMenu.h"
 #include "CDMenuActions.h"
+#include "string.h"
 
 TEXTMENU *CDMenuInit(void) {
     TEXTMENUITEM *itemPtr;

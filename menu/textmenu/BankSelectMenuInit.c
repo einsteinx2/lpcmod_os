@@ -8,13 +8,13 @@
  ***************************************************************************
 */
 
+#include "MenuInits.h"
 #include "lpcmod_v1.h"
 #include "config.h"
-#include "TextMenu.h"
 #include "FlashMenuActions.h"
 #include "boot.h"
-
-TEXTMENU* BankSelectInit(void *);
+#include "string.h"
+#include "lib/LPCMod/BootLPCMod.h"
 
 
 TEXTMENU *BankSelectMenuInit(void * bank) {
@@ -33,8 +33,8 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank0 (512KB)");
     itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNK512;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr = BNK512;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -43,8 +43,8 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank1 (256KB)");
     itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNK256;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr = BNK256;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -53,8 +53,8 @@ TEXTMENU *BankSelectMenuInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Bank2 (OS)");
     itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNKOS;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr = BNKOS;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
     
@@ -77,8 +77,8 @@ TEXTMENU *TSOPBankSelectMenuInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "TSOP bank0");
     itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr = BNKTSOPSPLIT0;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -87,8 +87,8 @@ TEXTMENU *TSOPBankSelectMenuInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "TSOP bank1");
     itemPtr->functionPtr=(void *)BankSelectInit;
-    itemPtr->functionDataPtr = malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
+    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr = BNKTSOPSPLIT1;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 
@@ -104,39 +104,39 @@ TEXTMENU* BankSelectInit(void * bank) {
     menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
     memset(menuPtr,0x00,sizeof(TEXTMENU));
     if(TSOPRecoveryMode){
-        if(*(u8 *)bank == BNKFULLTSOP)
+        if(*(unsigned char *)bank == BNKFULLTSOP)
            strcpy(menuPtr->szCaption, "Flash menu : Full TSOP recover");
-        else if(*(u8 *)bank == BNKTSOPSPLIT0)
+        else if(*(unsigned char *)bank == BNKTSOPSPLIT0)
             strcpy(menuPtr->szCaption, "Flash menu : bank0 TSOP recover");
-        else if(*(u8 *)bank == BNKTSOPSPLIT1)
+        else if(*(unsigned char *)bank == BNKTSOPSPLIT1)
             strcpy(menuPtr->szCaption, "Flash menu : bank1 TSOP recover");
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchOSBank(*(u8 *)bank);
+        switchOSBank(*(unsigned char *)bank);
 
     }
     else if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
-        if(*(u8 *)bank == BNKOS)
+        if(*(unsigned char *)bank == BNKOS)
             strcpy(menuPtr->szCaption, "Flash menu : OS bank");
-        else if(*(u8 *)bank == BNK256)
+        else if(*(unsigned char *)bank == BNK256)
             strcpy(menuPtr->szCaption, "Flash menu : 256KB bank");
-        else if(*(u8 *)bank == BNK512)
+        else if(*(unsigned char *)bank == BNK512)
             strcpy(menuPtr->szCaption, "Flash menu : 512KB bank");
         else
             strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
 
-        switchOSBank(*(u8 *)bank);
+        switchOSBank(*(unsigned char *)bank);
     }
     else if(fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP){
         if(LPCmodSettings.OSsettings.TSOPcontrol){
-    	    if(*(u8 *)bank == BNKTSOPSPLIT0)
+    	    if(*(unsigned char *)bank == BNKTSOPSPLIT0)
                 strcpy(menuPtr->szCaption, "Flash menu : TSOP bank0");
-            else if(*(u8 *)bank == BNKTSOPSPLIT1)
+            else if(*(unsigned char *)bank == BNKTSOPSPLIT1)
                 strcpy(menuPtr->szCaption, "Flash menu : TSOP bank1");
             else
                 strcpy(menuPtr->szCaption, "UNKNOWN BANK. GO BACK!");
-            switchOSBank(*(u8 *)bank);
+            switchOSBank(*(unsigned char *)bank);
         }
         else{
             strcpy(menuPtr->szCaption, "Flash menu : TSOP");
@@ -152,8 +152,8 @@ TEXTMENU* BankSelectInit(void * bank) {
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
        sprintf(itemPtr->szCaption,"Net Flash");
     itemPtr->functionPtr= enableNetflash;
-    itemPtr->functionDataPtr= malloc(sizeof(u8));
-        *(u8 *)itemPtr->functionDataPtr= BIOS_NETFLASH;
+    itemPtr->functionDataPtr= malloc(sizeof(unsigned char));
+        *(unsigned char *)itemPtr->functionDataPtr= BIOS_NETFLASH;
     TextMenuAddItem(menuPtr, itemPtr);
 #if DEV_FEATURES
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

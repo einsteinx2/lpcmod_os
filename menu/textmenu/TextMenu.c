@@ -9,8 +9,14 @@
 
 #include "TextMenu.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "string.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "xblast/settings/xblastSettingsChangeTracker.h"
+#include "lib/cromwell/cromString.h"
+#include "lib/time/timeManagement.h"
+
 int breakOutOfMenu=0;
-u32 temp, oldTemp; 
+unsigned int temp, oldTemp; 
 int timeRemain = 0;
 int oldTimeRemain = 0;
 int visibleCount = 0;
@@ -42,7 +48,7 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
     TEXTMENUITEM *item=NULL;
     int menucount;    
     
-    u8 uncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
+    unsigned char uncommittedChanges = LPCMod_CountNumberOfChangesInSettings();
 
     VIDEO_CURSOR_POSX=75;
     VIDEO_CURSOR_POSY=45;
@@ -122,8 +128,8 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
 
 void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
     temp = menu->timeout;
-    u32 COUNT_start;
-    COUNT_start = IoInputDword(0x8008);
+    unsigned int COUNT_start;
+    COUNT_start = getMS();
 
     TEXTMENUITEM *itemPtr, *selectedMenuItem, *firstVisibleMenuItem;
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
@@ -182,7 +188,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
                 }
             }
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1 || (u32)temp>(0x369E99*MENU_TIMEWAIT)) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1 || (unsigned int)temp>(0x369E99*MENU_TIMEWAIT)) {
             temp = 0;
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_ATTR=0xffffff;
@@ -306,9 +312,9 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem) {
         }
 
         if (temp != 0) {
-            temp = IoInputDword(0x8008) - COUNT_start;
+            temp = getMS() - COUNT_start;
             oldTimeRemain = timeRemain;
-            timeRemain = MENU_TIMEWAIT - temp/0x369E99;
+            timeRemain = MENU_TIMEWAIT - temp/1000;
             if (oldTimeRemain != timeRemain) {
                 BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
                 TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
@@ -343,7 +349,7 @@ void textMenuLCDPrint(TEXTMENU *menu, TEXTMENUITEM *selectedItem){
                 xLCD.PrintLine[2](JUSTIFYLEFT, titleLine);
                 if(colon) {
                     memset(titleLine,0x20,xLCD.LineSize);            //Fill with "Space" characters.
-                    u8 nbChars = strlen(selectedItem->szParameter);        //Number of character in string
+                    unsigned char nbChars = strlen(selectedItem->szParameter);        //Number of character in string
                     for (i = 0; i < nbChars; i++){                //Justify text to the right of the screen.
                         titleLine[xLCD.LineSize - nbChars + i] = selectedItem->szParameter[i];
                     }

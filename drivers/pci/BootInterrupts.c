@@ -10,8 +10,10 @@
  */
 
 #include "boot.h"
-#include "config.h"
+#include "i2c.h"
 #include "cpu.h"
+#include "lib/LPCMod/BootLPCMod.h"
+#include "lib/time/timeManagement.h"
 
 volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
 volatile bool fSeenPowerdown;
@@ -62,124 +64,53 @@ extern void IntHandlerException10(void);
 // structure defining our ISRs
 
 typedef struct {
-    u8 m_bInterruptCpu;
-    u32 m_dwpVector;
+    unsigned char m_bInterruptCpu;
+    unsigned int m_dwpVector;
 } ISR_PREP;
 
 const ISR_PREP isrprep[] = {
-    { 0x00, (u32)IntHandlerException0 },
-    { 0x01, (u32)IntHandlerException1 },
-    { 0x02, (u32)IntHandlerException2 },
-    { 0x03, (u32)IntHandlerException3 },
-    { 0x04, (u32)IntHandlerException4 },
-    { 0x05, (u32)IntHandlerException5 },
-    { 0x06, (u32)IntHandlerException6 },
-    { 0x07, (u32)IntHandlerException7 },
-    { 0x08, (u32)IntHandlerException8 },
-    { 0x09, (u32)IntHandlerException9 },
-    { 0x0a, (u32)IntHandlerExceptionA },
-    { 0x0b, (u32)IntHandlerExceptionB },
-    { 0x0c, (u32)IntHandlerExceptionC },
-    { 0x0d, (u32)IntHandlerExceptionD },
-    { 0x0e, (u32)IntHandlerExceptionE },
-    { 0x0f, (u32)IntHandlerExceptionF },
-    { 0x10, (u32)IntHandlerException10 },
+    { 0x00, (unsigned int)IntHandlerException0 },
+    { 0x01, (unsigned int)IntHandlerException1 },
+    { 0x02, (unsigned int)IntHandlerException2 },
+    { 0x03, (unsigned int)IntHandlerException3 },
+    { 0x04, (unsigned int)IntHandlerException4 },
+    { 0x05, (unsigned int)IntHandlerException5 },
+    { 0x06, (unsigned int)IntHandlerException6 },
+    { 0x07, (unsigned int)IntHandlerException7 },
+    { 0x08, (unsigned int)IntHandlerException8 },
+    { 0x09, (unsigned int)IntHandlerException9 },
+    { 0x0a, (unsigned int)IntHandlerExceptionA },
+    { 0x0b, (unsigned int)IntHandlerExceptionB },
+    { 0x0c, (unsigned int)IntHandlerExceptionC },
+    { 0x0d, (unsigned int)IntHandlerExceptionD },
+    { 0x0e, (unsigned int)IntHandlerExceptionE },
+    { 0x0f, (unsigned int)IntHandlerExceptionF },
+    { 0x10, (unsigned int)IntHandlerException10 },
 
             // interrupts from PIC1
 
-    { 0x20, (u32)IntHandlerTimer0 },
-    { 0x21, (u32)IntHandler1 },
-    { 0x22, (u32)IntHandler2 },
-    { 0x23, (u32)IntHandler3 },
-    { 0x24, (u32)IntHandler4 },
-    { 0x25, (u32)IntHandler5 },
-    { 0x26, (u32)IntHandler6 },
-    { 0x27, (u32)IntHandler7 },
+    { 0x20, (unsigned int)IntHandlerTimer0 },
+    { 0x21, (unsigned int)IntHandler1 },
+    { 0x22, (unsigned int)IntHandler2 },
+    { 0x23, (unsigned int)IntHandler3 },
+    { 0x24, (unsigned int)IntHandler4 },
+    { 0x25, (unsigned int)IntHandler5 },
+    { 0x26, (unsigned int)IntHandler6 },
+    { 0x27, (unsigned int)IntHandler7 },
 
             // interrupts from PIC 2
 
-    { 0x70, (u32)IntHandler8 },
-    { 0x71, (u32)IntHandler9 },
-    { 0x72, (u32)IntHandler10 },
-    { 0x73, (u32)IntHandlerI2C },
-    { 0x74, (u32)IntHandlerSmc },
-    { 0x75, (u32)IntHandler13 },
-    { 0x76, (u32)IntHandlerIde },
-    { 0x77, (u32)IntHandler15 },
+    { 0x70, (unsigned int)IntHandler8 },
+    { 0x71, (unsigned int)IntHandler9 },
+    { 0x72, (unsigned int)IntHandler10 },
+    { 0x73, (unsigned int)IntHandlerI2C },
+    { 0x74, (unsigned int)IntHandlerSmc },
+    { 0x75, (unsigned int)IntHandler13 },
+    { 0x76, (unsigned int)IntHandlerIde },
+    { 0x77, (unsigned int)IntHandler15 },
 
     { 0, 0 }
 };
-
-
-
-void wait_smalldelay(void) {
-    wait_us(1);                 //ATA specs specifies a 600ns delay between sending a command and checking BSY.
-                                //1us is more than acceptable here.
-}
-
-void wait_us(u32 ticks) {
-        
-    /*
-          32 Bit range = 1200 sec ! => 20 min
-        1. sec = 0x369E99
-        1 ms =  3579,545
-                    
-    */
-    
-    u32 COUNT_start;
-    u32 temp;
-    u32 COUNT_TO;
-    u32 HH;
-    
-    // Maximum Input range
-    if (ticks>(1200*1000)) ticks = 1200*1000;
-    
-    COUNT_TO = (u32) ((float)(ticks*3.579545));
-    COUNT_start = IoInputDword(0x8008);    
-
-    while(1) {
-
-        // Reads out the System timer
-        HH = IoInputDword(0x8008);        
-        temp = HH-COUNT_start;
-        // We reached the counter
-        if (temp>COUNT_TO) break;
-    
-    };
-    
-
-}
-
-void wait_ms(u32 ticks) {
-        
-    /*
-          32 Bit range = 1200 sec ! => 20 min
-        1. sec = 0x369E99
-        1 ms =  3579,545
-                    
-    */
-    
-    u32 COUNT_start;
-    u32 temp;
-    u32 COUNT_TO;
-    u32 HH;
-    
-    // Maximum Input range
-    if (ticks>(1200*1000)) ticks = 1200*1000;
-    
-    COUNT_TO = (u32) ((float)(ticks*3579.545));
-    COUNT_start = IoInputDword(0x8008);    
-
-    while(1) {
-        // Reads out the System timer
-        HH = IoInputDword(0x8008);        
-        temp = HH-COUNT_start;
-        // We reached the counter
-        if (temp>COUNT_TO) break;
-    };
-    
-
-}
 
 void BootInterruptsWriteIdt() {
 
@@ -208,12 +139,12 @@ void BootInterruptsWriteIdt() {
         ptspmi[n].m_wSelector=0x10;
         ptspmi[n].m_wType=0x8e00;  // interrupt gate, 32-bit
         if(n==isrprep[n1].m_bInterruptCpu) {  // is it next on our prep list?  If so, stick it in
-            ptspmi[n].m_wHandlerHighAddressLow16=(u16)isrprep[n1].m_dwpVector;
-            ptspmi[n].m_wHandlerLinearAddressHigh16=(u16)(((u32)isrprep[n1].m_dwpVector)>>16);
+            ptspmi[n].m_wHandlerHighAddressLow16=(unsigned short)isrprep[n1].m_dwpVector;
+            ptspmi[n].m_wHandlerLinearAddressHigh16=(unsigned short)(((unsigned int)isrprep[n1].m_dwpVector)>>16);
             n1++;
         } else { // otherwise default handler (pretty useless, but will catch it)
-            ptspmi[n].m_wHandlerHighAddressLow16=(u16)((u32)IntHandlerUnused);
-            ptspmi[n].m_wHandlerLinearAddressHigh16=(u16)(((u32)IntHandlerUnused)>>16);
+            ptspmi[n].m_wHandlerHighAddressLow16=(unsigned short)((unsigned int)IntHandlerUnused);
+            ptspmi[n].m_wHandlerLinearAddressHigh16=(unsigned short)(((unsigned int)IntHandlerUnused)>>16);
         }
     }
 
@@ -246,9 +177,9 @@ void BootInterruptsWriteIdt() {
 
 void IntHandlerCSmc(void)
 {
-    u8 bStatus, nBit=0;
+    unsigned char bStatus, nBit=0;
         unsigned int temp;
-        u8 temp_AV_mode;
+        unsigned char temp_AV_mode;
         
     nCountInterruptsSmc++;
    
@@ -269,7 +200,7 @@ void IntHandlerCSmc(void)
     
     while(nBit<7) {
         if(bStatus & 1) {
-            u8 b=0x04;
+            unsigned char b=0x04;
                    switch(nBit) {
                 case 0: // POWERDOWN EVENT
                     debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
@@ -385,7 +316,7 @@ void IntHandlerUnusedC2(void)
 
 
 
-// this guy is getting called at 18.2Hz
+// this guy is getting called at 1000.15Hz, 1ms
 
 void IntHandlerCTimer0(void)
 {
@@ -419,7 +350,7 @@ void IntHandler2C(void)
 
 void IntHandler3VsyncC(void)  // video VSYNC
 {
-    *((volatile u32 *)0xfd600100)=0x1;  // clear VSYNC int
+    *((volatile unsigned int *)0xfd600100)=0x1;  // clear VSYNC int
 } 
 
 
@@ -476,10 +407,10 @@ void IntHandlerException3C(void) {    debugSPIPrintInt("CPU Exc: Breakpoint\n");
 void IntHandlerException4C(void) {    debugSPIPrintInt("CPU Exc: Overflow Trap\n");    while(1) ; }
 void IntHandlerException5C(void) {    debugSPIPrintInt("CPU Exc: BOUND exceeded\n");    while(1) ; }
 void IntHandlerException6C(void) {
-    u32 dwEbp=0;
+    unsigned int dwEbp=0;
     debugSPIPrintInt("CPU Exc: Invalid Opcode\n");
         __asm__ __volatile__ ( " mov %%esp, %%eax\n " : "=a" (dwEbp) );
-        debugSPIPrintInt("   %08lX:%08lX\n", *((volatile u32 *)(dwEbp+0x48)), *((volatile u32 *)(dwEbp+0x44)));
+        debugSPIPrintInt("   %08lX:%08lX\n", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
     while(1) ;
 }
 //void IntHandlerException7C(void) {    debugSPIPrintInt("CPU Exc: Coprocessor Absent\n");    while(1) ; }

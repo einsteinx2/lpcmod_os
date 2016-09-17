@@ -14,6 +14,7 @@
 #include "xcalibur.h"
 #include "xcalibur-regs.h"
 #include "encoder.h"
+#include "string.h"
 
 int xcalibur_calc_hdtv_mode(
     xbox_hdtv_mode hdtv_mode,

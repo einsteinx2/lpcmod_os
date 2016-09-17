@@ -1,5 +1,5 @@
-#CC	= gcc-3.3 #Left for legacy purpose
-PREFIX = i686-linux-gnu-
+#CC	= gcc-3.30 #Left for legacy purpose
+PREFIX = #i686-linux-gnu-
 CC	= ${PREFIX}gcc  #Builds find using gcc 5.4.0 on a x86 Ubuntu system 
 
 # prepare check for gcc 3.3, $(GCC_3.3) will either be 0 or 1
@@ -7,22 +7,23 @@ GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)
 
 GCC_4.2 := $(shell expr `$(CC) -dumpversion` \>= 4.2)
 
+DEBUG := yes
 ETHERBOOT := yes
+
 INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/cdrom \
 	-I$(TOPDIR)/fs/fatx -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/eeprom -I$(TOPDIR)/lib/crypt \
 	-I$(TOPDIR)/drivers/video -I$(TOPDIR)/drivers/ide -I$(TOPDIR)/drivers/flash -I$(TOPDIR)/lib/misc \
-	-I$(TOPDIR)/boot_xbe/ -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/font \
-	-I$(TOPDIR)/startuploader -I$(TOPDIR)/drivers/cpu \
+	-I$(TOPDIR)/boot_xbe/ -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/cromwell/font \
+	-I$(TOPDIR)/startuploader -I$(TOPDIR)/drivers/cpu -I$(TOPDIR)/menu \
 	-I$(TOPDIR)/lib/jpeg/ -I$(TOPDIR)/menu/actions -I$(TOPDIR)/menu/textmenu \
-	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/lwip/src/include \
+	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/lwip -I$(TOPDIR)/lwip/src/include \
 	-I$(TOPDIR)/lwip/src/include/ipv4
-
 
 #These are intended to be non-overridable.
 CROM_CFLAGS=$(INCLUDE)
 
 #You can override these if you wish.
-CFLAGS= -Os -march=pentium -m32 -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type
+CFLAGS= -Os -march=pentium -m32 -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type -ffreestanding
 
 # add the option for gcc 3.3 only, again, non-overridable
 ifeq ($(GCC_3.3), 1)
@@ -31,7 +32,7 @@ endif
 
 # add the option for gcc 4.2 only, again, non-overridable
 ifeq ($(GCC_4.2), 1)
-CFLAGS += -fno-stack-protector
+CFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
 endif
 
 LD      = ${PREFIX}ld
@@ -40,16 +41,22 @@ OBJCOPY = ${PREFIX}objcopy
 export CC
 
 TOPDIR  := $(shell /bin/pwd)
-SUBDIRS	= boot_rom fs drivers lib boot menu lwip
+SUBDIRS	= boot_rom fs drivers lib boot menu lwip xblast
 #### Etherboot specific stuff
 ifeq ($(ETHERBOOT), yes)
 ETH_SUBDIRS = etherboot
 CROM_CFLAGS	+= -DETHERBOOT
-ETH_INCLUDE = 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include	
-ETH_CFLAGS  = 	-Os -march=pentium -m32 -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe
+ETH_INCLUDE = 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include -I$(TOPDIR)
+ETH_CFLAGS  = 	-Os -march=pentium -m32 -Werror -Wreturn-type $(ETH_INCLUDE) -Wstrict-prototypes -fomit-frame-pointer -pipe -ffreestanding
 # add the option for gcc 4.2 only, again, non-overridable
 ifeq ($(GCC_4.2), 1)
-ETH_CFLAGS += -fno-stack-protector
+ETH_CFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
+endif
+
+ifeq ($(DEBUG), yes)
+DEBUG_FLAGS = -DDEV_FEATURES -DSPITRACE
+CROM_CFLAGS += $(DEBUG_FLAGS)
+ETH_CFLAGS += $(DEBUG_FLAGS)
 endif
 endif
 
@@ -96,7 +103,11 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootHddKey.o
 OBJECTS-CROM += $(TOPDIR)/obj/rc4.o
 OBJECTS-CROM += $(TOPDIR)/obj/sha1.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootVideoHelpers.o
+OBJECTS-CROM += $(TOPDIR)/obj/cromString.o
+OBJECTS-CROM += $(TOPDIR)/obj/string.o
+OBJECTS-CROM += $(TOPDIR)/obj/sortHelpers.o
 OBJECTS-CROM += $(TOPDIR)/obj/vsprintf.o
+OBJECTS-CROM += $(TOPDIR)/obj/timeManagement.o
 OBJECTS-CROM += $(TOPDIR)/obj/Gentoox.o
 OBJECTS-CROM += $(TOPDIR)/obj/LED.o
 OBJECTS-CROM += $(TOPDIR)/obj/IconMenu.o
@@ -104,11 +115,6 @@ OBJECTS-CROM += $(TOPDIR)/obj/IconMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/TextMenu.o
 OBJECTS-CROM += $(TOPDIR)/obj/TextMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/BankSelectMenuInit.o
-#OBJECTS-CROM += $(TOPDIR)/obj/IPMenuInit.o
-#OBJECTS-CROM += $(TOPDIR)/obj/URLMenuInit.o
-#OBJECTS-CROM += $(TOPDIR)/obj/KernelPathMenuInit.o
-#OBJECTS-CROM += $(TOPDIR)/obj/InitrdPathMenuInit.o
-#OBJECTS-CROM += $(TOPDIR)/obj/AppendPathMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/VideoMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/ResetMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/HDDFlashMenuInit.o
@@ -131,11 +137,6 @@ OBJECTS-CROM += $(TOPDIR)/obj/VideoMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/InfoMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/ResetMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/FlashMenuActions.o
-#OBJECTS-CROM += $(TOPDIR)/obj/IPMenuActions.o
-#OBJECTS-CROM += $(TOPDIR)/obj/URLMenuActions.o
-#OBJECTS-CROM += $(TOPDIR)/obj/KernelPathMenuActions.o
-#OBJECTS-CROM += $(TOPDIR)/obj/InitrdPathMenuActions.o
-#OBJECTS-CROM += $(TOPDIR)/obj/AppendPathMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/HDDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/CDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LEDMenuActions.o
@@ -158,25 +159,21 @@ OBJECTS-CROM += $(TOPDIR)/obj/cputools.o
 OBJECTS-CROM += $(TOPDIR)/obj/microcode.o
 OBJECTS-CROM += $(TOPDIR)/obj/ioapic.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootInterrupts.o
-#OBJECTS-CROM += $(TOPDIR)/obj/fsys_reiserfs.o
-#OBJECTS-CROM += $(TOPDIR)/obj/fsys_ext2fs.o
-#OBJECTS-CROM += $(TOPDIR)/obj/char_io.o
-#OBJECTS-CROM += $(TOPDIR)/obj/disk_io.o
-#OBJECTS-CROM += $(TOPDIR)/obj/decode-jpg.o
 OBJECTS-CROM += $(TOPDIR)/obj/nanojpeg.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFlash.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFlashUi.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootEEPROM.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLPCMod.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
-OBJECTS-CROM += $(TOPDIR)/obj/BootParser.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
 OBJECTS-CROM += $(TOPDIR)/obj/md5.o
-#OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 OBJECTS-CROM += $(TOPDIR)/obj/strtol.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
+OBJECTS-CROM += $(TOPDIR)/obj/xblastSettings.o
+OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsChangeTracker.o
+OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsImportExport.o
 #USB
 OBJECTS-CROM += $(TOPDIR)/obj/config.o 
 OBJECTS-CROM += $(TOPDIR)/obj/hcd-pci.o
@@ -197,22 +194,16 @@ OBJECTS-CROM += $(TOPDIR)/obj/xpad.o
 OBJECTS-CROM += $(TOPDIR)/obj/risefall.o
 #ETHERBOOT
 ifeq ($(ETHERBOOT), yes)
-OBJECTS-CROM += $(TOPDIR)/obj/nfs.o
 OBJECTS-CROM += $(TOPDIR)/obj/nic.o
-#OBJECTS-CROM += $(TOPDIR)/obj/osloader.o
 OBJECTS-CROM += $(TOPDIR)/obj/xbox.o
 OBJECTS-CROM += $(TOPDIR)/obj/forcedeth.o
-OBJECTS-CROM += $(TOPDIR)/obj/xbox_misc.o
 OBJECTS-CROM += $(TOPDIR)/obj/xbox_pci.o
 OBJECTS-CROM += $(TOPDIR)/obj/etherboot_config.o
-OBJECTS-CROM += $(TOPDIR)/obj/xbox_main.o
-OBJECTS-CROM += $(TOPDIR)/obj/elf.o
 endif
 
-#SUBDIRS += networktools #tcpListener
+#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
 OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
-#New stack WIP
-#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o def.o inet_chksum.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+
 OBJECTS-CROM += $(OBJECTS-LWIP)
 
 RESOURCES = $(TOPDIR)/obj/backdrop.elf
@@ -225,7 +216,7 @@ BOOT_ETH_DIR = boot_eth/ethboot
 BOOT_ETH_SUBDIRS = ethsubdirs
 endif
 
-all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe vmlboot $(BOOT_ETH_DIR) cromwell.bin imagecompress 256KBBinGen crcbin
+all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe xbeboot vmlboot vml_startup $(BOOT_ETH_DIR) cromwell.bin imagecompress 256KBBinGen crcbin
 
 ifeq ($(ETHERBOOT), yes)
 ethsubdirs: $(patsubst %, _dir_%, $(ETH_SUBDIRS))
@@ -249,6 +240,7 @@ clean:
 	rm -f $(TOPDIR)/obj/*.gz 
 	rm -f $(TOPDIR)/obj/*.bin 
 	rm -f $(TOPDIR)/obj/*.elf
+	rm -f $(TOPDIR)/obj/*.map
 	rm -f $(TOPDIR)/image/*.bin 
 	rm -f $(TOPDIR)/image/*.xbe 
 	rm -f $(TOPDIR)/xbe/*.xbe $(TOPDIR)/xbe/*.bin
@@ -268,40 +260,50 @@ obj/image-crom.bin:
 	${LD} -o obj/image-crom.elf ${OBJECTS-CROM} ${RESOURCES} ${LDFLAGS-ROM} -Map $(TOPDIR)/obj/image-crom.map
 	${OBJCOPY} --output-target=binary --strip-all obj/image-crom.elf $@
 
-vmlboot: ${OBJECTS-VML}
+vmlboot: vml_startup
 	${LD} -o $(TOPDIR)/obj/vmlboot.elf ${OBJECTS-VML} ${LDFLAGS-VMLBOOT}
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/vmlboot.elf $(TOPDIR)/boot_vml/disk/$@
+	
+vml_startup:
+	$(CC) ${CFLAGS} -c -o ${OBJECTS-VML} boot_vml/vml_Startup.S
 
 ifeq ($(ETHERBOOT), yes)
-boot_eth/ethboot: ${OBJECTS-ETH} obj/image-crom.bin
+boot_eth/ethboot: ethboot obj/image-crom.bin
 	${LD} -o obj/ethboot.elf ${OBJECTS-ETH} -b binary obj/image-crom.bin ${LDFLAGS-ETHBOOT} -Map $(TOPDIR)/obj/ethboot.map
 	${OBJCOPY} --output-target=binary --strip-all obj/ethboot.elf obj/ethboot.bin
 	perl -I boot_eth boot_eth/mknbi.pl --output=$@ obj/ethboot.bin
+	
+ethboot:
+	$(CC) ${CFLAGS} -c -o ${OBJECTS-ETH} boot_eth/eth_Startup.S
 endif
 
-xromwell.xbe: ${OBJECTS-XBE}
+xromwell.xbe: xbeboot
 	${LD} -o $(TOPDIR)/obj/xbeboot.elf ${OBJECTS-XBE} ${LDFLAGS-XBEBOOT}
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/xbeboot.elf $(TOPDIR)/xbe/XBlast\ OS.xbe
+	
+xbeboot:
+	$(CC) ${CFLAGS} -c -o ${OBJECTS-XBE} boot_xbe/xbeboot.S
 
 cromwell.bin:
 	${LD} -o $(TOPDIR)/obj/2lbimage.elf ${OBJECTS-ROMBOOT} ${LDFLAGS-ROMBOOT} -Map $(TOPDIR)/obj/2lbimage.map
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/2lbimage.elf $(TOPDIR)/obj/2blimage.bin
 
 # This is a local executable, so don't use a cross compiler...
-bin/imagebld: lib/imagebld/imagebld.c lib/crypt/sha1.c lib/crypt/md5.c
-	gcc -Ilib/crypt -o bin/sha1.o -c lib/crypt/sha1.c
-	gcc -Ilib/crypt -o bin/md5.o -c lib/crypt/md5.c
-	gcc -Ilib/crypt -o bin/imagebld.o -c lib/imagebld/imagebld.c
-	gcc -o bin/imagebld bin/imagebld.o bin/sha1.o bin/md5.o
+bin/imagebld: pc_tools/imagebld/imagebld.c lib/crypt/sha1.c lib/crypt/md5.c
+	gcc -O0 -g -Ilib/crypt -o bin/sha1.o -c lib/crypt/sha1.c
+	gcc -O0 -g -Ilib/crypt -o bin/md5.o -c lib/crypt/md5.c
+	gcc -O0 -g -Ilib/crypt -o bin/imagebld.o -c pc_tools/imagebld/imagebld.c
+	gcc -O0 -g -o bin/imagebld bin/imagebld.o bin/sha1.o bin/md5.o
 
 # Same here.
 crcbin:
-	gcc -o bin/crcbin.o -c lib/crcbin/crcbin.c
-	gcc -o bin/crcbin bin/crcbin.o obj/crc32.o
+	gcc -o bin/crcbin.o -c pc_tools/crcbin/crcbin.c
+	gcc -o bin/crc32.o -c lib/misc/crc32.c
+	gcc -o bin/crcbin bin/crcbin.o bin/crc32.o
 	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
 scriptchecker:
-	gcc -g -o bin/scriptChecker lib/scriptChecker/scriptChecker.c
+	gcc -g -o bin/scriptChecker pc_tools/scriptChecker/scriptChecker.c
 	
 imagecompress: obj/image-crom.bin bin/imagebld 
 	cp obj/image-crom.bin obj/c

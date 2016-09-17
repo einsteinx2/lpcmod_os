@@ -16,6 +16,7 @@
 #else
 #include "../usb_wrapper.h"
 #include "hcd.h"
+#include "string.h"
 #endif
 
 /**

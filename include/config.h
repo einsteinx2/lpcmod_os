@@ -3,7 +3,7 @@
 #define PROG_NAME "XBlast OS"
 
 //XBlast OS version number
-#define VERSION "0.35 (beta)"
+#define VERSION "0.41 (beta)"
 
 // selects between the supported video modes, see boot.h for enum listing those available
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600
@@ -28,8 +28,6 @@
 //shown unless you move the xpad. Just backdrop->boot, otherwise
 #define SILENT_MODE
 
-//Obsolete
-
 
 // display a line like Composite 480 detected if uncommented
 #undef REPORT_VIDEO_MODE
@@ -38,35 +36,8 @@
 #undef DISPLAY_MBR_INFO
 
 #undef DEBUG_MODE
-// enable logging to serial port.  You probably don't have this.
-#define INCLUDE_SERIAL 0
-// enable trace message printing for debugging - with serial only
-#define PRINT_TRACE 0
 // enable/ disable Etherboot
 #undef ETHERBOOT
 // enable/ disable LWIP
 #define LWIP
 
-// IP configuration for WebBoot
-#define WB_BLOCK_A 192
-#define WB_BLOCK_B 168
-#define WB_BLOCK_C 0
-#define WB_BLOCK_D 254
-#define WB_PORT 80
-
-// IP configuration for WebUpdate
-#define WF_BLOCK_A 192
-#define WF_BLOCK_B 168
-#define WF_BLOCK_C 0
-#define WF_BLOCK_D 254
-#define WF_PORT 80
-
-//To show/hide stuff from public releases. Set now but will need to be changed to 0 soon.
-#define DEV_FEATURES 0
-
-#if DEV_FEATURES == 1
-#define SPITRACE
-#endif
-
-//Print info from Int handlers. Absolutely remove when not debugging interrupts!
-//#define SPI_INT_TRACE
