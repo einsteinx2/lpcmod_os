@@ -11,11 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-<<<<<<< HEAD
 extern unsigned int crc32buf(unsigned char *buf, int len);
-=======
-
->>>>>>> branch 'master' of https://psyko_chewbacca@bitbucket.org/psyko_chewbacca/lpcmod_os.git
 void showUsage(const char *progname);
 
 

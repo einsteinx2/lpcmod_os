@@ -1,19 +1,9 @@
-<<<<<<< HEAD
 #include "ProgressBar.h"
 #include "boot.h"
 
 void DisplayProgressBar(int currentVal, int maxVal, unsigned long color) {
     int x,y,l,w,h,m;
     unsigned int *fb=(unsigned int*)FB_START;
-=======
-#include "boot.h"
-#include "BootFlash.h"
-#include "memory_layout.h"
-
-void DisplayProgressBar(int currentVal, int maxVal, unsigned long color) {
-    int x,y,l,w,h,m;
-    u32 *fb=(u32*)FB_START;
->>>>>>> branch 'master' of https://psyko_chewbacca@bitbucket.org/psyko_chewbacca/lpcmod_os.git
 
     if(maxVal<2){
         return;

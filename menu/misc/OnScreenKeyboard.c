@@ -7,7 +7,6 @@
  *                                                                         *
  ***************************************************************************/
 
-<<<<<<< HEAD
 #include "OnScreenKeyboard.h"
 #include "boot.h"
 #include "video.h"
@@ -52,49 +51,6 @@ void OnScreenKeyboard(char * string, unsigned char maxLength, unsigned char line
     bool refresh = true;
     bool charAccepted = false;
     unsigned char rowLength, stringLength;
-=======
-#include "boot.h"
-#include "video.h"
-#include "memory_layout.h"
-#include "lib/LPCMod/BootLCD.h"
-#include "NetworkMenuActions.h"
-
-#define FULL_KEYBOARD   0
-#define IP_KEYPAD       1
-#define HEX_KEYPAD      2
-
-char keymap[4][10] = {{'1','2','3','4','5','6','7','8','9','0'},
-                      {'A','B','C','D','E','F','G','H','I','J'},
-                      {'K','L','M','N','O','P','Q','R','S','T'},
-                      {'U','V','W','X','Y','Z',',','.','\'',';'}};
-
-char shiftkeymap[4][10] = {{'!','@','#','$','%','?','&','*','(',')'},
-                           {'a','b','c','d','e','f','g','h','i','j'},
-                           {'k','l','m','n','o','p','q','r','s','t'},
-                           {'u','v','w','x','y','z','-','+','\"',':'}};
-
-char ipKeypad[4][3] = {{'1','2','3'},
-                       {'4','5','6'},
-                       {'7','8','9'},
-                       {' ','0','.'}};
-
-char hexKeypad[4][4] = {{'A','1','2','3'},
-                       {'B','4','5','6'},
-                       {'C','7','8','9'},
-                       {'D','E','F','0'}};
-
-void OnScreenKeyboard(char * string, u8 maxLength, u8 line, u8 kbType) {
-    bool exit = false;
-//  bool result = false;        //Start assuming user will not change string.
-    u8 cursorposX = 0;
-    u8 cursorposY = 0;
-    u8 textpos = 0;
-    u8 x, y, i;
-    bool shift = false;
-    bool refresh = true;
-    bool charAccepted = false;
-    u8 rowLength, stringLength;
->>>>>>> branch 'master' of https://psyko_chewbacca@bitbucket.org/psyko_chewbacca/lpcmod_os.git
     char ipFieldLength, dotCount;     //Assume IP string is properly constructed.
     char limitFieldString[4] = {0, 0, 0, 0};    //To check if user enters a number bigger than 255 in IP Keypad.
     //Array of function pointers to let "line" value decide which function needs to be called.
