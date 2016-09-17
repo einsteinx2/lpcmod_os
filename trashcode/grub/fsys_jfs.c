@@ -103,6 +103,7 @@ next_extent (void)
 
 
 static void
+<<<<<<< HEAD
 di_read (unsigned int inum, dinode_t *di)
 {
     s64 key;
@@ -278,6 +279,183 @@ jfs_dir (char *dirname)
     unsigned int inum, parent_inum;
     s64 di_size;
     unsigned int di_mode;
+=======
+di_read (u32 inum, dinode_t *di)
+{
+    s64 key;
+    u32 xd, ioffset;
+    s64 offset;
+    xad_t *xad;
+    pxd_t pxd;
+
+    key = (((inum >> L2INOSPERIAG) << L2INOSPERIAG) + 4096) >> jfs.l2bsize;
+    xd = (inum & (INOSPERIAG - 1)) >> L2INOSPEREXT;
+    ioffset = ((inum & (INOSPERIAG - 1)) & (INOSPEREXT - 1)) << L2DISIZE;
+    xad = first_extent (fileset);
+    do {
+        offset = offsetXAD (xad);
+        if (isinxt (key, offset, lengthXAD (xad))) {
+            devread ((addressXAD (xad) + key - offset) << jfs.bdlog,
+                 3072 + xd*sizeof(pxd_t), sizeof(pxd_t), (char *)&pxd);
+            devread (addressPXD (&pxd) << jfs.bdlog,
+                 ioffset, DISIZE, (char *)di);
+            break;
+        }
+    } while ((xad = next_extent ()));
+}
+
+static ldtentry_t *
+next_dentry (void)
+{
+    ldtentry_t *de;
+    s8 *stbl;
+
+    if (jfs.dttype == DTTYPE_INLINE) {
+        if (jfs.sindex < jfs.slastindex) {
+            return (ldtentry_t *)&dtroot->slot[(int)dtroot->header.stbl[jfs.sindex++]];
+        }
+    } else {
+        de = (ldtentry_t *)dtpage->slot;
+        stbl = (s8 *)&de[(int)dtpage->header.stblindex];
+        if (jfs.sindex < jfs.slastindex) {
+            return &de[(int)stbl[jfs.sindex++]];
+        } else if (dtpage->header.next) {
+            devread (dtpage->header.next << jfs.bdlog, 0,
+                 sizeof(dtpage_t), (char *)dtpage);
+            jfs.slastindex = dtpage->header.nextindex;
+            jfs.sindex = 1;
+            return &de[(int)((s8 *)&de[(int)dtpage->header.stblindex])[0]];
+        }
+    }
+
+    return (jfs.de_index < 2) ? &de_always[jfs.de_index++] : NULL;
+}
+
+static ldtentry_t *
+first_dentry (void)
+{
+    dtroot_t *dtr;
+    pxd_t *xd;
+    idtentry_t *de;
+
+    dtr = (dtroot_t *)&inode->di_btroot;
+    jfs.sindex = 0;
+    jfs.de_index = 0;
+
+    de_always[0].inumber = inode->di_parent;
+    de_always[1].inumber = inode->di_number;
+    if (dtr->header.flag & BT_LEAF) {
+        jfs.dttype = DTTYPE_INLINE;
+        jfs.slastindex = dtr->header.nextindex;
+    } else {
+        de = (idtentry_t *)dtpage->slot;
+        jfs.dttype = DTTYPE_PAGE;
+        xd = &((idtentry_t *)dtr->slot)[(int)dtr->header.stbl[0]].xd;
+        for (;;) {
+            devread (addressPXD (xd) << jfs.bdlog, 0,
+                 sizeof(dtpage_t), (char *)dtpage);
+            if (dtpage->header.flag & BT_LEAF)
+                break;
+            xd = &de[(int)((s8 *)&de[(int)dtpage->header.stblindex])[0]].xd;
+        }
+        jfs.slastindex = dtpage->header.nextindex;
+    }
+
+    return next_dentry ();
+}
+
+
+static dtslot_t *
+next_dslot (int next)
+{
+    return (jfs.dttype == DTTYPE_INLINE)
+        ? (dtslot_t *)&dtroot->slot[next]
+        : &((dtslot_t *)dtpage->slot)[next];
+}
+
+static void
+uni2ansi (UniChar *uni, char *ansi, int len)
+{
+    for (; len; len--, uni++)
+        *ansi++ = (*uni & 0xff80) ? '?' : *(char *)uni;
+}
+
+int
+jfs_mount (void)
+{
+    struct jfs_superblock super;
+
+    if (part_length < MINJFS >> SECTOR_BITS
+        || !devread (SUPER1_OFF >> SECTOR_BITS, 0,
+             sizeof(struct jfs_superblock), (char *)&super)
+        || (super.s_magic != JFS_MAGIC)
+        || !devread ((AITBL_OFF >> SECTOR_BITS) + FILESYSTEM_I,
+             0, DISIZE, (char*)fileset)) {
+        return 0;
+    }
+
+    jfs.bsize = super.s_bsize;
+    jfs.l2bsize = super.s_l2bsize;
+    jfs.bdlog = jfs.l2bsize - SECTOR_BITS;
+
+    return 1;
+}
+
+int
+jfs_read (char *buf, int len)
+{
+    xad_t *xad;
+    s64 endofprev, endofcur;
+    s64 offset, xadlen;
+    int toread, startpos, endpos;
+
+    startpos = filepos;
+    endpos = filepos + len;
+    endofprev = (1ULL << 62) - 1;
+    xad = first_extent (inode);
+    do {
+        offset = offsetXAD (xad);
+        xadlen = lengthXAD (xad);
+        if (isinxt (filepos >> jfs.l2bsize, offset, xadlen)) {
+            endofcur = (offset + xadlen) << jfs.l2bsize; 
+            toread = (endofcur >= endpos)
+                  ? len : (endofcur - filepos);
+
+            disk_read_func = disk_read_hook;
+            devread (addressXAD (xad) << jfs.bdlog,
+                 filepos - (offset << jfs.l2bsize), toread, buf);
+            disk_read_func = NULL;
+
+            buf += toread;
+            len -= toread;
+            filepos += toread;
+        } else if (offset > endofprev) {
+            toread = ((offset << jfs.l2bsize) >= endpos)
+                  ? len : ((offset - endofprev) << jfs.l2bsize);
+            len -= toread;
+            filepos += toread;
+            for (; toread; toread--) {
+                *buf++ = 0;
+            }
+            continue;
+        }
+        endofprev = offset + xadlen; 
+        xad = next_extent ();
+    } while (len > 0 && xad);
+
+    return filepos - startpos;
+}
+
+int
+jfs_dir (char *dirname)
+{
+    char *ptr, *rest, ch;
+    ldtentry_t *de;
+    dtslot_t *ds;
+    u32 inum, parent_inum;
+    s64 di_size;
+    u32 di_mode;
+>>>>>>> branch 'master' of https://psyko_chewbacca@bitbucket.org/psyko_chewbacca/lpcmod_os.git
     int namlen, cmp, n, link_count;
     char namebuf[JFS_NAME_MAX + 1], linkbuf[JFS_PATH_MAX];
 

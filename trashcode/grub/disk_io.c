@@ -132,7 +132,11 @@ rawread (int drive, int sector, int byte_offset, int byte_len, char *buf)
         int nThisTime=512;
                if(byte_len<512) nThisTime=byte_len;
         if(byte_offset) {
+<<<<<<< HEAD
             unsigned char ba[512];
+=======
+            u8 ba[512];
+>>>>>>> branch 'master' of https://psyko_chewbacca@bitbucket.org/psyko_chewbacca/lpcmod_os.git
             if(BootIdeReadSector(drive, buf, sector, 0, 512)) {
                 bprintf("Unable to get first sector\n");
                                  return 1;

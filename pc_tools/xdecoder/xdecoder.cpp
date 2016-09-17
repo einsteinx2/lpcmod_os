@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <stdlib.h>
 
+<<<<<<< HEAD
 /*
  * Decode XCodes from BIOS image and outputs to text file
  * Generated text should be directly insertable in cromwell
@@ -12,6 +13,8 @@
  *
  */
 
+=======
+>>>>>>> branch 'master' of https://psyko_chewbacca@bitbucket.org/psyko_chewbacca/lpcmod_os.git
 #define SMBUS         0x0000c000
 
 using namespace std;
