@@ -32,6 +32,8 @@
 #ifndef __HTTPD_H__
 #define __HTTPD_H__
 
+extern bool netFlashOver;
+
 void httpd_init(unsigned char flashType);
 
 #endif /* __HTTPD_H__ */

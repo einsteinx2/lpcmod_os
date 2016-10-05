@@ -354,8 +354,6 @@ typedef enum {
 //Put here to make it global (yeah yeah... I don't care. There are far worst things done in the VHDL code of the modchip trust me!)
 unsigned char mbVersion;
 
-bool netFlashOver;      //Yeah, it's lazy but I don't want to change netFlash too much... Sorry.
-
 //Global for convenience.
 unsigned char *videosavepage;
 unsigned char refreshIconMenu;

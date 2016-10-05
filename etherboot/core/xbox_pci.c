@@ -124,7 +124,7 @@ void scan_pci_bus(int type, struct pci_device *dev)
 #if	DEBUG
 		{
 			int i;
-			dprintf(("%hhx:%hhx.%hhx [%hX/%hX]\n",
+			dprintf(("%hx:%hx.%hx [%hX/%hX]\n",
 				bus, PCI_SLOT(devfn), PCI_FUNC(devfn),
 				vendor, device));
 #if	DEBUG > 1
@@ -236,7 +236,7 @@ unsigned long pci_bar_start(struct pci_device *dev, unsigned int index)
 		if ((lo & PCI_BASE_ADDRESS_MEM_TYPE_MASK) == PCI_BASE_ADDRESS_MEM_TYPE_64) {
 			pci_read_config_dword(dev, index + 4, &hi);
 			if (hi) {
-				printf("Unhandled 64bit BAR\n");
+				dprintf(("Unhandled 64bit BAR"));
 				return -1UL;
 			}
 		}

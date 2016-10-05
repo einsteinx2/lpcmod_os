@@ -33,7 +33,6 @@
 #define __LWIPOPTS_H__
 
 #include "string.h"
-#include "lib/cromwell/cromString.h"
 
 #define NO_SYS 1
 /* #define LWIP_EVENT_API 1 */
@@ -72,10 +71,9 @@ a lot of data that needs to be copied, this should be set high. */
 /* MEMP_NUM_NETCONN: the number of struct netconns. */
 #define MEMP_NUM_NETCONN        0
 
-
 /* MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active
    timeouts. */
-#define MEMP_NUM_SYS_TIMEOUT    0
+#define MEMP_NUM_SYS_TIMEOUT    12
 
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
@@ -119,6 +117,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define ARP_TABLE_SIZE 64
 #define ARP_QUEUEING 0
 
+
 /* ---------- IP options ---------- */
 /* Define IP_FORWARD to 1 if you wish to have the ability to forward
    IP packets across network interfaces. If you are going to run lwIP
@@ -141,7 +140,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* 1 if you want to do an ARP check on the offered address
    (recommended). */
-#define DHCP_DOES_ARP_CHECK     0
+#define DHCP_DOES_ARP_CHECK     1
 
 /* ---------- UDP options ---------- */
 #define LWIP_UDP                1

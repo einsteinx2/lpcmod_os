@@ -1,8 +1,17 @@
 #include "etherboot_config.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include "osdep.h"
 
 #include	"if_ether.h"
+
+#define DEBUG 1
+#define TFTM_DEBUG
+#ifdef TFTM_DEBUG
+#define dprintf(x) debugSPIPrint x
+#else
+#define dprintf(x)
+#endif
 
 #define ARP_CLIENT	0
 #define ARP_SERVER	1

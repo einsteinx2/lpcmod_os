@@ -155,7 +155,7 @@ TEXTMENU* BankSelectInit(void * bank) {
     itemPtr->functionDataPtr= malloc(sizeof(unsigned char));
         *(unsigned char *)itemPtr->functionDataPtr= BIOS_NETFLASH;
     TextMenuAddItem(menuPtr, itemPtr);
-#if DEV_FEATURES
+#ifdef DEV_FEATURES
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
        sprintf(itemPtr->szCaption,"Web Update");

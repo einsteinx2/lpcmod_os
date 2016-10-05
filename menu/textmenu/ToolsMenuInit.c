@@ -67,8 +67,13 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
-    if((mbVersion == REV1_1 || mbVersion == REV1_0 || DEV_FEATURES) &&  //Don't show this when Xbox motherboard is not 1.0/1.1.
-       (LPCmodSettings.OSsettings.TSOPcontrol)){               //Don't show if TSOP split is not enabled.
+#ifdef DEV_FEATURES
+    if(LPCmodSettings.OSsettings.TSOPcontrol)
+#else
+    if((mbVersion == REV1_1 || mbVersion == REV1_0 ) &&  //Don't show this when Xbox motherboard is not 1.0/1.1.
+       (LPCmodSettings.OSsettings.TSOPcontrol))          //Don't show if TSOP split is not enabled.
+#endif
+    {
         //TSOP split manual control
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -100,7 +105,8 @@ TEXTMENU *ToolsMenuInit(void) {
         TextMenuAddItem(menuPtr, itemPtr);
     }
 */
-    if(DEV_FEATURES){
+#ifdef DEV_FEATURES
+    {
         //Save xblast.cfg
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -109,6 +115,7 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
+#endif
     //Load xblast.cfg
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -124,7 +131,8 @@ TEXTMENU *ToolsMenuInit(void) {
     itemPtr->functionDataPtr = (void *)XBlastScriptMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(DEV_FEATURES){
+#ifdef DEV_FEATURES
+    {
         //Developers tools
         itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
         memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
@@ -133,6 +141,7 @@ TEXTMENU *ToolsMenuInit(void) {
         itemPtr->functionDataPtr = (void *)DeveloperMenuInit();
         TextMenuAddItem(menuPtr, itemPtr);
     }
+#endif
 
     return menuPtr;
 }

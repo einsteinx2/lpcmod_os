@@ -48,21 +48,48 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
+#include "lwip/init.h"
 #include <lwip/stats.h>
 #include <lwip/snmp.h>
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 #include "lwip/dhcp.h"
 #include "lwip/tcp_impl.h"
+#include "lwip/timers.h"
 #include "string.h"
 #include "xblast/settings/xblastSettingsDefs.h"
-#include "boot.h"
+#include "lib/cromwell/cromString.h"
+#include "httpd.h"
+#include "string.h"
+#include "stdlib.h"
+#include <stdarg.h>
 
-struct eth_addr ethaddr = { 0, 0x0d, 0xff, 0xff, 0, 0 };
+bool netFlashOver;
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
 #define IFNAME1 'b'
+
+typedef enum
+{
+	NetworkState_Idle = 0U,
+	NetworkState_Init = 1,
+	NetworkState_DHCPStart = 2,
+	NetworkState_ServerInit = 3,
+	NetworkState_ServerRunning = 4,
+	NetworkState_ServerShuttingDown = 5,
+	NetworkState_Cleanup = 6
+}NetworkState;
+
+static NetworkState currentNetworkState = NetworkState_Idle;
+static struct ip_addr ipaddr, netmask, gw;
+static struct netif *netif = NULL;
+static int divisor = 0;
+
+void
+eth_transmit (const char *d, unsigned int t, unsigned int s, const void *p);
+int
+eth_poll_into (char *buf, int *len);
 
 /**
  * Helper struct to hold private data used to operate your ethernet interface.
@@ -70,10 +97,12 @@ struct eth_addr ethaddr = { 0, 0x0d, 0xff, 0xff, 0, 0 };
  * as it is already kept in the struct netif.
  * But this is only an example, anyway...
  */
+#if 0
 struct ethernetif {
   struct eth_addr *ethaddr;
   /* Add whatever per-interface state that is needed here. */
 };
+#endif
 
 /* Forward declarations. */
 static void  ethernetif_input(struct netif *netif);
@@ -90,13 +119,15 @@ extern char forcedeth_hw_addr[6];
 static void
 low_level_init(struct netif *netif)
 {
+#if 0
   struct ethernetif *ethernetif = netif->state;
+#endif
 
   /* set MAC hardware address length */
   netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
-  memcpy (netif->hwaddr, forcedeth_hw_addr, 6);
+  memcpy (netif->hwaddr, forcedeth_hw_addr, ETHARP_HWADDR_LEN);
 
   /* maximum transfer unit */
   netif->mtu = 1500;
@@ -127,13 +158,13 @@ low_level_init(struct netif *netif)
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
-  //struct ethernetif *ethernetif = netif->state;
+#if 0
+  struct ethernetif *ethernetif = netif->state;
+#endif
   char buf[1500];
   char *bufptr;
   struct eth_hdr *h;
   struct pbuf *q;
-
-  //initiate transfer();
   
 #if ETH_PAD_SIZE
   pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
@@ -148,7 +179,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
 	bufptr += q->len;
   }
 
-  h = (struct eth_hdr *) bufptr;
+  h = (struct eth_hdr *) buf;
 
   //signal that packet should be sent();
   eth_transmit (&h->dest.addr[0], ntohs (h->type), p->tot_len - sizeof(struct eth_hdr), &buf[sizeof(struct eth_hdr)]);
@@ -176,11 +207,10 @@ low_level_input(struct netif *netif)
   struct pbuf *p, *q;
   char *bufptr;
   char buf[1500];
-  u16_t len;
+  int len;
 
   /* Obtain the size of the packet and put it into the "len"
      variable. */
-  //len = ;
   if (!eth_poll_into (buf, &len))
     return NULL;
 
@@ -242,11 +272,13 @@ low_level_input(struct netif *netif)
 static void
 ethernetif_input(struct netif *netif)
 {
+#if 0
   struct ethernetif *ethernetif;
+#endif
   struct eth_hdr *ethhdr;
   struct pbuf *p;
 
-  ethernetif = netif->state;
+  //ethernetif = netif->state;
 
   /* move received packet into a new pbuf */
   p = low_level_input(netif);
@@ -258,13 +290,7 @@ ethernetif_input(struct netif *netif)
   switch (htons(ethhdr->type)) {
   /* IP or ARP packet? */
   case ETHTYPE_IP:
-	ethernet_input (p, netif);
-	pbuf_header (p, - sizeof(struct eth_hdr));
-	netif->input (p, netif);
-	break;
   case ETHTYPE_ARP:
-	  ethernet_input (p, netif);
-	break;
 #if PPPOE_SUPPORT
   /* PPPoE packet? */
   case ETHTYPE_PPPOEDISC:
@@ -301,15 +327,19 @@ ethernetif_input(struct netif *netif)
 err_t
 ethernetif_init(struct netif *netif)
 {
+#if 0
   struct ethernetif *ethernetif;
+#endif
 
   LWIP_ASSERT("netif != NULL", (netif != NULL));
 
+#if 0
   ethernetif = mem_malloc(sizeof(struct ethernetif));
   if (ethernetif == NULL) {
     LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
     return ERR_MEM;
   }
+#endif
 
 #if LWIP_NETIF_HOSTNAME
   /* Initialize interface hostname */
@@ -323,7 +353,6 @@ ethernetif_init(struct netif *netif)
    */
   NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, 100000000); //100Mbps
 
-  netif->state = ethernetif;
   netif->name[0] = IFNAME0;
   netif->name[1] = IFNAME1;
   /* We directly use etharp_output() here to save a function call.
@@ -337,8 +366,6 @@ ethernetif_init(struct netif *netif)
   /* initialize the hardware */
   low_level_init(netif);
 
-  ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
-
   return ERR_OK;
 }
 
@@ -349,182 +376,189 @@ ebd_wait (u16_t time) {
     extern unsigned long currticks (void);
 
     delay_ticks = time * 3579;
-    if (!start_ticks)
+    if (start_ticks == 0)
         start_ticks = currticks ();
 
-    while (1)
-    {
-		unsigned long ticks = currticks () - start_ticks;
-		if (ticks > delay_ticks) {
-			start_ticks = 0;
-			return 0;
-		}
+	unsigned long ticks = currticks () - start_ticks;
+	if (ticks > delay_ticks) {
+		start_ticks = 0;
+		return 1;	//Delay's over
 	}
-    return 0;   //Keep compiler happy
+	
+    return 0;   //not finished
 }
 
 
 int
 run_lwip (unsigned char flashType) {
-    struct ip_addr ipaddr, netmask, gw;
-    struct netif *netif;
-    bool first = 1;
 
-    //Init a couple of Lwip globals because they seem to assume declared pointers are set to NULL by default.
-    //From tcp.c
-    tcp_bound_pcbs = NULL;
-    tcp_listen_pcbs.listen_pcbs = NULL;
-    tcp_active_pcbs = NULL;
-    tcp_tw_pcbs = NULL;
-    tcp_tmp_pcb = NULL;
-    tcp_active_pcbs_changed = 0;
+    bool returnResult = 0;
 
-    //from netif.c
-    netif_list = NULL;
-    netif_default = NULL;
-
-    //from udp.c
-    udp_pcbs = NULL;
-
-    lwip_init();
-    printk ("\n            TCP/IP initialized.\n");
-    netFlashOver = false;
-
-    netif = netif_find("eb");   //Trying to find previously configured network interface
-
-    if(netif == NULL){
-        debugSPIPrint("No configured network interface found. Creating one.");
-        netif = (struct netif *)malloc(sizeof(struct netif));
-        //Will never be removed for entire duration of program execution so no free()...
-
-        //These will be overwritten by DHCP anyway if need be.
-        IP4_ADDR(&gw, 0,0,0,0);
-        IP4_ADDR(&ipaddr, 0,0,0,0);
-        IP4_ADDR(&netmask, 255,0,0,0);
-
-        netif_add (netif, &ipaddr, &netmask, &gw, NULL, ethernetif_init, ip_input);
-    }
-    else{
-        debugSPIPrint("Found previously configured network interface.");
-    }
-    if (LPCmodSettings.OSsettings.useDHCP){
-        //Re-run DHCP discover anyways just in case lease was revoked.
-        dhcp_start (netif);
-    }
-    else {
-        //Not necessary, but polite.
-        dhcp_stop (netif);
-        IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
-                 LPCmodSettings.OSsettings.staticGateway[1],
-                 LPCmodSettings.OSsettings.staticGateway[2],
-                 LPCmodSettings.OSsettings.staticGateway[3]);
-        IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
-                 LPCmodSettings.OSsettings.staticIP[1],
-                 LPCmodSettings.OSsettings.staticIP[2],
-                 LPCmodSettings.OSsettings.staticIP[3]);
-        IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
-                 LPCmodSettings.OSsettings.staticMask[1],
-                 LPCmodSettings.OSsettings.staticMask[2],
-                 LPCmodSettings.OSsettings.staticMask[3]);
-        netif_set_addr(netif, &ipaddr, &netmask, &gw);
-        //netif_set_ipaddr (&netif, &ipaddr);
-        //netif_set_netmask (&netif, &netmask);
-        //netif_set_gw (&netif, &gw);
-        dhcp_inform (netif);
-    }
-
-    netif_set_default (netif);
-
-    int divisor = 0;
-
-    while(netif->ip_addr.addr == 0)
+    switch(currentNetworkState)
     {
-    	ethernetif_input(netif);
-    	ebd_wait(TCP_TMR_INTERVAL);
-    	if (divisor++ == 60 * 4)
+    case NetworkState_Idle:
+		debugSPIPrint("currentNetworkState == NetworkState_Idle");
+    	//Init a couple of Lwip globals because they seem to assume declared pointers are set to NULL by default.
+		//From tcp.c
+		tcp_bound_pcbs = NULL;
+		tcp_listen_pcbs.listen_pcbs = NULL;
+		tcp_active_pcbs = NULL;
+		tcp_tw_pcbs = NULL;
+		tcp_tmp_pcb = NULL;
+
+		//from netif.c
+		netif_list = NULL;
+		netif_default = NULL;
+
+		//From udp.c
+		udp_pcbs = NULL;
+
+		divisor = 0;
+		currentNetworkState = NetworkState_Init;
+    	debugSPIPrint("currentNetworkState == NetworkState_Init");
+    	break;
+    case NetworkState_Init:
+        /*mem_init ();
+        memp_init ();
+        pbuf_init ();
+        netif_init ();
+        ip_init ();
+        udp_init ();
+        tcp_init ();
+        etharp_init ();
+		sys_timeouts_init();*/
+    	lwip_init();
+
+        printk ("\n            TCP/IP initialized.\n");
+		netFlashOver = false;
+
+		netif = netif_find("eb");   //Trying to find previously configured network interface
+
+		if(netif == NULL)
+		{
+			debugSPIPrint("No configured network interface found. Creating one.");
+			netif = (struct netif *)malloc(sizeof(struct netif));
+			//Will never be removed for entire duration of program execution so no free()...
+
+			//These will be overwritten by DHCP anyway if need be.
+			IP4_ADDR(&gw, 0,0,0,0);
+			IP4_ADDR(&ipaddr, 0,0,0,0);
+			IP4_ADDR(&netmask, 0,0,0,0);
+
+			netif_add (netif, &ipaddr, &netmask, &gw, NULL, ethernetif_init, ethernet_input);
+		}
+		else
+		{
+			debugSPIPrint("Found previously configured network interface.");
+		}
+
+		if (LPCmodSettings.OSsettings.useDHCP)
+		{
+			//Re-run DHCP discover anyways just in case lease was revoked.
+			dhcp_start (netif);
+
+			currentNetworkState = NetworkState_DHCPStart;
+			debugSPIPrint("currentNetworkState == NetworkState_DHCPStart");
+		}
+		else
+		{
+			//Not necessary, but polite.
+			dhcp_stop (netif);
+			IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
+					 LPCmodSettings.OSsettings.staticGateway[1],
+					 LPCmodSettings.OSsettings.staticGateway[2],
+					 LPCmodSettings.OSsettings.staticGateway[3]);
+			IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
+					 LPCmodSettings.OSsettings.staticIP[1],
+					 LPCmodSettings.OSsettings.staticIP[2],
+					 LPCmodSettings.OSsettings.staticIP[3]);
+			IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
+					 LPCmodSettings.OSsettings.staticMask[1],
+					 LPCmodSettings.OSsettings.staticMask[2],
+					 LPCmodSettings.OSsettings.staticMask[3]);
+			netif_set_addr(netif, &ipaddr, &netmask, &gw);
+
+			dhcp_inform (netif);
+
+			currentNetworkState = NetworkState_ServerInit;
+			debugSPIPrint("currentNetworkState == NetworkState_ServerInit");
+		}
+		netif_set_default (netif);
+    	break;
+    case NetworkState_DHCPStart:
+	    ethernetif_input(netif);
+		
+    	if (ebd_wait(TCP_TMR_INTERVAL))
     	{
-    		if (first && netif->dhcp->state != DHCP_BOUND)
+			if (divisor++ == 60 * 4) //1 minute timeout before forfeiting
 			{
-				IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
-						 LPCmodSettings.OSsettings.staticGateway[1],
-						 LPCmodSettings.OSsettings.staticGateway[2],
-						 LPCmodSettings.OSsettings.staticGateway[3]);
-				IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
-						 LPCmodSettings.OSsettings.staticIP[1],
-						 LPCmodSettings.OSsettings.staticIP[2],
-						 LPCmodSettings.OSsettings.staticIP[3]);
-				IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
-						 LPCmodSettings.OSsettings.staticMask[1],
-						 LPCmodSettings.OSsettings.staticMask[2],
-						 LPCmodSettings.OSsettings.staticMask[3]);
+				if (netif->dhcp->state != DHCP_BOUND)
+				{
+					//Not necessary, but polite.
+					dhcp_stop (netif);
+					IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
+							 LPCmodSettings.OSsettings.staticGateway[1],
+							 LPCmodSettings.OSsettings.staticGateway[2],
+							 LPCmodSettings.OSsettings.staticGateway[3]);
+					IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
+							 LPCmodSettings.OSsettings.staticIP[1],
+							 LPCmodSettings.OSsettings.staticIP[2],
+							 LPCmodSettings.OSsettings.staticIP[3]);
+					IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
+							 LPCmodSettings.OSsettings.staticMask[1],
+							 LPCmodSettings.OSsettings.staticMask[2],
+							 LPCmodSettings.OSsettings.staticMask[3]);
+					netif_set_addr(netif, &ipaddr, &netmask, &gw);
 
-				printk ("\n            DHCP FAILED - Falling back to %u.%u.%u.%u",
-					ipaddr.addr & 0x000000ff,
-					(ipaddr.addr & 0x0000ff00) >> 8,
-					(ipaddr.addr & 0x00ff0000) >> 16,
-					(ipaddr.addr & 0xff000000) >> 24);
-
-				dhcp_stop (netif);
-				netif_set_addr(netif, &ipaddr, &netmask, &gw);
+					dhcp_inform (netif);
+				}
+				divisor=0;
+				currentNetworkState = NetworkState_ServerInit;
+				debugSPIPrint("currentNetworkState == NetworkState_ServerInit");
 			}
-			first = 0;
-			dhcp_coarse_tmr();
+		}
 
-			divisor=0;
-    		}
+    	if(netif->dhcp->state == DHCP_BOUND)
+    	{
+    		currentNetworkState = NetworkState_ServerInit;
+			debugSPIPrint("currentNetworkState == NetworkState_ServerInit");
+    	}
+    	break;
+    case NetworkState_ServerInit:
+        printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
+            ((netif->ip_addr.addr) & 0xff),
+            ((netif->ip_addr.addr) >> 8 & 0xff),
+            ((netif->ip_addr.addr) >> 16 & 0xff),
+            ((netif->ip_addr.addr) >> 24 & 0xff));
 
-    		if (divisor & 1)
-    		{
-    			dhcp_fine_tmr ();
-			}
+		httpd_init(flashType);
+
+		currentNetworkState = NetworkState_ServerRunning;
+    	debugSPIPrint("currentNetworkState == NetworkState_ServerRunning");
+    	break;
+    case NetworkState_ServerRunning:
+	    ethernetif_input(netif);
+
+    	if(netFlashOver == true)
+    	{
+    		currentNetworkState = NetworkState_ServerShuttingDown;
+			debugSPIPrint("currentNetworkState == NetworkState_ServerShuttingDown");
+    	}
+    	break;
+    case NetworkState_ServerShuttingDown:
+    	dhcp_stop(netif);
+
+    	currentNetworkState = NetworkState_Cleanup;
+    	debugSPIPrint("currentNetworkState == NetworkState_Cleanup");
+    	break;
+    case NetworkState_Cleanup:
+    	returnResult = 1;
+
+    	currentNetworkState = NetworkState_Idle;
+    	break;
     }
 
-    httpd_init(flashType);
+    sys_check_timeouts();
 
-	printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
-		((netif->ip_addr.addr) & 0xff),
-		((netif->ip_addr.addr) >> 8 & 0xff),
-		((netif->ip_addr.addr) >> 16 & 0xff),
-		((netif->ip_addr.addr) >> 24 & 0xff));
-
-    while (!netFlashOver) {
-    	ethernetif_input(netif);
-    	ebd_wait(TCP_TMR_INTERVAL);
-
-    	tcp_tmr();
-#if 0
-        if (!ebd_wait (netif, TCP_TMR_INTERVAL)) {
-            //printk ("!ebd_wait");
-            if (divisor++ == 60 * 4) {
-
-                dhcp_coarse_tmr ();
-                divisor = 0;
-            }
-            if(first && divisor == 10){
-	        if (netif->dhcp->state != DHCP_BOUND && LPCmodSettings.OSsettings.useDHCP) {
-	            printk ("\n            DHCP FAILED - Falling back to %u.%u.%u.%u",
-	                ipaddr.addr & 0x000000ff,
-	                (ipaddr.addr & 0x0000ff00) >> 8,
-	                (ipaddr.addr & 0x00ff0000) >> 16,
-	                (ipaddr.addr & 0xff000000) >> 24);
-	            dhcp_stop (netif);
-	            netif_set_addr(netif, &ipaddr, &netmask, &gw);
-	        }
-	        printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
-	            ((netif->ip_addr.addr) & 0xff),
-	            ((netif->ip_addr.addr) >> 8 & 0xff),
-	            ((netif->ip_addr.addr) >> 16 & 0xff),
-	            ((netif->ip_addr.addr) >> 24 & 0xff));
-	        first = 0;
-                }
-            if (divisor & 1){
-                dhcp_fine_tmr ();
-            }
-            tcp_tmr ();
-            //else
-            //	printk("Got packet!! \n");
-        }
-#endif
-    }
-    return 0;   //Keep compiler happy
+    return returnResult;   //Keep compiler happy
 }

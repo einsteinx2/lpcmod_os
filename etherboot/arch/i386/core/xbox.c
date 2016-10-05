@@ -33,7 +33,7 @@ struct meminfo meminfo =
 	}
 };
 
-unsigned long virt_offset = 0;
+const unsigned long virt_offset = 0;
 
 struct pci_driver* pci_drivers = &forcedeth_driver;
 struct pci_driver* pci_drivers_end = &forcedeth_driver + 1;

@@ -1,7 +1,7 @@
 /**
  * lwip DNS resolver header file.
 
- * Author: Jim Pettinato
+ * Author: Jim Pettinato 
  *   April 2007
 
  * ported from uIP resolv.c Copyright (c) 2002-2003, Adam Dunkels.
@@ -34,6 +34,13 @@
 #ifndef __LWIP_DNS_H__
 #define __LWIP_DNS_H__
 
+#include "lwip/opt.h"
+
+#if LWIP_DNS /* don't build if not configured for use in lwipopts.h */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** DNS timer period */
 #define DNS_TMR_INTERVAL          1000
@@ -70,20 +77,48 @@
    sizeof(struct addrinfo) + sizeof(struct sockaddr_in) + DNS_MAX_NAME_LENGTH + 1 byte zero-termination */
 #define NETDB_ELEM_SIZE           (32 + 16 + DNS_MAX_NAME_LENGTH + 1)
 
-/** The maximum of DNS servers */
-#ifndef DNS_MAX_SERVERS
-#define DNS_MAX_SERVERS                 2
+#if DNS_LOCAL_HOSTLIST
+/** struct used for local host-list */
+struct local_hostlist_entry {
+  /** static hostname */
+  const char *name;
+  /** static host address in network byteorder */
+  ip_addr_t addr;
+  struct local_hostlist_entry *next;
+};
+#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+#ifndef DNS_LOCAL_HOSTLIST_MAX_NAMELEN
+#define DNS_LOCAL_HOSTLIST_MAX_NAMELEN  DNS_MAX_NAME_LENGTH
+#endif
+#define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct local_hostlist_entry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+#endif /* DNS_LOCAL_HOSTLIST */
+
+/** Callback which is invoked when a hostname is found.
+ * A function of this type must be implemented by the application using the DNS resolver.
+ * @param name pointer to the name that was looked up.
+ * @param ipaddr pointer to an ip_addr_t containing the IP address of the hostname,
+ *        or NULL if the name could not be found (or on any other error).
+ * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
+*/
+typedef void (*dns_found_callback)(const char *name, ip_addr_t *ipaddr, void *callback_arg);
+
+void           dns_init(void);
+void           dns_tmr(void);
+void           dns_setserver(u8_t numdns, ip_addr_t *dnsserver);
+ip_addr_t      dns_getserver(u8_t numdns);
+err_t          dns_gethostbyname(const char *hostname, ip_addr_t *addr,
+                                 dns_found_callback found, void *callback_arg);
+
+#if DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+int            dns_local_removehost(const char *hostname, const ip_addr_t *addr);
+err_t          dns_local_addhost(const char *hostname, const ip_addr_t *addr);
+#endif /* DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+
+#ifdef __cplusplus
+}
 #endif
 
-struct dns_query {
-  /* DNS query record starts with either a domain name or a pointer
-     to a name already present somewhere in the packet. */
-  u16_t type;
-  u16_t cls;
-};
-
-#define PP_HTONS(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
-#define SMEMCPY(dst,src,len)            memcpy(dst,src,len)
-
+#endif /* LWIP_DNS */
 
 #endif /* __LWIP_DNS_H__ */

@@ -42,9 +42,9 @@ struct nic	nic =
 	{
 		0,				/* dev.disable */
 		{
-			0,
-			0,
-			PCI_BUS_TYPE,
+			0,			/* Vendor ID */
+			0,			/* Device ID */
+			PCI_BUS_TYPE, /*Bus type */
 		},				/* dev.devid */
 		0,				/* index */
 		0,				/* type */
@@ -103,8 +103,8 @@ void eth_disable(void)
 int eth_load_configuration(struct dev *dev __unused, unsigned char flashType)
 {
 	extern int run_lwip(unsigned char flashType);
-
-	run_lwip(flashType);
-
+	debugSPIPrint("Starting network service");
+	while(run_lwip(flashType) == 0);
+	debugSPIPrint("Killing network service");
 	return 0;
 }

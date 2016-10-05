@@ -33,8 +33,16 @@
 #ifndef __LWIP_PBUF_H__
 #define __LWIP_PBUF_H__
 
-#include "arch/cc.h"
+#include "lwip/opt.h"
+#include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/** Currently, the pbuf_custom code is only needed for one specific configuration
+ * of IP_FRAG */
+#define LWIP_SUPPORT_CUSTOM_PBUF (IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF)
 
 #define PBUF_TRANSPORT_HLEN 20
 #define PBUF_IP_HLEN        20
@@ -47,21 +55,26 @@ typedef enum {
 } pbuf_layer;
 
 typedef enum {
-  PBUF_RAM,
-  PBUF_ROM,
-  PBUF_REF,
-  PBUF_POOL
-} pbuf_flag;
+  PBUF_RAM, /* pbuf data is stored in RAM */
+  PBUF_ROM, /* pbuf data is stored in ROM */
+  PBUF_REF, /* pbuf comes from the pbuf pool */
+  PBUF_POOL /* pbuf payload refers to RAM */
+} pbuf_type;
 
-/* Definitions for the pbuf flag field (these are not the flags that
-   are passed to pbuf_alloc()). */
-#define PBUF_FLAG_RAM   0x00U    /* Flags that pbuf data is stored in RAM */
-#define PBUF_FLAG_ROM   0x01U    /* Flags that pbuf data is stored in ROM */
-#define PBUF_FLAG_POOL  0x02U    /* Flags that the pbuf comes from the pbuf pool */
-#define PBUF_FLAG_REF   0x04U    /* Flags thet the pbuf payload refers to RAM */
 
-/** indicates this packet was broadcast on the link */
-#define PBUF_FLAG_LINK_BROADCAST 0x80U
+/** indicates this packet's data should be immediately passed to the application */
+#define PBUF_FLAG_PUSH      0x01U
+/** indicates this is a custom pbuf: pbuf_free and pbuf_header handle such a
+    a pbuf differently */
+#define PBUF_FLAG_IS_CUSTOM 0x02U
+/** indicates this pbuf is UDP multicast to be looped back */
+#define PBUF_FLAG_MCASTLOOP 0x04U
+/** indicates this pbuf was received as link-level broadcast */
+#define PBUF_FLAG_LLBCAST   0x08U
+/** indicates this pbuf was received as link-level multicast */
+#define PBUF_FLAG_LLMCAST   0x10U
+/** indicates this pbuf includes a TCP FIN flag */
+#define PBUF_FLAG_TCP_FIN   0x20U
 
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */
@@ -69,7 +82,7 @@ struct pbuf {
 
   /** pointer to the actual data in the buffer */
   void *payload;
-  
+
   /**
    * total length of this buffer and all next buffers in chain
    * belonging to the same packet.
@@ -78,39 +91,88 @@ struct pbuf {
    * p->tot_len == p->len + (p->next? p->next->tot_len: 0)
    */
   u16_t tot_len;
-  
-  /* length of this buffer */
-  u16_t len;  
 
-  /* flags telling the type of pbuf */
-  u16_t flags;
-  
+  /** length of this buffer */
+  u16_t len;
+
+  /** pbuf_type as u8_t instead of enum to save space */
+  u8_t /*pbuf_type*/ type;
+
+  /** misc flags */
+  u8_t flags;
+
   /**
    * the reference count always equals the number of pointers
    * that refer to this pbuf. This can be pointers from an application,
    * the stack itself, or pbuf->next pointers from a chain.
    */
   u16_t ref;
-  
 };
 
-/* pbuf_init():
+#if LWIP_SUPPORT_CUSTOM_PBUF
+/** Prototype for a function to free a custom pbuf */
+typedef void (*pbuf_free_custom_fn)(struct pbuf *p);
 
-   Initializes the pbuf module. The num parameter determines how many
-   pbufs that should be allocated to the pbuf pool, and the size
-   parameter specifies the size of the data allocated to those.  */
-void pbuf_init(void);
+/** A custom pbuf: like a pbuf, but following a function pointer to free it. */
+struct pbuf_custom {
+  /** The actual pbuf */
+  struct pbuf pbuf;
+  /** This function is called when pbuf_free deallocates this pbuf(_custom) */
+  pbuf_free_custom_fn custom_free_function;
+};
+#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
 
-struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag);
+#if LWIP_TCP && TCP_QUEUE_OOSEQ
+/** Define this to 0 to prevent freeing ooseq pbufs when the PBUF_POOL is empty */
+#ifndef PBUF_POOL_FREE_OOSEQ
+#define PBUF_POOL_FREE_OOSEQ 1
+#endif /* PBUF_POOL_FREE_OOSEQ */
+#if NO_SYS && PBUF_POOL_FREE_OOSEQ
+extern volatile u8_t pbuf_free_ooseq_pending;
+void pbuf_free_ooseq(void);    //XXX: lpcmod_os specific. Make function prototype standard.
+/** When not using sys_check_timeouts(), call PBUF_CHECK_FREE_OOSEQ()
+    at regular intervals from main level to check if ooseq pbufs need to be
+    freed! */
+#define PBUF_CHECK_FREE_OOSEQ() do { if(pbuf_free_ooseq_pending) { \
+  /* pbuf_alloc() reported PBUF_POOL to be empty -> try to free some \
+     ooseq queued pbufs now */ \
+  pbuf_free_ooseq(); }}while(0)
+#endif /* NO_SYS && PBUF_POOL_FREE_OOSEQ*/
+#endif /* LWIP_TCP && TCP_QUEUE_OOSEQ */
+
+/* Initializes the pbuf module. This call is empty for now, but may not be in future. */
+#define pbuf_init()
+
+struct pbuf *pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type);
+#if LWIP_SUPPORT_CUSTOM_PBUF
+struct pbuf *pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type,
+                                 struct pbuf_custom *p, void *payload_mem,
+                                 u16_t payload_mem_len);
+#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
 void pbuf_realloc(struct pbuf *p, u16_t size); 
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
 void pbuf_ref(struct pbuf *p);
-void pbuf_ref_chain(struct pbuf *p);
 u8_t pbuf_free(struct pbuf *p);
 u8_t pbuf_clen(struct pbuf *p);  
-void pbuf_cat(struct pbuf *h, struct pbuf *t);
-void pbuf_chain(struct pbuf *h, struct pbuf *t);
-struct pbuf *pbuf_take(struct pbuf *f);
+void pbuf_cat(struct pbuf *head, struct pbuf *tail);
+void pbuf_chain(struct pbuf *head, struct pbuf *tail);
 struct pbuf *pbuf_dechain(struct pbuf *p);
+err_t pbuf_copy(struct pbuf *p_to, struct pbuf *p_from);
+u16_t pbuf_copy_partial(struct pbuf *p, void *dataptr, u16_t len, u16_t offset);
+err_t pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len);
+struct pbuf *pbuf_coalesce(struct pbuf *p, pbuf_layer layer);
+#if LWIP_CHECKSUM_ON_COPY
+err_t pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
+                       u16_t len, u16_t *chksum);
+#endif /* LWIP_CHECKSUM_ON_COPY */
+
+u8_t pbuf_get_at(struct pbuf* p, u16_t offset);
+u16_t pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n);
+u16_t pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset);
+u16_t pbuf_strstr(struct pbuf* p, const char* substr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_PBUF_H__ */

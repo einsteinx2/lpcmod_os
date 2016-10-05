@@ -103,3 +103,9 @@ unsigned int getElapsedTimeSince(unsigned int startValue_ms)
 {
 	return currentHeldTime_ms - startValue_ms;
 }
+
+//To accomodate lwip
+unsigned int sys_now(void)
+{
+	return (unsigned int)(getAPICCount() / 3579.545);
+}

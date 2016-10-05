@@ -7,7 +7,7 @@ GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)
 
 GCC_4.2 := $(shell expr `$(CC) -dumpversion` \>= 4.2)
 
-DEBUG := yes
+DEBUG ?= 0 #run make with "DEBUG=1" argument to enable extra debug
 ETHERBOOT := yes
 
 INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/cdrom \
@@ -53,7 +53,7 @@ ifeq ($(GCC_4.2), 1)
 ETH_CFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
 endif
 
-ifeq ($(DEBUG), yes)
+ifeq ($(DEBUG), 1)
 DEBUG_FLAGS = -DDEV_FEATURES -DSPITRACE
 CROM_CFLAGS += $(DEBUG_FLAGS)
 ETH_CFLAGS += $(DEBUG_FLAGS)
@@ -201,8 +201,8 @@ OBJECTS-CROM += $(TOPDIR)/obj/xbox_pci.o
 OBJECTS-CROM += $(TOPDIR)/obj/etherboot_config.o
 endif
 
-#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
-OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
 
 OBJECTS-CROM += $(OBJECTS-LWIP)
 
@@ -216,7 +216,10 @@ BOOT_ETH_DIR = boot_eth/ethboot
 BOOT_ETH_SUBDIRS = ethsubdirs
 endif
 
-all: clean resources $(BOOT_ETH_SUBDIRS) cromsubdirs xromwell.xbe xbeboot vmlboot vml_startup $(BOOT_ETH_DIR) cromwell.bin imagecompress 256KBBinGen crcbin
+.PHONY: all clean
+
+all: clean
+	@$(MAKE) -j16 --no-print-directory resources $(BOOT_ETH_SUBDIRS) cromsubdirs xbeboot xromwell.xbe vml_startup vmlboot $(BOOT_ETH_DIR) obj/image-crom.bin cromwell.bin imagecompress 256KBBinGen crcbin
 
 ifeq ($(ETHERBOOT), yes)
 ethsubdirs: $(patsubst %, _dir_%, $(ETH_SUBDIRS))
@@ -256,11 +259,11 @@ clean:
 	mkdir -p $(TOPDIR)/obj 
 	mkdir -p $(TOPDIR)/bin
 
-obj/image-crom.bin:
+obj/image-crom.bin: cromsubdirs resources
 	${LD} -o obj/image-crom.elf ${OBJECTS-CROM} ${RESOURCES} ${LDFLAGS-ROM} -Map $(TOPDIR)/obj/image-crom.map
 	${OBJCOPY} --output-target=binary --strip-all obj/image-crom.elf $@
 
-vmlboot: vml_startup
+vmlboot: vml_startup 
 	${LD} -o $(TOPDIR)/obj/vmlboot.elf ${OBJECTS-VML} ${LDFLAGS-VMLBOOT}
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/vmlboot.elf $(TOPDIR)/boot_vml/disk/$@
 	
@@ -284,32 +287,32 @@ xromwell.xbe: xbeboot
 xbeboot:
 	$(CC) ${CFLAGS} -c -o ${OBJECTS-XBE} boot_xbe/xbeboot.S
 
-cromwell.bin:
+cromwell.bin: cromsubdirs
 	${LD} -o $(TOPDIR)/obj/2lbimage.elf ${OBJECTS-ROMBOOT} ${LDFLAGS-ROMBOOT} -Map $(TOPDIR)/obj/2lbimage.map
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/2lbimage.elf $(TOPDIR)/obj/2blimage.bin
 
 # This is a local executable, so don't use a cross compiler...
-bin/imagebld: pc_tools/imagebld/imagebld.c lib/crypt/sha1.c lib/crypt/md5.c
-	gcc -O0 -g -Ilib/crypt -o bin/sha1.o -c lib/crypt/sha1.c
-	gcc -O0 -g -Ilib/crypt -o bin/md5.o -c lib/crypt/md5.c
-	gcc -O0 -g -Ilib/crypt -o bin/imagebld.o -c pc_tools/imagebld/imagebld.c
-	gcc -O0 -g -o bin/imagebld bin/imagebld.o bin/sha1.o bin/md5.o
+bin/imagebld:
+	gcc -Ilib/crypt -o bin/sha1.o -c lib/crypt/sha1.c
+	gcc -Ilib/crypt -o bin/md5.o -c lib/crypt/md5.c
+	gcc -Ilib/crypt -o bin/imagebld.o -c pc_tools/imagebld/imagebld.c
+	gcc -o bin/imagebld bin/imagebld.o bin/sha1.o bin/md5.o
 
 # Same here.
 crcbin:
 	gcc -o bin/crcbin.o -c pc_tools/crcbin/crcbin.c
 	gcc -o bin/crc32.o -c lib/misc/crc32.c
 	gcc -o bin/crcbin bin/crcbin.o bin/crc32.o
-	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
 scriptchecker:
 	gcc -g -o bin/scriptChecker pc_tools/scriptChecker/scriptChecker.c
 	
-imagecompress: obj/image-crom.bin bin/imagebld 
+imagecompress: obj/image-crom.bin bin/imagebld
 	cp obj/image-crom.bin obj/c
 	gzip -9 obj/c
 	bin/imagebld -xbe xbe/XBlast\ OS.xbe obj/image-crom.bin
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin f
 
-256KBBinGen: imagecompress
+256KBBinGen: imagecompress crcbin cromwell.bin
 	bin/imagebld -rom obj/2blimage.bin obj/c.gz image/cromwell.bin
+	bin/crcbin image/cromwell.bin image/crcwell.bin

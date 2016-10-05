@@ -41,7 +41,7 @@
 #include "Gentoox.h"
 #include "MenuActions.h"
 #include "BootFlash.h"
-/*#include "httpd.h"*/
+#include "httpd.h"
 
 #include "lwip/tcp.h"
 
@@ -105,12 +105,12 @@ static struct http_file http_files[11]={
     {sizeof (http_file2) - 1, http_file2},       /* 2 */
     {sizeof (http_file404) - 1, http_file404},   /* 3 */
     {sizeof (http_file500) - 1, http_file500},   /* 4 */
-    {sizeof (http_file0) - 1, http_file5},       /* 5 */
-    {sizeof (http_file1) - 1, http_file6},       /* 6 */
-    {sizeof (http_file2) - 1, http_file7},       /* 7 */
-    {sizeof (http_file0) - 1, http_file8},       /* 8 */
-    {sizeof (http_file1) - 1, http_file9},       /* 9 */
-    {sizeof (http_file2) - 1, http_file10}       /* 10 */
+    {sizeof (http_file5) - 1, http_file5},       /* 5 */
+    {sizeof (http_file6) - 1, http_file6},       /* 6 */
+    {sizeof (http_file7) - 1, http_file7},       /* 7 */
+    {sizeof (http_file8) - 1, http_file8},       /* 8 */
+    {sizeof (http_file9) - 1, http_file9},       /* 9 */
+    {sizeof (http_file10) - 1, http_file10}       /* 10 */
 };
 
 /*-----------------------------------------------------------------------------------*/
@@ -424,8 +424,11 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 
   hs = arg;
 
-  if (err == ERR_OK && p != NULL) {
+  if (err == ERR_OK && p != NULL)
+  {
 	  struct pbuf *q;
+
+	  debugSPIPrint("Received pbuf.");
     /* Inform TCP that we have taken the data. */
     tcp_recved(pcb, p->tot_len);
 
@@ -465,7 +468,9 @@ http_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 
 	pbuf_free(p);
   }
-  if (err == ERR_OK && p == NULL) {
+  if (err == ERR_OK && p == NULL)
+  {
+	  debugSPIPrint("pbuf null. Closing connection.");
     close_conn(pcb, hs);
   }
   return ERR_OK;

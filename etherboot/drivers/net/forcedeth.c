@@ -48,17 +48,8 @@
 /* to get the PCI support functions, if this is a PCI NIC */
 #include "pci.h"
 
-#include "lib/LPCMod/xblastDebug.h"
-
 #define drv_version "v1.1"
 #define drv_date "02-03-2004"
-
-#define TFTM_DEBUG
-#ifdef TFTM_DEBUG
-#define dprintf(x) debugSPIPrint x
-#else
-#define dprintf(x)
-#endif
 
 typedef unsigned char u8;
 typedef signed char s8;
@@ -71,7 +62,7 @@ typedef signed int s32;
 #define virt_to_le32desc(addr)  cpu_to_le32(virt_to_bus(addr))
 #define le32desc_to_virt(addr)  bus_to_virt(le32_to_cpu(addr))
 
-unsigned long BASE;
+static unsigned long BASE;
 /* NIC specific static variables go here */
 
 
@@ -125,7 +116,7 @@ enum {
 
 	NvRegOffloadConfig = 0x90,
 #define NVREG_OFFLOAD_HOMEPHY	0x601
-#define NVREG_OFFLOAD_NORMAL	0x5ee
+#define NVREG_OFFLOAD_NORMAL	RX_NIC_BUFSIZE
 	NvRegReceiverControl = 0x094,
 #define NVREG_RCVCTL_START	0x01
 	NvRegReceiverStatus = 0x98,
@@ -147,6 +138,9 @@ enum {
 	NvRegMulticastMaskA = 0xB8,
 	NvRegMulticastMaskB = 0xBC,
 
+	NvRegPhyInterface = 0xC0,
+#define PHY_RGMII		0x10000000
+
 	NvRegTxRingPhysAddr = 0x100,
 	NvRegRxRingPhysAddr = 0x104,
 	NvRegRingSizes = 0x108,
@@ -155,12 +149,12 @@ enum {
 	NvRegUnknownTransmitterReg = 0x10c,
 	NvRegLinkSpeed = 0x110,
 #define NVREG_LINKSPEED_FORCE 0x10000
-#define NVREG_LINKSPEED_10	10
+#define NVREG_LINKSPEED_10	1000
 #define NVREG_LINKSPEED_100	100
-#define NVREG_LINKSPEED_1000	1000
+#define NVREG_LINKSPEED_1000	50
 	NvRegUnknownSetupReg5 = 0x130,
 #define NVREG_UNKSETUP5_BIT31	(1<<31)
-	NvRegUnknownSetupReg3 = 0x134,
+	NvRegUnknownSetupReg3 = 0x13c,
 #define NVREG_UNKSETUP3_VAL1	0x200010
 	NvRegTxRxControl = 0x144,
 #define NVREG_TXRXCTL_KICK	0x0001
@@ -179,15 +173,15 @@ enum {
 	NvRegAdapterControl = 0x188,
 #define NVREG_ADAPTCTL_START	0x02
 #define NVREG_ADAPTCTL_LINKUP	0x04
-#define NVREG_ADAPTCTL_PHYVALID	0x4000
+#define NVREG_ADAPTCTL_PHYVALID	0x40000
 #define NVREG_ADAPTCTL_RUNNING	0x100000
 #define NVREG_ADAPTCTL_PHYSHIFT	24
 	NvRegMIISpeed = 0x18c,
 #define NVREG_MIISPEED_BIT8	(1<<8)
 #define NVREG_MIIDELAY	5
 	NvRegMIIControl = 0x190,
-#define NVREG_MIICTL_INUSE	0x10000
-#define NVREG_MIICTL_WRITE	0x08000
+#define NVREG_MIICTL_INUSE	0x08000
+#define NVREG_MIICTL_WRITE	0x00400
 #define NVREG_MIICTL_ADDRSHIFT	5
 	NvRegMIIData = 0x194,
 	NvRegWakeUpFlags = 0x200,
@@ -266,14 +260,20 @@ enum {
 #define NV_WAKEUPMASKENTRIES	4
 
 /* General driver defaults */
-#define NV_WATCHDOG_TIMEO	(2*HZ)
+#define NV_WATCHDOG_TIMEO	(5*HZ)
 #define DEFAULT_MTU		1500	/* also maximum supported, at least for now */
 
 #define RX_RING		4
 #define TX_RING		2
-/* limited to 1 packet until we understand NV_TX_LASTPACKET */
-#define TX_LIMIT_STOP	10
-#define TX_LIMIT_START	5
+
+/*
+ * If your nic mysteriously hangs then try to reduce the limits
+ * to 1/0: It might be required to set NV_TX_LASTPACKET in the
+ * last valid ring entry. But this would be impossible to
+ * implement - probably a disassembly error.
+ */
+#define TX_LIMIT_STOP	63
+#define TX_LIMIT_START	62
 
 /* rx/tx mac addr + type + vlan + align + slack*/
 #define RX_NIC_BUFSIZE		(DEFAULT_MTU + 64)
@@ -282,6 +282,28 @@ enum {
 
 #define OOM_REFILL	(1+HZ/20)
 #define POLL_WAIT	(1+HZ/100)
+
+/* PHY defines */
+#define PHY_OUI_MARVELL	0x5043
+#define PHY_OUI_CICADA	0x03f1
+#define PHYID1_OUI_MASK	0x03ff
+#define PHYID1_OUI_SHFT	6
+#define PHYID2_OUI_MASK	0xfc00
+#define PHYID2_OUI_SHFT	10
+#define PHY_INIT1	0x0f000
+#define PHY_INIT2	0x0e00
+#define PHY_INIT3	0x01000
+#define PHY_INIT4	0x0200
+#define PHY_INIT5	0x0004
+#define PHY_INIT6	0x02000
+#define PHY_GIGABIT	0x0100
+
+#define PHY_TIMEOUT	0x1
+#define PHY_ERROR	0x2
+
+#define PHY_100	0x1
+#define PHY_1000	0x2
+#define PHY_HALF	0x100
 
 struct ring_desc {
 	u32 PacketBuffer;
@@ -307,13 +329,14 @@ part of this buffer */
 static unsigned char rxb[RX_RING * RX_NIC_BUFSIZE];
 
 /* Private Storage for the NIC */
-struct forcedeth_private {
+static struct forcedeth_private {
 	/* General data:
 	 * Locking: spin_lock(&np->lock); */
 	int in_shutdown;
 	u32 linkspeed;
 	int duplex;
 	int phyaddr;
+	unsigned int phy_oui;
 
 	/* General data: RO fields */
 	u8 *ring_addr;
@@ -364,26 +387,105 @@ static int reg_delay(int offset, u32 mask,
 }
 
 #define MII_READ	(-1)
-#define MII_PHYSID1         0x02	/* PHYS ID 1                   */
-#define MII_PHYSID2         0x03	/* PHYS ID 2                   */
+
+/* Generic MII registers. */
+
 #define MII_BMCR            0x00	/* Basic mode control register */
 #define MII_BMSR            0x01	/* Basic mode status register  */
+#define MII_PHYSID1         0x02        /* PHYS ID 1                   */
+#define MII_PHYSID2         0x03        /* PHYS ID 2                   */
 #define MII_ADVERTISE       0x04	/* Advertisement control reg   */
 #define MII_LPA             0x05	/* Link partner ability reg    */
+#define MII_EXPANSION       0x06        /* Expansion register          */
+#define MII_CTRL1000        0x09        /* 1000BASE-T control          */
+#define MII_STAT1000        0x0a        /* 1000BASE-T status           */
+#define MII_ESTATUS         0x0f        /* Extended Status */
+#define MII_DCOUNTER        0x12        /* Disconnect counter          */
+#define MII_FCSCOUNTER      0x13        /* False carrier counter       */
+#define MII_NWAYTEST        0x14        /* N-way auto-neg test reg     */
+#define MII_RERRCOUNTER     0x15        /* Receive error counter       */
+#define MII_SREVISION       0x16        /* Silicon revision            */
+#define MII_RESV1           0x17        /* Reserved...                 */
+#define MII_LBRERROR        0x18        /* Lpback, rx, bypass error    */
+#define MII_PHYADDR         0x19        /* PHY address                 */
+#define MII_RESV2           0x1a        /* Reserved...                 */
+#define MII_TPISTATUS       0x1b        /* TPI status for 10mbps       */
+#define MII_NCONFIG         0x1c        /* Network interface config    */
 
-#define BMSR_ANEGCOMPLETE       0x0020	/* Auto-negotiation complete   */
+/* Basic mode control register. */
+#define BMCR_RESV               0x003f  /* Unused...                   */
+#define BMCR_SPEED1000          0x0040  /* MSB of Speed (1000)         */
+#define BMCR_CTST               0x0080  /* Collision test              */
+#define BMCR_FULLDPLX           0x0100	/* Full duplex                 */
+#define BMCR_ANRESTART          0x0200	/* Auto negotiation restart    */
+#define BMCR_ISOLATE            0x0400  /* Disconnect DP83840 from MII */
+#define BMCR_PDOWN              0x0800  /* Powerdown the DP83840       */
+#define BMCR_ANENABLE           0x1000	/* Enable auto negotiation     */
+#define BMCR_SPEED100           0x2000	/* Select 100Mbps              */
+#define BMCR_LOOPBACK           0x4000  /* TXD loopback bits           */
+#define BMCR_RESET              0x8000	/* Reset the DP83840           */
+
+/* Basic mode status register. */
+#define BMSR_ERCAP              0x0001  /* Ext-reg capability          */
+#define BMSR_JCD                0x0002  /* Jabber detected             */
+#define BMSR_LSTATUS            0x0004  /* Link status                 */
+#define BMSR_ANEGCAPABLE        0x0008  /* Able to do auto-negotiation */
+#define BMSR_RFAULT             0x0010  /* Remote fault detected       */
+#define BMSR_ANEGCOMPLETE       0x0020  /* Auto-negotiation complete   */
+#define BMSR_RESV               0x00c0  /* Unused...                   */
+#define BMSR_ESTATEN            0x0100  /* Extended Status in R15 */
+#define BMSR_100HALF2           0x0200  /* Can do 100BASE-T2 HDX */
+#define BMSR_100FULL2           0x0400  /* Can do 100BASE-T2 FDX */
+#define BMSR_10HALF             0x0800  /* Can do 10mbps, half-duplex  */
+#define BMSR_10FULL             0x1000  /* Can do 10mbps, full-duplex  */
+#define BMSR_100HALF            0x2000  /* Can do 100mbps, half-duplex */
+#define BMSR_100FULL            0x4000  /* Can do 100mbps, full-duplex */
+#define BMSR_100BASE4           0x8000  /* Can do 100mbps, 4k packets  */
+
+/* Advertisement control register. */
+#define ADVERTISE_SLCT          0x001f  /* Selector bits               */
+#define ADVERTISE_CSMA          0x0001  /* Only selector supported     */
+#define ADVERTISE_10HALF        0x0020	/* Try for 10mbps half-duplex  */
+#define ADVERTISE_1000XFULL     0x0020  /* Try for 1000BASE-X full-duplex */
+#define ADVERTISE_10FULL        0x0040	/* Try for 10mbps full-duplex  */
+#define ADVERTISE_1000XHALF     0x0040  /* Try for 1000BASE-X half-duplex */
+#define ADVERTISE_100HALF       0x0080	/* Try for 100mbps half-duplex */
+#define ADVERTISE_1000XPAUSE    0x0080  /* Try for 1000BASE-X pause    */
+#define ADVERTISE_100FULL       0x0100	/* Try for 100mbps full-duplex */
+#define ADVERTISE_1000XPSE_ASYM 0x0100  /* Try for 1000BASE-X asym pause */
+#define ADVERTISE_100BASE4      0x0200  /* Try for 100mbps 4k packets  */
+#define ADVERTISE_PAUSE_CAP     0x0400  /* Try for pause               */
+#define ADVERTISE_PAUSE_ASYM    0x0800  /* Try for asymetric pause     */
+#define ADVERTISE_RESV          0x1000  /* Unused...                   */
+#define ADVERTISE_RFAULT        0x2000  /* Say we can detect faults    */
+#define ADVERTISE_LPACK         0x4000  /* Ack link partners response  */
+#define ADVERTISE_NPAGE         0x8000  /* Next page bit               */
+
+#define ADVERTISE_FULL (ADVERTISE_100FULL | ADVERTISE_10FULL | \
+			ADVERTISE_CSMA)
+#define ADVERTISE_ALL (ADVERTISE_10HALF | ADVERTISE_10FULL | \
+                      ADVERTISE_100HALF | ADVERTISE_100FULL)
 
 /* Link partner ability register. */
-#define LPA_SLCT                0x001f	/* Same as advertise selector  */
-#define LPA_10HALF              0x0020	/* Can do 10mbps half-duplex   */
-#define LPA_10FULL              0x0040	/* Can do 10mbps full-duplex   */
-#define LPA_100HALF             0x0080	/* Can do 100mbps half-duplex  */
-#define LPA_100FULL             0x0100	/* Can do 100mbps full-duplex  */
-#define LPA_100BASE4            0x0200	/* Can do 100mbps 4k packets   */
-#define LPA_RESV                0x1c00	/* Unused...                   */
-#define LPA_RFAULT              0x2000	/* Link partner faulted        */
-#define LPA_LPACK               0x4000	/* Link partner acked us       */
-#define LPA_NPAGE               0x8000	/* Next page bit               */
+#define LPA_SLCT                0x001f  /* Same as advertise selector  */
+#define LPA_10HALF              0x0020  /* Can do 10mbps half-duplex   */
+#define LPA_1000XFULL           0x0020  /* Can do 1000BASE-X full-duplex */
+#define LPA_10FULL              0x0040  /* Can do 10mbps full-duplex   */
+#define LPA_1000XHALF           0x0040  /* Can do 1000BASE-X half-duplex */
+#define LPA_100HALF             0x0080  /* Can do 100mbps half-duplex  */
+#define LPA_1000XPAUSE          0x0080  /* Can do 1000BASE-X pause     */
+#define LPA_100FULL             0x0100  /* Can do 100mbps full-duplex  */
+#define LPA_1000XPAUSE_ASYM     0x0100  /* Can do 1000BASE-X pause asym*/
+#define LPA_100BASE4            0x0200  /* Can do 100mbps 4k packets   */
+#define LPA_PAUSE_CAP           0x0400  /* Can pause                   */
+#define LPA_PAUSE_ASYM          0x0800  /* Can pause asymetrically     */
+#define LPA_RESV                0x1000  /* Unused...                   */
+#define LPA_RFAULT              0x2000  /* Link partner faulted        */
+#define LPA_LPACK               0x4000  /* Link partner acked us       */
+#define LPA_NPAGE               0x8000  /* Next page bit               */
+
+#define LPA_DUPLEX            (LPA_10FULL | LPA_100FULL)
+#define LPA_100                       (LPA_100FULL | LPA_100HALF | LPA_100BASE4)
 
 /* mii_rw: read/write a register on the PHY.
  *
@@ -392,19 +494,12 @@ static int reg_delay(int offset, u32 mask,
 static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 		  int value)
 {
-	volatile u8 *base = (u8 *) BASE;
-	int was_running;
+	u8 *base = (u8 *) BASE;
 	u32 reg;
 	int retval;
 
 	writel(NVREG_MIISTAT_MASK, base + NvRegMIIStatus);
-	was_running = 0;
-	reg = readl(base + NvRegAdapterControl);
-	if (reg & NVREG_ADAPTCTL_RUNNING) {
-		was_running = 1;
-		writel(reg & ~NVREG_ADAPTCTL_RUNNING,
-		       base + NvRegAdapterControl);
-	}
+
 	reg = readl(base + NvRegMIIControl);
 	if (reg & NVREG_MIICTL_INUSE) {
 		writel(NVREG_MIICTL_INUSE, base + NvRegMIIControl);
@@ -412,7 +507,7 @@ static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 	}
 
 	reg =
-	    NVREG_MIICTL_INUSE | (addr << NVREG_MIICTL_ADDRSHIFT) | miireg;
+	    (addr << NVREG_MIICTL_ADDRSHIFT) | miireg;
 	if (value != MII_READ) {
 		writel(value, base + NvRegMIIData);
 		reg |= NVREG_MIICTL_WRITE;
@@ -434,18 +529,103 @@ static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 			 miireg, addr));
 		retval = -1;
 	} else {
-		/* FIXME: why is that required? */
-		udelay(50);
 		retval = readl(base + NvRegMIIData);
 		dprintf(("mii_rw read from reg %d at PHY %d: 0x%x.",
 			 miireg, addr, retval));
 	}
-	if (was_running) {
-		reg = readl(base + NvRegAdapterControl);
-		writel(reg | NVREG_ADAPTCTL_RUNNING,
-		       base + NvRegAdapterControl);
-	}
 	return retval;
+}
+
+static int phy_reset(struct nic *nic)
+{
+
+	u32 miicontrol;
+	unsigned int tries = 0;
+
+	miicontrol = mii_rw(nic, np->phyaddr, MII_BMCR, MII_READ);
+	miicontrol |= BMCR_RESET;
+	if (mii_rw(nic, np->phyaddr, MII_BMCR, miicontrol)) {
+		return -1;
+	}
+
+	/* wait for 500ms */
+	udelay(500000);
+
+	/* must wait till reset is deasserted */
+	while (miicontrol & BMCR_RESET) {
+		udelay(10000);
+		miicontrol = mii_rw(nic, np->phyaddr, MII_BMCR, MII_READ);
+		/* FIXME: 100 tries seem excessive */
+		if (tries++ > 100)
+			return -1;
+	}
+	return 0;
+}
+
+static int phy_init(struct nic *nic)
+{
+	u8 *base = (u8 *) BASE;
+	u32 phyinterface, phy_reserved, mii_status, mii_control,
+	    mii_control_1000, reg;
+
+	/* set advertise register */
+	reg = mii_rw(nic, np->phyaddr, MII_ADVERTISE, MII_READ);
+	reg |=
+	    (LPA_10HALF | LPA_10FULL | LPA_100HALF |
+	    		LPA_100FULL | 0x800 | 0x400);
+	if (mii_rw(nic, np->phyaddr, MII_ADVERTISE, reg)) {
+		dprintf(("phy write to advertise failed."));
+		return 0x2;
+	}
+
+	/* get phy interface type */
+	phyinterface = readl(base + NvRegPhyInterface);
+
+	/* see if gigabit phy */
+	mii_status = mii_rw(nic, np->phyaddr, MII_BMSR, MII_READ);
+
+	/* reset the phy */
+	if (phy_reset(nic)) {
+		dprintf(("phy reset failed"));
+		return 0x2;
+	}
+
+	/* phy vendor specific configuration */
+	if ((np->phy_oui == PHY_OUI_CICADA) && (phyinterface & PHY_RGMII)) {
+		phy_reserved =
+		    mii_rw(nic, np->phyaddr, MII_RESV1, MII_READ);
+		phy_reserved &= ~(PHY_INIT1 | PHY_INIT2);
+		phy_reserved |= (PHY_INIT3 | PHY_INIT4);
+		if (mii_rw(nic, np->phyaddr, MII_RESV1, phy_reserved)) {
+			dprintf(("phy init failed."));
+			return 0x2;
+		}
+		phy_reserved =
+		    mii_rw(nic, np->phyaddr, MII_NCONFIG, MII_READ);
+		phy_reserved |= PHY_INIT5;
+		if (mii_rw(nic, np->phyaddr, MII_NCONFIG, phy_reserved)) {
+			dprintf(("phy init failed."));
+			return 0x2;
+		}
+	}
+	if (np->phy_oui == PHY_OUI_CICADA) {
+		phy_reserved =
+		    mii_rw(nic, np->phyaddr, MII_SREVISION, MII_READ);
+		phy_reserved |= PHY_INIT6;
+		if (mii_rw(nic, np->phyaddr, MII_SREVISION, phy_reserved)) {
+			dprintf(("phy init failed."));
+			return 0x2;
+		}
+	}
+
+	/* restart auto negotiation */
+	mii_control = mii_rw(nic, np->phyaddr, MII_BMCR, MII_READ);
+	mii_control |= (BMCR_ANRESTART | BMCR_ANENABLE);
+	if (mii_rw(nic, np->phyaddr, MII_BMCR, mii_control)) {
+		return 0x2;
+	}
+
+	return 0;
 }
 
 static void start_rx(struct nic *nic __unused)
@@ -532,8 +712,8 @@ static int alloc_rx(struct nic *nic __unused)
 		rx_ring[i].Length = cpu_to_le16(RX_NIC_BUFSIZE);
 		wmb();
 		rx_ring[i].Flags = cpu_to_le16(NV_RX_AVAIL);
-		/*      printf("alloc_rx: Packet  %d marked as Available",
-		   refill_rx); */
+		      dprintf(("alloc_rx: Packet  %d marked as Available",
+		   refill_rx));
 		refill_rx++;
 	}
 	np->refill_rx = refill_rx;
@@ -544,8 +724,51 @@ static int alloc_rx(struct nic *nic __unused)
 
 static int update_linkspeed(struct nic *nic)
 {
-	int adv, lpa, newdup;
+	int adv, lpa;
 	u32 newls;
+	int newdup = np->duplex;
+	u32 mii_status;
+	int retval = 0;
+	u32 control_1000, status_1000, phyreg;
+	u8 *base = (u8 *) BASE;
+	int i;
+
+	/* BMSR_LSTATUS is latched, read it twice:
+	 * we want the current value.
+	 */
+	mii_rw(nic, np->phyaddr, MII_BMSR, MII_READ);
+	mii_status = mii_rw(nic, np->phyaddr, MII_BMSR, MII_READ);
+
+#if 1
+	//yhlu
+	for(i=0;i<30;i++) {
+		mii_status = mii_rw(nic, np->phyaddr, MII_BMSR, MII_READ);
+		if((mii_status & BMSR_LSTATUS) && (mii_status & BMSR_ANEGCOMPLETE)) break;
+		udelay(100000);
+	}
+#endif
+
+	if (!(mii_status & BMSR_LSTATUS)) {
+		printf
+		    ("no link detected by phy - falling back to 10HD.\n");
+		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
+		newdup = 0;
+		retval = 0;
+		goto set_speed;
+	}
+
+	/* check auto negotiation is complete */
+	if (!(mii_status & BMSR_ANEGCOMPLETE)) {
+		/* still in autonegotiation - configure nic for 10 MBit HD and wait. */
+		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
+		newdup = 0;
+		retval = 0;
+		printf("autoneg not completed - falling back to 10HD.\n");
+		goto set_speed;
+	}
+
+	retval = 1;
+
 	adv = mii_rw(nic, np->phyaddr, MII_ADVERTISE, MII_READ);
 	lpa = mii_rw(nic, np->phyaddr, MII_LPA, MII_READ);
 	dprintf(("update_linkspeed: PHY advertises 0x%hX, lpa 0x%hX.",
@@ -570,12 +793,35 @@ static int update_linkspeed(struct nic *nic)
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 	}
-	if (np->duplex != newdup || np->linkspeed != newls) {
-		np->duplex = newdup;
-		np->linkspeed = newls;
-		return 1;
-	}
-	return 0;
+
+      set_speed:
+	if (np->duplex == newdup && np->linkspeed == newls)
+		return retval;
+
+	dprintf(("changing link setting from %d/%s to %d/%s.\n",
+	       np->linkspeed, np->duplex ? "Full-Duplex": "Half-Duplex", newls, newdup ? "Full-Duplex": "Half-Duplex"));
+
+	np->duplex = newdup;
+	np->linkspeed = newls;
+
+
+	phyreg = readl(base + NvRegPhyInterface);
+	phyreg &= ~(PHY_HALF | PHY_100 | PHY_1000);
+	if (np->duplex == 0)
+		phyreg |= PHY_HALF;
+	if ((np->linkspeed & 0xFFF) == NVREG_LINKSPEED_100)
+		phyreg |= PHY_100;
+	else if ((np->linkspeed & 0xFFF) == NVREG_LINKSPEED_1000)
+		phyreg |= PHY_1000;
+	writel(phyreg, base + NvRegPhyInterface);
+
+	writel(NVREG_MISC1_FORCE | (np->duplex ? 0 : NVREG_MISC1_HD),
+	       base + NvRegMisc1);
+	pci_push(base);
+	writel(np->linkspeed, base + NvRegLinkSpeed);
+	pci_push(base);
+
+	return retval;
 }
 
 
@@ -647,15 +893,21 @@ static int forcedeth_reset(struct nic *nic)
 	writel(0, base + NvRegMulticastMaskA);
 	writel(0, base + NvRegMulticastMaskB);
 	writel(0, base + NvRegPacketFilterFlags);
+
+	writel(0, base + NvRegTransmitterControl);
+	writel(0, base + NvRegReceiverControl);
+
 	writel(0, base + NvRegAdapterControl);
+
+	/* 2) initialize descriptor rings */
+	oom = init_ring(nic);
+
 	writel(0, base + NvRegLinkSpeed);
 	writel(0, base + NvRegUnknownTransmitterReg);
 	txrx_reset(nic);
 	writel(0, base + NvRegUnknownSetupReg6);
 
-	/* 2) initialize descriptor rings */
 	np->in_shutdown = 0;
-	oom = init_ring(nic);
 
 	/* 3) set mac address */
 	{
@@ -671,9 +923,20 @@ static int forcedeth_reset(struct nic *nic)
 		writel(mac[1], base + NvRegMacAddrB);
 	}
 
-	/* 4) continue setup */
+	/* 4) give hw rings */
+	writel((u32) virt_to_le32desc(&rx_ring[0]),
+	       base + NvRegRxRingPhysAddr);
+	writel((u32) virt_to_le32desc(&tx_ring[0]),
+	       base + NvRegTxRingPhysAddr);
+
+	writel(((RX_RING - 1) << NVREG_RINGSZ_RXSHIFT) +
+	       ((TX_RING - 1) << NVREG_RINGSZ_TXSHIFT),
+	       base + NvRegRingSizes);
+
+	/* 5) continue setup */
 	np->linkspeed = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 	np->duplex = 0;
+	writel(np->linkspeed, base + NvRegLinkSpeed);
 	writel(NVREG_UNKSETUP3_VAL1, base + NvRegUnknownSetupReg3);
 	writel(0, base + NvRegTxRxControl);
 	pci_push(base);
@@ -684,35 +947,14 @@ static int forcedeth_reset(struct nic *nic)
 		  NV_SETUP5_DELAYMAX,
 		  "\n");
 	writel(0, base + NvRegUnknownSetupReg4);
-
-	/* 5) Find a suitable PHY */
-	writel(NVREG_MIISPEED_BIT8 | NVREG_MIIDELAY, base + NvRegMIISpeed);
-	for (i = 1; i < 32; i++) {
-		int id1, id2;
-
-		id1 = mii_rw(nic, i, MII_PHYSID1, MII_READ);
-		if (id1 < 0)
-			continue;
-		id2 = mii_rw(nic, i, MII_PHYSID2, MII_READ);
-		if (id2 < 0)
-			continue;
-		dprintf(("open: Found PHY %04x:%04x at address %d.",
-			 id1, id2, i));
-		np->phyaddr = i;
-
-		update_linkspeed(nic);
-
-		break;
-	}
-	if (i == 32) {
-		printf("open: failing due to lack of suitable PHY.");
-		ret = -1;
-		goto out_drain;
-	}
-
-	printf("           %d-Mbs Link, %s-Duplex",
+//       writel(NVREG_IRQSTAT_MASK, base + NvRegIrqStatus);
+	writel(NVREG_MIISTAT_MASK2, base + NvRegMIIStatus);
+#if 0
+	printf("%d-Mbs Link, %s-Duplex\n",
 	       np->linkspeed & NVREG_LINKSPEED_10 ? 10 : 100,
 	       np->duplex ? "Full" : "Half");
+#endif
+
 	/* 6) continue setup */
 	writel(NVREG_MISC1_FORCE | (np->duplex ? 0 : NVREG_MISC1_HD),
 	       base + NvRegMisc1);
@@ -734,20 +976,11 @@ static int forcedeth_reset(struct nic *nic)
 	writel(NVREG_UNKSETUP6_VAL, base + NvRegUnknownSetupReg6);
 	writel((np->
 		phyaddr << NVREG_ADAPTCTL_PHYSHIFT) |
-	       NVREG_ADAPTCTL_PHYVALID, base + NvRegAdapterControl);
+	       NVREG_ADAPTCTL_PHYVALID | NVREG_ADAPTCTL_RUNNING,
+	       base + NvRegAdapterControl);
+	writel(NVREG_MIISPEED_BIT8 | NVREG_MIIDELAY, base + NvRegMIISpeed);
 	writel(NVREG_UNKSETUP4_VAL, base + NvRegUnknownSetupReg4);
 	writel(NVREG_WAKEUPFLAGS_VAL, base + NvRegWakeUpFlags);
-
-	/* 7) start packet processing */
-	writel((u32) virt_to_le32desc(&rx_ring[0]),
-	       base + NvRegRxRingPhysAddr);
-	writel((u32) virt_to_le32desc(&tx_ring[0]),
-	       base + NvRegTxRingPhysAddr);
-
-
-	writel(((RX_RING - 1) << NVREG_RINGSZ_RXSHIFT) +
-	       ((TX_RING - 1) << NVREG_RINGSZ_TXSHIFT),
-	       base + NvRegRingSizes);
 
 	i = readl(base + NvRegPowerState);
 	if ((i & NVREG_POWERSTATE_POWEREDUP) == 0) {
@@ -758,11 +991,8 @@ static int forcedeth_reset(struct nic *nic)
 	udelay(10);
 	writel(readl(base + NvRegPowerState) | NVREG_POWERSTATE_VALID,
 	       base + NvRegPowerState);
-	writel(NVREG_ADAPTCTL_RUNNING, base + NvRegAdapterControl);
 
 	writel(0, base + NvRegIrqMask);
-	pci_push(base);
-	writel(NVREG_IRQSTAT_MASK, base + NvRegIrqStatus);
 	pci_push(base);
 	writel(NVREG_MIISTAT_MASK2, base + NvRegMIIStatus);
 	writel(NVREG_IRQSTAT_MASK, base + NvRegIrqStatus);
@@ -778,17 +1008,26 @@ static int forcedeth_reset(struct nic *nic)
 	       base + NvRegPacketFilterFlags);
 
 	set_multicast(nic);
+	/* One manual link speed update: Interrupts are enabled, future link
+	 * speed changes cause interrupts and are handled by nv_link_irq().
+	 */
+	{
+		u32 miistat;
+		miistat = readl(base + NvRegMIIStatus);
+		writel(NVREG_MIISTAT_MASK, base + NvRegMIIStatus);
+		dprintf(("startup: got 0x%hX.\n", miistat));
+	}
+	ret = update_linkspeed(nic);
+
 	//start_rx(nic);
 	start_tx(nic);
 
-	if (!
-	    (mii_rw(nic, np->phyaddr, MII_BMSR, MII_READ) &
-	     BMSR_ANEGCOMPLETE)) {
-		printf("no link during initialization.");
+	if (ret) {
+		//Start Connection netif_carrier_on(dev);
+	} else {
+		printf("no link during initialization.\n");
 	}
 
-	udelay(10000);
-      out_drain:
 	return ret;
 }
 
@@ -821,6 +1060,7 @@ static int forcedeth_poll(struct nic *nic)
 		wmb();
 		np->cur_rx++;
 		alloc_rx(nic);
+		dprintf(("incoming packet"));
 		return 1;
 	}
 	return 0;		/* initially as this is called to flush the input */
@@ -841,6 +1081,8 @@ static void forcedeth_transmit(struct nic *nic, const char *d,	/* Destination */
 	//u16 status;
 	u8 *base = (u8 *) BASE;
 	int nr;
+
+	dprintf(("ETH transmit"));
 
 	nr = np->next_tx % TX_RING;
 
@@ -867,7 +1109,6 @@ static void forcedeth_transmit(struct nic *nic, const char *d,	/* Destination */
 
 	writel(NVREG_TXRXCTL_KICK, base + NvRegTxRxControl);
 	pci_push(base);
-	tx_ring[nr].Flags = np->tx_flags;
 	np->next_tx++;
 
 
@@ -934,14 +1175,15 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 	struct nic *nic = (struct nic *) dev;
 	unsigned long addr;
 	int sz;
+	int i;
 	u8 *base;
 
 	if (pci->ioaddr == 0)
 		return 0;
 
-/*	printf("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX",
-	       pci->name, pci->vendor, pci->dev_id);
-*/
+	dprintf(("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX",
+	       pci->name, pci->vendor, pci->dev_id));
+
 	/* point to private storage */
 	np = &npx;
 
@@ -988,6 +1230,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 			NV_TX_VALID);
 	switch (pci->dev_id) {
 	case 0x01C3:		// nforce
+	case 0x054C:
 		np->irqmask = NVREG_IRQMASK_WANTED_2;
 		np->irqmask |= NVREG_IRQ_TIMER;
 		break;
@@ -1002,6 +1245,39 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		np->irqmask |= NVREG_IRQ_TIMER;
 
 	}
+
+	/* find a suitable phy */
+	for (i = 1; i < 32; i++) {
+		int id1, id2;
+		id1 = mii_rw(nic, i, MII_PHYSID1, MII_READ);
+		if (id1 < 0 || id1 == 0xffff)
+			continue;
+		id2 = mii_rw(nic, i, MII_PHYSID2, MII_READ);
+		if (id2 < 0 || id2 == 0xffff)
+			continue;
+		id1 = (id1 & PHYID1_OUI_MASK) << PHYID1_OUI_SHFT;
+		id2 = (id2 & PHYID2_OUI_MASK) >> PHYID2_OUI_SHFT;
+		dprintf
+			(("%s: open: Found PHY %hX:%hX at address %d.\n",
+			  pci->name, id1, id2, i));
+		np->phyaddr = i;
+		np->phy_oui = id1 | id2;
+		break;
+	}
+	if (i == 32) {
+		/* PHY in isolate mode? No phy attached and user wants to
+		 * test loopback? Very odd, but can be correct.
+		 */
+		dprintf
+			(("%s: open: Could not find a valid PHY.\n", pci->name));
+	}
+
+	if (i != 32) {
+		/* reset it */
+		dprintf(("PHY found. Re-Init"));
+		phy_init(nic);
+	}
+
 	dprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s",
 		 pci->name, pci->vendor, pci->dev_id, pci->name));
 
