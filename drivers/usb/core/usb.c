@@ -950,6 +950,7 @@ int usb_new_device(struct usb_device *dev, struct device *parent)
     switch (dev->speed) {
     case USB_SPEED_HIGH:        /* fixed at 64 */
         i = 64;
+        debugSPIPrint("USB_SPEED_HIGH device");
         break;
     case USB_SPEED_FULL:        /* 8, 16, 32, or 64 */
         /* to determine the ep0 maxpacket size, read the first 8
@@ -1053,7 +1054,10 @@ int usb_new_device(struct usb_device *dev, struct device *parent)
     /* put into sysfs, with device and config specific files */
     err = device_add (&dev->dev);
     if (err)
+    {
+        debugSPIPrint("Error during device_add");
         return err;
+    }
     usb_create_driverfs_dev_files (dev);
 
     /* Register all of the interfaces for this device with the driver core.

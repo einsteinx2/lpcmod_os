@@ -65,6 +65,7 @@
 #include <stdarg.h>
 
 bool netFlashOver;
+WebServerOps currentWebServerOp;
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'

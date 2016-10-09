@@ -12,6 +12,7 @@
 #include "lpcmod_v1.h"
 #include "FlashMenuActions.h"
 #include "string.h"
+#include "WebServerOps.h"
 
 TEXTMENU* EEPROMFileRestoreMenuInit(void);
 
@@ -70,7 +71,7 @@ TEXTMENU *eepromEditMenuInit(void) {
     strcpy(itemPtr->szCaption, "Restore from network");
     itemPtr->functionPtr= enableNetflash;
     itemPtr->functionDataPtr= malloc(sizeof(unsigned char));
-        *(unsigned char *)itemPtr->functionDataPtr= EEPROM_NETFLASH;
+        *(unsigned char *)itemPtr->functionDataPtr= WebServerOps_EEPROMFlash;
     itemPtr->functionDataPtrMemAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 

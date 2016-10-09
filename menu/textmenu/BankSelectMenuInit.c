@@ -15,6 +15,7 @@
 #include "boot.h"
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "WebServerOps.h"
 
 
 TEXTMENU *BankSelectMenuInit(void * bank) {
@@ -153,7 +154,7 @@ TEXTMENU* BankSelectInit(void * bank) {
        sprintf(itemPtr->szCaption,"Net Flash");
     itemPtr->functionPtr= enableNetflash;
     itemPtr->functionDataPtr= malloc(sizeof(unsigned char));
-        *(unsigned char *)itemPtr->functionDataPtr= BIOS_NETFLASH;
+        *(unsigned char *)itemPtr->functionDataPtr= WebServerOps_BIOSFlash;
     TextMenuAddItem(menuPtr, itemPtr);
 #ifdef DEV_FEATURES
     itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));

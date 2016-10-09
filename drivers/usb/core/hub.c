@@ -56,7 +56,7 @@ static pid_t khubd_pid = 0;            /* PID of khubd */
 static DECLARE_COMPLETION(khubd_exited);
 
 #ifdef    DEBUG
-/*
+
 static inline char *portspeed (int portstatus)
 {
     if (portstatus & (1 << USB_PORT_FEAT_HIGHSPEED))
@@ -66,7 +66,7 @@ static inline char *portspeed (int portstatus)
     else
         return "12 Mb/s";
 }
-*/
+
 #endif
 
 /* for dev_info, dev_dbg, etc */

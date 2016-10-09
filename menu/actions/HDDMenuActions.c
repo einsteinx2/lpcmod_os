@@ -16,6 +16,7 @@
 #include "FlashMenuActions.h"
 #include "Gentoox.h"
 #include "menu/misc/ConfirmDialog.h"
+#include "WebServerOps.h"
 
 void AssertLockUnlock(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
@@ -43,14 +44,13 @@ void AssertLockUnlock(void *itemPtr){
 void AssertLockUnlockFromNetwork(void *itemPtr){
     TEXTMENUITEM * tempItemPtr = (TEXTMENUITEM *)itemPtr;
     unsigned char nIndexDrive = 1;                                //Toggle slave by default.
-    char temp = HDD1LOCK_NETFLASH;
+    char temp = WebServerOps_HDD1Lock;
     unsigned char *eepromPtr;
 
     //Not that cool to do but I don't want to change the function call in textmenu.c...
     nIndexDrive = (unsigned char)tempItemPtr->szParameter[50];
     if(nIndexDrive == 0)
-        temp = HDD0LOCK_NETFLASH;
-
+        temp = WebServerOps_HDD0Lock;
     enableNetflash((void *)&temp);
 
     if((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) {

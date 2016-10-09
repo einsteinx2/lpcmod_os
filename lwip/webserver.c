@@ -135,19 +135,19 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
         busyLED();
         //printk ("\nGot BIOS-image over http, %d bytes\n", hs->bios_len);
         switch(pcb->flashType){
-            case BIOS_NETFLASH:
+            case WebServerOps_BIOSFlash:
                 fileBuf = (unsigned char *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
                 memset(fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
                 memcpy(fileBuf, hs->bios_start, hs->bios_len);
                 netFlashOver = FlashFileFromBuffer(fileBuf, hs->bios_len, 0); //0 because we don't want to show confirmDialog screens.
                 free(fileBuf);
                 break;
-            case EEPROM_NETFLASH:
+            case WebServerOps_EEPROMFlash:
                 updateEEPROMEditBufferFromInputBuffer(hs->bios_start, hs->bios_len, true);
                 netFlashOver = 1;
                 UIFooter();
                 break;
-            case HDD0LOCK_NETFLASH:
+            case WebServerOps_HDD0Lock:
                 if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
                     UnlockHDD(0, 1, (unsigned char *)hs->bios_start, false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
                 }
@@ -156,7 +156,7 @@ static void close_conn(struct tcp_pcb *pcb, struct http_state *hs) {
                 }
                 netFlashOver = 1;
                 break;
-            case HDD1LOCK_NETFLASH:
+            case WebServerOps_HDD1Lock:
                 if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002) {       //Drive is already locked
                     UnlockHDD(1, 1, (unsigned char *)hs->bios_start,false);                      //Attempt Unlock only if SECURITY_UNLOCK was successful.
                 }
@@ -262,7 +262,7 @@ handle_line(struct tcp_pcb *pcb, struct http_state *hs)
 			if (fno > 2) {
 				fno = 3; /* 404 */
 			}
-			if(pcb->flashType == HDD0LOCK_NETFLASH || pcb->flashType == HDD1LOCK_NETFLASH){
+			if(pcb->flashType == WebServerOps_HDD0Lock || pcb->flashType == WebServerOps_HDD1Lock){
 			    fileSelect = 8;
 			}
 			else{
@@ -372,7 +372,7 @@ handle_post(struct http_state *hs, unsigned char flashType)
 	len = end - start;
 
 	switch(flashType){
-	case BIOS_NETFLASH:
+	case WebServerOps_BIOSFlash:
 	    if(len != 256*1024 && len != 512*1024 && len != 1024*1024){
 	        hs->file = http_files[2].data;
 		hs->left = http_files[2].len;
@@ -382,7 +382,7 @@ handle_post(struct http_state *hs, unsigned char flashType)
 	    hs->file = http_files[1].data;
 	    hs->left = http_files[1].len;
 	    break;
-	case EEPROM_NETFLASH:
+	case WebServerOps_EEPROMFlash:
 	    if(len != 256){
 	        hs->file = http_files[7].data;
 		hs->left = http_files[7].len;
@@ -392,8 +392,8 @@ handle_post(struct http_state *hs, unsigned char flashType)
 	    hs->file = http_files[6].data;
 	    hs->left = http_files[6].len;
 	    break;
-	case HDD0LOCK_NETFLASH:
-	case HDD1LOCK_NETFLASH:
+	case WebServerOps_HDD0Lock:
+	case WebServerOps_HDD1Lock:
             if(len != 256){
 	        hs->file = http_files[10].data;
 		hs->left = http_files[10].len;

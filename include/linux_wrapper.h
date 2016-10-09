@@ -524,6 +524,8 @@ void my_wait_for_completion(struct completion*);
 /*------------------------------------------------------------------------*/ 
 /* Debug output */
 /*------------------------------------------------------------------------*/ 
+//#define DEBUG_MODE
+#include "lib/LPCMod/xblastDebug.h"
 #ifdef DEBUG_MODE
 #define dev_printk(lvl,x,f,arg...) debugSPIPrint(f, ## arg)
 #define dev_dbg(x,f,arg...) debugSPIPrint(f, ## arg)
