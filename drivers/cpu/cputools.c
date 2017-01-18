@@ -65,7 +65,7 @@ double RDTSC(void){
     unsigned long a, d;
 
     rdtsc(a,d);
-    //debugSPIPrint("d:0x%X, a:0x%X", d, a);
+    //debugSPIPrint("d:0x%X, a:0x%X\n", d, a);
     return (((unsigned long long)a) | (((unsigned long long)d) << 32));
 }
 
@@ -82,7 +82,7 @@ extern unsigned long getCPUFreq(void){
     Tcpu_result = RDTSC();
     Twin_result = IoInputDword(0x8008);
     
-    //debugSPIPrint("CPU1: %u, win1: %u, win2: %u", Tcpu_result-Tcpu_fsb, Twin_fsb, Twin_result);
+    //debugSPIPrint("CPU1: %u, win1: %u, win2: %u\n", Tcpu_result-Tcpu_fsb, Twin_fsb, Twin_result);
 
     Fcpu = (Tcpu_result - Tcpu_fsb);
     Fcpu /= (Twin_result - Twin_fsb);
@@ -101,7 +101,7 @@ extern unsigned long getCPUFreq(void){
         finalResult = 1400;    //Trusty 1.4GHz
     else
         finalResult = 1480;    //DreamX 1.48GHz    
-    //debugSPIPrint("Fcpu: %u", finalResult);
+    //debugSPIPrint("Fcpu: %u\n", finalResult);
 
     return finalResult;
 }

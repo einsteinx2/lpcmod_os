@@ -11,25 +11,23 @@
 #include "BootEEPROM.h"
 #include <stdbool.h>
 
-void saveEEPromToFlash(void *whatever);
-void restoreEEPromFromFlash(void *whatever);
-void warningDisplayEepromEditMenu(void *ignored);
-void wipeEEPromUserSettings(void *whatever);
+void saveEEPromToFlash(void* ignored);
+void restoreEEPromFromFlash(void* ignored);
+void warningDisplayEepromEditMenu(void* ignored);
+void wipeEEPromUserSettings(void* ignored);
 
-void showMemTest(void *whatever);
+void showMemTest(void* ignored);
 void memtest(void);
 int testBank(int bank);
 
-void ToolHeader(char *title);
-
 //void TSOPRecoveryReboot(void *ignored);
 
-void saveXBlastcfg(void * ignored);
-void loadXBlastcfg(void * ignored);
+void saveXBlastcfg(void* ignored);
+void loadXBlastcfg(void* ignored);
 
-void prevA19controlModBootValue(void * itemPtr);
-void nextA19controlModBootValue(void * itemPtr);
+void prevA19controlModBootValue(void* itemPtr);
+void nextA19controlModBootValue(void* itemPtr);
 
-bool replaceEEPROMContentFromBuffer(EEPROMDATA * eepromPtr);
+bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr);
 
 #endif

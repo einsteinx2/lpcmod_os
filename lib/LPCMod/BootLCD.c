@@ -7,14 +7,15 @@
  *                                                                         *
  ***************************************************************************/
 
- #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromString.h"
 #include "lib/time/timeManagement.h"
 #include "boot.h"
 #include "VideoInitialization.h"
 #include "BootLCD.h"
 #include "lpcmod_v1.h"
-#include "BootLPCMod.h"
-#include "BootFlash.h"
+#include "xblast/HardwareIdentifier.h"
+#include "xblast/settings/xblastSettingsDefs.h"
+#include "lib/LPCMod/BootLPCMod.h"
 #include "string.h"
 
 void BootLCDInit(void){
@@ -32,7 +33,7 @@ void BootLCDInit(void){
     xLCD.Init = WriteLCDInit;
     xLCD.Command = WriteLCDCommand;
     xLCD.Data = WriteLCDData;
-    if(fHasHardware == SYSCON_ID_X3)    //Xecuter 3 interface differently from other modchips.
+    if(isXecuter3())    //Xecuter 3 interface differently from other modchips.
         xLCD.WriteIO = X3WriteLCDIO;
     else
         xLCD.WriteIO = WriteLCDIO;
@@ -47,7 +48,7 @@ void BootLCDSwitchType(void){
     xLCD.LineSize = LPCmodSettings.LCDsettings.lineLength;    //Defaults to 4 lines LCDs
     xLCD.nbLines = LPCmodSettings.LCDsettings.nbLines;        //Defaults to 20 chars/line
     switch(LPCmodSettings.LCDsettings.lcdType){
-        case KS0073:
+        case LCDTYPE_KS0073:
             xLCD.Line1Start = 0x00;
             xLCD.Line2Start = 0x20;    //Check the datasheet if you don't believe me.
             xLCD.Line3Start = 0x40;
@@ -75,7 +76,7 @@ void setLCDContrast(unsigned char value){
 }
 
 void setLCDBacklight(unsigned char value){
-    if(fHasHardware != SYSCON_ID_X3){                  //Everything but Xecuter 3
+    if(isXecuter3() == false){  //Everything but Xecuter 3
         float fBackLight=((float)value)/100.0f;
         fBackLight*=127.0f;
         unsigned char newValue=(unsigned char)fBackLight;
@@ -88,10 +89,10 @@ void setLCDBacklight(unsigned char value){
 
 void assertInitLCD(void){
     if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1){    //Display should be ON but is not initialized.
-        if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP)     //XBlast Mod only.
+        if(isPureXBlast())     //XBlast Mod only.
             toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
         xLCD.enable = 1;
-        if(fHasHardware != SYSCON_ID_X3 && fHasHardware != SYSCON_ID_XXOPX)
+        if(isLCDContrastSupport())
             setLCDContrast(LPCmodSettings.LCDsettings.contrast);
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
         wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
@@ -109,12 +110,14 @@ void assertInitLCD(void){
 
 
 
-void WriteLCDInit(void){
+void WriteLCDInit(void)
+{
     if(xLCD.enable != 1)
         return;
 
     //Xecuter 3 only
-    if(fHasHardware == SYSCON_ID_X3){
+    if(isXecuter3())
+    {
         //initialize GP/IO
         WriteToIO(X3_DISP_O_DAT, 0);
         WriteToIO(X3_DISP_O_CMD, 0);
@@ -158,7 +161,7 @@ void WriteLCDCommand(unsigned char value){
 void WriteLCDData(unsigned char value){
     if(xLCD.enable != 1)
         return;
-    xLCD.WriteIO(value, (fHasHardware == SYSCON_ID_X3)?X3_DISPLAY_RS:DISPLAY_RS, xLCD.TimingData);
+    xLCD.WriteIO(value, isXecuter3()?X3_DISPLAY_RS:DISPLAY_RS, xLCD.TimingData);
 }
 
 void WriteLCDIO(unsigned char data, bool RS, unsigned short wait){

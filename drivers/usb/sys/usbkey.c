@@ -40,7 +40,7 @@ static void usb_kbd_irq(struct urb *urb, struct pt_regs *regs)
     #if keyboarddebug
     ycoffset += 15;
     ycoffset = ycoffset % 600;
-    VIDEO_CURSOR_POSX=20;
+    VIDEO_CURSOR_POSX=vmode.xmargin;
     VIDEO_CURSOR_POSY=ycoffset;    
     printe(" -%02x %02x %02x %02x %02x %02x\n",kbd->kbd_pkt[0],kbd->kbd_pkt[1],kbd->kbd_pkt[2],kbd->kbd_pkt[3],kbd->kbd_pkt[4],kbd->kbd_pkt[5]);
     #endif

@@ -9,18 +9,21 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "TextMenu.h"
+
 //For the icon->text menu jump
 void AdvancedMenu(void *menu);
 
 //Used to display child menus
-void DrawChildTextMenu(void *menu);
-void ResetDrawChildTextMenu(void *menu);
+void DrawChildTextMenu(void* menu);
+void ResetDrawChildTextMenu(TEXTMENU* menu);
 void DrawLargeHDDTextMenu(unsigned char drive);
 
 void SetWidescreen(void *);
 void SetVideoStandard(void *);
 void SetLEDColor(void *);
 
+void freeTextMenuAllocMem(TEXTMENU* menu);
 
 //void DrawBootMenu(void *entry);
 //void BootMenuEntry(void *entry);
@@ -36,15 +39,7 @@ void SetLEDColor(void *);
 #ifdef ETHERBOOT
 void BootFromEtherboot(void *);
 #endif
-
-// Booting Original Bios
-void assertBankScriptExecTSOPBoot(void * data);
-void BootOriginalBios(unsigned char bank);
-
-// Booting 256k Modbios
-void assertBankScriptExecBankBoot(void * data);
-void BootModBios(unsigned char bank);
-
+void UiHeader(char *title);
 void UIFooter(void);
 
 #endif

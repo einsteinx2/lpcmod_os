@@ -211,7 +211,7 @@ void * malloc(size_t size) {
     tempmalloc = t_malloc(temp);
     tempmalloc2 = (unsigned int*)tempmalloc;
 
-    tempmalloc = (unsigned char*)((unsigned int)(tempmalloc+0x100) & 0xffFFff00);
+    tempmalloc = (unsigned char *)((unsigned int)(tempmalloc+0x100) & 0xffFFff00);
     tempmalloc1 = (unsigned int*)tempmalloc;
     tempmalloc1--;
     tempmalloc1--;
@@ -220,6 +220,14 @@ void * malloc(size_t size) {
     BootPciInterruptEnable();
         
     return tempmalloc;
+}
+
+void *calloc (size_t __nmemb, size_t __size)
+{
+    void* ptr = malloc(__nmemb * __size);
+    memset(ptr, 0x00, __nmemb * __size);
+
+    return ptr;
 }
 
 void free(void *ptr) {

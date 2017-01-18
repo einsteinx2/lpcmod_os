@@ -19,6 +19,8 @@
 // No relationship between the author(s) and Microsoft Corporation exists or is
 // implied.
 
+#include "../include/memory_layout.h"
+
 // Constants
 
 // Size of a page on x86
@@ -29,10 +31,10 @@
 #define KERNEL_ADDRESS            0x00100000
 // Minimum physical address at which the kernel can reside temporarily
 #define MIN_KERNEL_ADDRESS        KERNEL_ADDRESS
-// Memory reserved to the kernel (1 MB at the moment)
-#define KERNEL_MAX_SIZE            0x00100000 // 1MB maximum Kernel for Cromwell
+// Memory reserved to the kernel (4 MB at the moment)
+#define KERNEL_MAX_SIZE            0x00400000 // 4MB maximum Kernel for Cromwell
 // Location of kernel in RAM
-#define KERNEL_RAM_ADDRESS        0x03A00000
+#define KERNEL_RAM_ADDRESS        CODE_LOC_START
 // Size of memory on a retail XBOX unit
 #define RETAIL_RAM_SIZE            0x04000000
 // Reserve pages in address space
@@ -76,7 +78,7 @@ AUX_DEVICE_INFO    =    PARAM+0x01FF
 LOADER_TYPE    =    PARAM+0x0210
 LOAD_FLAGS    =    PARAM+0x0211
 KERNEL_START    =    PARAM+0x0214
-INITRD_START    =    PARAM+0x0218
+INITRD_START_    =    PARAM+0x0218
 INITRD_SIZE    =    PARAM+0x021C
 COMMAND_LINE    =    PARAM+0x0800
 REL_COMMAND_LINE    =    0x0800

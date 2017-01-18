@@ -5,8 +5,7 @@
 
 #include	"if_ether.h"
 
-#define DEBUG 1
-#define TFTM_DEBUG
+//#define TFTM_DEBUG
 #ifdef TFTM_DEBUG
 #define dprintf(x) debugSPIPrint x
 #else

@@ -96,7 +96,7 @@ if ($showversion) {
     exit 0;
 }
 
-if (defined($ENV{LANG}) and $ENV{LANG} =~ /\.UTF-8$/i) {
+if ($] <= 5.008 and defined($ENV{LANG}) and $ENV{LANG} =~ /\.UTF-8$/i) {
     print STDERR <<'EOF';
 Warning: Perl 5.8 may have a bug that affects handing of strings in Unicode
 locales that may cause misbehaviour with binary files.  To work around this

@@ -13,10 +13,10 @@ Memory Mapping 2BLoader for Cromwell Loading
      0x0200 0000 2bLoader Decompression Memory 
      0x024F FFFF 2bLoader Decompression MemoryEnd
      
-     0x0250 0000 2bLoader Dynamic Memory Start 
-     0x03AF FFFF 2bLoader Dynamic Memory End
+     0x01A0 0000 2bLoader Dynamic Memory Start 
+     0x02FF FFFF 2bLoader Dynamic Memory End
      
-     0x03A0 0000 c/x romwell Ramcopy Start (0x200000 size = 2MB) 
+     0x0380 0000 c/x romwell Ramcopy Start (0x400000 size = 4MB) 
      0x03BF FFFF c/x romwell Ramcopy End
      0x03C0 0000 Video Memory Start (4MB)
      0x03FF FFFF Video Memory End

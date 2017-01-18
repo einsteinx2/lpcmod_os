@@ -23,8 +23,8 @@ void LCDToggleEN5V(void * itemStr){
 }
 
 void LCDChangeLCDType(void * itemStr){
-    LPCmodSettings.LCDsettings.lcdType = LPCmodSettings.LCDsettings.lcdType? HD44780 : KS0073;
     BootLCDSwitchType();
+    LPCmodSettings.LCDsettings.lcdType = LPCmodSettings.LCDsettings.lcdType? LCDTYPE_HD44780 : LCDTYPE_KS0073;
     sprintf(itemStr,"%s", LPCmodSettings.LCDsettings.lcdType? "KS0073" : "HD44780");
 }
 

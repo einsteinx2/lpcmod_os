@@ -12,56 +12,57 @@
 #include "DeveloperMenuActions.h"
 #include "lpcmod_v1.h"
 #include "string.h"
-#include "lib/LPCMod/BootLPCMod.h"
+#include "xblast/HardwareIdentifier.h"
 
-TEXTMENU *DeveloperMenuInit(void) {
-    TEXTMENUITEM *itemPtr;
-    TEXTMENU *menuPtr;
+TEXTMENU* DeveloperMenuInit(void)
+{
+    TEXTMENUITEM* itemPtr;
+    TEXTMENU* menuPtr;
 
-
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Developer tools");
 
     //Write to LPC port
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Write LPC I/O");
-    itemPtr->functionPtr= LPCIOWrite;
+    itemPtr->functionPtr = LPCIOWrite;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
     
     //Read LPC port data.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Read LPC I/O");
-    itemPtr->functionPtr= LPCIORead;
+    itemPtr->functionPtr = LPCIORead;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Read SMBus data.
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Read SMBus");
+    itemPtr->functionPtr = SMBusRead;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
     if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP){
         //Read GPI/O port data.
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Read XBlast GPI/O port");
-        itemPtr->functionPtr= GPIORead;
+        itemPtr->functionPtr = GPIORead;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
     //Print LPCmodsettings struct data.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Print settings values");
-    itemPtr->functionPtr= settingsPrintData;
+    itemPtr->functionPtr = settingsPrintData;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 /*
     //Boot BFM BIOS.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Boot BFM BIOS");
-    itemPtr->functionPtr= DrawChildTextMenu;
+    itemPtr->functionPtr = DrawChildTextMenu;
     itemPtr->functionDataPtr = (void *)BFMBootMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 */

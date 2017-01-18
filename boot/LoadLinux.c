@@ -11,7 +11,6 @@
 #include "video.h"
 #include "memory_layout.h"
 #include "sha1.h"
-#include "BootFlash.h"
 #include "cpu.h"
 #include "BootIde.h"
 #include "config.h"
@@ -21,7 +20,7 @@
 #include "FlashMenuActions.h"
 #include "string.h"
 #include "Gentoox.h"
-
+#include "FlashUi.h"
 
 //Grub bits
 unsigned long saved_drive;
@@ -186,7 +185,7 @@ int LoadKernelNative(CONFIGENTRY *config) {
         while(1);
     }
     // Use INITRD_START as temporary location for loading the Kernel
-    tempBuf = (unsigned char*)INITRD_START;
+    tempBuf = (unsigned char *)INITRD_START;
     dwKernelSize=grub_read(tempBuf, MAX_KERNEL_SIZE);
     memPlaceKernel(tempBuf, dwKernelSize);
     grub_close();
@@ -288,7 +287,7 @@ int LoadKernelFatX(CONFIGENTRY *config) {
     if(partition == NULL) return 0;
 
     // Use INITRD_START as temporary location for loading the Kernel
-    tempBuf = (unsigned char*)INITRD_START;
+    tempBuf = (unsigned char *)INITRD_START;
     printk("           Boot: Loading kernel '%s'", config->szKernel);
     dots();
     if(! LoadFATXFile(partition,config->szKernel,&infokernel)) {
@@ -434,7 +433,7 @@ int LoadKernelCdrom(CONFIGENTRY *config) {
     unsigned char* tempBuf;
 
     // Use INITRD_START as temporary location for loading the Kernel
-    tempBuf = (unsigned char*)INITRD_START;
+    tempBuf = (unsigned char *)INITRD_START;
     printk("           Boot: Loading kernel '%s'", config->szKernel);
     dots();
     dwKernelSize=BootIso9660GetFile(config->drive,config->szKernel, tempBuf, MAX_KERNEL_SIZE);
@@ -475,9 +474,6 @@ int BootLoadFlashCD(int cdromId) {
     long imageSize=0;
     int n;
     int imageFound=0;
-    struct SHA1Context context;
-    unsigned char SHA1_result[20];
-    unsigned char checksum[20];
     unsigned char *fileBuf;
     fileBuf = (unsigned char *)malloc(1024 * 1024);
     memset(fileBuf,0x0,1024 * 1024);

@@ -7,281 +7,78 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "MenuInits.h"
+#include "boot.h"
 #include "video.h"
-#include "i2c.h"
-#include "BootFATX.h"
-#include "BootFlash.h"
-#include "lpcmod_v1.h"
-#include "lib/LPCMod/BootLPCMod.h"
+#include "MenuInits.h"
 #include "lib/cromwell/cromString.h"
 #include "lib/time/timeManagement.h"
-#include "xblast/scriptEngine/xblastScriptEngine.h"
-#include "FlashMenuActions.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include <stddef.h>
-//CONFIGENTRY *LoadConfigCD(int);
-//TEXTMENU *TextMenuInit(void);
-void freeTextMenuAllocMem(TEXTMENU* menu);
 
-void AdvancedMenu(void *textmenu) {
+void AdvancedMenu(void *textmenu)
+{
     TextMenu((TEXTMENU*)textmenu, NULL);
 }
 
-void assertBankScriptExecBankBoot(void * data){
-    FATXFILEINFO fileinfo;
-    int bank = *(unsigned char *)data;
-
-    if(LPCmodSettings.OSsettings.runBankScript){
-        extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
-                runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
-                free(fileinfo.buffer);
-        }
-    }
-
-    BootModBios(bank);
-}
-
-void assertBankScriptExecTSOPBoot(void * data){
-    FATXFILEINFO fileinfo;
-    int bank = *(unsigned char *)data;
-
-    if(LPCmodSettings.OSsettings.runBankScript){
-        extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo)){
-                runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
-                free(fileinfo.buffer);
-        }
-    }
-
-    BootOriginalBios(bank);
-}
-
-// Booting Original Bios
-void BootOriginalBios(unsigned char bank) {
-    BootFlashSaveOSSettings();
-    assertWriteEEPROM();
-    
-    BootStopUSB();
-    
-    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP){
-        //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
-    	if(mbVersion == REV1_6 || mbVersion == REVUNKNOWN)
-    	    switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
-        else
-            switchBootBank(bank);    // switch to original bios but modchip listen to LPC commands.
-
-        I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-    }
-    else {
-        I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
-    }
-    I2CRebootQuick();
-    while(1);
-}    
-
-// Booting bank Modbios
-void BootModBios(unsigned char bank) {
-    BootFlashSaveOSSettings();
-    assertWriteEEPROM();
-    switchBootBank(bank);
-    
-    BootStopUSB();
-    
-    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP)
-      I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-    else
-      I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
-    I2CRebootQuick();
-    while(1);
-}
-/*
-void BootFromCD(void *data) {
-    BootFlashSaveOSSettings();
-    assertWriteEEPROM();
-    //We have to go an extra step when the CD icon is selected, as unlike
-    //the other boot modes, we have not parsed the linuxboot.cfg file yet.
-    int nTempCursorY = VIDEO_CURSOR_POSY; 
-    CONFIGENTRY *config = LoadConfigCD(*(int*)data);
-    if (config==NULL) {
-        errorLED();
-        printk("\n\n           Could not boot from disc!\n           Try different media and a lower burning speed.\n");
-        wait_ms(5000);
-        inputLED();
-        //Clear the screen and return to the menu
-        BootVideoClearScreen(&jpegBackdrop, nTempCursorY, VIDEO_CURSOR_POSY+1);    
-        return;
-    }
-    DrawBootMenu(config);
-}
-
-void BootFromNet(void *whatever) {
-   memcpy((void*)FB_START,videosavepage,FB_SIZE);
-   VIDEO_ATTR=0xffef37;
-   VIDEO_ATTR=0xffc8c8c8;
-   initialiseNetwork();
-   netBoot();
-}
-*/
-/*
-void DrawBootMenu(void *rootEntry) {
-    //entry is the pointer to the root config entry
-    TEXTMENU *menu;
-    TEXTMENUITEM *menuPtr, *defaultMenuItem;
-    CONFIGENTRY *configEntry, *currentConfigEntry;
-    extern int timedOut;
-
-    defaultMenuItem=NULL;
-    configEntry = rootEntry;
-
-    if (configEntry->nextConfigEntry==NULL) {
-        //If there is only one option, just boot it.
-        BootMenuEntry(configEntry);
-        return;
-    }
-
-    if (timedOut) {
-        //We should be non-interactive, then.
-        //If there is a default entry, boot that.
-        for (currentConfigEntry = configEntry; currentConfigEntry != NULL; 
-            currentConfigEntry = currentConfigEntry->nextConfigEntry) {
-            if (currentConfigEntry->isDefault) {
-                BootMenuEntry(currentConfigEntry);
-                return;
-            }
-        }
-        //There wasn't a default entry, so just boot the first in the list
-        BootMenuEntry(configEntry);
-        return;
-    }
-    
-    menu = malloc(sizeof(TEXTMENU));
-    memset(menu,0x00,sizeof(TEXTMENU));
-    strcpy(menu->szCaption, "Boot menu");
-  
-    for (currentConfigEntry = configEntry; currentConfigEntry != NULL; 
-        currentConfigEntry = currentConfigEntry->nextConfigEntry) {
-    
-        menuPtr = (TEXTMENUITEM *)malloc(sizeof(TEXTMENUITEM*));
-        memset(menuPtr, 0x00, sizeof(menuPtr));
-        if (currentConfigEntry->title == NULL) {
-            strcpy(menuPtr->szCaption,"Untitled");
-        } else { 
-            strncpy(menuPtr->szCaption,currentConfigEntry->title,50);
-        }
-        menuPtr->functionPtr = BootMenuEntry;
-        menuPtr->functionDataPtr = (void *)currentConfigEntry;
-        //If this config entry is default, mark the menu item as default.
-        if (currentConfigEntry->isDefault) defaultMenuItem = menuPtr;
-        TextMenuAddItem(menu,menuPtr);
-    }
-    TextMenu(menu, defaultMenuItem);
-}
-
-void BootMenuEntry(void *entry) {
-    CONFIGENTRY *config = (CONFIGENTRY*)entry;
-    if (!(config->nextConfigEntry==NULL) || !(config->previousConfigEntry==NULL)) {
-        memcpy((void*)FB_START,videosavepage,FB_SIZE);
-    }
-
-    switch (config->bootType) {
-        case BOOT_CDROM:
-            LoadKernelCdrom(config);
-            break;
-        case BOOT_FATX:
-            LoadKernelFatX(config);
-            break;
-        case BOOT_NATIVE:
-            LoadKernelNative(config);
-            break;
-    }
-    ExittoLinux(config);
-}
-*/
-void DrawChildTextMenu(void *menu) {
-    TEXTMENU * menuPtr = (TEXTMENU*)menu;
+void DrawChildTextMenu(void* menu)
+{
+    TEXTMENU* menuPtr = (TEXTMENU*)menu;
     TextMenu(menuPtr, menuPtr->firstMenuItem);
     //freeTextMenuAllocMem(menuPtr);
 }
 
-void ResetDrawChildTextMenu(void *menu) {
-    TEXTMENU * resetSelection = (TEXTMENU*)menu;
-    TextMenu((TEXTMENU*)menu, resetSelection->firstMenuItem);
-    //freeTextMenuAllocMem(resetSelection);
+void ResetDrawChildTextMenu(TEXTMENU* menu)
+{
+    TextMenu(menu, menu->firstMenuItem);
+    freeTextMenuAllocMem(menu);
+    debugSPIPrint("Returning to previous menu\n");
 }
 
-void DrawLargeHDDTextMenu(unsigned char drive){
-    TEXTMENU *menuPtr;
+void DrawLargeHDDTextMenu(unsigned char drive)
+{
     breakOutOfMenu = 1;
-    menuPtr = (TEXTMENU *)LargeHDDMenuInit((void *)&drive);
+    LargeHDDMenuDynamic((void *)&drive);
     //Memory allocation freeing is done in ResetDrawChildTextMenu which is called by LargeHDDMenuInit.
 }
 
-#ifdef ETHERBOOT 
-extern int etherboot(unsigned char flashType);
-void BootFromEtherboot(void *data) {
-    busyLED();
-    initialiseNetwork();
-    etherboot();
-}
-#endif
-
-#ifdef FLASH
-/*
-void FlashBios(void *data) {
-    BootFlashSaveOSSettings();
-    assertWriteEEPROM();
-    BootLoadFlashCD();
-}
-*/
-
-void freeTextMenuAllocMem(TEXTMENU* menu){
-    TEXTMENUITEM * itemPtr = menu->firstMenuItem;
+void freeTextMenuAllocMem(TEXTMENU* menu)
+{
+    TEXTMENUITEM* currentItem = menu->firstMenuItem;
+    TEXTMENUITEM* nextItem;
     int itemCount = 0;
 
-    if(menu != NULL){
-        //Count the number of entries from menu we just left.
-        //Make sure there's at least 1 entry.
-        if(itemPtr != NULL){
-            while(itemPtr->nextMenuItem != NULL){
-                itemCount++;
-                itemPtr = itemPtr->nextMenuItem;
+    if(menu != NULL)
+    {
+        debugSPIPrint("freeing menu %s\n", menu->szCaption);
+        while(currentItem != NULL)
+        {
+            nextItem = currentItem->nextMenuItem;
+            debugSPIPrint("free menu item : %s\n", currentItem->szCaption);
+            if(currentItem->functionDataPtr != NULL && currentItem->dataPtrAlloc)
+            {
+                debugSPIPrint("free alloc param\n");
+                free(currentItem->functionDataPtr);
             }
-
-            printk("\n\n           number of items=%u", itemCount);
-
-            while(itemCount > 0){
-                itemCount--;
-                //malloc was made to store data pointed by functionDataPtr in this specific entry.
-                if(itemPtr->functionDataPtrMemAlloc && itemPtr->functionDataPtr != NULL)
-                    free(itemPtr->functionDataPtr);
-
-                itemPtr = itemPtr->previousMenuItem;
-                free(itemPtr->nextMenuItem);
-            }
-
-            if(itemPtr->functionDataPtrMemAlloc && itemPtr->functionDataPtr != NULL)
-                free(itemPtr->functionDataPtr);
-            free(itemPtr);      //Free First item in the list
-        }
-        else{       //TODO: Remove after debug
-            printk("\n\n           item PTR is NULL???");
-            while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+            free(currentItem);
+            currentItem = nextItem;
         }
 
         //Finally free menuPtr since it no longer points to an allocated item entry.
         free(menu);
         menu = NULL;
     }
-    else{       //TODO: Remove after debug
-        printk("\n\n           menu PTR is NULL???");
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
-    }
 }
-#endif
 
-void UIFooter(void) {
+void UiHeader(char *title)
+{
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+    VIDEO_ATTR=0xffffef37;
+    printk("\n\n\2       %s\2\n\n\n", title);
+}
+
+void UIFooter(void)
+{
     VIDEO_ATTR=0xffc8c8c8;
     printk("\n\n           Press Button 'B' or 'Back' to return.");
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_STATE(XPAD_STATE_BACK) != 1)) wait_ms(10);
 }

@@ -13,31 +13,25 @@
 #include "CDMenuActions.h"
 #include "string.h"
 
-TEXTMENU *CDMenuInit(void) {
-    TEXTMENUITEM *itemPtr;
-    TEXTMENU *menuPtr;
-    int i=0;
+TEXTMENU* CDMenuInit(void)
+{
+    TEXTMENUITEM* itemPtr;
+    TEXTMENU* menuPtr;
+    int i = 0;
 
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "CD Menu");
 
-    //No entry in this menu will have a configurable parameter.
-    //Set first character to NULL to indicate no string is to be shown.
-    itemPtr->szParameter[0]=0;
-
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Eject CD");
-    itemPtr->functionPtr= CDEject;
-      itemPtr->functionDataPtr = NULL;
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption, "Eject CD");
+    itemPtr->functionPtr = CDEject;
+    itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Inject CD");
-    itemPtr->functionPtr= CDInject;
-      itemPtr->functionDataPtr = NULL;
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    sprintf(itemPtr->szCaption, "Inject CD");
+    itemPtr->functionPtr = CDInject;
+    itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
         
     return menuPtr;

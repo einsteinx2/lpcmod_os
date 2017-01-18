@@ -9,19 +9,20 @@
 
 #include "MenuInits.h"
 #include "boot.h"
+#include "xblast/HardwareIdentifier.h"
 #include "VideoMenuActions.h"
 #include "VideoInitialization.h"
 #include "string.h"
 
-TEXTMENU *VideoMenuInit(void) {
+TEXTMENU *VideoMenuInit(void)
+{
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
 
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Video Settings Menu");
 
-//    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+//    itemPtr = malloc(sizeof(TEXTMENUITEM));
 //    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 //    if(((unsigned char *)&eeprom)[0x96]&0x01) {
 //        strcpy(itemPtr->szCaption, "Display Size: Widescreen");
@@ -34,23 +35,9 @@ TEXTMENU *VideoMenuInit(void) {
 //    TextMenuAddItem(menuPtr, itemPtr);
     
     
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "TV Standard : ");
-    switch(*((VIDEO_STANDARD *)&eeprom.VideoStandard)) {
-        case NTSC_M:
-            sprintf(itemPtr->szParameter, "%s", "NTSC-U");
-            break;
-        case NTSC_J:
-            sprintf(itemPtr->szParameter, "%s", "NTSC-J");
-            break;
-        case PAL_I:
-            sprintf(itemPtr->szParameter, "%s", "PAL");
-            break;
-        default:
-            sprintf(itemPtr->szParameter, "%s", "Unknown");
-        break;
-    }
+    sprintf(itemPtr->szParameter, "%s", getVideoStandardText(*((EEPROM_VideoStandard *)&eeprom.VideoStandard)));
     itemPtr->functionPtr=incrementVideoStandard;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=decrementVideoStandard;
@@ -60,21 +47,23 @@ TEXTMENU *VideoMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     //VIDEO FORMAT SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Video format : ");
-    if(eeprom.VideoFlags[2] & WIDESCREEN){
-        sprintf(itemPtr->szParameter, "%s", "Widescreen");
+    EEPROM_VidScreenFormat format;
+    if(eeprom.VideoFlags[2] & EEPROM_VidScreenWidescreen)
+    {
+        format = EEPROM_VidScreenWidescreen;
     }
-    else {
-        if(eeprom.VideoFlags[2] & LETTERBOX){
-            sprintf(itemPtr->szParameter, "%s", "Letterbox");
-        }
-        else{
-            sprintf(itemPtr->szParameter, "%s", "Fullscreen");
-        }
+    else if(eeprom.VideoFlags[2] & EEPROM_VidScreenLetterbox)
+    {
+        format = EEPROM_VidScreenLetterbox;
     }
-    itemPtr->functionPtr= incrementVideoformat;
+    else
+    {
+        format = EEPROM_VidScreenFullScreen;
+    }
+    sprintf(itemPtr->szParameter, "%s", getScreenFormatText(format));
+    itemPtr->functionPtr = incrementVideoformat;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=decrementVideoformat;
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;
@@ -82,10 +71,9 @@ TEXTMENU *VideoMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Enable 480p : ");
-    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & R480p)? "Yes" : "No");
+    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & EEPROM_VidResolutionEnable480p)? "Yes" : "No");
     itemPtr->functionPtr=toggle480p;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=toggle480p;
@@ -94,10 +82,9 @@ TEXTMENU *VideoMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Enable 7200p : ");
-    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & R720p)? "Yes" : "No");
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Enable 720p : ");
+    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & EEPROM_VidResolutionEnable720p)? "Yes" : "No");
     itemPtr->functionPtr=toggle720p;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=toggle720p;
@@ -106,10 +93,9 @@ TEXTMENU *VideoMenuInit(void) {
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Enable 1080i : ");
-    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & R1080i)? "Yes" : "No");
+    sprintf(itemPtr->szParameter, "%s", (eeprom.VideoFlags[2] & EEPROM_VidResolutionEnable1080i)? "Yes" : "No");
     itemPtr->functionPtr=toggle1080i;
     itemPtr->functionDataPtr = itemPtr->szParameter;
     itemPtr->functionLeftPtr=toggle1080i;
@@ -117,6 +103,20 @@ TEXTMENU *VideoMenuInit(void) {
     itemPtr->functionRightPtr=toggle1080i;
     itemPtr->functionRightDataPtr = itemPtr->szParameter;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    if(isFrostySupport())
+    {
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Enable VGA : ");
+        sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.enableVGA? "Yes" : "No");
+        itemPtr->functionPtr=toggleVGA;
+        itemPtr->functionDataPtr = itemPtr->szParameter;
+        itemPtr->functionLeftPtr=toggleVGA;
+        itemPtr->functionLeftDataPtr = itemPtr->szParameter;
+        itemPtr->functionRightPtr=toggleVGA;
+        itemPtr->functionRightDataPtr = itemPtr->szParameter;
+        TextMenuAddItem(menuPtr, itemPtr);
+    }
 
     return menuPtr;
 }

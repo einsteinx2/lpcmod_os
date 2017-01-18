@@ -15,7 +15,7 @@ int ReadfromSMBus(unsigned char Address,unsigned char bRegister,unsigned char Si
 int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char bDataToWrite);
 int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWrite);
 int I2CWriteBytetoRegister(unsigned char bPicAddressI2cFormat, unsigned char bRegister, unsigned char wDataToWrite);
-int I2CWriteBytetoRegister(unsigned char bPicAddressI2cFormat, unsigned char bRegister, unsigned char wDataToWrite);
+
 int I2cSetFrontpanelLed(unsigned char b);
 bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp);
 void I2CRebootQuick(void);

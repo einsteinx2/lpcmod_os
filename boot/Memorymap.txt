@@ -20,10 +20,10 @@ Memory Mapping C/X romwell
     0x02A0 0000 Memory manager for Cromwell (0x1000000 size = 16 MB)
      0x039F FFFF Memory manager end
 
-     0x03A0 0000 c/x romwell Ramcopy Start (max size = 1MB) 
-     0x03AF FFFF c/x romwell Ramcopy End 
+     0x0380 0000 c/x romwell Ramcopy Start (max size = 1MB) 
+     0x03BF FFFF c/x romwell Ramcopy End 
      
-    0x03C0 0000 c/x romwell Stackpointer upper limit 
+    0x0380 0000 c/x romwell Stackpointer upper limit 
 
      0x03C0 0000 Video Memory Start (4MB)
      0x03FF FFFF Video Memory End

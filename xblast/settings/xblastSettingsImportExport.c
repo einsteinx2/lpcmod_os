@@ -20,6 +20,9 @@
 #include "NetworkMenuActions.h"
 #include "Gentoox.h"
 #include "menu/misc/ConfirmDialog.h"
+#include "lib/LPCMod/BootLCD.h"
+#include "i2c.h"
+#include "xblast/HardwareIdentifier.h"
 
 const char *xblastcfgstrings[NBTXTPARAMS] = {
 	//Contains boolean values.
@@ -30,6 +33,7 @@ const char *xblastcfgstrings[NBTXTPARAMS] = {
 	"runbootscript=",
 	"enablenetwork=",
 	"usedhcp=",
+	"eanblevga=",
 	"enable5v=",
 	"displaybootmsg=",
 	"customtextboot=",
@@ -74,7 +78,6 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
     int res = false;
     int dcluster;
     const char *cfgFileName = "\\XBlast\\xblast.cfg";
-    const char *path="\\XBlast\\";
     char compareBuf[100];                     //100 character long seems acceptable
     unsigned char i;
     bool settingLoaded[NBTXTPARAMS];
@@ -193,9 +196,9 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
                                             break;
                                         case (SPECIALPARAMGROUP + 3):
                                             if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
-                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = HD44780 ;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_HD44780 ;
                                             else if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))
-                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = KS0073 ;
+                                                *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_KS0073 ;
                                             break;
                                     } //switch(i)
                                 } //!if(i < IPTEXTPARAMGROUP){
@@ -238,9 +241,9 @@ int LPCMod_SaveCFGToHDD(void){
             res = FATXFindFile(partition, (char *)cfgFileName, dcluster, &fileinfo);
         }
         if(res){                //File already exist
-            if(ConfirmDialog("              Overwrite C:\\XBlast\\xblast.cfg?", 1)){
+            if(ConfirmDialog("Overwrite C:\\XBlast\\xblast.cfg?", 1)){
                 CloseFATXPartition(partition);
-                ToolHeader("Saving to C:\\XBlast\\xblast.cfg aborted.");
+                UiHeader("Saving to C:\\XBlast\\xblast.cfg aborted.");
                 cromwellWarning();
                 UIFooter();
                 initialSetLED(LPCmodSettings.OSsettings.LEDColor);
@@ -264,12 +267,12 @@ int LPCMod_SaveCFGToHDD(void){
 
             free(filebuf);
         }
-        ToolHeader("Saved settings to C:\\XBlast\\xblast.cfg");
+        UiHeader("Saved settings to C:\\XBlast\\xblast.cfg");
 
         CloseFATXPartition(partition);
     }
     else{
-        ToolHeader("Error opening partition. Drive formatted?");
+        UiHeader("Error opening partition. Drive formatted?");
     }
 
     UIFooter();
@@ -278,86 +281,84 @@ int LPCMod_SaveCFGToHDD(void){
 
 void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStruct *settingsStruct)
 {
-
+        int i = 0;
         //Boolean values
-        settingsStruct->settingsPtrArray[0] =
-        &(tempLPCmodSettings->OSsettings.Quickboot);
-        settingsStruct->settingsPtrArray[1] =
-        &(tempLPCmodSettings->OSsettings.TSOPcontrol);
-        settingsStruct->settingsPtrArray[2] =
-        &(tempLPCmodSettings->OSsettings.TSOPhide);
-        settingsStruct->settingsPtrArray[3] =
-        &(tempLPCmodSettings->OSsettings.runBankScript);
-        settingsStruct->settingsPtrArray[4] =
-        &(tempLPCmodSettings->OSsettings.runBootScript);
-        settingsStruct->settingsPtrArray[5] =
-        &(tempLPCmodSettings->OSsettings.enableNetwork);
-        settingsStruct->settingsPtrArray[6] =
-        &(tempLPCmodSettings->OSsettings.useDHCP);
-        settingsStruct->settingsPtrArray[7] =
-        &(tempLPCmodSettings->LCDsettings.enable5V);
-        settingsStruct->settingsPtrArray[8] =
-        &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
-        settingsStruct->settingsPtrArray[9] =
-        &(tempLPCmodSettings->LCDsettings.customTextBoot);
-        settingsStruct->settingsPtrArray[10] =
-        &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.Quickboot);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.TSOPcontrol);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.TSOPhide);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.runBankScript);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.runBootScript);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.enableNetwork);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.useDHCP);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.enableVGA);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.enable5V);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
 
         //Numerical values
-        settingsStruct->settingsPtrArray[11] =
-        &(tempLPCmodSettings->OSsettings.backgroundColorPreset);
-        settingsStruct->settingsPtrArray[12] =
-        &(tempLPCmodSettings->OSsettings.fanSpeed);
-        settingsStruct->settingsPtrArray[13] =
-        &(tempLPCmodSettings->OSsettings.bootTimeout);
-        settingsStruct->settingsPtrArray[14] =
-        &(tempLPCmodSettings->LCDsettings.nbLines);
-        settingsStruct->settingsPtrArray[15] =
-        &(tempLPCmodSettings->LCDsettings.lineLength);
-        settingsStruct->settingsPtrArray[16] =
-        &(tempLPCmodSettings->LCDsettings.backlight);
-        settingsStruct->settingsPtrArray[17] =
-        &(tempLPCmodSettings->LCDsettings.contrast);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.backgroundColorPreset);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.fanSpeed);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.bootTimeout);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.nbLines);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.lineLength);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.backlight);
+        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.contrast);
 
+        i = 0;
+        settingsStruct->IPsettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.staticIP;
+        settingsStruct->IPsettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.staticGateway;
+        settingsStruct->IPsettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.staticMask;
+        settingsStruct->IPsettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.staticDNS1;
+        settingsStruct->IPsettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.staticDNS2;
 
-        settingsStruct->IPsettingsPtrArray[0] =
-        tempLPCmodSettings->OSsettings.staticIP;
-        settingsStruct->IPsettingsPtrArray[1] =
-        tempLPCmodSettings->OSsettings.staticGateway;
-        settingsStruct->IPsettingsPtrArray[2] =
-        tempLPCmodSettings->OSsettings.staticMask;
-        settingsStruct->IPsettingsPtrArray[3] =
-        tempLPCmodSettings->OSsettings.staticDNS1;
-        settingsStruct->IPsettingsPtrArray[4] =
-        tempLPCmodSettings->OSsettings.staticDNS2;
+        i = 0;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.biosName512Bank;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.biosName256Bank;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.biosNameTSOPFullSplit0;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.biosNameTSOPSplit1;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->LCDsettings.customString0;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->LCDsettings.customString1;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->LCDsettings.customString2;
+        settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->LCDsettings.customString3;
 
+        i = 0;
+        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->OSsettings.activeBank);
+        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->OSsettings.altBank);
+        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->OSsettings.LEDColor);
+        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->LCDsettings.lcdType);
+}
 
-        settingsStruct->textSettingsPtrArray[0] =
-        tempLPCmodSettings->OSsettings.biosName0;
-        settingsStruct->textSettingsPtrArray[1] =
-        tempLPCmodSettings->OSsettings.biosName1;
-        settingsStruct->textSettingsPtrArray[2] =
-        tempLPCmodSettings->OSsettings.biosName2;
-        settingsStruct->textSettingsPtrArray[3] =
-        tempLPCmodSettings->OSsettings.biosName3;
-        settingsStruct->textSettingsPtrArray[4] =
-        tempLPCmodSettings->LCDsettings.customString0;
-        settingsStruct->textSettingsPtrArray[5] =
-        tempLPCmodSettings->LCDsettings.customString1;
-        settingsStruct->textSettingsPtrArray[6] =
-        tempLPCmodSettings->LCDsettings.customString2;
-        settingsStruct->textSettingsPtrArray[7] =
-        tempLPCmodSettings->LCDsettings.customString3;
+void importNewSettingsFromCFGLoad(_LPCmodSettings* newSettings)
+{
+    unsigned char vgaAlreadyset = LPCmodSettings.OSsettings.enableVGA;
 
+    memcpy(&LPCmodSettings, newSettings, sizeof(_LPCmodSettings));
 
-        settingsStruct->specialCasePtrArray[0] =
-        &(tempLPCmodSettings->OSsettings.activeBank);
-        settingsStruct->specialCasePtrArray[1] =
-        &(tempLPCmodSettings->OSsettings.altBank);
-        settingsStruct->specialCasePtrArray[2] =
-        &(tempLPCmodSettings->OSsettings.LEDColor);
-        settingsStruct->specialCasePtrArray[3] =
-        &(tempLPCmodSettings->LCDsettings.lcdType);
+    I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);
+    initialSetLED(LPCmodSettings.OSsettings.LEDColor);
+    //Stuff to do right after loading persistent settings from file.
+    if(isLCDSupported())
+    {
+        assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+    }
+
+    if(isFrostySupport())
+    {
+        if((vgaAlreadyset > 0) != (LPCmodSettings.OSsettings.enableVGA > 0))
+        {
+            BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
+        }
+    }
+    else
+    {
+        LPCmodSettings.OSsettings.enableVGA = 0;
+    }
+
+    if(isTSOPSplitCapable() == false)
+    {
+        LPCmodSettings.OSsettings.TSOPcontrol = 0;
+    }
 }
 
 #endif /* XBLASTSETTINGSIMPORTEXPORT_C_ */

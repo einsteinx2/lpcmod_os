@@ -11,7 +11,8 @@
 // 20040924 - Updated by dmp to include more str functions, and use ASM
 // where possible. ASM shamelessly stolen from linux-2.6.8.1
 
-#include "stdint.h"
+#include <stddef.h>
+#include <stdint.h>
 
 void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n)
 {

@@ -9,19 +9,12 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include "boot.h"
-#include "video.h"
-#include "memory_layout.h"
-#include "BootFATX.h"
-#include "cpu.h"
-#include "BootIde.h"
-#include "MenuActions.h"
-#include "config.h"
 
+#include <stdbool.h>
 struct TEXTMENUITEM;
 struct TEXTMENU;
 
-#define MENUCAPTIONSIZE 51
+#define MENUCAPTIONSIZE 73
 #define NOSELECTERROR   1
 
 #define FULL_KEYBOARD   0
@@ -38,9 +31,8 @@ typedef struct TEXTMENUITEM {
     void (*functionPtr) (void *);
     //Pointer to data used by the function above.
     void *functionDataPtr;
-    //Flag to indicate a malloc was executed to store data pointed by functionDataPtr.
-    bool functionDataPtrMemAlloc;
-
+    bool dataPtrAlloc;
+    //DataPtr below never get any allocated data
     void (*functionLeftPtr) (void *);
     void (*functionRightPtr) (void *);
     void *functionLeftDataPtr;
@@ -62,8 +54,9 @@ typedef struct TEXTMENU {
     //make up this menu.
     TEXTMENUITEM* firstMenuItem;
     unsigned int timeout;
-    int longTitle;
     int visibleCount;
+    bool smallChars;
+    bool hideUncommittedChangesLabel;
 } TEXTMENU;
 
 extern char bypassConfirmDialog[50];

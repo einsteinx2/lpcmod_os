@@ -2,7 +2,7 @@
  */
 /* MD5 context. */
 
-#include "stdint.h"
+#include <stdint.h>
 
 /* POINTER defines a generic pointer type */
 typedef uint8_t *POINTER;
@@ -20,7 +20,7 @@ typedef struct {
 }__attribute__ ((packed)) MD5_CTX;
 
 void MD5Init(MD5_CTX *context);
-void MD5Update(MD5_CTX *context, unsigned char *input, unsigned int input_len);
+void MD5Update(MD5_CTX *context, const unsigned char *input, unsigned int input_len);
 void MD5Final(unsigned char digest[16], MD5_CTX *context);
 /*
 

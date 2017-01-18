@@ -22,12 +22,15 @@ int sprintf(char * buf, const char *fmt, ...);
 #include "cromwell.h"
 #include "string.h"
 #include "nanojpegHelper.h"
-#include <stdarg.h>
+#include "xblast/HardwareIdentifier.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lib/LPCMod/BootLPCMod.h"
 
+#include <stdarg.h>
 
 #define WIDTH_SPACE_PIXELS 5
+//TODO: define
+#define UndefinedHorizontalOffsetInPixels 0
 
 // returns number of x pixels taken up by ascii character bCharacter
 
@@ -38,8 +41,8 @@ unsigned int BootVideoGetCharacterWidth(unsigned char bCharacter, bool fDouble)
     
     if(fDouble) nSpace=8;
 
-        // we only have glyphs for 0x21 through 0x7e inclusive
-
+    if(bCharacter == '\n') return 0;
+    // we only have glyphs for 0x21 through 0x7e inclusive
     if(bCharacter<0x21) return nSpace;
     if(bCharacter>0x7e) return nSpace;
 
@@ -122,7 +125,8 @@ int BootVideoOverlayCharacter(
     RGBA rgbaColourAndOpaqueness,
     unsigned char bCharacter,
     bool fDouble
-) {
+)
+{
     int nSpace;
     unsigned int n, nStart, nWidth, y, nHeight
 //        nOpaquenessMultiplied,
@@ -133,56 +137,85 @@ int BootVideoOverlayCharacter(
 
         // we only have glyphs for 0x21 through 0x7e inclusive
 
-    if(bCharacter=='\t') {
+    if(bCharacter=='\t')
+    {
         unsigned int dw=((unsigned int)pdwaTopLeftDestination) % m_dwCountBytesPerLineDestination;
         unsigned int dw1=((dw+1)%(32<<2));  // distance from previous boundary
         return ((32<<2)-dw1)>>2;
     }
     nSpace=WIDTH_SPACE_PIXELS;
-    if(fDouble) nSpace=8;
-    if(bCharacter<'!') return nSpace;
-    if(bCharacter>'~') return nSpace;
+    if(fDouble)
+    {
+        nSpace=8;
+    }
+    if(bCharacter<'!')
+    {
+        return nSpace;
+    }
+    if(bCharacter>'~')
+    {
+        return nSpace;
+    }
 
     nStart=waStarts[bCharacter-(' '+1)];
     nWidth=waStarts[bCharacter-' ']-nStart;
     nHeight=uiPixelsY;
 
-    if(fDouble) { nWidth<<=1; nHeight<<=1; }
+    if(fDouble)
+    {
+        nWidth<<=1;
+        nHeight<<=1;
+    }
 
 //    nStart=0;
 //    nWidth=300;
 
     pbaDestStart=((unsigned char *)pdwaTopLeftDestination);
 
-    for(y=0;y<nHeight;y++) {
+    for(y=0;y<nHeight;y++)
+    {
         unsigned char * pbaDest=pbaDestStart;
         int n1=nStart;
 
-        for(n=0;n<nWidth;n++) {
+        for(n=0;n<nWidth;n++)
+        {
             b=baCharset[n1>>1];
-            if(!(n1&1)) {
+            if(!(n1&1))
+            {
                 b1=b>>4;
-            } else {
+            }
+            else
+            {
                 b1=b&0x0f;
             }
-            if(fDouble) {
+
+            if(fDouble)
+            {
                 if(n & 1) n1++;
-            } else {
+            }
+            else
+            {
                 n1++;
             }
 
-        if(b1) {
-                *pbaDest=(unsigned char)((b1*(rgbaColourAndOpaqueness&0xff))>>4); pbaDest++;
+            if(b1)
+            {
+                    *pbaDest=(unsigned char)((b1*(rgbaColourAndOpaqueness&0xff))>>4); pbaDest++;
                 *pbaDest=(unsigned char)((b1*((rgbaColourAndOpaqueness>>8)&0xff))>>4); pbaDest++;
                 *pbaDest=(unsigned char)((b1*((rgbaColourAndOpaqueness>>16)&0xff))>>4); pbaDest++;
                 *pbaDest++=0xff;
-            } else {
+            }
+            else
+            {
                 pbaDest+=4;
             }
         }
-        if(fDouble) {
+        if(fDouble)
+        {
             if(y&1) nStart+=uiPixelsX;
-        } else {
+        }
+        else
+        {
             nStart+=uiPixelsX;
         }
         pbaDestStart+=m_dwCountBytesPerLineDestination;
@@ -198,10 +231,14 @@ int BootVideoOverlayString(unsigned int * pdwaTopLeftDestination, unsigned int m
 {
     unsigned int uiWidth=0;
     bool fDouble=0;
-    while((*szString != 0) && (*szString != '\n')) {
-        if(*szString=='\2') {
+    while((*szString != 0) && (*szString != '\n'))
+    {
+        if(*szString=='\2')
+        {
             fDouble=!fDouble;
-        } else {
+        }
+        else
+        {
             uiWidth+=BootVideoOverlayCharacter(
                 pdwaTopLeftDestination+uiWidth, m_dwCountBytesPerLineDestination, rgbaOpaqueness, *szString, fDouble
                 );
@@ -211,7 +248,8 @@ int BootVideoOverlayString(unsigned int * pdwaTopLeftDestination, unsigned int m
     return uiWidth;
 }
 
-bool BootVideoInitJPEGBackdropBuffer(JPEG * pJpeg){
+bool BootVideoInitJPEGBackdropBuffer(JPEG * pJpeg)
+{
     int i;
     
     if(pJpeg->pBackdrop == NULL)
@@ -251,38 +289,44 @@ blueColorDraw:
     return true;
 }
 
-bool BootVideoJpegUnpackAsRgb(unsigned char *pbaJpegFileImage, JPEG * pJpeg, int size) {
+bool BootVideoJpegUnpackAsRgb(unsigned char *pbaJpegFileImage, JPEG * pJpeg, int size)
+{
     int i;
     unsigned char *tempPtr;
 /*
     char temp[200];
 
-    debugSPIPrint("JPEG Image Decode. Input data is...");
+    debugSPIPrint("JPEG Image Decode. Input data is...\n");
     for(i = 0; i < 64; i++){
     if(i % 16){
-        sprintf(temp, "0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X", pbaJpegFileImage[i], pbaJpegFileImage[i+1], pbaJpegFileImage[i+2], pbaJpegFileImage[i+3], pbaJpegFileImage[i+4], pbaJpegFileImage[i+5], pbaJpegFileImage[i+6], pbaJpegFileImage[i+7], pbaJpegFileImage[i+8], pbaJpegFileImage[i+9], pbaJpegFileImage[i+10], pbaJpegFileImage[i+11], pbaJpegFileImage[i+12], pbaJpegFileImage[i+13], pbaJpegFileImage[i+14], pbaJpegFileImage[i+15]);
+        sprintf(temp, "0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", pbaJpegFileImage[i], pbaJpegFileImage[i+1], pbaJpegFileImage[i+2], pbaJpegFileImage[i+3], pbaJpegFileImage[i+4], pbaJpegFileImage[i+5], pbaJpegFileImage[i+6], pbaJpegFileImage[i+7], pbaJpegFileImage[i+8], pbaJpegFileImage[i+9], pbaJpegFileImage[i+10], pbaJpegFileImage[i+11], pbaJpegFileImage[i+12], pbaJpegFileImage[i+13], pbaJpegFileImage[i+14], pbaJpegFileImage[i+15]);
         debugSPIPrint(temp);
         }
     }
     debugSPIPrint("\n\n\n\n");
 */
     njInit();
-    if (njDecode(pbaJpegFileImage, size)) {
-	printk("Error decode picture\n");
-	return true;
+    if (njDecode(pbaJpegFileImage, size))
+    {
+        printk("Error decode picture\n");
+        return true;
     }
     tempPtr = (unsigned char *)njGetImage();
     if(njGetWidth() % ICON_WIDTH)
+    {
         return true;
+    }
     
-    if(njGetHeight() == ICON_HEIGHT){
+    if(njGetHeight() == ICON_HEIGHT)
+    {
     	if(pJpeg->pData != NULL)
     	    free(pJpeg->pData);
     	pJpeg->pData = malloc(3 * njGetWidth() * njGetHeight());
     	pJpeg->iconCount = njGetWidth() / ICON_WIDTH;
         memcpy(pJpeg->pData, tempPtr, 3*njGetWidth()*njGetHeight());
     }
-    else if(njGetHeight() == 768 && njGetImageSize() == (3 * 1024 * 768)){
+    else if(njGetHeight() == 768 && njGetImageSize() == (3 * 1024 * 768))
+    {
 	memcpy(pJpeg->pBackdrop, tempPtr, 3*1024*768);
     }
 
@@ -298,34 +342,35 @@ void BootVideoClearScreen(JPEG *pJpeg, int nStartLine, int nEndLine)
 
     if(nEndLine>=vmode.height) nEndLine=vmode.height-1;
 
+    if(pJpeg->pData!=NULL)
     {
-        if(pJpeg->pData!=NULL) {
-            volatile unsigned int *pdw=((unsigned int *)FB_START)+vmode.width*nStartLine;
-            int n1=3 * 1024 * nStartLine;
-            unsigned char *pbJpegBitmapAdjustedDatum=pJpeg->pBackdrop;
+        volatile unsigned int *pdw=((unsigned int *)FB_START)+vmode.width*nStartLine;
+        int n1=3 * 1024 * nStartLine;
+        unsigned char *pbJpegBitmapAdjustedDatum=pJpeg->pBackdrop;
 
-            while(nStartLine++<nEndLine) {
-                int n;
-                for(n=0;n<vmode.width;n++) {
-                    pdw[n]=0xff000000|
-                        ((pbJpegBitmapAdjustedDatum[n1+2]))|
-                        ((pbJpegBitmapAdjustedDatum[n1+1])<<8)|
-                        ((pbJpegBitmapAdjustedDatum[n1])<<16)
-                        //XXX: could be pdw[n] = 0xff000000|0x012F53; for static color
-                    ;
-                    n1+=3;
-                }
-                n1+=3 * (1024 - vmode.width);
-                pdw+=vmode.width; // adding unsigned int footprints
+        while(nStartLine++<nEndLine)
+        {
+            int n;
+            for(n=0;n<vmode.width;n++)
+            {
+                pdw[n]=0xff000000|
+                    ((pbJpegBitmapAdjustedDatum[n1+2]))|
+                    ((pbJpegBitmapAdjustedDatum[n1+1])<<8)|
+                    ((pbJpegBitmapAdjustedDatum[n1])<<16)
+                    //XXX: could be pdw[n] = 0xff000000|0x012F53; for static color
+                ;
+                n1+=3;
             }
+            n1+=3 * (1024 - vmode.width);
+            pdw+=vmode.width; // adding unsigned int footprints
         }
     }
 }
 
 int VideoDumpAddressAndData(unsigned int dwAds, const unsigned char * baData, unsigned int dwCountBytesUsable) { // returns bytes used
     int nCountUsed=0;
-    while(dwCountBytesUsable) {
-
+    while(dwCountBytesUsable)
+    {
         unsigned int dw=(dwAds & 0xfffffff0);
         char szAscii[17];
         char sz[256];
@@ -333,11 +378,15 @@ int VideoDumpAddressAndData(unsigned int dwAds, const unsigned char * baData, un
         int nBytes=0;
 
         szAscii[16]='\0';
-        while(nBytes<16) {
-            if((dw<dwAds) || (dwCountBytesUsable==0)) {
+        while(nBytes<16)
+        {
+            if((dw<dwAds) || (dwCountBytesUsable==0))
+            {
                 n+=sprintf(&sz[n], "   ");
                 szAscii[nBytes]=' ';
-            } else {
+            }
+            else
+            {
                 unsigned char b=*baData++;
                 n+=sprintf(&sz[n], "%02X ", b);
                 if((b<32) || (b>126)) szAscii[nBytes]='.'; else szAscii[nBytes]=b;
@@ -359,38 +408,44 @@ int VideoDumpAddressAndData(unsigned int dwAds, const unsigned char * baData, un
     }
     return 1;
 }
-void BootVideoChunkedPrint(const char * szBuffer) {
+void BootVideoChunkedPrint(const char * szBuffer)
+{
     int n=0;
     int nDone=0;
+    unsigned char fDouble = 0;
 
     while (szBuffer[n] != 0)
     {
-        if(szBuffer[n]=='\n') {
+        if(szBuffer[n] == '\2')
+        {
+            fDouble = 1;
+        }
+
+        if(szBuffer[n]=='\n')
+        {
             BootVideoOverlayString(
                 (unsigned int *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
                 vmode.width*4, VIDEO_ATTR, &szBuffer[nDone]
             );
             nDone=n+1;
-            VIDEO_CURSOR_POSY+=16; 
-            VIDEO_CURSOR_POSX=vmode.xmargin<<2;
+            VIDEO_CURSOR_POSY += (16 << fDouble);
+            fDouble = 0;
+            VIDEO_CURSOR_POSX = (vmode.xmargin << 2) + UndefinedHorizontalOffsetInPixels;
         }
         n++;
     }
     if (n != nDone)
     {
-        VIDEO_CURSOR_POSX+=BootVideoOverlayString(
-            (unsigned int *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
-            vmode.width*4, VIDEO_ATTR, &szBuffer[nDone]
-        )<<2;
-        if (VIDEO_CURSOR_POSX > (vmode.width - 
-            vmode.xmargin) <<2)
-        {
-            VIDEO_CURSOR_POSY+=16; 
-            VIDEO_CURSOR_POSX=vmode.xmargin<<2;
-        }
-        
-    }
+        VIDEO_CURSOR_POSX += BootVideoOverlayString(
+                                (unsigned int *)((FB_START) + VIDEO_CURSOR_POSY * (vmode.width*4) + VIDEO_CURSOR_POSX),
+                                vmode.width*4, VIDEO_ATTR, &szBuffer[nDone]) << 2;
 
+        if (VIDEO_CURSOR_POSX > (vmode.width - vmode.xmargin) << 2)
+        {
+            VIDEO_CURSOR_POSY += (16 << fDouble);
+            VIDEO_CURSOR_POSX = (vmode.xmargin << 2) + UndefinedHorizontalOffsetInPixels;
+        }
+    }
 }
 
 int console_putchar(int c)

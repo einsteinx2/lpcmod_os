@@ -14,6 +14,7 @@
 #include "cpu.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/time/timeManagement.h"
+#include "xblast/HardwareIdentifier.h"
 
 volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
 volatile bool fSeenPowerdown;
@@ -161,7 +162,7 @@ void BootInterruptsWriteIdt() {
     IoOutputByte(0xa1, 0x02);  // am slave, hooked to INT2 on master
     IoOutputByte(0xa1, 0x01);  // x86 mode normal EOI
 
-    if (cromwell_config==CROMWELL)     IoOutputByte(0xa1, 0x00);    // enable int14(IDE) int12(SMI)
+    if (isXBE() == false)     IoOutputByte(0xa1, 0x00);    // enable int14(IDE) int12(SMI)
     else IoOutputByte(0xa1, 0xaf);
 
     // enable interrupts

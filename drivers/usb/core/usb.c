@@ -92,10 +92,10 @@ int usb_device_probe(struct device *dev)
     const struct usb_device_id *id;
     int error = -ENODEV;
 
-    //debugSPIPrint("Entering usb_device_probe");
+    //usbprintk("Entering usb_device_probe\n");
 
     if (!driver->probe){
-    	debugSPIPrint("Error in usb_device_probe!");
+    	usbprintk("Error in usb_device_probe!\n");
         return error;
     }
 
@@ -108,7 +108,7 @@ int usb_device_probe(struct device *dev)
     }
     else{
         //TODO: Add debug print to screen to show user VendorID/ProductID of incompatible hardware.
-        debugSPIPrint("Device named %s is not compatible.", dev->name);
+        usbprintk("Device named %s is not compatible.\n", dev->name);
     }
     if (!error)
         intf->driver = driver;
@@ -168,10 +168,10 @@ int usb_register(struct usb_driver *new_driver)
     retval = driver_register(&new_driver->driver);
 
     if (!retval) {
-        //debugSPIPrint("registered new driver %s", new_driver->name);
+        //usbprintk("registered new driver %s\n", new_driver->name);
         usbfs_update_special();
     } else {
-    	debugSPIPrint("problem %d when registering driver %s",
+    	usbprintk("problem %d when registering driver %s\n",
             retval, new_driver->name);
     }
 
@@ -320,7 +320,7 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
 
     /* proc_connectinfo in devio.c may call us with id == NULL. */
     if (id == NULL){
-    	debugSPIPrint("NULL id...");
+    	usbprintk("NULL id...\n");
         return NULL;
     }
 
@@ -332,20 +332,20 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
        id->driver_info is the way to create an entry that
        indicates that the driver want to examine every
        device and interface. */
-	debugSPIPrint("Checking USB named \"%s\": Vendor:0x%04X  Product:0x%04X  Class:0x%02X", dev->dev.name, dev->descriptor.idVendor, dev->descriptor.idProduct, dev->descriptor.bDeviceClass);
+	usbprintk("Checking USB named \"%s\": Vendor:0x%04X  Product:0x%04X  Class:0x%02X\n", dev->dev.name, dev->descriptor.idVendor, dev->descriptor.idProduct, dev->descriptor.bDeviceClass);
     for (; id->idVendor || id->bDeviceClass || id->bInterfaceClass ||
            id->driver_info; id++) {
 
 
         if ((id->match_flags & USB_DEVICE_ID_MATCH_VENDOR) &&
             id->idVendor != dev->descriptor.idVendor) {
-            //debugSPIPrint("VendorID mismatch: Listed Vendor:0x%04X  Device Vendor:0x%04X", id->idVendor, dev->descriptor.idVendor);
+            //usbprintk("VendorID mismatch: Listed Vendor:0x%04X  Device Vendor:0x%04X\n", id->idVendor, dev->descriptor.idVendor);
             continue;
         }
 
         if ((id->match_flags & USB_DEVICE_ID_MATCH_PRODUCT) &&
             id->idProduct != dev->descriptor.idProduct){
-            //debugSPIPrint("ProductID mismatch: Listed Product:0x%04X  Device Product:0x%04X", id->idProduct, dev->descriptor.idProduct);
+            //usbprintk("ProductID mismatch: Listed Product:0x%04X  Device Product:0x%04X\n", id->idProduct, dev->descriptor.idProduct);
             continue;
         }
 #if 0
@@ -383,10 +383,10 @@ usb_match_id(struct usb_interface *interface, const struct usb_device_id *id)
             (id->bInterfaceProtocol != intf->desc.bInterfaceProtocol))
             continue;
 #endif
-        debugSPIPrint("Proper USB device found. Name : %s", dev->dev.name);
+        usbprintk("Proper USB device found. Name : %s\n", dev->dev.name);
         return id;
     }
-    debugSPIPrint("USB named \"%s\" not found... Vendor:0x%04X  Product:0x%04X", dev->dev.name, dev->descriptor.idVendor, dev->descriptor.idProduct);
+    usbprintk("USB named \"%s\" not found... Vendor:0x%04X  Product:0x%04X\n", dev->dev.name, dev->descriptor.idVendor, dev->descriptor.idProduct);
     return NULL;
 }
 
@@ -431,7 +431,7 @@ static int usb_device_match (struct device *dev, struct device_driver *drv)
 
     /* check for generic driver, which we don't match any device with */
     if (drv == &usb_generic_driver){
-    	//debugSPIPrint("Generic driver loaded. No matching to occur...");
+    	//usbprintk("Generic driver loaded. No matching to occur...\n");
         return 0;
     }
 
@@ -444,7 +444,7 @@ static int usb_device_match (struct device *dev, struct device_driver *drv)
     if (id)
         return 1;
 
-    debugSPIPrint("No id... Returning...");
+    usbprintk("No id... Returning...\n");
     return 0;
 }
 
@@ -565,7 +565,7 @@ static int usb_hotplug (struct device *dev, char **envp, int num_envp,
 static int usb_hotplug (struct device *dev, char **envp,
             int num_envp, char *buffer, int buffer_size)
 {
-	debugSPIPrint("USB hotplug event");
+	usbprintk("USB hotplug event\n");
     return -ENODEV;
 }
 
@@ -677,7 +677,7 @@ static struct usb_device *match_device(struct usb_device *dev,
     struct usb_device *ret_dev = NULL;
     int child;
 
-    dbg("looking at vendor %d, product %d",
+    dbg("looking at vendor %d, product %d\n",
         dev->descriptor.idVendor,
         dev->descriptor.idProduct);
 
@@ -950,7 +950,7 @@ int usb_new_device(struct usb_device *dev, struct device *parent)
     switch (dev->speed) {
     case USB_SPEED_HIGH:        /* fixed at 64 */
         i = 64;
-        debugSPIPrint("USB_SPEED_HIGH device");
+        usbprintk("USB_SPEED_HIGH device\n");
         break;
     case USB_SPEED_FULL:        /* 8, 16, 32, or 64 */
         /* to determine the ep0 maxpacket size, read the first 8
@@ -1055,7 +1055,7 @@ int usb_new_device(struct usb_device *dev, struct device *parent)
     err = device_add (&dev->dev);
     if (err)
     {
-        debugSPIPrint("Error during device_add");
+        usbprintk("Error during device_add\n");
         return err;
     }
     usb_create_driverfs_dev_files (dev);

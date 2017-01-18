@@ -4,7 +4,7 @@
  * I just want these out of the way where they aren't in your
  * face, but so that you can still use them..
  */
-#define CONFIG_USB_DEBUG
+//#define CONFIG_USB_DEBUG
 #if 0
 #include <linux/config.h>
 #include <linux/kernel.h>
@@ -49,7 +49,7 @@ static void usb_show_config(struct usb_host_config *config)
         if (!ifp)
             break;
 
-        debugSPIPrint("\n  Interface: %d", i);
+        usbprintk("\n  Interface: %d\n", i);
         for (j = 0; j < ifp->num_altsetting; j++)
             usb_show_interface(ifp->altsetting + j);
     }
@@ -71,80 +71,80 @@ void usb_show_device_descriptor(struct usb_device_descriptor *desc)
 {
     if (!desc)
     {
-        debugSPIPrint("Invalid USB device descriptor (NULL POINTER)");
+        usbprintk("Invalid USB device descriptor (NULL POINTER)\n");
         return;
     }
-    debugSPIPrint("  Length              = %2d%s", desc->bLength,
+    usbprintk("  Length              = %2d%s\n", desc->bLength,
         desc->bLength == USB_DT_DEVICE_SIZE ? "" : " (!!!)");
-    debugSPIPrint("  DescriptorType      = %02x", desc->bDescriptorType);
+    usbprintk("  DescriptorType      = %02x\n", desc->bDescriptorType);
 
-    debugSPIPrint("  USB version         = %x.%02x",
+    usbprintk("  USB version         = %x.%02x\n",
         desc->bcdUSB >> 8, desc->bcdUSB & 0xff);
-    debugSPIPrint("  Vendor:Product      = %04x:%04x",
+    usbprintk("  Vendor:Product      = %04x:%04x\n",
         desc->idVendor, desc->idProduct);
-    debugSPIPrint("  MaxPacketSize0      = %d", desc->bMaxPacketSize0);
-    debugSPIPrint("  NumConfigurations   = %d", desc->bNumConfigurations);
-    debugSPIPrint("  Device version      = %x.%02x",
+    usbprintk("  MaxPacketSize0      = %d\n", desc->bMaxPacketSize0);
+    usbprintk("  NumConfigurations   = %d\n", desc->bNumConfigurations);
+    usbprintk("  Device version      = %x.%02x\n",
         desc->bcdDevice >> 8, desc->bcdDevice & 0xff);
 
-    debugSPIPrint("  Device Class:SubClass:Protocol = %02x:%02x:%02x",
+    usbprintk("  Device Class:SubClass:Protocol = %02x:%02x:%02x\n",
         desc->bDeviceClass, desc->bDeviceSubClass, desc->bDeviceProtocol);
     switch (desc->bDeviceClass) {
     case 0:
-        debugSPIPrint("    Per-interface classes");
+        usbprintk("    Per-interface classes\n");
         break;
     case USB_CLASS_AUDIO:
-        debugSPIPrint("    Audio device class");
+        usbprintk("    Audio device class\n");
         break;
     case USB_CLASS_COMM:
-        debugSPIPrint("    Communications class");
+        usbprintk("    Communications class\n");
         break;
     case USB_CLASS_HID:
-        debugSPIPrint("    Human Interface Devices class");
+        usbprintk("    Human Interface Devices class\n");
         break;
     case USB_CLASS_PRINTER:
-        debugSPIPrint("    Printer device class");
+        usbprintk("    Printer device class\n");
         break;
     case USB_CLASS_MASS_STORAGE:
-        debugSPIPrint("    Mass Storage device class");
+        usbprintk("    Mass Storage device class\n");
         break;
     case USB_CLASS_HUB:
-        debugSPIPrint("    Hub device class");
+        usbprintk("    Hub device class\n");
         break;
     case USB_CLASS_VENDOR_SPEC:
-        debugSPIPrint("    Vendor class");
+        usbprintk("    Vendor class\n");
         break;
     default:
-        debugSPIPrint("    Unknown class");
+        usbprintk("    Unknown class\n");
     }
 }
 
 void usb_show_config_descriptor(struct usb_config_descriptor *desc)
 {
-    debugSPIPrint("Configuration:");
-    debugSPIPrint("  bLength             = %4d%s", desc->bLength,
+    usbprintk("Configuration:");
+    usbprintk("  bLength             = %4d%s\n", desc->bLength,
         desc->bLength == USB_DT_CONFIG_SIZE ? "" : " (!!!)");
-    debugSPIPrint("  bDescriptorType     =   %02x", desc->bDescriptorType);
-    debugSPIPrint("  wTotalLength        = %04x", desc->wTotalLength);
-    debugSPIPrint("  bNumInterfaces      =   %02x", desc->bNumInterfaces);
-    debugSPIPrint("  bConfigurationValue =   %02x", desc->bConfigurationValue);
-    debugSPIPrint("  iConfiguration      =   %02x", desc->iConfiguration);
-    debugSPIPrint("  bmAttributes        =   %02x", desc->bmAttributes);
-    debugSPIPrint("  bMaxPower            = %4dmA", desc->bMaxPower * 2);
+    usbprintk("  bDescriptorType     =   %02x\n", desc->bDescriptorType);
+    usbprintk("  wTotalLength        = %04x\n", desc->wTotalLength);
+    usbprintk("  bNumInterfaces      =   %02x\n", desc->bNumInterfaces);
+    usbprintk("  bConfigurationValue =   %02x\n", desc->bConfigurationValue);
+    usbprintk("  iConfiguration      =   %02x\n", desc->iConfiguration);
+    usbprintk("  bmAttributes        =   %02x\n", desc->bmAttributes);
+    usbprintk("  bMaxPower            = %4dmA\n", desc->bMaxPower * 2);
 }
 
 void usb_show_interface_descriptor(struct usb_interface_descriptor *desc)
 {
-    debugSPIPrint("  Alternate Setting: %2d", desc->bAlternateSetting);
-    debugSPIPrint("    bLength             = %4d%s", desc->bLength,
+    usbprintk("  Alternate Setting: %2d\n", desc->bAlternateSetting);
+    usbprintk("    bLength             = %4d%s\n", desc->bLength,
         desc->bLength == USB_DT_INTERFACE_SIZE ? "" : " (!!!)");
-    debugSPIPrint("    bDescriptorType     =   %02x", desc->bDescriptorType);
-    debugSPIPrint("    bInterfaceNumber    =   %02x", desc->bInterfaceNumber);
-    debugSPIPrint("    bAlternateSetting   =   %02x", desc->bAlternateSetting);
-    debugSPIPrint("    bNumEndpoints       =   %02x", desc->bNumEndpoints);
-    debugSPIPrint("    bInterface Class:SubClass:Protocol =   %02x:%02x:%02x",
+    usbprintk("    bDescriptorType     =   %02x\n", desc->bDescriptorType);
+    usbprintk("    bInterfaceNumber    =   %02x\n", desc->bInterfaceNumber);
+    usbprintk("    bAlternateSetting   =   %02x\n", desc->bAlternateSetting);
+    usbprintk("    bNumEndpoints       =   %02x\n", desc->bNumEndpoints);
+    usbprintk("    bInterface Class:SubClass:Protocol =   %02x:%02x:%02x\n",
         desc->bInterfaceClass, desc->bInterfaceSubClass, desc->bInterfaceProtocol);
-    debugSPIPrint("    iInterface          =   %02x", desc->iInterface);
+    usbprintk("    iInterface          =   %02x\n", desc->iInterface);
 }
 
 void usb_show_endpoint_descriptor(struct usb_endpoint_descriptor *desc)
@@ -154,23 +154,23 @@ void usb_show_endpoint_descriptor(struct usb_endpoint_descriptor *desc)
         USB_DT_ENDPOINT_SIZE) ? "" : " (!!!)";
     char *EndpointType[4] = { "Control", "Isochronous", "Bulk", "Interrupt" };
 
-    debugSPIPrint("    Endpoint:");
-    debugSPIPrint("      bLength             = %4d%s",
+    usbprintk("    Endpoint:\n");
+    usbprintk("      bLength             = %4d%s\n",
         desc->bLength, LengthCommentString);
-    debugSPIPrint("      bDescriptorType     =   %02x", desc->bDescriptorType);
-    debugSPIPrint("      bEndpointAddress    =   %02x (%s)", desc->bEndpointAddress,
+    usbprintk("      bDescriptorType     =   %02x\n", desc->bDescriptorType);
+    usbprintk("      bEndpointAddress    =   %02x (%s)\n", desc->bEndpointAddress,
         (desc->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
             USB_ENDPOINT_XFER_CONTROL ? "i/o" :
         (desc->bEndpointAddress & USB_ENDPOINT_DIR_MASK) ? "in" : "out");
-    debugSPIPrint("      bmAttributes        =   %02x (%s)", desc->bmAttributes,
+    usbprintk("      bmAttributes        =   %02x (%s)\n", desc->bmAttributes,
         EndpointType[USB_ENDPOINT_XFERTYPE_MASK & desc->bmAttributes]);
-    debugSPIPrint("      wMaxPacketSize      = %04x", desc->wMaxPacketSize);
-    debugSPIPrint("      bInterval           =   %02x", desc->bInterval);
+    usbprintk("      wMaxPacketSize      = %04x\n", desc->wMaxPacketSize);
+    usbprintk("      bInterval           =   %02x\n", desc->bInterval);
 
     /* Audio extensions to the endpoint descriptor */
     if (desc->bLength == USB_DT_ENDPOINT_AUDIO_SIZE) {
-        debugSPIPrint("      bRefresh            =   %02x", desc->bRefresh);
-        debugSPIPrint("      bSynchAddress       =   %02x", desc->bSynchAddress);
+        usbprintk("      bRefresh            =   %02x", desc->bRefresh);
+        usbprintk("      bSynchAddress       =   %02x", desc->bSynchAddress);
     }
 }
 
@@ -183,26 +183,26 @@ void usb_show_string(struct usb_device *dev, char *id, int index)
     if (!(buf = kmalloc(256, GFP_KERNEL)))
         return;
     if (usb_string(dev, index, buf, 256) > 0)
-        dev_printk(KERN_INFO, &dev->dev, "%s: %s", id, buf);
+        dev_printk(KERN_INFO, &dev->dev, "%s: %s\n", id, buf);
     kfree(buf);
 }
 
 void usb_dump_urb (struct urb *urb)
 {
-    debugSPIPrint ("urb                   :%p", urb);
-    debugSPIPrint ("dev                   :%p", urb->dev);
-    debugSPIPrint ("pipe                  :%08X", urb->pipe);
-    debugSPIPrint ("status                :%d", urb->status);
-    debugSPIPrint ("transfer_flags        :%08X", urb->transfer_flags);
-    debugSPIPrint ("transfer_buffer       :%p", urb->transfer_buffer);
-    debugSPIPrint ("transfer_buffer_length:%d", urb->transfer_buffer_length);
-    debugSPIPrint ("actual_length         :%d", urb->actual_length);
-    debugSPIPrint ("setup_packet          :%p", urb->setup_packet);
-    debugSPIPrint ("start_frame           :%d", urb->start_frame);
-    debugSPIPrint ("number_of_packets     :%d", urb->number_of_packets);
-    debugSPIPrint ("interval              :%d", urb->interval);
-    debugSPIPrint ("error_count           :%d", urb->error_count);
-    debugSPIPrint ("context               :%p", urb->context);
-    debugSPIPrint ("complete              :%p", urb->complete);
+    usbprintk ("urb                   :%p\n", urb);
+    usbprintk ("dev                   :%p\n", urb->dev);
+    usbprintk ("pipe                  :%08X\n", urb->pipe);
+    usbprintk ("status                :%d\n", urb->status);
+    usbprintk ("transfer_flags        :%08X\n", urb->transfer_flags);
+    usbprintk ("transfer_buffer       :%p\n", urb->transfer_buffer);
+    usbprintk ("transfer_buffer_length:%d\n", urb->transfer_buffer_length);
+    usbprintk ("actual_length         :%d\n", urb->actual_length);
+    usbprintk ("setup_packet          :%p\n", urb->setup_packet);
+    usbprintk ("start_frame           :%d\n", urb->start_frame);
+    usbprintk ("number_of_packets     :%d\n", urb->number_of_packets);
+    usbprintk ("interval              :%d\n", urb->interval);
+    usbprintk ("error_count           :%d\n", urb->error_count);
+    usbprintk ("context               :%p\n", urb->context);
+    usbprintk ("complete              :%p\n", urb->complete);
 }
 

@@ -11,8 +11,9 @@
  ***************************************************************************/
 
 //#include "2bconsts.h"
-#include "stdint.h"
+#include <stdint.h>
 #include "cromwell_types.h"
+#include <stddef.h>
 
 
 /////////////////////////////////

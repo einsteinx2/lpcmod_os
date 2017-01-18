@@ -17,12 +17,14 @@
 #define KERNEL_PM_CODE_END 0x00900000
 
 #define INITRD_START       KERNEL_PM_CODE_END
-#define MAX_INITRD_END     0x02A00000
+#define MAX_INITRD_END     0x01A00000
 
 #define MEMORYMANAGERSTART MAX_INITRD_END
-#define MEMORYMANAGEREND   0x039FFFFF
+#define MEMORYMANAGEREND   0x02FFFFFF
 
-#define STACK_TOP 0x03C00000
+#define CODE_LOC_START 0x03800000 /* Decompressed cromwell binary get puts at that offset in RAM */
+
+#define STACK_TOP CODE_LOC_START /* Stack is going down on x86 */
 
 #define MAX_KERNEL_SIZE    (KERNEL_PM_CODE_END - KERNEL_PM_CODE)
 #define MEMORYMANAGERSIZE  (MEMORYMANAGEREND - MEMORYMANAGERSTART)
@@ -37,7 +39,7 @@
 #define RAMSIZE_USE (RAMSIZE - FB_SIZE)
 
 //#define LPCFlashadress 0xFFF00000
-#define LPCFlashadress 0xFF000000
+#define LPCFlashadress 0xFF000000u
 
 //Location and max size of extracted 2BL from BFM BIOS
 #define MIN_2BL 0x400000

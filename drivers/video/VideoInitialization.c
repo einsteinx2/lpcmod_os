@@ -19,7 +19,7 @@
 #include <math.h>
 #endif
 #include <boot.h>
-
+#include "lib/LPCMod/xblastDebug.h"
 #include "VideoInitialization.h"
 
 extern unsigned char VIDEO_AV_MODE;
@@ -58,11 +58,12 @@ static void NvSetCrtc(volatile unsigned char * pbRegs, int nIndex, unsigned char
 xbox_tv_encoding DetectVideoStd(void) {
     xbox_tv_encoding videoStd;
     unsigned char b=I2CTransmitByteGetReturn(0x54, 0x5A); // the eeprom defines the TV standard for the box
-
     if(b == 0x40) {
         videoStd = TV_ENC_NTSC;
+        debugSPIPrint("Detected Video Standard: NTSC\n");
     } else {
         videoStd = TV_ENC_PALBDGHI;
+        debugSPIPrint("Detected Video Standard: PAL\n");
     }
 
     return videoStd;
@@ -72,14 +73,15 @@ xbox_av_type DetectAvType(void) {
     xbox_av_type avType;
 
     switch (VIDEO_AV_MODE) {
-        case 0: avType = AV_SCART_RGB; break;
-        case 1: avType = AV_HDTV; break;
-        case 2: avType = AV_VGA_SOG; break;
-        case 4: avType = AV_SVIDEO; break;
-        case 6: avType = AV_COMPOSITE; break;
-             case 7: avType = AV_VGA; break;
-        default: avType = AV_COMPOSITE; break;
+        case 0: avType = AV_SCART_RGB; break;  // mode 1+2+3
+        case 1: avType = AV_HDTV; break;       // mode 2+3
+        case 2: avType = AV_VGA_SOG; break;    // mode 1+3
+        case 4: avType = AV_SVIDEO; break;     // mode 1+2  AKA PAL Stereo
+        case 6: avType = AV_COMPOSITE; break;  // mode 1   AKA NTSC Stereo
+        case 7: avType = AV_VGA; break;        // mode 0
+        default: avType = AV_COMPOSITE; break; // mode 3, mode 2
     }
+
     return avType;
 }
 

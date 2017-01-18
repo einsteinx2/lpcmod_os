@@ -8,7 +8,7 @@
 /* The "volatile" is due to gcc bugs */
 #define barrier() __asm__ __volatile__("": : :"memory")
 
-#include "stdint.h"
+#include <stdint.h>
 #include "limits.h"
 #include "string.h"
 #include "io.h"

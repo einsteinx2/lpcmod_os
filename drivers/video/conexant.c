@@ -17,6 +17,7 @@
 #include "conexant.h"
 #include "focus.h"
 #include "string.h"
+#include "xblast/settings/xblastSettingsDefs.h"
 
 #define ADR(x) (x / 2 - 0x17)
 
@@ -140,24 +141,54 @@ int conexant_calc_hdtv_mode(
     switch (hdtv_mode) {
         case HDTV_480p:
             // use sync on green
-            regs[ADR(0x2e)] = 0xed; // HDTV_EN = 1, RGB2PRPB = 1, RPR_SYNC_DIS = 1, BPB_SYNC_DIS = 1, HD_SYNC_EDGE = 1, RASTER_SEL = 01
-            regs[ADR(0x32)] = 0x48; // DRVS = 2, IN_MODE[3] = 1;
-            regs[ADR(0x3e)] = 0x45; // MCOMPU
-            regs[ADR(0x40)] = 0x51; // MCOMPV
+            if(LPCmodSettings.OSsettings.enableVGA)
+            {
+                regs[ADR(0x2e)] = 0x00; // HDTV_EN = 0, RGB2PRPB = 0, RPR_SYNC_DIS = 0, BPB_SYNC_DIS = 0, HD_SYNC_EDGE = 0, RASTER_SEL = 00
+                regs[ADR(0x32)] = 0x48; // DRVS = 2, IN_MODE[3] = 1;
+                regs[ADR(0x3e)] = 0x80; // MCOMPU
+                regs[ADR(0x40)] = 0x80; // MCOMPV
+            }
+            else
+            {
+                regs[ADR(0x2e)] = 0xed; // HDTV_EN = 1, RGB2PRPB = 1, RPR_SYNC_DIS = 1, BPB_SYNC_DIS = 1, HD_SYNC_EDGE = 1, RASTER_SEL = 01
+                regs[ADR(0x32)] = 0x48; // DRVS = 2, IN_MODE[3] = 1;
+                regs[ADR(0x3e)] = 0x45; // MCOMPU
+                regs[ADR(0x40)] = 0x51; // MCOMPV
+            }
             break;
         case HDTV_720p:
             // use sync on green
-            regs[ADR(0x2e)] = 0xea; // HDTV_EN = 1, RGB2PRPB = 1, RPR_SYNC_DIS = 1, BPB_SYNC_DIS = 1, HD_SYNC_EDGE = 1, RASTER_SEL = 01
-            regs[ADR(0x32)] = 0x49; // DRVS = 2, IN_MODE[3] = 1, CSC_SEL=1;
-            regs[ADR(0x3e)] = 0x45; // MCOMPU
-            regs[ADR(0x40)] = 0x51; // MCOMPV
+            if(LPCmodSettings.OSsettings.enableVGA)
+            {
+                regs[ADR(0x2e)] = 0x00; // HDTV_EN = 0, RGB2PRPB = 0, RPR_SYNC_DIS = 0, BPB_SYNC_DIS = 0, HD_SYNC_EDGE = 0, RASTER_SEL = 00
+                regs[ADR(0x32)] = 0x48; // DRVS = 2, IN_MODE[3] = 1, CSC_SEL=1;
+                regs[ADR(0x3e)] = 0x80; // MCOMPU
+                regs[ADR(0x40)] = 0x80; // MCOMPV
+            }
+            else
+            {
+                regs[ADR(0x2e)] = 0xea; // HDTV_EN = 1, RGB2PRPB = 1, RPR_SYNC_DIS = 1, BPB_SYNC_DIS = 1, HD_SYNC_EDGE = 1, RASTER_SEL = 01
+                regs[ADR(0x32)] = 0x49; // DRVS = 2, IN_MODE[3] = 1, CSC_SEL=1;
+                regs[ADR(0x3e)] = 0x45; // MCOMPU
+                regs[ADR(0x40)] = 0x51; // MCOMPV
+            }
             break;
         case HDTV_1080i:
             // use sync on green
-            regs[ADR(0x2e)] = 0xeb; // HDTV_EN = 1, RGB2PRPB = 1, RPR_SYNC_DIS = 1, BPB_SYNC_DIS = 1, HD_SYNC_EDGE = 1, RASTER_SEL = 01
-            regs[ADR(0x32)] = 0x49; // DRVS = 2, IN_MODE[3] = 1, CSC_SEL=1;
-            regs[ADR(0x3e)] = 0x48; // MCOMPU
-            regs[ADR(0x40)] = 0x5b; // MCOMPV
+            if(LPCmodSettings.OSsettings.enableVGA)
+            {
+                regs[ADR(0x2e)] = 0x00; // HDTV_EN = 0, RGB2PRPB = 0, RPR_SYNC_DIS = 0, BPB_SYNC_DIS = 0, HD_SYNC_EDGE = 0, RASTER_SEL = 00
+                regs[ADR(0x32)] = 0x48; // DRVS = 2, IN_MODE[3] = 1, CSC_SEL=0;
+                regs[ADR(0x3e)] = 0x80; // MCOMPU
+                regs[ADR(0x40)] = 0x80; // MCOMPV
+            }
+            else
+            {
+                regs[ADR(0x2e)] = 0xeb; // HDTV_EN = 1, RGB2PRPB = 1, RPR_SYNC_DIS = 1, BPB_SYNC_DIS = 1, HD_SYNC_EDGE = 1, RASTER_SEL = 01
+                regs[ADR(0x32)] = 0x49; // DRVS = 2, IN_MODE[3] = 1, CSC_SEL=1;
+                regs[ADR(0x3e)] = 0x48; // MCOMPU
+                regs[ADR(0x40)] = 0x5b; // MCOMPV
+            }
             break;
     }
     regs[ADR(0x3c)] = 0x80; // MCOMPY
@@ -208,20 +239,22 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
         regs[ADR(0x90)] = ((param.v_linesi)&0xff);
         // V_ACTIVEO
         /* TODO: Absolutely not sure about other modes than plain NTSC / PAL */
-        switch(mode->tv_encoding) {
-            case TV_ENC_NTSC:
-            case TV_ENC_NTSC60:
-            case TV_ENC_PALM:
-            case TV_ENC_PAL60:
-                m=param.v_activeo + 1;
-                break;
-            case TV_ENC_PALBDGHI:
-                m=param.v_activeo + 2;
-                break;
-            default:
-                m=param.v_activeo + 2;
-                break;
+        switch(mode->tv_encoding)
+        {
+        case TV_ENC_NTSC:
+        case TV_ENC_NTSC60:
+        case TV_ENC_PALM:
+        case TV_ENC_PAL60:
+            m=param.v_activeo + 1;
+            break;
+        case TV_ENC_PALBDGHI:
+            m=param.v_activeo + 2;
+            break;
+        default:
+            m=param.v_activeo + 2;
+            break;
         }
+
         b=regs[ADR(0x86)]&(~0x80);
         regs[ADR(0x86)] = ((m>>1)&0x80)|b;
         regs[ADR(0x84)] = ((m)&0xff);
@@ -257,17 +290,21 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
             // adjust PLL
             dwPllRatio = (int)(6.0 * ((double)param.h_clko / vidstda[mode->tv_encoding].m_dSecHsyncPeriod) *
                 param.clk_ratio * 0x10000 / pll_base + 0.5);
+
             dwInt = dwPllRatio / 0x10000;
             dwFract = dwPllRatio - (dwInt * 0x10000);
             b=regs[ADR(0xa0)]&(~0x3f);
             regs[ADR(0xa0)] = ((dwInt)&0x3f)|b;
             regs[ADR(0x9e)] = ((dwFract>>8)&0xff);
             regs[ADR(0x9c)] = ((dwFract)&0xff);
+
             // recalc value
             dPllOutputFrequency = ((double)dwInt + ((double)dwFract)/65536.0)/(6 * param.clk_ratio / pll_base);
+
             // enable 3:2 clocking mode
             b=regs[ADR(0x38)]&(~0x20);
-            if (param.clk_ratio > 1.1) {
+            if (param.clk_ratio > 1.1)
+            {
                 b |= 0x20;
             }
             regs[ADR(0x38)] = b;
@@ -277,12 +314,14 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
             b=regs[ADR(0x38)]&(~0x04);
             regs[ADR(0x38)] = ((m>>6)&0x04)|b;
             regs[ADR(0x7c)] = (m&0xff);
+
             // update burst end position (note +128 is in hardware)
             m=(vidstda[mode->tv_encoding].m_dSecBurstEnd) * dPllOutputFrequency + 0.5;
             if(m<128) m=128;
             b=regs[ADR(0x38)]&(~0x08);
             regs[ADR(0x38)] = (((m-128)>>5)&0x08)|b;
             regs[ADR(0x7e)] = ((m-128)&0xff);
+
             // update HSYNC width
             m=(vidstda[mode->tv_encoding].m_dSecHsyncWidth) * dPllOutputFrequency + 0.5;
             regs[ADR(0x7a)] = ((m)&0xff);
@@ -296,6 +335,7 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
                     / (double)param.h_clko
                 ) + 0.5
             );
+
             regs[ADR(0xae)] = (dwSubcarrierIncrement&0xff);
             regs[ADR(0xb0)] = ((dwSubcarrierIncrement>>8)&0xff);
             regs[ADR(0xb2)] = ((dwSubcarrierIncrement>>16)&0xff);
@@ -305,77 +345,84 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
         {
             unsigned int dwWssIncrement = 0;
 
-            switch(mode->tv_encoding) {
-                case TV_ENC_NTSC:
-                case TV_ENC_NTSC60:
-                    dwWssIncrement=(unsigned int) ((1048576.0 / ( 0.000002234 * dPllOutputFrequency))+0.5);
-                    break;
-                case TV_ENC_PALBDGHI:
-                case TV_ENC_PALN:
-                case TV_ENC_PALNC:
-                case TV_ENC_PALM:
-                case TV_ENC_PAL60:
-                    dwWssIncrement=(unsigned int) ((1048576.0 / ( 0.0000002 * dPllOutputFrequency))+0.5);
-                    break;
-                default:
-                    break;
-                }
+            switch(mode->tv_encoding)
+            {
+            case TV_ENC_NTSC:
+            case TV_ENC_NTSC60:
+                dwWssIncrement=(unsigned int) ((1048576.0 / ( 0.000002234 * dPllOutputFrequency))+0.5);
+                break;
+            case TV_ENC_PALBDGHI:
+            case TV_ENC_PALN:
+            case TV_ENC_PALNC:
+            case TV_ENC_PALM:
+            case TV_ENC_PAL60:
+                dwWssIncrement=(unsigned int) ((1048576.0 / ( 0.0000002 * dPllOutputFrequency))+0.5);
+                break;
+            default:
+                break;
+            }
 
             regs[ADR(0x66)] = (dwWssIncrement&0xff);
             regs[ADR(0x68)] = ((dwWssIncrement>>8)&0xff);
             regs[ADR(0x6a)] = ((dwWssIncrement>>16)&0xf);
         }
+
         // set mode register
         b=regs[ADR(0xa2)]&(0x41);
-        switch(mode->tv_encoding) {
-                case TV_ENC_NTSC:
-                    b |= 0x0a; // SETUP + VSYNC_DUR
-                    break;
-                case TV_ENC_NTSC60:
-                    b |= 0x08; // VSYNC_DUR
-                    break;
-                case TV_ENC_PALBDGHI:
-                case TV_ENC_PALNC:
-                        b |= 0x24; // PAL_MD + 625LINE
-                    break;
-                case TV_ENC_PALN:
-                    b |= 0x2e; // PAL_MD + SETUP + 625LINE + VSYNC_DUR
-                    break;
-                case TV_ENC_PALM:
-                    b |= 0x2a; // PAL_MD + SETUP + VSYNC_DUR
-                    break;
-                case TV_ENC_PAL60:
-                    b |= 0x28; // PAL_MD + VSYNC_DUR
-                    break;
-                default:
-                    break;
+        switch(mode->tv_encoding)
+        {
+        case TV_ENC_NTSC:
+            b |= 0x0a; // SETUP + VSYNC_DUR
+            break;
+        case TV_ENC_NTSC60:
+            b |= 0x08; // VSYNC_DUR
+            break;
+        case TV_ENC_PALBDGHI:
+        case TV_ENC_PALNC:
+            b |= 0x24; // PAL_MD + 625LINE
+            break;
+        case TV_ENC_PALN:
+            b |= 0x2e; // PAL_MD + SETUP + 625LINE + VSYNC_DUR
+            break;
+        case TV_ENC_PALM:
+            b |= 0x2a; // PAL_MD + SETUP + VSYNC_DUR
+            break;
+        case TV_ENC_PAL60:
+            b |= 0x28; // PAL_MD + VSYNC_DUR
+            break;
+        default:
+            break;
         }
+
         regs[ADR(0xa2)] = b;
         regs[ADR(0xc6)] = 0x98; // IN_MODE = 24 bit RGB multiplexed
-        switch(mode->av_type) {
-            case AV_COMPOSITE:
-            case AV_SVIDEO:
-                regs[ADR(0x2e)] |= 0x40; // RGB2YPRPB = 1
-                regs[ADR(0x6c)] = 0x46; // FLD_MODE = 10, EACTIVE = 1, EN_SCART = 0, EN_REG_RD = 1
-                regs[ADR(0x5a)] = 0x00; // Y_OFF (Brightness)
-                regs[ADR(0xa4)] = 0xe5; // SYNC_AMP
-                regs[ADR(0xa6)] = 0x74; // BST_AMP
-                regs[ADR(0xba)] = 0x24; // SLAVER = 1, DACDISC = 1
-                regs[ADR(0xce)] = 0x19; // OUT_MUXA = 01, OUT_MUXB = 10, OUT_MUXC = 10, OUT_MUXD = 00
-                regs[ADR(0xd6)] = 0x00; // OUT_MODE = 00 (CVBS)
-                break;
-            case AV_SCART_RGB:
-                regs[ADR(0x6c)] = 0x4e; // FLD_MODE = 10, EACTIVE = 1, EN_SCART = 1, EN_REG_RD = 1
-                regs[ADR(0x5a)] = 0xff; // Y_OFF (Brightness)
-                regs[ADR(0xa4)] = 0xe7; // SYNC_AMP
-                regs[ADR(0xa6)] = 0x77; // BST_AMP
-                regs[ADR(0xba)] = 0x20; // SLAVER = 1, enable all DACs
-                regs[ADR(0xce)] = 0xe1; // OUT_MUXA = 01, OUT_MUXB = 00, OUT_MUXC = 10, OUT_MUXD = 11
-                regs[ADR(0xd6)] = 0x0c; // OUT_MODE = 11 (RGB / SCART / HDTV)
-                break;
-            default:
-                break;
+
+        switch(mode->av_type)
+        {
+        case AV_COMPOSITE:
+        case AV_SVIDEO:
+            regs[ADR(0x2e)] |= 0x40; // RGB2YPRPB = 1
+            regs[ADR(0x6c)] = 0x46; // FLD_MODE = 10, EACTIVE = 1, EN_SCART = 0, EN_REG_RD = 1
+            regs[ADR(0x5a)] = 0x00; // Y_OFF (Brightness)
+            regs[ADR(0xa4)] = 0xe5; // SYNC_AMP
+            regs[ADR(0xa6)] = 0x74; // BST_AMP
+            regs[ADR(0xba)] = 0x24; // SLAVER = 1, DACDISC = 1
+            regs[ADR(0xce)] = 0x19; // OUT_MUXA = 01, OUT_MUXB = 10, OUT_MUXC = 10, OUT_MUXD = 00
+            regs[ADR(0xd6)] = 0x00; // OUT_MODE = 00 (CVBS)
+            break;
+        case AV_SCART_RGB:
+            regs[ADR(0x6c)] = 0x4e; // FLD_MODE = 10, EACTIVE = 1, EN_SCART = 1, EN_REG_RD = 1
+            regs[ADR(0x5a)] = 0xff; // Y_OFF (Brightness)
+            regs[ADR(0xa4)] = 0xe7; // SYNC_AMP
+            regs[ADR(0xa6)] = 0x77; // BST_AMP
+            regs[ADR(0xba)] = 0x20; // SLAVER = 1, enable all DACs
+            regs[ADR(0xce)] = 0xe1; // OUT_MUXA = 01, OUT_MUXB = 00, OUT_MUXC = 10, OUT_MUXD = 11
+            regs[ADR(0xd6)] = 0x0c; // OUT_MODE = 11 (RGB / SCART / HDTV)
+            break;
+        default:
+            break;
         }
+
         riva_out->ext.vend = mode->yres - 1;
         riva_out->ext.vtotal = param.v_linesi - 1;
         riva_out->ext.vcrtc = mode->yres - 1;
@@ -393,6 +440,7 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
         riva_out->ext.crtchdispend = mode->xres + 8;
         riva_out->ext.crtcvstart = mode->yres + 32;
         riva_out->ext.crtcvtotal = param.v_linesi + 32;
+
         return 1;
     }
     else
@@ -404,7 +452,8 @@ int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out)
 static int conexant_calc_mode_params(
     xbox_video_mode * mode,
     xbox_tv_mode_parameter * param
-){
+)
+{
     const double dMinHBT = 2.5e-6; // 2.5uSec time for horizontal syncing
     const double invalidMetric = 1000;
 
@@ -518,7 +567,8 @@ static int conexant_calc_mode_params(
 static void conexant_calc_blankings(
     xbox_video_mode * mode,
     xbox_tv_mode_parameter * param
-){
+)
+{
     double dTotalHBlankI;
     double dFrontPorchIn;
     double dFrontPorchOut;
@@ -545,16 +595,17 @@ static void conexant_calc_blankings(
     ) - mode->xres + 15;
 
     // V_BLANKO
-    switch (mode->tv_encoding) {
-        case TV_ENC_NTSC:
-        case TV_ENC_NTSC60:
-        case TV_ENC_PAL60:
-        case TV_ENC_PALM:
-            param->v_blanko = (int)( 140 - ( param->v_activeo / 2.0 ) + 0.5 );
-            break;
-        default:
-            param->v_blanko = (int)( 167 - ( param->v_activeo / 2.0 ) + 0.5 );
-            break;
+    switch (mode->tv_encoding)
+    {
+    case TV_ENC_NTSC:
+    case TV_ENC_NTSC60:
+    case TV_ENC_PAL60:
+    case TV_ENC_PALM:
+        param->v_blanko = (int)( 140 - ( param->v_activeo / 2.0 ) + 0.5 );
+        break;
+    default:
+        param->v_blanko = (int)( 167 - ( param->v_activeo / 2.0 ) + 0.5 );
+        break;
     }
 
     // V_BLANKI

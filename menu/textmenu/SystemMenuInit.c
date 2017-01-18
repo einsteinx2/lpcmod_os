@@ -14,23 +14,23 @@
 #include "lpcmod_v1.h"
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "xblast/HardwareIdentifier.h"
 
 TEXTMENU *SystemMenuInit(void) {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
 
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "System settings");
 
     if(fSpecialEdition == SYSCON_ID_V1_PRE_EDITION)
     {
 		//BACKGROUND COLOR SETTINGS MENU
-		itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
+		itemPtr = malloc(sizeof(TEXTMENUITEM));
 		memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
 		strcpy(itemPtr->szCaption, "Background color : ");
 		bgColorString(itemPtr->szParameter);
-		itemPtr->functionPtr= NULL;
+		itemPtr->functionPtr = NULL;
 		itemPtr->functionDataPtr = NULL;
 		itemPtr->functionLeftPtr=toggleBGColor;
 		itemPtr->functionLeftDataPtr = itemPtr->szParameter;
@@ -40,17 +40,15 @@ TEXTMENU *SystemMenuInit(void) {
     }
 
     //LED SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption,"LED");
     itemPtr->szParameter[0]=0;
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)LEDMenuInit();
+    itemPtr->functionDataPtr = LEDMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
     
     //FAN SPEED
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"Fan speed : ");
     sprintf(itemPtr->szParameter, "%d%%", LPCmodSettings.OSsettings.fanSpeed);
     itemPtr->functionPtr=NULL;
@@ -66,29 +64,26 @@ TEXTMENU *SystemMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     //VIDEO SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Video settings");
     itemPtr->szParameter[0]=0;
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)VideoMenuInit();
+    itemPtr->functionDataPtr = VideoMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
     //VIDEO SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Network settings");
     itemPtr->szParameter[0]=0;
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)NetworkMenuInit();
+    itemPtr->functionDataPtr = NetworkMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
     //DVD REGION SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "DVD region : ");
-    sprintf(itemPtr->szParameter, "%s", DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
-    itemPtr->functionPtr= NULL;
+    sprintf(itemPtr->szParameter, "%s", getDVDRegionText(eeprom.DVDPlaybackKitZone[0]));
+    itemPtr->functionPtr = NULL;
     itemPtr->functionDataPtr = NULL;
     itemPtr->functionLeftPtr=decrementDVDRegion;
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;
@@ -97,11 +92,10 @@ TEXTMENU *SystemMenuInit(void) {
     TextMenuAddItem(menuPtr, itemPtr);
 
     //GAME REGION SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Game region : ");
-    sprintf(itemPtr->szParameter, "%s", Gameregiontext[getGameRegionValue(&eeprom)]);
-    itemPtr->functionPtr= NULL;
+    sprintf(itemPtr->szParameter, "%s", getGameRegionText(getGameRegionValue(&eeprom)));
+    itemPtr->functionPtr = NULL;
     itemPtr->functionDataPtr = NULL;
     itemPtr->functionLeftPtr=decrementGameRegion;
     itemPtr->functionLeftDataPtr = itemPtr->szParameter;

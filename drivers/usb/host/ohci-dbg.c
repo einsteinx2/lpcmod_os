@@ -30,14 +30,14 @@ urb_print (struct urb * urb, char * str, int small)
     unsigned int pipe= urb->pipe;
 
     if (!urb->dev || !urb->dev->bus) {
-        dbg("%s URB: no dev", str);
+        dbg("%s URB: no dev\n", str);
         return;
     }
 
 #ifndef    OHCI_VERBOSE_DEBUG
     if (urb->status != 0)
 #endif
-    dbg("%s %p dev=%d ep=%d%s-%s flags=%x len=%d/%d stat=%d",
+    dbg("%s %p dev=%d ep=%d%s-%s flags=%x len=%d/%d stat=%d\n",
             str,
             urb,
             usb_pipedevice (pipe),

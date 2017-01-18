@@ -1,4 +1,4 @@
 
-O_TARGET := BootFlash.o BootFlashUi.o
+O_TARGET := FlashUi.o FlashDriver.o FlashLowLevel.o
 
 include $(TOPDIR)/Rules.make

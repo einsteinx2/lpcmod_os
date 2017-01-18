@@ -9,24 +9,40 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "MenuInits.h"
+
 #define BIOSNAMEMAXLENGTH       20
 
-void decrementActiveBank(void * itemStr);
-void incrementActiveBank(void * itemStr);
+typedef struct
+{
+    char* powerButString;
+    char* ejectButString;
+    char* tsopControlString;
+    TEXTMENUITEM* bank256ItemPtr;
+    TEXTMENUITEM* tsopBank0ItemPtr;
+    TEXTMENUITEM* tsopBank1ItemPtr;
+    TEXTMENUITEM* tsopFullItemPtr;
+    TEXTMENUITEM* resetAllItemPtr;
+}BankSelectCommonParams;
 
-void decrementAltBank(void * itemStr);
-void incrementAltBank(void * itemStr);
+void decrementActiveBank(void* itemStr);
+void incrementActiveBank(void* itemStr);
 
-void decrementbootTimeout(void * itemStr);
-void incrementbootTimeout(void * itemStr);
+void decrementAltBank(void* itemStr);
+void incrementAltBank(void* itemStr);
 
-void toggleQuickboot(void * itemStr);
+void decrementbootTimeout(void* itemStr);
+void incrementbootTimeout(void* itemStr);
 
-void resetSettings(void *whatever);
+void toggleQuickboot(void* itemStr);
 
-void editBIOSName(void *bankID);
+void resetSettings(void* ignored);
 
-void toggleTSOPcontrol(void * itemPtr);
-void toggleTSOPhide(void * itemPtr);
+void editBIOSName(void* bankID);
+
+void toggleTSOPcontrol(void* customStruct);
+void toggleTSOPhide(void* itemStr);
+
+void reorderTSOPNameMenuEntries(BankSelectCommonParams* params);
 
 #endif

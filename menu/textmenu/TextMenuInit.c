@@ -13,125 +13,123 @@
 #include "VideoInitialization.h"
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "xblast/HardwareIdentifier.h"
 
-TEXTMENU *TextMenuInit(void) {
+TEXTMENU *TextMenuInit(void)
+{
     
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
     
     //Create the root menu - MANDATORY
     menuPtr = malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    memset(menuPtr,0x00,sizeof(TEXTMENU)); // Sets timeout and visibleCount to 0.
     strcpy(menuPtr->szCaption, "XBlast Mod settings");
     menuPtr->firstMenuItem=NULL;
 
     
-    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_XT_TSOP) {        //No need to display this menu if no modchip is present.
+    if(isXBlastCompatible())         //No need to display this menu if no modchip is present.
+    {
         //XBlast(modchip) SETTINGS MENU
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "XBlast settings");
         itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)ModchipMenuInit();
+        itemPtr->functionDataPtr = ModchipMenuInit();
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
     //SYSTEM SETTINGS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "System settings");
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)SystemMenuInit();
+    itemPtr->functionDataPtr = SystemMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(fHasHardware == SYSCON_ID_V1 ||                  //No need to display this menu if no modchip is present.
-       fHasHardware == SYSCON_ID_V1_TSOP ||
-       fHasHardware == SYSCON_ID_XX1 ||
-       fHasHardware == SYSCON_ID_XX2 ||
-       fHasHardware == SYSCON_ID_XXOPX ||
-       fHasHardware == SYSCON_ID_XX3 ||
-       fHasHardware == SYSCON_ID_X3){                  //LCD is supported on SmartXX chips.
+    if(isLCDSupported())    //No need to display this menu if no modchip is present.
+    {                       //LCD is supported on SmartXX & X3 chips.
         //LCD SETTINGS MENU
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "LCD settings");
         itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)LCDMenuInit();
+        itemPtr->functionDataPtr = LCDMenuInit();
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
     //TOOLS MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Tools");
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)ToolsMenuInit();
+    itemPtr->functionDataPtr = ToolsMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
 
 #ifdef FLASH
-    if(fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP){
+    if(isXBlastOnTSOP())
+    {
         //FLASH MENU
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Flash menu");
-        itemPtr->functionPtr=DrawChildTextMenu;
         if(LPCmodSettings.OSsettings.TSOPcontrol)
-            itemPtr->functionDataPtr = (void *)TSOPBankSelectMenuInit(NULL);
+        {
+            itemPtr->functionPtr = TSOPBankSelectMenuDynamic;
+        }
         else
-            itemPtr->functionDataPtr = (void *)BankSelectInit(NULL);
+        {
+            itemPtr->functionPtr = BankSelectDynamic;
+            itemPtr->functionDataPtr = malloc(sizeof(FlashBank));
+            *(FlashBank *)itemPtr->functionDataPtr = FlashBank_NoBank;
+            itemPtr->dataPtrAlloc = true;
+        }
         TextMenuAddItem(menuPtr, itemPtr);
     }
-    else if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT){
+    else if(isXBlastOnLPC())
+    {
         //FLASH MENU
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Flash menu");
-        itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)BankSelectMenuInit(NULL);
+        itemPtr->functionPtr = DrawChildTextMenu;
+        itemPtr->functionDataPtr = BankSelectMenuInit();
         TextMenuAddItem(menuPtr, itemPtr);
     }
-    else {
+    else
+    {
         //FLASH MENU. Shown when no XBlast modchip is detected.
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Flash menu");
-        itemPtr->functionPtr=DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)BankSelectInit(NULL);
+        itemPtr->functionPtr = BankSelectDynamic;
+        itemPtr->functionDataPtr = malloc(sizeof(FlashBank));
+        *(FlashBank *)itemPtr->functionDataPtr = FlashBank_NoBank;
+        itemPtr->dataPtrAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
 #endif
 
     //HDD MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "HDD menu");
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)HDDMenuInit();
+    itemPtr->functionDataPtr = HDDMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
     //CD MENU
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "CD menu");
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)CDMenuInit();
+    itemPtr->functionDataPtr = CDMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
     // Info Menu
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Info menu");
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)InfoMenuInit();
+    itemPtr->functionDataPtr = InfoMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
     // Power Menu
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Power menu");
     itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)ResetMenuInit();
+    itemPtr->functionDataPtr = ResetMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
     
     return menuPtr;

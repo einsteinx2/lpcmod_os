@@ -16,222 +16,63 @@
 #include "BootIde.h"
 #include "IconMenu.h"
 #include "MenuActions.h"
-#include "lpcmod_v1.h"
 #include <stddef.h>
 #include "lib/LPCMod/BootLPCMod.h"
-/*
-void InitFatXIcons(void);
-void InitNativeIcons(void);
-void InitWebBootIcons(void);
-void InitNetBootIcons(void);
-*/
-void IconMenuInit(void) {
-//    int i=0;
-    ICON *iconPtr=NULL;
+#include "xblast/PowerManagement.h"
+#include "xblast/HardwareIdentifier.h"
+#include "string.h"
 
-//Not used for lpcmod OS.
+void IconMenuInit(void)
+{
+    selectedIcon=NULL;
 
+    icon512BankIcon = calloc(1, sizeof(ICON));
+    icon512BankIcon->iconSlot = ICON_SOURCE_SLOT5;
+    icon512BankIcon->bankID = BNK512;
+    icon512BankIcon->functionPtr = assertBankScriptExecBankBoot;
+    icon512BankIcon->functionDataPtr = malloc(sizeof(unsigned char));
+    *(unsigned char *)icon512BankIcon->functionDataPtr = BNK512;
+    icon512BankIcon->dataPtrAlloc = true;
 
+    icon256BankIcon = calloc(1, sizeof(ICON));
+    icon256BankIcon->iconSlot = ICON_SOURCE_SLOT4;
+    icon256BankIcon->bankID = BNK256;
+    icon256BankIcon->functionPtr = assertBankScriptExecBankBoot;
+    icon256BankIcon->functionDataPtr = malloc(sizeof(unsigned char));
+    *(unsigned char *)icon256BankIcon->functionDataPtr = BNK256;
+    icon256BankIcon->dataPtrAlloc = true;
 
-/*
-    for (i=0; i<2; ++i) {
-        //Add the cdrom icon - if you have two cdroms, you'll get two icons!
-        if (tsaHarddiskInfo[i].m_fAtapi) {
-            char *driveName=malloc(sizeof(char)*14);
-            sprintf(driveName,"CD/DVD");
-            iconPtr = (ICON *)malloc(sizeof(ICON));
-            iconPtr->iconSlot = ICON_SOURCE_SLOT2;
-            iconPtr->szCaption = driveName;
-            iconPtr->functionPtr = BootFromCD;
-            iconPtr->functionDataPtr = malloc(sizeof(int));
-            *(int*)iconPtr->functionDataPtr = i;
-            AddIcon(iconPtr);
-        }
-    }
+    iconSplitTSOPBank0Icon = calloc(1, sizeof(ICON));
+    iconSplitTSOPBank0Icon->iconSlot = ICON_SOURCE_SLOT3;
+    iconSplitTSOPBank0Icon->bankID = BNKTSOPSPLIT0;
+    iconSplitTSOPBank0Icon->functionPtr = assertBankScriptExecTSOPBoot;
+    iconSplitTSOPBank0Icon->functionDataPtr = malloc(sizeof(unsigned char));
+    *(unsigned char *)iconSplitTSOPBank0Icon->functionDataPtr = BNKTSOPSPLIT0;
+    iconSplitTSOPBank0Icon->dataPtrAlloc = true;
 
+    iconSplitTSOPBank1Icon = calloc(1, sizeof(ICON));
+    iconSplitTSOPBank1Icon->iconSlot = ICON_SOURCE_SLOT3;
+    iconSplitTSOPBank1Icon->szCaption = "Boot OnBoard Bank1";
+    iconSplitTSOPBank1Icon->bankID = BNKTSOPSPLIT1;
+    iconSplitTSOPBank1Icon->functionPtr = assertBankScriptExecTSOPBoot;
+    iconSplitTSOPBank1Icon->functionDataPtr = malloc(sizeof(unsigned char));
+    *(unsigned char *)iconSplitTSOPBank1Icon->functionDataPtr = BNKTSOPSPLIT1;
+    iconSplitTSOPBank1Icon->dataPtrAlloc = true;
 
-    // For the Pro/ Home Gentoox distributions.  If MCE isnt installed
-    // Gentoox Pro/ Home will be selected as the default icon.
-    InitFatXIcons();
+    iconFullTSOPBankIcon = calloc(1, sizeof(ICON));
+    iconFullTSOPBankIcon->iconSlot = ICON_SOURCE_SLOT3;
+    iconFullTSOPBankIcon->bankID = BNKFULLTSOP;
+    iconFullTSOPBankIcon->functionPtr = assertBankScriptExecTSOPBoot;
+    iconFullTSOPBankIcon->functionDataPtr = malloc(sizeof(unsigned char));
+    *(unsigned char *)iconFullTSOPBankIcon->functionDataPtr = BNKFULLTSOP;
+    iconFullTSOPBankIcon->dataPtrAlloc = true;
 
-    // Largely for MCE.  MCE will get selected as the default boot icon
-    // if it is installed.
-    InitNativeIcons();
-
-    // For booting a Packlet from the internet.
-#ifdef LWIP
-    InitWebBootIcons();
-    InitNetBootIcons();
-#endif
-*/
-if(!TSOPRecoveryMode){ //Do not try to boot anything if in TSOP recovery.
-    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_XT_TSOP) {
-        iconPtr = (ICON *)malloc(sizeof(ICON));
-        iconPtr->iconSlot = ICON_SOURCE_SLOT5;
-        iconPtr->szCaption = "Boot 512KB bank";
-        iconPtr->bankID = BNK512;
-        iconPtr->functionPtr = assertBankScriptExecBankBoot;
-        iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
-            *(unsigned char*)iconPtr->functionDataPtr = BNK512;
-            iconPtr->dataPtrAlloc = true;
-        AddIcon(iconPtr);
-
-        iconPtr = (ICON *)malloc(sizeof(ICON));
-        iconPtr->iconSlot = ICON_SOURCE_SLOT4;
-        iconPtr->szCaption = "Boot 256KB bank";
-        iconPtr->bankID = BNK256;
-        iconPtr->functionPtr = assertBankScriptExecBankBoot;
-        iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
-            *(unsigned char*)iconPtr->functionDataPtr = BNK256;
-            iconPtr->dataPtrAlloc = true;
-        AddIcon(iconPtr);
-    }
-    if(!LPCmodSettings.OSsettings.TSOPhide){
-        if(((fHasHardware == SYSCON_ID_V1) || (fHasHardware == SYSCON_ID_V1_TSOP)) &&
-            LPCmodSettings.OSsettings.TSOPcontrol){
-                iconPtr = (ICON *)malloc(sizeof(ICON));
-                iconPtr->iconSlot = ICON_SOURCE_SLOT3;
-                iconPtr->szCaption = "Boot OnBoard Bank0";
-                iconPtr->bankID = BNKTSOPSPLIT0;
-                iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
-                iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
-                        *(unsigned char*)iconPtr->functionDataPtr = BNKTSOPSPLIT0;
-                        iconPtr->dataPtrAlloc = true;
-                AddIcon(iconPtr);
-
-                iconPtr = (ICON *)malloc(sizeof(ICON));
-                iconPtr->iconSlot = ICON_SOURCE_SLOT3;
-                iconPtr->szCaption = "Boot OnBoard Bank1";
-                iconPtr->bankID = BNKTSOPSPLIT1;
-                iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
-                iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
-                        *(unsigned char*)iconPtr->functionDataPtr = BNKTSOPSPLIT1;
-                        iconPtr->dataPtrAlloc = true;
-                AddIcon(iconPtr);
-        }
-        else {                                        //No split.
-            iconPtr = (ICON *)malloc(sizeof(ICON));
-            iconPtr->iconSlot = ICON_SOURCE_SLOT3;
-            iconPtr->szCaption = "Boot OnBoard BIOS";
-            iconPtr->bankID = BNKFULLTSOP;
-            iconPtr->functionPtr = assertBankScriptExecTSOPBoot;
-            iconPtr->functionDataPtr = malloc(sizeof(unsigned char));
-                    *(unsigned char*)iconPtr->functionDataPtr = BNKFULLTSOP;
-                    iconPtr->dataPtrAlloc = true;
-            AddIcon(iconPtr);
-        }
-    }
+    advancedMenuIcon = (ICON *)malloc(sizeof(ICON));
+    advancedMenuIcon->iconSlot = ICON_SOURCE_SLOT2;
+    advancedMenuIcon->szCaption = "Settings";
+    advancedMenuIcon->bankID = NOBNKID;
+    advancedMenuIcon->functionPtr = AdvancedMenu;
+    advancedMenuIcon->functionDataPtr = TextMenuInit();
+    advancedMenuIcon->dataPtrAlloc = false;
 }
 
-#ifdef ADVANCED_MENU
-    iconPtr = (ICON *)malloc(sizeof(ICON));
-    iconPtr->iconSlot = ICON_SOURCE_SLOT2;
-    iconPtr->szCaption = "Settings";
-    iconPtr->bankID = NOBNKID;
-    iconPtr->functionPtr = AdvancedMenu;
-    iconPtr->functionDataPtr = (void *)TextMenuInit();
-    iconPtr->dataPtrAlloc = false;
-    AddIcon(iconPtr);
-#endif
-/*
-#ifdef ETHERBOOT
-    //Etherboot icon - if it's compiled in, it's always available.
-    iconPtr = (ICON *)malloc(sizeof(ICON));
-    iconPtr->iconSlot = ICON_SOURCE_SLOT3;
-    iconPtr->szCaption = "Etherboot";
-    iconPtr->functionPtr = BootFromEtherboot;
-    AddIcon(iconPtr);
-#endif    
-*/
-    //Set this to point to the icon you want to be selected by default.
-    //Otherwise, leave it alone, and the first icon will be selected.
-    //selectedIcon = iconPtr;
-}
-/*
-void InitFatXIcons(void) {
-    ICON *iconPtr=NULL;
-    unsigned char ba[512];
-    int driveId=0;
-    
-    if (tsaHarddiskInfo[driveId].m_fDriveExists && !tsaHarddiskInfo[driveId].m_fAtapi) {
-        memset(ba,0x00,512);
-        BootIdeReadSector(driveId, ba, 3, 0, 512);
-        if (!strncmp("BRFR",ba,4)) {
-            //Got a FATX formatted HDD
-            CONFIGENTRY *entry = (CONFIGENTRY*)LoadConfigFatX();
-            if (entry !=NULL) {
-                //There is a config file present.
-                iconPtr = (ICON *)malloc(sizeof(ICON));
-               iconPtr->iconSlot = ICON_SOURCE_SLOT4;
-                iconPtr->szCaption="   FatX";
-                iconPtr->functionPtr = DrawBootMenu;
-                iconPtr->functionDataPtr = (void *)entry;
-                AddIcon(iconPtr);
-                //If we have fatx, mark it as default.
-                //If there are natives, they'll get priority shortly
-                selectedIcon = iconPtr;
-            }
-        }
-    }
-}
-
-void InitWebBootIcons(void) {
-    ICON *iconPtr=NULL;
-    iconPtr = (ICON *)malloc(sizeof(ICON));
-      iconPtr->iconSlot = ICON_SOURCE_SLOT3;
-    iconPtr->szCaption = "Web Boot";
-    iconPtr->functionPtr = AdvancedMenu;
-    iconPtr->functionDataPtr = (void *)IPMenuInit();
-    AddIcon(iconPtr);
-}
-
-void InitNetBootIcons(void) {
-    ICON *iconPtr=NULL;
-    iconPtr = (ICON *)malloc(sizeof(ICON));
-      iconPtr->iconSlot = ICON_SOURCE_SLOT3;
-    iconPtr->szCaption = "Net Boot";
-    iconPtr->functionPtr = BootFromNet;
-    iconPtr->functionDataPtr = NULL;
-    AddIcon(iconPtr);
-}
-
-
-void InitNativeIcons(void) {
-    ICON *iconPtr=NULL;
-    unsigned char ba[512];
-    int driveId;    
-
-    for (driveId=0; driveId<2; driveId++) {
-        if (tsaHarddiskInfo[driveId].m_fDriveExists && !tsaHarddiskInfo[driveId].m_fAtapi) {
-            volatile unsigned char *pb;
-            int n=0, nPos=0;
-            
-            memset(ba,0x00,512);
-            BootIdeReadSector(driveId, ba, 0, 0, 512);
-                    
-            //See if there is an MBR - no MBR means no native boot options.
-            if( !(ba[0x1fe]==0x55) || !(ba[0x1ff]==0xaa)) return;
-    
-            pb=&ba[0x1be];
-            //Check the primary partitions
-            for (n=0; n<4; n++,pb+=16) {
-                if(pb[0]&0x80) {
-                    //Bootable flag IS set on this partition.
-                    CONFIGENTRY *entry = (CONFIGENTRY*)LoadConfigNative(driveId, n);
-                    if (entry!=NULL) {
-                        //There is a valid config file here.
-                        //Add an icon for this partition 
-                        iconPtr = (ICON *)malloc(sizeof(ICON));
-                          iconPtr->iconSlot = ICON_SOURCE_SLOT1;
-                        iconPtr->szCaption="  Native";
-                        iconPtr->functionPtr = DrawBootMenu;
-                        iconPtr->functionDataPtr = (void *)entry;
-                          AddIcon(iconPtr);
-                        selectedIcon = iconPtr;
-                    }
-                }
-            }
-        }
-    }
-}
-*/

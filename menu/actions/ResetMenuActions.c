@@ -8,26 +8,35 @@
  ***************************************************************************/
 #include "ResetMenuActions.h"
 #include "BootEEPROM.h"
-#include "BootFlash.h"
+#include "FlashUi.h"
 #include "boot.h"
 #include "i2c.h"
 
-void SlowReboot(void *ignored){
-    assertWriteEEPROM();
-    BootFlashSaveOSSettings();
-    BootStopUSB();
-    I2CRebootSlow();
+void SlowReboot(void *ignored)
+{
+    if(SaveXBlastOSSettings())
+    {
+        assertWriteEEPROM();
+        BootStopUSB();
+        I2CRebootSlow();
+    }
 }
 
-void QuickReboot(void *ignored){
-    assertWriteEEPROM();
-    BootFlashSaveOSSettings();
-    BootStopUSB();
-    I2CRebootQuick();
+void QuickReboot(void *ignored)
+{
+    if(SaveXBlastOSSettings())
+    {
+        assertWriteEEPROM();
+        BootStopUSB();
+        I2CRebootQuick();
+    }
 }
 
-void PowerOff(void *ignored) {
-    assertWriteEEPROM();
-    BootFlashSaveOSSettings();
-    I2CPowerOff();
+void PowerOff(void *ignored)
+{
+    if(SaveXBlastOSSettings())
+    {
+        assertWriteEEPROM();
+        I2CPowerOff();
+    }
 }

@@ -12,7 +12,12 @@
 extern void printTextSPI(const char * functionName, char * buffer, ...);
 #define debugSPIPrint(...) printTextSPI(__func__, ##__VA_ARGS__)
 #else
+#ifdef __FLASH_SIMULATOR__
+#include <stdio.h>
+#define debugSPIPrint(...) printf(__VA_ARGS__)
+#else
 #define debugSPIPrint(...)
+#endif
 #endif
 
 #ifdef SPI_INT_TRACE

@@ -10,8 +10,10 @@
 
 #include "xblastSettingsDefs.h"
 
-void initialLPCModOSBoot(_LPCmodSettings *LPCmodSettings);
+void populateSettingsStructWithDefault(_LPCmodSettings *LPCmodSettings);
 
 void LPCMod_LCDBankString(char * string, unsigned char bankID);
+
+const char* getSpecialSettingString(unsigned char SpecialSettingindex, unsigned char value);
 
 #endif /* XBLASTSETTINGS_H_ */

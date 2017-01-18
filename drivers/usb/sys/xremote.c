@@ -130,9 +130,9 @@ void XRemoteInit(void)
 {
 
     current_remote_key=0;
-    usbprintk("XRemote probe %p ",xremote_probe);
+    usbprintk("XRemote probe %p\n",xremote_probe);
     if (usb_register(&xremote_driver) < 0) {
-        err("Unable to register XRemote driver");
+        err("Unable to register XRemote driver\n");
         return;
     }       
 }

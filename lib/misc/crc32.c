@@ -60,6 +60,8 @@
 /*     hardware you could probably optimize the shift in assembler by  */
 /*     using byte-swap instructions.                                   */
 
+#include "crc32.h"
+
 unsigned int UPDC32(unsigned char octet, unsigned int crc);
 
 static unsigned int table[256] = { /* CRC polynomial 0xedb88320 */

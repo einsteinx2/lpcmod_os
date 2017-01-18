@@ -14,43 +14,44 @@
 #include "string.h"
 #include "lib/LPCMod/xblastDebug.h"
 
-char bypassConfirmDialog[100];        //Arbitrary length
+#define ComparebufSize 100
+char bypassConfirmDialog[ComparebufSize];        //Arbitrary length
 
-bool ConfirmDialog(char * string, bool critical) {
-
+bool ConfirmDialog(char * string, bool critical)
+{
+    unsigned int yPos = 120;
+    unsigned int stringLength = strlen(string);
     bool result = true;         //True = cancel.
         
-    if(!strncmp(string, bypassConfirmDialog, strlen(string)) && !critical) 
+    stringLength = stringLength > ComparebufSize ? ComparebufSize : stringLength;
+    if(strncmp(string, bypassConfirmDialog, stringLength) == false && critical == false)
+    {
         return false;
+    }
 
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    VIDEO_CURSOR_POSX=75;
-    VIDEO_CURSOR_POSY=100;
     VIDEO_ATTR=0xffff1515;                        //Red characters.
-    printk("\n\2%s\2\n", string);
+    yPos = centerScreenPrintk(yPos, "\2%s\n", string);
     VIDEO_ATTR=0xffffff;                //Back to white
-    printk("\n\n\n\1                                  Hold RT, LT, Start and White to confirm\n");
-    printk("\1                                               Press Back to cancel");    
+    yPos = centerScreenPrintk(yPos, "Hold RT, LT, Start and White to confirm\n");
+    centerScreenPrintk(yPos, "Press Back to cancel");
     
-    while(!risefall_xpad_STATE(XPAD_STATE_BACK)){
+    while(risefall_xpad_STATE(XPAD_STATE_BACK) == false)
+    {
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
            risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
-           risefall_xpad_STATE(XPAD_STATE_START) /*&&
-           risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_WHITE)*/
-           && XPAD_current[0].keys[5])
-        {        //white button
-        	debugSPIPrint("All correct buttons pressed. Accepting.");
-           sprintf(bypassConfirmDialog,"%s", string);
-           result = false;
-           break;
+           risefall_xpad_STATE(XPAD_STATE_START)
+           && XPAD_current[0].keys[5]) //white button
+        {
+            debugSPIPrint("All correct buttons pressed. Accepting.\n");
+            strncpy(bypassConfirmDialog, string, stringLength);
+            result = false;
+            break;
         }
            
     
     }
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    VIDEO_CURSOR_POSX=0;
-    VIDEO_CURSOR_POSY=0;
-    debugSPIPrint("result value : %s", result? "true" : "false");
     
     return result;
 }

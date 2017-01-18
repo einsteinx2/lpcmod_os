@@ -34,8 +34,15 @@ typedef struct ICON {
 } ICON;
 
 
-extern ICON *selectedIcon;
-extern ICON *firstIcon;
+ICON* firstIcon;
+ICON* selectedIcon;
+
+ICON* icon512BankIcon;
+ICON* icon256BankIcon;
+ICON* iconFullTSOPBankIcon;
+ICON* iconSplitTSOPBank0Icon;
+ICON* iconSplitTSOPBank1Icon;
+ICON* advancedMenuIcon;
 
 //If this is set, the menu item was chosen automatically, due to timeout
 extern int timedOut;
@@ -45,8 +52,5 @@ void AddIcon(ICON *newIcon);
 
 //This draws and handles input for the main menu
 bool IconMenu(void);
-
-void freeIconMenuAllocMem(void);
-void repositionIconPtrs(void);
 
 #endif

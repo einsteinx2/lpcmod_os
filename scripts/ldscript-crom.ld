@@ -6,14 +6,13 @@ OUTPUT_FORMAT ("elf32-i386");
 OUTPUT_ARCH(i386);
 MEMORY
 {
-	ram (rwx) : ORIGIN = 0, LENGTH = 64M
-	rom (rx)  : ORIGIN = 0x03A00000, LENGTH = 2M
+	ram (rwx) : ORIGIN = 0, LENGTH = 60M
+	rom (rx)  : ORIGIN = 0x03800000, LENGTH = 4M
 }
 
 /* this should be changed depending the actual size of the rom */
-ROM_SIZE = 256K;
-LOW_ROM = 0x03A00000; /* 58MB */
-
+LOW_ROM = 0x03800000; /* 56MB */
+FRAMBUFFER = 0x03C00000; /* 60MB */
 
 SECTIONS {
 
@@ -64,6 +63,7 @@ SECTIONS {
 		*(COMMON)
 		_ebss = . ;
 		_heap = . ;
+		ASSERT (_heap < 0x300000, "ROM placement does not fit in section.");
 	}
 	
 	/DISCARD/ : { *(.eh_frame) }

@@ -10,66 +10,120 @@
 
 #include "xblastSettingsChangeTracker.h"
 #include "xblastSettingsImportExport.h"
-#include "xblastSettingsDefs.h"
+#include "xblastSettings.h"
 #include "xblast/scriptEngine/xblastScriptEngine.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include "string.h"
 #include "stdlib.h"
 #include <stddef.h>
 
-typedef struct _singleChangeEntry{
-    void *origPtr;
-    void *modifiedOtr;
-    unsigned char itemVariableSize;
-    short arraySize;    //0 for no array
-    bool isEEPROM;
-    bool isBootScript;
-    bool isString;
-    char *displayString;
-    struct _singleChangeEntry *nextChange;
-}_singleChangeEntry;
+static void putNewChangeInList(OSSettingsChangeList* list, OSSettingsChangeEntry_t* change);
 
-typedef struct {
-    unsigned short nbChanges;
-    _singleChangeEntry *firstChangeEntry;
-}_completeChangeList;
+void settingsTrackerInit(void)
+{
+    osSettingsChangeList.changeCount = 0;
+    osSettingsChangeList.firstChangeEntry = NULL;
+}
 
-static _completeChangeList changeList;
-
-unsigned char LPCMod_CountNumberOfChangesInSettings(void)
+unsigned char LPCMod_CountNumberOfChangesInSettings(bool generateChangeStruct, OSSettingsChangeList* output)
 {
     int numberOfChanges = 0;
+    OSSettingsChangeEntry_t* currentChangeEntry;
+    output->changeCount = 0;
 
     unsigned char i, j;
     _settingsPtrStruct originalSettingsPtrStruct;
     setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
 
-    for(i = 0; i < NBTXTPARAMS; i++){
-        if(i < IPTEXTPARAMGROUP){
+    for(i = 0; i < NBTXTPARAMS; i++)
+    {
+        currentChangeEntry = NULL;
+        if(i < IPTEXTPARAMGROUP)
+        {
             if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i])
+            {
+                if(generateChangeStruct)
+                {
+                    currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
+                    currentChangeEntry->label = xblastcfgstrings[i];
+                    sprintf(currentChangeEntry->changeString, "%u -> %u", *originalSettingsPtrStruct.settingsPtrArray[i], *settingsPtrStruct.settingsPtrArray[i]);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.settingsPtrArray[i];
+                    currentChangeEntry->newSetting = settingsPtrStruct.settingsPtrArray[i];
+                    currentChangeEntry->settingSize = 1;
+                }
                 numberOfChanges += 1;
+            }
         }
-        else if(i < TEXTPARAMGROUP){
-            for(j = 0; j < 4; j++){
-                if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j]){
+        else if(i < TEXTPARAMGROUP)
+        {
+            for(j = 0; j < 4; j++)
+            {
+                if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j])
+                {
+                    if(generateChangeStruct)
+                    {
+                        currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
+                        currentChangeEntry->label = xblastcfgstrings[i];
+                        sprintf(currentChangeEntry->changeString, "\"%u.%u.%u.%u\" -> \"%u.%u.%u.%u\"",
+                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
+                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
+                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
+                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3],
+                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
+                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
+                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
+                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3]);
+                        currentChangeEntry->origSettings = originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP];
+                        currentChangeEntry->newSetting = settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP];
+                        currentChangeEntry->settingSize = 4;
+                    }
                     numberOfChanges += 1;
                     break;
                 }
             }
         }
-        else if(i < SPECIALPARAMGROUP){
-            if(strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]))
+        else if(i < SPECIALPARAMGROUP)
+        {
+            unsigned char origLength = strlen(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
+            unsigned char newLength = strlen(settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
+            if(origLength != newLength ||
+               strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]))
+            {
+                if(generateChangeStruct)
+                {
+                    currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
+                    currentChangeEntry->label = xblastcfgstrings[i];
+                    sprintf(currentChangeEntry->changeString, "\"%s\" -> \"%s\"", originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP];
+                    currentChangeEntry->newSetting = settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP];
+                    currentChangeEntry->settingSize = origLength > newLength ? origLength : newLength;
+                }
                 numberOfChanges += 1;
+            }
         }
-        else{
+        else
+        {
             if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP])
+            {
+                if(generateChangeStruct)
+                {
+                    currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
+                    currentChangeEntry->label = xblastcfgstrings[i];
+                    const char* origString = getSpecialSettingString(i - SPECIALPARAMGROUP, *originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
+                    const char* newString = getSpecialSettingString(i - SPECIALPARAMGROUP, *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
+                    sprintf(currentChangeEntry->changeString, "\"%s\" -> \"%s\"", origString, newString);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP];
+                    currentChangeEntry->newSetting = settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP];
+                    currentChangeEntry->settingSize = 1;
+                }
                 numberOfChanges += 1;
+            }
         }
-    }
 
-    numberOfChanges += generateStringsForEEPROMChanges(false); //do not generate strings
-
-    if(LPCMod_checkForBootScriptChanges()){
-        numberOfChanges += 1;
+        if(currentChangeEntry != NULL)
+        {
+            putNewChangeInList(output, currentChangeEntry);
+        }
     }
 
     return numberOfChanges;
@@ -78,24 +132,17 @@ unsigned char LPCMod_CountNumberOfChangesInSettings(void)
 
 bool LPCMod_checkForBootScriptChanges(void){
     unsigned int oldBufferSize, modifiedBufferSize;
-    if(scriptSavingPtr == NULL){
-        return false;   //No new script to save. Therefore no changes.
-    }
-
-    if(bootScriptBuffer == NULL){
-        return true;    //If there's a new script to save but nothing is already saved in flash. Change detected.
-    }
 
     //If there's both a new script to save and a script already saved in flash. Check if they are different.
-    modifiedBufferSize = LPCmodSettings.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
-    oldBufferSize = LPCmodSettingsOrigFromFlash.firstScript.nextEntryPosition - sizeof(_LPCmodSettings) - 1;
+    modifiedBufferSize = LPCmodSettings.flashScript.scriptSize;
+    oldBufferSize = LPCmodSettingsOrigFromFlash.flashScript.scriptSize;
 
     if(modifiedBufferSize != oldBufferSize){    //Scripts size differ.
         return true;
     }
 
     //If above condition is false, it means both script have the same size
-    if(memcmp(scriptSavingPtr, bootScriptBuffer, oldBufferSize)){
+    if(memcmp(LPCmodSettings.flashScript.scriptData, LPCmodSettingsOrigFromFlash.flashScript.scriptData, ScriptSavedInFlashMaxSizeInBytes)){
         return true;
     }
 
@@ -103,26 +150,40 @@ bool LPCMod_checkForBootScriptChanges(void){
     return false;
 }
 
-void cleanChangeListStruct(void){
-    unsigned short i;
-    _singleChangeEntry *tempEntryPtr;
+void cleanOSSettingsChangeListStruct(OSSettingsChangeList* input)
+{
+    OSSettingsChangeEntry_t* nextEntry;
+    OSSettingsChangeEntry_t* curEntry = input->firstChangeEntry;
 
-    for(i = 0; i < changeList.nbChanges; i++){
-        if(changeList.firstChangeEntry == NULL)
-            break;
-
-        if(changeList.firstChangeEntry->nextChange != NULL)
-            tempEntryPtr = changeList.firstChangeEntry->nextChange;
-        else
-            tempEntryPtr = NULL;
-
-        if(changeList.firstChangeEntry->displayString != NULL)
-            free(changeList.firstChangeEntry->displayString);
-        free(changeList.firstChangeEntry);
-        changeList.firstChangeEntry = tempEntryPtr;
+    while(curEntry != NULL)
+    {
+        nextEntry = curEntry->nextChange;
+        free(curEntry);
+        curEntry = nextEntry;
     }
 
-    changeList.nbChanges = 0;
+    input->changeCount = 0;
+    input->firstChangeEntry = NULL;
+}
+
+static void putNewChangeInList(OSSettingsChangeList* list, OSSettingsChangeEntry_t* change)
+{
+    OSSettingsChangeEntry_t* cycler = list->firstChangeEntry;
+
+    if(list->firstChangeEntry == NULL)
+    {
+        list->firstChangeEntry = change;
+        list->changeCount = 1;
+        return;
+    }
+
+    while(cycler->nextChange != NULL)
+    {
+        cycler = cycler->nextChange;
+    }
+
+    list->changeCount += 1;
+    cycler->nextChange = change;
 }
 
 #endif /* XBLASTSETTINGSCHANGETRACKER_C_ */

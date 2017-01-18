@@ -10,31 +10,34 @@
 #include "ToolsMenuActions.h"
 #include "BootFATX.h"
 #include "lpcmod_v1.h"
-#include "BootHddKey.h"
-#include "rc4.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include "MenuActions.h"
 #include "string.h"
 #include "boot.h"
 #include "menu/misc/OnScreenKeyboard.h"
 #include "menu/misc/ConfirmDialog.h"
+#include "xblast/HardwareIdentifier.h"
 
-void displayEditEEPROMBuffer(void *ignored){
+void displayEditEEPROMBuffer(void *ignored)
+{
     int i;
-    unsigned char decryptedConfounder[8];
-    unsigned char decryptedGameRegion[4];
     unsigned char decryptedWholeBuffer[0x30];
     unsigned char version;
     char serialString[13];
 
     version = decryptEEPROMData((unsigned char *)editeeprom, decryptedWholeBuffer);
-    ToolHeader("Modified EEPROM buffer content");
+    UiHeader("Modified EEPROM buffer content");
+
     printk("\n\n           EEPROM version: %u", version);
-    if(version < V1_0 || version > V1_6){
+    if(version < EEPROM_EncryptV1_0 || version > EEPROM_EncryptV1_6)
+    {
         printk(" (corrupted!)");
     }
+
     printk("\n           Decrypted Confounder:");
-    for(i = 0; i < 8; i++){
+    for(i = 0; i < 8; i++)
+    {
         printk(" %02X", decryptedWholeBuffer[20+i]);
     }
 /*
@@ -44,81 +47,79 @@ void displayEditEEPROMBuffer(void *ignored){
     }
 */
     printk("\n           Decrypted HDDKey:");
-    for(i = 0; i < 16; i++){
+    for(i = 0; i < 16; i++)
+    {
         printk(" %02X", decryptedWholeBuffer[28+i]);
     }
+
     printk("\n           Decrypted GameRegion:");
     for(i = 0; i < 4; i++){
         printk(" %02X", decryptedWholeBuffer[44+i]);
     }
-    printk(" (%s)", Gameregiontext[(decryptedWholeBuffer[44] <= 4)? decryptedWholeBuffer[44] : 0]);  //Hopefully, everything we need is in first byte.
+
+    printk(" (%s)", getGameRegionText((decryptedWholeBuffer[44] <= 4)? decryptedWholeBuffer[44] : EEPROM_XBERegionInvalid));  //Hopefully, everything we need is in first byte.
+
     printk("\n           MAC address: %02X:%02X:%02X:%02X:%02X:%02X",
     editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
     editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
+
     memcpy(serialString, editeeprom->SerialNumber, 12);
     serialString[12]='\0';
     printk("\n           Serial Number: %s", serialString);
+
     printk("\n           Online Key:");
-    for(i = 0; i < 16; i++){
+    for(i = 0; i < 16; i++)
+    {
         printk(" %02X", editeeprom->OnlineKey[i]);
     }
+
     UIFooter();
 }
 
 
-void LastResortRecovery(void *ignored){
-//Generic 1.0 revision eeprom image. Thanks bunnie!
-    const unsigned char EEPROMimg[] = {
-        0x47, 0x83, 0xa2, 0x7d, 0x6a, 0x69, 0x10, 0x8b, 0x2d, 0xb2, 0xe8, 0x90, 0xe1, 0x60, 0xde, 0xed,
-        0x02, 0xc2, 0xaa, 0x79, 0x21, 0x47, 0xcd, 0xb0, 0xb7, 0xa8, 0x7a, 0x77, 0x44, 0x9c, 0x5e, 0x6e,
-        0xd0, 0xf5, 0xf9, 0xe6, 0x94, 0x68, 0x39, 0xe0, 0xca, 0xa5, 0xd2, 0xe5, 0xfa, 0x02, 0xb9, 0xb7,
-        0x9d, 0x19, 0xe6, 0xed, 0x36, 0x30, 0x35, 0x33, 0x37, 0x39, 0x35, 0x32, 0x31, 0x39, 0x30, 0x32,
-        0x00, 0x50, 0xf2, 0x41, 0x9e, 0x5f, 0x00, 0x00, 0x2d, 0xaa, 0x6c, 0x23, 0x99, 0x80, 0x11, 0x47,
-        0x33, 0xc3, 0xc7, 0x1a, 0x2b, 0xa5, 0x06, 0xb3, 0x00, 0x01, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x75, 0x61, 0x57, 0xfb, 0x2c, 0x01, 0x00, 0x00, 0x45, 0x53, 0x54, 0x00, 0x45, 0x44, 0x54, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0a, 0x05, 0x00, 0x02, 0x04, 0x01, 0x00, 0x02,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc4, 0xff, 0xff, 0xff,
-        0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-    };
-
-    if(ConfirmDialog("     Overwrite EEPROM with generic image?", 1))       //First generic warning
+void LastResortRecovery(void *ignored)
+{
+    if(ConfirmDialog("Overwrite EEPROM with generic image?", 1))       //First generic warning
+    {
         return;
+    }
 
-    memcpy(editeeprom, EEPROMimg, sizeof(EEPROMDATA));
+    const EEPROMDATA* data = getRecoveryImage();
+
+    updateEEPROMEditBufferFromInputBuffer((unsigned char *)data, sizeof(EEPROMDATA), true);
 }
 
-void bruteForceFixDisplayresult(void *ignored){
+void bruteForceFixDisplayresult(void *ignored)
+{
     unsigned char eepromVersion;
-    char unused[20];
-    ToolHeader("Brute Force Fix EEPROM");
-    eepromVersion = BootHddKeyGenerateEepromKeyData((unsigned char *)editeeprom,unused);
 
-    if(eepromVersion < V1_0 && eepromVersion > V1_6){
-        if(bruteForceFixEEprom()){
+    UiHeader("Brute Force Fix EEPROM");
+    eepromVersion = decryptEEPROMData((unsigned char *)editeeprom, NULL);
+
+    if(eepromVersion < EEPROM_EncryptV1_0 && eepromVersion > EEPROM_EncryptV1_6)
+    {
+        if(bruteForceFixEEprom())
+        {
             //success
             printk("\n\n           Successfully fixed!\n\n\n");
         }
-        else{
+        else
+        {
             printk("\n\n           EEPROM could be fixed...\n           Use \"Last resort recovery\" feature or try something else.\n\n\n");
         }
     }
-    else{
+    else
+    {
         printk("\n\n           Brute force fix not useful here.\n           Aborting.\n\n\n");
     }
     UIFooter();
 }
 
-bool bruteForceFixEEprom(void){
+bool bruteForceFixEEprom(void)
+{
     unsigned char ver, bytepos;
     int bytecombinations;
     unsigned char *teeprom;
-    char unused[20];
     teeprom = malloc(sizeof(EEPROMDATA));
 
     //Fix attempt to sucessfully decrypt 48 first bytes of EEPROM by
@@ -127,12 +128,15 @@ bool bruteForceFixEEprom(void){
     //positive result, next byte in buffer is given the same treatment.
     //So, effectively, this technique can only recover a corrupt
     //EEPROM with only a single corrupt byte in it's first 48 bytes.
-    for (bytepos=0;bytepos<0x30;bytepos++) {
-        for (bytecombinations=0;bytecombinations<0x100;bytecombinations++) {
+    for (bytepos=0;bytepos<0x30;bytepos++)
+    {
+        for (bytecombinations=0;bytecombinations<0x100;bytecombinations++)
+        {
             memcpy(teeprom,editeeprom,sizeof(EEPROMDATA));
             teeprom[bytepos]=bytecombinations;
-            ver = BootHddKeyGenerateEepromKeyData(teeprom,unused);
-            if (ver!=13) {
+            ver = decryptEEPROMData(teeprom,NULL);
+            if(ver >= EEPROM_EncryptV1_0 && ver <= EEPROM_EncryptV1_6)
+            {
                 memcpy(editeeprom,teeprom,sizeof(EEPROMDATA));
                 free(teeprom);
                 return true;
@@ -144,28 +148,38 @@ bool bruteForceFixEEprom(void){
     return false;      // No Match found
 }
 
-void confirmSaveToEEPROMChip(void *ignored){
-    if(replaceEEPROMContentFromBuffer(editeeprom)){
-        ToolHeader("Operation aborted");
+void confirmSaveToEEPROMChip(void *ignored)
+{
+    if(replaceEEPROMContentFromBuffer(editeeprom))
+    {
+        UiHeader("Operation aborted");
         printk("\n           Invalid EEPROM image data.");
         printk("\n           Data not saved!");
         UIFooter();
     }
 }
 
-void editMACAddress(void *ignored){
+void editMACAddress(void *ignored)
+{
     unsigned char i, j;
     char macString[13];
     unsigned char nibble[2];
+
     sprintf(macString, "%02X%02X%02X%02X%02X%02X",
     editeeprom->MACAddress[0], editeeprom->MACAddress[1], editeeprom->MACAddress[2],
     editeeprom->MACAddress[3], editeeprom->MACAddress[4], editeeprom->MACAddress[5]);
+
     OnScreenKeyboard(macString, 13, 3, HEX_KEYPAD); //Function will add terminating character.
-    if(strlen(macString) == 12){
-        for(i = 0; i < 6; i++){
-            for(j = 0; j < 2; j++){
+
+    if(strlen(macString) == 12)
+    {
+        for(i = 0; i < 6; i++)
+        {
+            for(j = 0; j < 2; j++)
+            {
                 //Dumdum way of converting string of hex into actual hex.
-                switch(macString[i*2 + j]){
+                switch(macString[i*2 + j])
+                {
                     case '0':
                         nibble[j] = 0;
                         break;
@@ -221,7 +235,8 @@ void editMACAddress(void *ignored){
     }
 }
 
-void restoreEEPROMFromFile(void *fname) {
+void restoreEEPROMFromFile(void *fname)
+{
     int res;
     FATXFILEINFO fileinfo;
     FATXPartition *partition;
@@ -229,12 +244,14 @@ void restoreEEPROMFromFile(void *fname) {
     partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
 
     res = LoadFATXFile(partition, fname, &fileinfo);
-    ToolHeader("Load EEPROM image from HDD");
-    if(res){
+    UiHeader("Load EEPROM image from HDD");
+    if(res)
+    {
         updateEEPROMEditBufferFromInputBuffer(fileinfo.buffer, fileinfo.fileSize, true);
         free(fileinfo.buffer);
     }
-    else{
+    else
+    {
             printk("\n\n           Error!\n           File read error.");
     }
     UIFooter();
@@ -242,75 +259,105 @@ void restoreEEPROMFromFile(void *fname) {
 
 int updateEEPROMEditBufferFromInputBuffer(unsigned char *buffer, unsigned int size, bool verbose)
 {
-    int res = 0, version;
+    int res = 0;
+    EEPROM_EncryptVersion newVersion, hostVersion;
     unsigned char decryptedData[0x30];
-    unsigned char tempBuffer[256];
-    unsigned char confirmHash[20];
-    unsigned char baKeyHash[20];
-    struct rc4_key RC4_key;
-    
-    memcpy(tempBuffer, buffer, size);
+    EEPROMDATA result;
 
-    if(size != 256){
+    if(buffer == NULL)
+    {
+        res = -4;
+    }
+    else if(size != sizeof(EEPROMDATA))
+    {
         res = -3;
     }
-    else{
-        memset(decryptedData, 0, 0x30);
-        version = decryptEEPROMData(tempBuffer, decryptedData);
-        if(version >= V1_0 && version <= V1_6){   //Current content in eeprom is valid.
-        
+    else
+    {
+        newVersion = EepromSanityCheck((EEPROMDATA *)buffer);
+        debugSPIPrint("Input EEPROM image version : %u\n", newVersion);
+
+        if(newVersion >= EEPROM_EncryptV1_0 && newVersion <= EEPROM_EncryptV1_6)   //Current content in eeprom is valid.
+        {
+            memcpy(&result, buffer, sizeof(EEPROMDATA));
+            memset(decryptedData, 0, 0x30);
+            decryptEEPROMData((unsigned char *)&result, decryptedData);
+
             //Prepare to encrypt for the right motherboard version
-            if(mbVersion >= REV1_6)
-                version = V1_6;
-            else if(mbVersion >= REV1_1)
-                version = V1_1;
-            else
-                version = V1_0;
-                
-            memset(&RC4_key,0,sizeof(rc4_key));
-            memset(confirmHash, 0, 20);
-            memset(baKeyHash, 0, 20);
-            memcpy(tempBuffer, decryptedData, 0x30);
+            switch(getMotherboardRevision())
+            {
+            case XboxMotherboardRevision_DEBUGKIT:
+            case XboxMotherboardRevision_DEVKIT:
+            case XboxMotherboardRevision_1_0:
+                hostVersion = EEPROM_EncryptV1_0;
+                break;
+            case XboxMotherboardRevision_1_1:
+            case XboxMotherboardRevision_1_2:
+            case XboxMotherboardRevision_1_4:
+                hostVersion = EEPROM_EncryptV1_1;
+                break;
+            case XboxMotherboardRevision_1_6:
+                hostVersion = EEPROM_EncryptV1_6;
+                break;
+            case XboxMotherboardRevision_UNKNOWN:
+                hostVersion = EEPROM_EncryptInvalid;
+                res = -4;
+                goto endExec;
+                break;
+            }
 
-            // Calculate the Confirm-Hash
-            HMAC_hdd_calculation(version, confirmHash, &tempBuffer[20], 8, &tempBuffer[28], 20, NULL);
+            if(hostVersion != newVersion)
+            {
+                if(ConfirmDialog("EEPROM versions mismatch!\n\2Continue anyway?", true))
+                {
+                    res = -2;
+                    goto endExec;
+                }
+            }
 
-            memcpy(&tempBuffer[0],confirmHash,20);
-
-            // Calculate the Key-Hash
-            HMAC_hdd_calculation(version, baKeyHash, &tempBuffer[0], 20, NULL);
-
-            //initialize RC4 key
-            rc4_prepare_key(baKeyHash, 20, &RC4_key);
-
-            //decrypt data (from eeprom) with generated key
-            rc4_crypt(&tempBuffer[20],28,&RC4_key);
+            debugSPIPrint("Encrypt new image into version : %u\n", hostVersion);
+            encryptEEPROMData(decryptedData, &result, hostVersion);
 
             // Save back to EEprom
-            memcpy((unsigned char *)editeeprom, tempBuffer, sizeof(EEPROMDATA));
-            
+            memcpy((unsigned char *)editeeprom, &result, sizeof(EEPROMDATA));
+
             //Recalculate checksums to be nice.
             EepromCRC((unsigned char *)editeeprom->Checksum2,(unsigned char *)editeeprom->SerialNumber,0x28);
             EepromCRC((unsigned char *)editeeprom->Checksum3,(unsigned char *)editeeprom->TimeZoneBias,0x5b);
-            
-            res = 0;
-    
         }
-        else{       //Content of new EEPROM image is not valid.
+        else       //Content of new EEPROM image is not valid.
+        {
             res = -1;   //loaded EEPROM image is not valid
         }
     }
-    if(verbose){
-        if(res == 0){
+endExec:
+    if(verbose)
+    {
+        if(res == 0)
+        {
             printk("\n\n           Success!.\n           EEPROM image successfully loaded to modified EEPROM buffer.");
         }
-        else{
+        else
+        {
             printk("\n\n           Error!");
             if(res == -1)
+            {
                 printk("\n           Invalid EEPROM image file.");
+            }
+            else if(res == -2)
+            {
+                printk("\n           Aborted operation.");
+            }
             else if(res == -3)
+            {
                 printk ("\n          EEPROM image file size wrong.");
+            }
+            else
+            {
+                printk ("\n          Unknown EEPROM error.");
+            }
         }
     }
+
     return res;
 }

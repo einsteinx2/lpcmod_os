@@ -24,9 +24,9 @@
 #define S44 21
 
 
-static void MD5Transform (UINT4 state[4], unsigned char block[64]);
+static void MD5Transform (UINT4 state[4], const unsigned char block[64]);
 static void Encode (unsigned char *output, UINT4 *input, unsigned int len);
-static void Decode (UINT4 *output, unsigned char *input, unsigned int len);
+static void Decode (UINT4 *output, const unsigned char *input, unsigned int len);
 static void MD5_memcpy (POINTER output, POINTER input, unsigned int len);
 static void MD5_memset (POINTER output, int value, unsigned int len);
 
@@ -88,7 +88,7 @@ void MD5Init (MD5_CTX *context)
   operation, processing another message block, and updating the
   context.
  */
-void MD5Update (MD5_CTX *context, unsigned char *input, unsigned int inputLen)
+void MD5Update (MD5_CTX *context, const unsigned char *input, unsigned int inputLen)
 {
   unsigned int i, index, partLen;
 
@@ -154,7 +154,7 @@ void MD5Final (unsigned char digest[16], MD5_CTX *context)
 
 /* MD5 basic transformation. Transforms state based on block.
  */
-static void MD5Transform (UINT4 state[4], unsigned char block[64])
+static void MD5Transform (UINT4 state[4], const unsigned char block[64])
 {
   UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
@@ -260,7 +260,7 @@ static void Encode (unsigned char *output, UINT4 *input, unsigned int len)
 /* Decodes input (unsigned char) into output (UINT4). Assumes len is
   a multiple of 4.
  */
-static void Decode (UINT4 *output, unsigned char *input, unsigned int len)
+static void Decode (UINT4 *output, const unsigned char *input, unsigned int len)
 {
   unsigned int i, j;
 

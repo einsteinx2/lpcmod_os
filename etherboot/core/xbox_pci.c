@@ -206,7 +206,7 @@ void adjust_pci_device(struct pci_device *p)
 #if DEBUG > 0
 		dprintf((
 			"The PCI BIOS has not enabled this device!\n"
-			"Updating PCI command %hX->%hX. pci_bus %hhX pci_device_fn %hhX",
+			"Updating PCI command %hX->%hX. pci_bus %hhX pci_device_fn %hhX\n",
 			   pci_command, new_command, p->bus, p->devfn));
 #endif
 		pcibios_write_config_word(p->bus, p->devfn, PCI_COMMAND, new_command);
@@ -236,7 +236,7 @@ unsigned long pci_bar_start(struct pci_device *dev, unsigned int index)
 		if ((lo & PCI_BASE_ADDRESS_MEM_TYPE_MASK) == PCI_BASE_ADDRESS_MEM_TYPE_64) {
 			pci_read_config_dword(dev, index + 4, &hi);
 			if (hi) {
-				dprintf(("Unhandled 64bit BAR"));
+				dprintf(("Unhandled 64bit BAR\n"));
 				return -1UL;
 			}
 		}

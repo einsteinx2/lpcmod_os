@@ -1,3 +1,5 @@
+#include "../include/memory_layout.h"
+
 .code32
 
 .section .vmlinuz_start, "ax"
@@ -8,9 +10,9 @@
     xor    %edx, %edx          
     cld
     
-    mov     $0x03A00000, %edi        // Destiation
+    mov     $CODE_LOC_START, %edi        // Destiation
     mov     $0x00100100, %esi    // Source
-    mov     $0x200000, %ecx        // 2MB
+    mov     $0x400000, %ecx        // 4MB
     rep movsb
     wbinvd
 /*    
@@ -57,6 +59,6 @@
 */
     
     cld    
-    ljmp     $0x10, $0x03A00000                                            
+    ljmp     $0x10, $CODE_LOC_START
 
 .org 0x0100    // append crom image here

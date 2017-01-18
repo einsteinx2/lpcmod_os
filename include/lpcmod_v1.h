@@ -62,6 +62,16 @@
 #define BNKOS  0x87u
 
 
+typedef enum
+{
+    FlashBank_OSBank = BNKOS,
+    FlashBank_512Bank = BNK512,
+    FlashBank_256Bank = BNK256,
+    FlashBank_FullTSOPBank = BNKFULLTSOP,
+    FlashBank_SplitTSOP0Bank = BNKTSOPSPLIT0,
+    FlashBank_SplitTSOP1Bank = BNKTSOPSPLIT1,
+    FlashBank_NoBank = NOBNKID
+} FlashBank;
 
 #define LPCMOD_TRUE 0x01u
 #define LPCMOD_FALSE    0x00u
@@ -107,53 +117,17 @@
 
 #define SYSCON_ID_CHAM 0xAAu     //Xodus Chameleon ID at 0x00FE
 
+#define SYSCON_ID_UNKNOWN 0x00u
+#define SYSCON_ID_UNKNOWN_TSOP 0x1000u
+
 //Other modchips ID by flash type.
 #define FLASH_ID_XECUTER3       0x01ADu
 #define FLASH_ID_XECUTER2       0x01D5u
 #define FLASH_ID_XENIUM         0x01C4u
 
 
-#define HD44780        0x0u
-#define KS0073         0x1u
-
-/*
-#define ADR_ACTIVEBANK 0xFF010
-#define ADR_QUICKBOOT 0xFF011
-#define ADR_ACTIVEITEM 0xFF012
-#define ADR_FANSPEED 0xFF013
-#define ADR_BOOTTIMEOUT 0xFF014
-
-#define ADR_BIOSNAME0 0xFF023
-#define ADR_BIOSNAME1 0xFF037
-#define ADR_BIOSNAME2 0xFF04B
-#define ADR_BIOSNAME3 0xFF05F
-#define ADR_BIOSNAME4 0xFF073
-#define ADR_BIOSNAME5 0xFF087
-#define ADR_BIOSNAME6 0xFF09B
-#define ADR_BIOSNAME7 0xFF0AF
-#define ADR_BIOSNAME0 0xFF0C3
-
-#define ADR_ENABLENET 0xFF0ED
-#define ADR_USEDHCP 0xFF0EE
-#define ADR_IP 0xFF0EF
-#define ADR_GATEWAY 0xFF0F3
-#define ADR_DNS1 0xFF0F7
-#define ADR_DNS2 0xFF0FB
-
-#define ADR_EN5V 0xFF101
-#define ADR_LCDTYPE 0xFF102
-#define ADR_NBLINES 0xFF103
-#define ADR_LINELENGTH 0xFF104
-#define ADR_BACKLIGHT 0xFF105
-#define ADR_CONTRAST 0xFF106
-#define ADR_DISPMSGBOOT 0xFF107
-#define ADR_CUSTOMTEXT 0xFF108
-#define ADR_BIOSNAMEDISP 0xFF109
-#define ADR_LCDSTRING0 0xFF110
-#define ADR_LCDSTRING0 0xFF124
-#define ADR_LCDSTRING0 0xFF138
-#define ADR_LCDSTRING0 0xFF14C
-*/
+#define LCDTYPE_HD44780        0x0u
+#define LCDTYPE_KS0073         0x1u
 
 
 #endif

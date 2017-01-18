@@ -1,2 +1,2 @@
-O_TARGET := Confirm.o ConfirmDialog.o OnScreenKeyboard.o ProgressBar.o
+O_TARGET := ConfirmDialog.o OnScreenKeyboard.o ProgressBar.o #Confirm.o
 include $(TOPDIR)/Rules.make

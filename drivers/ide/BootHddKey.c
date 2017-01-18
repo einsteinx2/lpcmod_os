@@ -8,8 +8,6 @@
 #include "BootEEPROM.h"
 #include <stdarg.h>
 
-void HMAC_hdd_calculation(int version,unsigned char *HMAC_result, ... );
-
 int copy_swap_trim(unsigned char *dst, unsigned char *src, int len)
 {
     unsigned char tmp;

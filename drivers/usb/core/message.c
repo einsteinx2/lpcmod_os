@@ -71,7 +71,7 @@ static int usb_start_wait_urb(struct urb *urb, int timeout, int* actual_length)
                 urb->pipe, urb->status, timeout);
             status = urb->status;
         } else {
-            debugSPIPrint("usb_control/bulk_msg: timeout");
+            usbprintk("usb_control/bulk_msg: timeout\n");
             usb_unlink_urb(urb);  // remove urb safely
             status = -ETIMEDOUT;
         }
@@ -98,7 +98,7 @@ int usb_internal_control_msg(struct usb_device *usb_dev, unsigned int pipe,
     if (!urb)
         return -ENOMEM;
   
-    usb_fill_control_urb(urb, usb_dev, pipe, (unsigned char*)cmd, data, len,
+    usb_fill_control_urb(urb, usb_dev, pipe, (unsigned char *)cmd, data, len,
            usb_api_blocking_completion, 0);
 
     retv = usb_start_wait_urb(urb, timeout, &length);
@@ -150,7 +150,7 @@ int usb_control_msg(struct usb_device *dev, unsigned int pipe, __u8 request, __u
     dr->wIndex = cpu_to_le16p(&index);
     dr->wLength = cpu_to_le16p(&size);
 
-    //dbg("usb_control_msg");    
+    //dbg("usb_control_msg\n");
 
     ret = usb_internal_control_msg(dev, pipe, dr, data, size, timeout);
 
@@ -807,14 +807,14 @@ int usb_set_interface(struct usb_device *dev, int interface, int alternate)
 
     iface = usb_ifnum_to_if(dev, interface);
     if (!iface) {
-        debugSPIPrint("selecting invalid interface %d", interface);
+        usbprintk("selecting invalid interface %d\n", interface);
         return -EINVAL;
     }
 
     /* 9.4.10 says devices don't need this, if the interface
        only has one alternate setting */
     if (iface->num_altsetting == 1) {
-        dbg("ignoring set_interface for dev %d, iface %d, alt %d",
+        dbg("ignoring set_interface for dev %d, iface %d, alt %d\n",
             dev->devnum, interface, alternate);
         return 0;
     }
@@ -919,7 +919,7 @@ int usb_set_configuration(struct usb_device *dev, int configuration)
         }
     }
     if ((!cp && configuration != 0) || (cp && configuration == 0)) {
-        debugSPIPrint("selecting invalid configuration %d", configuration);
+        usbprintk("selecting invalid configuration %d\n", configuration);
         return -EINVAL;
     }
 
@@ -1000,7 +1000,7 @@ int usb_string(struct usb_device *dev, int index, char *buf, size_t size)
             dev->have_langid = -1;
             dev->string_langid = tbuf[2] | (tbuf[3]<< 8);
                 /* always use the first langid listed */
-            dbg("USB device number %d default language ID 0x%x",
+            dbg("USB device number %d default language ID 0x%x\n",
                 dev->devnum, dev->string_langid);
         }
     }

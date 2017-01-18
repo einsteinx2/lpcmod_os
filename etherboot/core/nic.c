@@ -96,15 +96,3 @@ void eth_disable(void)
 {
 	disable(&nic.dev);
 }
-
-/*
- * Find out what our boot parameters are
- */
-int eth_load_configuration(struct dev *dev __unused, unsigned char flashType)
-{
-	extern int run_lwip(unsigned char flashType);
-	debugSPIPrint("Starting network service");
-	while(run_lwip(flashType) == 0);
-	debugSPIPrint("Killing network service");
-	return 0;
-}

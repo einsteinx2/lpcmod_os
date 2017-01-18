@@ -13,70 +13,64 @@
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "xblast/settings/xblastSettingsDefs.h"
+#include "xblast/HardwareIdentifier.h"
 
-TEXTMENU *ToolsMenuInit(void) {
+TEXTMENU *ToolsMenuInit(void)
+{
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
     int i=0;
 
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0x00,sizeof(TEXTMENU));
+    menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Tools");
 
-    if(cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT) {
+    if(isXBE() == false || fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)
+    {
         //Save EEPROM data to flash
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Save EEPROM to modchip");
-        itemPtr->functionPtr= saveEEPromToFlash;
+        itemPtr->functionPtr = saveEEPromToFlash;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
 
         //Restore EEPROM data from flash
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Restore EEPROM from modchip");
-        itemPtr->functionPtr= restoreEEPromFromFlash;
+        itemPtr->functionPtr = restoreEEPromFromFlash;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
 
     //Dangerous stuff is going on in there.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Edit EEPROM content");
-    itemPtr->functionPtr= warningDisplayEepromEditMenu;
+    itemPtr->functionPtr = warningDisplayEepromEditMenu;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Wipe EEPROM section that holds non-vital data.
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Reset system settings");
-    itemPtr->functionPtr= wipeEEPromUserSettings;
+    itemPtr->functionPtr = wipeEEPromUserSettings;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Do not show this entry if 1.6/1.6b
-    if(mbVersion != REV1_6){
+    if(getMotherboardRevision() != XboxMotherboardRevision_1_6)
+    {
         //128MB MEMORY TEST
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "128MB RAM test");
         itemPtr->functionPtr=showMemTest;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
-#ifdef DEV_FEATURES
-    if(LPCmodSettings.OSsettings.TSOPcontrol)
-#else
-    if((mbVersion == REV1_1 || mbVersion == REV1_0 ) &&  //Don't show this when Xbox motherboard is not 1.0/1.1.
-       (LPCmodSettings.OSsettings.TSOPcontrol))          //Don't show if TSOP split is not enabled.
-#endif
+
+    if(isTSOPSplitCapable() &&  //Don't show this when Xbox motherboard is not 1.0/1.1.
+       LPCmodSettings.OSsettings.TSOPcontrol)          //Don't show if TSOP split is not enabled.
     {
         //TSOP split manual control
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "TSOP recover force bank : ");
         if(A19controlModBoot == BNKTSOPSPLIT0)
             sprintf(itemPtr->szParameter, "%s", "Bank0");
@@ -84,7 +78,7 @@ TEXTMENU *ToolsMenuInit(void) {
             sprintf(itemPtr->szParameter, "%s", "Bank1");
         else
             sprintf(itemPtr->szParameter, "%s", "No");
-        itemPtr->functionPtr= nextA19controlModBootValue;
+        itemPtr->functionPtr = nextA19controlModBootValue;
         itemPtr->functionDataPtr= itemPtr->szParameter;
         itemPtr->functionLeftPtr=prevA19controlModBootValue;
         itemPtr->functionLeftDataPtr = itemPtr->szParameter;
@@ -94,11 +88,10 @@ TEXTMENU *ToolsMenuInit(void) {
     }
 /*
     //TSOP recovery entries. Do not show if already in TSOP recovery
-    if((cromwell_config==CROMWELL || fHasHardware == SYSCON_ID_V1)
+    if((isXBE() == false || fHasHardware == SYSCON_ID_V1)
        && !TSOPRecoveryMode) {
         //TSOP recovery
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "TSOP Recovery");
         itemPtr->functionPtr=TSOPRecoveryReboot;
         itemPtr->functionDataPtr = NULL;
@@ -108,37 +101,33 @@ TEXTMENU *ToolsMenuInit(void) {
 #ifdef DEV_FEATURES
     {
         //Save xblast.cfg
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Save C:\\xblast.cfg");
-        itemPtr->functionPtr= saveXBlastcfg;
+        itemPtr->functionPtr = saveXBlastcfg;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
 #endif
     //Load xblast.cfg
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
-    itemPtr->functionPtr= loadXBlastcfg;
+    itemPtr->functionPtr = loadXBlastcfg;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "XBlast scripts");
-    itemPtr->functionPtr= DrawChildTextMenu;
-    itemPtr->functionDataPtr = (void *)XBlastScriptMenuInit();
+    itemPtr->functionPtr = DrawChildTextMenu;
+    itemPtr->functionDataPtr = XBlastScriptMenuInit();
     TextMenuAddItem(menuPtr, itemPtr);
 
 #ifdef DEV_FEATURES
     {
         //Developers tools
-        itemPtr = (TEXTMENUITEM*)malloc(sizeof(TEXTMENUITEM));
-        memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Developer tools");
-        itemPtr->functionPtr= DrawChildTextMenu;
-        itemPtr->functionDataPtr = (void *)DeveloperMenuInit();
+        itemPtr->functionPtr = DrawChildTextMenu;
+        itemPtr->functionDataPtr = DeveloperMenuInit();
         TextMenuAddItem(menuPtr, itemPtr);
     }
 #endif

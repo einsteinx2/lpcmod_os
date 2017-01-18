@@ -15,6 +15,7 @@
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/time/timeManagement.h"
+#include "xblast/PowerManagement.h"
 #include "MenuActions.h"
 
 
@@ -126,7 +127,7 @@ bool ifFunction(int param1, unsigned char op, int param2);
 bool gpiFunction(unsigned char port);
 bool gpoFunction(unsigned char port, unsigned char value);
 bool waitFunction(int ms);
-bool bootFunction(unsigned char bank);
+bool bootFunction(FlashBank bank);
 bool fanFunction(unsigned char value);
 bool ledFunction(char * value);
 bool lcdPrintFunction(unsigned char line, char * text, unsigned char stringLength);
@@ -441,7 +442,7 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
                         break;
                     case FUNCTION_BOOT:
                         if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
-                            bootFunction((unsigned char)argumentList[1].value);
+                            bootFunction((FlashBank)argumentList[1].value);
                         }
                         //else{
                             //printf("\nRuntime execution error. Improper BOOT function call!");
@@ -718,13 +719,13 @@ bool waitFunction(int ms){
     //printk("\n     wait function called : %ums",ms);
     return true;
 }
-bool bootFunction(unsigned char bank){
+bool bootFunction(FlashBank bank){
     //printf("\n****Boot bank: %u", bank);
 	//printk("\n     boot function called : %u",bank);
-    if(bank == BNK512 || bank == BNK256 || bank == BNKOS){
+    if(bank == FlashBank_512Bank || bank == FlashBank_256Bank || bank == FlashBank_OSBank){
         BootModBios(bank);
     }
-    else if(bank == BNKTSOPSPLIT0 || bank == BNKTSOPSPLIT1 || bank == BNKFULLTSOP){
+    else if(bank == FlashBank_SplitTSOP0Bank || bank == FlashBank_SplitTSOP1Bank || bank == FlashBank_FullTSOPBank){
         BootOriginalBios(bank);
     }
     else
@@ -1320,7 +1321,7 @@ int trimScript(unsigned char ** file, unsigned int fileSize){
 
     //we know the new size of the buffer.
     free(*file);
-    *file = (unsigned char*)malloc(newSize);
+    *file = (unsigned char *)malloc(newSize);
 
     //Move back to the start of the list.
     currentSegment = firstSegment;

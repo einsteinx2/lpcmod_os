@@ -8,11 +8,12 @@
  ***************************************************************************/
 
 #include "BootFATX.h"
-#include "BootFlash.h"
 #include "video.h"
 #include "BootLPCMod.h"
 #include "lpcmod_v1.h"
 #include "LEDMenuActions.h"
+#include "lib/time/timeManagement.h"
+#include "xblast/HardwareIdentifier.h"
 #include "string.h"
 #include "stdlib.h"
 #include "stdio.h"
@@ -31,9 +32,13 @@ void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct){
 
     //We have a XBlast Mod detected or else there's a strong possibility function will return 0xff;
     if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_V1_TSOP)
+    {
         temp = ReadFromIO(XBLAST_IO);
+    }
     else
+    {
         temp = 0;
+    }
 
     //If no valid pointer is specified, take Global struct.
     if(GPIOstruct == NULL)
@@ -52,7 +57,6 @@ void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct){
 }
 
 void LPCMod_WriteIO(unsigned char port, unsigned char value){
-    struct _GenPurposeIOs *localGPIOstruct;
     unsigned char temp;
 
     //We have a XBlast Mod detected or else there's a strong possibility function will return 0xff;
@@ -120,6 +124,44 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
     return 0;
 }
 
+//Use this function only for in OS operations.
+void switchOSBank(FlashBank bank) {
+    //Only send command if XBlast compatible device is found
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP)
+    {
+        currentFlashBank = bank;
+        xF70ELPCRegister = bank;
+        WriteToIO (XBLAST_CONTROL, bank);    // switch to proper bank
+                                             //Send OSBNKCTRLBIT when toggling a bank other than BNKOS.
+    }
+}
+
+//Use this function only when you're about to boot into another bank.
+void switchBootBank(FlashBank bank)
+{
+    //Only send command if XBlast compatible device is found
+    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP)
+    {
+        unsigned char resultBank = bank;
+        //currentFlashBank = NOBNKID;         //We won't be coming back from this!
+        if(bank > BOOTFROMTSOP)       //We're asked to boot from XBlast's flash
+            resultBank |= A19controlModBoot;  //Apply custom A19 control (if need be).
+        WriteToIO (XBLAST_CONTROL, resultBank); // switch to proper bank from booting register
+    }
+}
+
+void WriteToIO(unsigned short _port, unsigned char _data)
+{
+   __asm__ ("out %%al, %%dx" : : "a" (_data), "d" (_port));
+}
+
+unsigned char ReadFromIO(unsigned short address)
+{
+   unsigned char data;
+   __asm__ __volatile__ ("inb %w1,%0":"=a" (data):"Nd" (address));
+   return data;
+}
+
 #ifdef SPITRACE
 void printTextSPI(const char * functionName, char * buffer, ...)
 {
@@ -134,18 +176,18 @@ void printTextSPI(const char * functionName, char * buffer, ...)
     if(buffer != NULL){
         va_start(args, buffer);
         vsprintf(tempBuf,buffer,args);
-        sprintf(outputBuf, "%s: %s", functionName, tempBuf);
+        sprintf(outputBuf, "[%s] %s", functionName, tempBuf);
     }
     else{
-        sprintf(outputBuf, "%s", functionName);
+        sprintf(outputBuf, "[%s]\n", functionName);
     }
 
     stringLength = strlen(outputBuf);
     if(stringLength > 200)
         stringLength = 200;
 
-    //Will send null terminating character at the end.
-    for(pos = 0; pos <= stringLength; pos++){
+    //Will NOT send null terminating character at the end.
+    for(pos = 0; pos < stringLength; pos++){
         LPCMod_FastWriteIO(0x4, 0); // /CS to '0'
         for(i = 7; i >= 0; i--){
             LPCMod_FastWriteIO(0x3, (outputBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
@@ -155,6 +197,7 @@ void printTextSPI(const char * functionName, char * buffer, ...)
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
     }
     //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
+    wait_us(50);
 }
 #endif
 

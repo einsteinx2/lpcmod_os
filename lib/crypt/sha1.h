@@ -17,7 +17,7 @@
 #ifndef _SHA1_H_
 #define _SHA1_H_  
 
-#include "stdint.h"
+#include <stdint.h>
 /*
  * If you do not have the ISO standard stdint.h header file, then you
  * must typdef the following:

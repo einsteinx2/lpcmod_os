@@ -7,7 +7,7 @@ OUTPUT_ARCH(i386);
 MEMORY
 {
     ram (rwx) : ORIGIN = 0, LENGTH = 64M
-    rom (rx)  : ORIGIN = 0x03A00000, LENGTH = 2M
+    rom (rx)  : ORIGIN = 0x03800000, LENGTH = 4M
 }
 
 

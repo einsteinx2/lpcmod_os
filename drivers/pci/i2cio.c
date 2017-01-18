@@ -9,9 +9,9 @@
 
 #include "i2c.h"
 #include "boot.h"
-#include "BootFlash.h"
 #include "memory_layout.h"
 #include "lib/time/timeManagement.h"
+#include "xblast/HardwareIdentifier.h"
 #include "string.h"
 
 /*
@@ -206,7 +206,7 @@ bool I2CGetTemperature(int * pnLocalTemp, int * pExternalTemp)
     //Motherboard temp.
     ReadfromSMBus(0x10, 0x0A, 1, pExternalTemp);
 
-    if(mbVersion != REV1_6){
+    if(getMotherboardRevision() != XboxMotherboardRevision_1_6){
         *pnLocalTemp=I2CTransmitByteGetReturn(0x4c, 0x01);
     }
     else{
@@ -298,7 +298,7 @@ void I2CSetFanSpeed(unsigned char speed){
 //Thanks XBMC team for the code.
 //TODO: switch case for cleaner look?
 unsigned char I2CGetXboxMBRev(void){
-    unsigned char result = REVUNKNOWN;
+    unsigned char result = XboxMotherboardRevision_UNKNOWN;
     unsigned int temp[3];
     char ver[4];
     ver[3] = 0;        //Terminator.
@@ -311,30 +311,30 @@ unsigned char I2CGetXboxMBRev(void){
     ver[2] = (char)temp[2];
 
     if ( !strcmp(ver,("01D")) || !strcmp(ver,("D01")) || !strcmp(ver,("1D0")) || !strcmp(ver,("0D1"))) {
-        result = DEVKIT;
+        result = XboxMotherboardRevision_DEVKIT;
     }
     else if (!strcmp(ver,("DBG")) || !strcmp(ver,("B11"))){
-        result = DEBUGKIT;
+        result = XboxMotherboardRevision_DEBUGKIT;
     }
     else if (!strcmp(ver,("P01"))){
-        result = REV1_0;
+        result = XboxMotherboardRevision_1_0;
     }
     else if (!strcmp(ver,("P05"))){
-        result = REV1_1;
+        result = XboxMotherboardRevision_1_1;
     }
     else if (!strcmp(ver,("P11")) || !strcmp(ver,("1P1")) || !strcmp(ver,("11P"))){
         if(ReadfromSMBus(0x6A, 0x00, 0, temp) == 0){
-            result = REV1_4;
+            result = XboxMotherboardRevision_1_4;
         }
         else {
-            result = REV1_2;
+            result = XboxMotherboardRevision_1_2;
         }
     }
     else if (!strcmp(ver,("P2L"))){
-        result = REV1_6;
+        result = XboxMotherboardRevision_1_6;
     }
     else {
-        result = REVUNKNOWN;
+        result = XboxMotherboardRevision_UNKNOWN;
     }
     return result;
 }

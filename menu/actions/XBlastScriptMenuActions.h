@@ -19,5 +19,6 @@ void saveScriptToFlash(void *fname);
 void loadScriptFromFlash(void * ignored);
 void toggleRunBootScript(void * itemStr);
 void toggleRunBankScript(void * itemStr);
+void deleteFlashScriptFromFlash(void * ignored);
 
 #endif

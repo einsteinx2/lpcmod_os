@@ -1,0 +1,22 @@
+<html xmlns='http://www.w3.org/1999/xhtml' >
+  <head>
+    <title>XBlast OS: Net Flash</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=ASCII">
+  </head>
+  <body bgcolor="#012F53" text="white">
+    <DIV style="color:#FFFFFF">
+		Use the form below to update the BIOS of your modchip. <br><br><B>WARNING!</B> 
+		It will use the file you upload to replace the contents of your modchip.&nbsp; 
+		Make sure you upload the correct size BIOS for your modchip! (Will mirror if too small)<br><B>Bank0 = 512KB</B>
+		<br><B>Bank1 = 256KB</B><br><B>Bank2(OS) = 256KB</B>   
+      <br>
+      <br>
+    <form id="biosup" method="post" enctype="multipart/form-data" accept-charset=ASCII>
+       Set BIOS name (max 20 characters):<br>
+       <input type="text" name="biosname"><br>
+	   Select BIOS File:<br>
+        <input type="file" id="file" name="biosbin">
+        <input type="submit" value="Upload and Flash">
+    </form>
+  </body>
+</html><span style="line-height: 20px; font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 11px; background-color: transparent;" data-mce-style="line-height: 20px; font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 11px; background-color: transparent;"> </span>

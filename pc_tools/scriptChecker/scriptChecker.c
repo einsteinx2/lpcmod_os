@@ -1312,7 +1312,7 @@ int trimScript(unsigned char ** file, unsigned int fileSize){
 
     //we know the new size of the buffer.
     free(*file);
-    *file = (unsigned char*)malloc(newSize);
+    *file = (unsigned char *)malloc(newSize);
 =======
 typedef unsigned char u8;
 typedef unsigned int u32;
@@ -1801,7 +1801,7 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         break;
                     case FUNCTION_BOOT:
                         if(argumentList[1].exist && (argumentList[1].type == ARGTYPE_VARIABLE || argumentList[1].type == ARGTYPE_NUMERIC)){
-                            bootFunction((u8)argumentList[1].value);
+                            bootFunction((unsigned char)argumentList[1].value);
                         }
                         else{
                             printf("\nRuntime execution error. Improper BOOT function call!");

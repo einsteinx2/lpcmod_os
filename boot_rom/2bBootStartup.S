@@ -771,9 +771,10 @@ initaftermemcpy:
 	rep stosl
    	
    	//Clear decompressed kernel space.
-   	// memset((void*)0x03A30000,0x0,0x40000)
-	movl $0x40000, %ecx
-	movl $0x03A30000, %edi
+   	// memset((void*)0x03800000,0x0,0x400000)
+   	#include "memory_layout.h"
+	movl $0x30000, %ecx
+	movl $CODE_LOC_START, %edi
 	rep stosl
 
 	lidt tableIdtDescriptor

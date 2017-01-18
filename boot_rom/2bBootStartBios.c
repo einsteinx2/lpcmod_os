@@ -15,13 +15,14 @@
 
 #include "2bload.h"
 #include "sha1.h"
+#include "memory_layout.h"
 
 extern int decompress_kernel(char*out, char *data, int len);
 
 /* -------------------------  Main Entry for after the ASM sequences ------------------------ */
     // do not change this, this is linked to many many scipts
 
-#define CROMWELL_Memory_pos 	 	0x03A00000
+#define CROMWELL_Memory_pos 	 	CODE_LOC_START
 #define PROGRAMM_Memory_2bl 	 	0x00100000
 #define CROMWELL_compress_temploc 	0x02000000
 
@@ -94,9 +95,9 @@ extern void BootStartBiosLoader ( void ) {
         if (memcmp(&bootloaderChecksum[0],SHA1_result,20)==0) {
             // The Checksum is good                          
             // We start the Cromwell immediatly
-            BufferIN = (unsigned char*)(CROMWELL_compress_temploc);
+            BufferIN = (unsigned char *)(CROMWELL_compress_temploc);
             BufferINlen=compressed_image_size;
-            BufferOUT = (unsigned char*)CROMWELL_Memory_pos;
+            BufferOUT = (unsigned char *)CROMWELL_Memory_pos;
             decompress_kernel(BufferOUT, BufferIN, BufferINlen);
             
             // This is a config bit in Cromwell, telling the Cromwell, that it is a Cromwell and not a Xromwell
@@ -107,10 +108,10 @@ extern void BootStartBiosLoader ( void ) {
 
 
             // We now jump to the cromwell, Good bye 2bl loader
-            // This means: jmp CROMWELL_Memory_pos == 0x03A00000
+            // This means: jmp CROMWELL_Memory_pos == 0x03800000
             __asm __volatile__ (
             "cld\n"
-            "ljmp $0x10, $0x03A00000\n"
+            "ljmp $0x10, $0x03800000\n"
             );
             // We are not Longer here
             break;

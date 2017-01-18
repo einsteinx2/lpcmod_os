@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //data latched on rising edge and idle clock to low.
 //Arduino relay SPI-in data to UART-out. This way, text can be
 //picked up in a terminal on your computer.
-//Every Arduino board will work with this sketch but prefer one
-//that runs on 3.3V instead of the more common 5V.
+//Every Arduino board will work with this sketch.
+//XBlast IOs are 3.3V but 5V-tolerant.
 
 //Connect GND between Arduino and XBlast
 //Connect Arduino pin 10(SS) to XBlast OUT3
@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <SPI.h>
 
-#define ringBufferSize 1024  //1.5KB buffer
+#define ringBufferSize 800 // To accommodate ATMega168 devices with 1KB SRAM
 unsigned char buf[ringBufferSize];
 
 unsigned short dataInPos = 0;
@@ -63,51 +63,32 @@ void setup (void)
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-    if(SPDR == '\0')
+    if(ringBufRollOver == false || dataInPos < dataOutPos)
     {
-      buf[dataInPos] = '\r';
-      dataInPos++;
-      if(dataInPos == ringBufferSize)
-      {
-        dataInPos = 0;
-        ringBufRollOver = true;
-      }
-      buf[dataInPos] = '\n';
-    }
-    else
-    {
-      buf[dataInPos] = SPDR;
-    }
-    dataInPos++;
-    if(dataInPos == ringBufferSize)
-    {
-        dataInPos = 0;
-        ringBufRollOver = true;
+        // Drop byte if ring buffer is full
+	    buf[dataInPos++] = SPDR;
+	    
+	    if(dataInPos >= ringBufferSize)
+	    {
+	        dataInPos = 0;
+	        ringBufRollOver = true;
+	    }
     }
 }
 
 // main loop - wait for flag set in interrupt routine
 void loop (void)
 {
-  unsigned short writeLength;
-  unsigned short tempPos;
-  if((dataOutPos != dataInPos) || (dataOutPos == 0 && dataInPos == 0 && ringBufRollOver == true))
-  {
-    ringBufRollOver = false;
-    tempPos = dataOutPos;
-    if(dataInPos < dataOutPos) //Roll over occured since last occurence
+    while(1)
     {
-      writeLength = ringBufferSize - dataOutPos;
-      dataOutPos = 0;
+        if((dataOutPos != dataInPos) || (dataOutPos == 0 && dataInPos == 0 && ringBufRollOver == true))
+        {
+            Serial.write(buf[dataOutPos++]);   
+	    	if(dataOutPos >= ringBufferSize)
+	    	{
+	    	    ringBufRollOver = false;
+	    	}
+        } 
     }
-    else
-    {
-      writeLength = dataInPos - dataOutPos;
-      dataOutPos = dataInPos;
-    }
-    
-    Serial.write(buf + tempPos, writeLength);   
-    
-  } 
 }
 

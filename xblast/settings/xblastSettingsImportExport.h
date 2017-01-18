@@ -14,4 +14,6 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
 int LPCMod_SaveCFGToHDD(void);
 void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStruct *settingsStruct);
 
+void importNewSettingsFromCFGLoad(_LPCmodSettings* newSettings);
+
 #endif /* XBLASTSETTINGSIMPORTEXPORT_H_ */

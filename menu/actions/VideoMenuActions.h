@@ -9,6 +9,8 @@
  *                                                                         *
  ***************************************************************************/
 
+#include "xblast/settings/xblastSettingsDefs.h"
+
 void SetWidescreen(void *);
 //void SetVideoStandard(void *);
 void incrementVideoStandard(void * itemStr);
@@ -20,5 +22,7 @@ void decrementVideoformat(void * itemStr);
 void toggle480p(void * itemStr);
 void toggle720p(void * itemStr);
 void toggle1080i(void * itemStr);
+
+void toggleVGA(void * itemStr);
 
 #endif

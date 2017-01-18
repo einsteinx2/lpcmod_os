@@ -17,8 +17,4 @@ void FlashBiosFromCD(void *cdromId);
 void enableNetflash(void *flashType);
 void enableWebupdate(void *whatever);
 
-void switchBank(char bank);
-void switchOSBank(unsigned char bank);
-void switchBootBank(unsigned char bank);
-
 void FlashFooter(void);

@@ -109,3 +109,8 @@ unsigned int sys_now(void)
 {
 	return (unsigned int)(getAPICCount() / 3579.545);
 }
+
+unsigned int getRandSeed(void)
+{
+    return getAPICCount();
+}

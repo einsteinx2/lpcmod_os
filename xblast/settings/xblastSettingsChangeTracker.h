@@ -10,8 +10,28 @@
 
 #include <stdbool.h>
 
-unsigned char LPCMod_CountNumberOfChangesInSettings(void);
+typedef struct OSSettingsChangeEntry
+{
+    const char* label;
+    char changeString[21 + 21 + 3];
+    void* newSetting;
+    void* origSettings;
+    unsigned char settingSize;
+    struct OSSettingsChangeEntry* nextChange;
+}OSSettingsChangeEntry_t;
+
+typedef struct
+{
+    unsigned char changeCount;
+    OSSettingsChangeEntry_t* firstChangeEntry;
+}OSSettingsChangeList;
+
+OSSettingsChangeList osSettingsChangeList;
+
+void settingsTrackerInit(void);
+
+unsigned char LPCMod_CountNumberOfChangesInSettings(bool generateChangeStruct, OSSettingsChangeList* output);
 bool LPCMod_checkForBootScriptChanges(void);
-void cleanChangeListStruct(void);
+void cleanOSSettingsChangeListStruct(OSSettingsChangeList* input);
 
 #endif /* XBLASTSETTINGSCHANGETRACKER_H_ */

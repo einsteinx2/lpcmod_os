@@ -516,21 +516,21 @@ static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 
 	if (reg_delay(NvRegMIIControl, NVREG_MIICTL_INUSE, 0,
 		      NV_MIIPHY_DELAY, NV_MIIPHY_DELAYMAX, NULL)) {
-		dprintf(("mii_rw of reg %d at PHY %d timed out.",
+		dprintf(("mii_rw of reg %d at PHY %d timed out.\n",
 			 miireg, addr));
 		retval = -1;
 	} else if (value != MII_READ) {
 		/* it was a write operation - fewer failures are detectable */
-		dprintf(("mii_rw wrote 0x%x to reg %d at PHY %d",
+		dprintf(("mii_rw wrote 0x%x to reg %d at PHY %d\n",
 			 value, miireg, addr));
 		retval = 0;
 	} else if (readl(base + NvRegMIIStatus) & NVREG_MIISTAT_ERROR) {
-		dprintf(("mii_rw of reg %d at PHY %d failed.",
+		dprintf(("mii_rw of reg %d at PHY %d failed.\n",
 			 miireg, addr));
 		retval = -1;
 	} else {
 		retval = readl(base + NvRegMIIData);
-		dprintf(("mii_rw read from reg %d at PHY %d: 0x%x.",
+		dprintf(("mii_rw read from reg %d at PHY %d: 0x%x.\n",
 			 miireg, addr, retval));
 	}
 	return retval;
@@ -574,7 +574,7 @@ static int phy_init(struct nic *nic)
 	    (LPA_10HALF | LPA_10FULL | LPA_100HALF |
 	    		LPA_100FULL | 0x800 | 0x400);
 	if (mii_rw(nic, np->phyaddr, MII_ADVERTISE, reg)) {
-		dprintf(("phy write to advertise failed."));
+		dprintf(("phy write to advertise failed.\n"));
 		return 0x2;
 	}
 
@@ -586,7 +586,7 @@ static int phy_init(struct nic *nic)
 
 	/* reset the phy */
 	if (phy_reset(nic)) {
-		dprintf(("phy reset failed"));
+		dprintf(("phy reset failed\n"));
 		return 0x2;
 	}
 
@@ -597,14 +597,14 @@ static int phy_init(struct nic *nic)
 		phy_reserved &= ~(PHY_INIT1 | PHY_INIT2);
 		phy_reserved |= (PHY_INIT3 | PHY_INIT4);
 		if (mii_rw(nic, np->phyaddr, MII_RESV1, phy_reserved)) {
-			dprintf(("phy init failed."));
+			dprintf(("phy init failed.\n"));
 			return 0x2;
 		}
 		phy_reserved =
 		    mii_rw(nic, np->phyaddr, MII_NCONFIG, MII_READ);
 		phy_reserved |= PHY_INIT5;
 		if (mii_rw(nic, np->phyaddr, MII_NCONFIG, phy_reserved)) {
-			dprintf(("phy init failed."));
+			dprintf(("phy init failed.\n"));
 			return 0x2;
 		}
 	}
@@ -613,7 +613,7 @@ static int phy_init(struct nic *nic)
 		    mii_rw(nic, np->phyaddr, MII_SREVISION, MII_READ);
 		phy_reserved |= PHY_INIT6;
 		if (mii_rw(nic, np->phyaddr, MII_SREVISION, phy_reserved)) {
-			dprintf(("phy init failed."));
+			dprintf(("phy init failed.\n"));
 			return 0x2;
 		}
 	}
@@ -632,7 +632,7 @@ static void start_rx(struct nic *nic __unused)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("start_rx"));
+	dprintf(("start_rx\n"));
 	/* Already running? Stop it. */
 	if (readl(base + NvRegReceiverControl) & NVREG_RCVCTL_START) {
 		writel(0, base + NvRegReceiverControl);
@@ -648,7 +648,7 @@ static void stop_rx(void)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("stop_rx"));
+	dprintf(("stop_rx\n"));
 	writel(0, base + NvRegReceiverControl);
 	reg_delay(NvRegReceiverStatus, NVREG_RCVSTAT_BUSY, 0,
 		  NV_RXSTOP_DELAY1, NV_RXSTOP_DELAY1MAX,
@@ -662,7 +662,7 @@ static void start_tx(struct nic *nic __unused)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("start_tx"));
+	dprintf(("start_tx\n"));
 	writel(NVREG_XMITCTL_START, base + NvRegTransmitterControl);
 	pci_push(base);
 }
@@ -671,7 +671,7 @@ static void stop_tx(void)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("stop_tx"));
+	dprintf(("stop_tx\n"));
 	writel(0, base + NvRegTransmitterControl);
 	reg_delay(NvRegTransmitterStatus, NVREG_XMITSTAT_BUSY, 0,
 		  NV_TXSTOP_DELAY1, NV_TXSTOP_DELAY1MAX,
@@ -686,7 +686,7 @@ static void txrx_reset(struct nic *nic __unused)
 {
 	u8 *base = (u8 *) BASE;
 
-	dprintf(("txrx_reset"));
+	dprintf(("txrx_reset\n"));
 	writel(NVREG_TXRXCTL_BIT2 | NVREG_TXRXCTL_RESET,
 	       base + NvRegTxRxControl);
 	pci_push(base);
@@ -712,7 +712,7 @@ static int alloc_rx(struct nic *nic __unused)
 		rx_ring[i].Length = cpu_to_le16(RX_NIC_BUFSIZE);
 		wmb();
 		rx_ring[i].Flags = cpu_to_le16(NV_RX_AVAIL);
-		      dprintf(("alloc_rx: Packet  %d marked as Available",
+		      dprintf(("alloc_rx: Packet  %d marked as Available\n",
 		   refill_rx));
 		refill_rx++;
 	}
@@ -771,7 +771,7 @@ static int update_linkspeed(struct nic *nic)
 
 	adv = mii_rw(nic, np->phyaddr, MII_ADVERTISE, MII_READ);
 	lpa = mii_rw(nic, np->phyaddr, MII_LPA, MII_READ);
-	dprintf(("update_linkspeed: PHY advertises 0x%hX, lpa 0x%hX.",
+	dprintf(("update_linkspeed: PHY advertises 0x%hX, lpa 0x%hX.\n",
 		 adv, lpa));
 
 	/* FIXME: handle parallel detection properly, handle gigabit ethernet */
@@ -884,7 +884,7 @@ static int forcedeth_reset(struct nic *nic)
 	u8 *base = (u8 *) BASE;
 	int ret, oom, i;
 	ret = 0;
-	dprintf(("forcedeth: open"));
+	dprintf(("forcedeth: open\n"));
 
 	/* 1) erase previous misconfiguration */
 	/* 4.1-1: stop adapter: ignored, 4.3 seems to be overkill */
@@ -1060,7 +1060,7 @@ static int forcedeth_poll(struct nic *nic)
 		wmb();
 		np->cur_rx++;
 		alloc_rx(nic);
-		dprintf(("incoming packet"));
+		dprintf(("incoming packet\n"));
 		return 1;
 	}
 	return 0;		/* initially as this is called to flush the input */
@@ -1082,7 +1082,7 @@ static void forcedeth_transmit(struct nic *nic, const char *d,	/* Destination */
 	u8 *base = (u8 *) BASE;
 	int nr;
 
-	dprintf(("ETH transmit"));
+	dprintf(("ETH transmit\n"));
 
 	nr = np->next_tx % TX_RING;
 
@@ -1137,7 +1137,7 @@ static void forcedeth_disable(struct dev *dev __unused)
 	/* disable interrupts on the nic or we will lock up */
 	writel(0, base + NvRegIrqMask);
 	pci_push(base);
-	dprintf(("Irqmask is zero again"));
+	dprintf(("Irqmask is zero again\n"));
 
 	/* specia op:o write back the misordered MAC address - otherwise
 	 * the next probe_nic would see a wrong address.
@@ -1181,7 +1181,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 	if (pci->ioaddr == 0)
 		return 0;
 
-	dprintf(("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX",
+	dprintf(("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX\n",
 	       pci->name, pci->vendor, pci->dev_id));
 
 	/* point to private storage */
@@ -1223,7 +1223,6 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		printf("Please complain to your hardware vendor.");
 		return 0;
 	}
-	printf("\n\n\n           MAC Address %!",nic->node_addr);
 
 	np->tx_flags =
 	    cpu_to_le16(NV_TX_LASTPACKET | NV_TX_LASTPACKET1 |
@@ -1274,11 +1273,11 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 
 	if (i != 32) {
 		/* reset it */
-		dprintf(("PHY found. Re-Init"));
+		dprintf(("PHY found. Re-Init\n"));
 		phy_init(nic);
 	}
 
-	dprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s",
+	dprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s\n",
 		 pci->name, pci->vendor, pci->dev_id, pci->name));
 
 	forcedeth_reset(nic);

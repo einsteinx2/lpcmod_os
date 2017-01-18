@@ -12,6 +12,8 @@
 void LPCIOWrite(void * ignored);
 void LPCIORead(void * ignored);
 
+void SMBusRead(void * ignored);
+
 void GPIORead(void * ignored);
 
 void settingsPrintData(void * ignored);

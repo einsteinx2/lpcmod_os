@@ -7,21 +7,24 @@
  *                                                                         *
  ***************************************************************************/
 #include "FlashMenuActions.h"
-
+#include "MenuActions.h"
 #include "lpcmod_v1.h"
+#include "FlashUi.h"
 #include "BootIde.h"
 #include "TextMenu.h"
 #include "boot.h"
+#include "video.h"
 #include "memory_layout.h"
 #include "BootFATX.h"
-#include "BootFlash.h"
+#include "FlashDriver.h"
 #include "Gentoox.h"
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
 #include "LEDMenuActions.h"
+#include "WebServerOps.h"
 
-extern int etherboot(unsigned char flashType);
+extern int etherboot(void);
 extern int BootLoadFlashCD(int cdromId);
 
 void FlashBiosFromHDD (void *fname) {
@@ -64,11 +67,32 @@ void FlashBiosFromCD (void *cdromId) {
 
 void enableNetflash (void *flashType) {
 #ifdef FLASH
+    static bool nicInit = false;
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     printk ("\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
 
-    etherboot(*(unsigned char *)flashType);
+    if(nicInit == true || etherboot() == 0)
+    {
+        nicInit = true;
+        extern int run_lwip(unsigned char flashType);
+        debugSPIPrint("Starting network service\n");
+        while(run_lwip(*(unsigned char *)flashType) == 0);
+        debugSPIPrint("Killing network service\n");
+        switch(currentWebServerOp)
+        {
+        case WebServerOps_BIOSFlash:
+            FlashPrintResult();
+
+            switchOSBank(FlashBank_OSBank);
+
+            break;
+        case WebServerOps_EEPROMFlash:
+            UIFooter();
+            break;
+        }
+
+    }
 #endif
 }
 
@@ -81,24 +105,6 @@ void enableWebupdate (void *whatever) {
     //initialiseNetwork ();
     //webUpdate ();
 #endif
-}
-
-//Use this function only for in OS operations.
-void switchOSBank(unsigned char bank) {
-    currentFlashBank = bank;
-    xF70ELPCRegister = bank;
-    WriteToIO (XBLAST_CONTROL, bank);    // switch to proper bank
-                                         //Send OSBNKCTRLBIT when toggling a bank other than BNKOS.
-}
-
-//Use this function only when you're about to boot into another bank.
-void switchBootBank(unsigned char bank)
-{
-    unsigned char resultBank = bank;
-    //currentFlashBank = NOBNKID;         //We won't be coming back from this!
-    if(bank > BOOTFROMTSOP)       //We're asked to boot from XBlast's flash
-        resultBank |= A19controlModBoot;  //Apply custom A19 control (if need be).
-    WriteToIO (XBLAST_CONTROL, resultBank); // switch to proper bank from booting register
 }
 
 void FlashFooter(void)

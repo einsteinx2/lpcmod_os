@@ -28,9 +28,6 @@ void toggleBGColor(void * itemStr)
 	BootVideoInitJPEGBackdropBuffer(&jpegBackdrop);
 	//Screen will be refreched in TextMenu main routine.
 	bgColorString((char *)itemStr);
-
-	//Refresh IconMenu too
-	refreshIconMenu = 1;
 }
 
 void bgColorString(char * stringOut)
@@ -69,56 +66,56 @@ void decrementFanSpeed(void * itemStr){
 
 void incrementGameRegion(void * itemStr){
 
-    if(ConfirmDialog("           Confirm change Game region?", 0))
+    if(ConfirmDialog("Confirm change Game region?", 0))
         return;
         
     int gameRegion = getGameRegionValue(&eeprom);
     switch(gameRegion){
-        case NORTH_AMERICA:
-            gameRegion = setGameRegionValue(JAPAN);
+        case EEPROM_XBERegionNorthAmerica:
+            gameRegion = setGameRegionValue(EEPROM_XBERegionJapan);
             break;
-        case JAPAN:
-            gameRegion = setGameRegionValue(EURO_AUSTRALIA);
+        case EEPROM_XBERegionJapan:
+            gameRegion = setGameRegionValue(EEPROM_XBERegionEuropeAustralia);
             break;
-        case EURO_AUSTRALIA:
+        case EEPROM_XBERegionEuropeAustralia:
         default:
-            gameRegion = setGameRegionValue(NORTH_AMERICA);
+            gameRegion = setGameRegionValue(EEPROM_XBERegionNorthAmerica);
             break;
         }
-    sprintf(itemStr, "%s",Gameregiontext[gameRegion]);
+    sprintf(itemStr, "%s",getGameRegionText(gameRegion));
 }
 
 void decrementGameRegion(void * itemStr){
 
-    if(ConfirmDialog("           Confirm change Game region?",0))
+    if(ConfirmDialog("Confirm change Game region?",0))
         return;
         
     int gameRegion = getGameRegionValue(&eeprom);
     switch(gameRegion){
-        case NORTH_AMERICA:
-            gameRegion = setGameRegionValue(EURO_AUSTRALIA);
+        case EEPROM_XBERegionNorthAmerica:
+            gameRegion = setGameRegionValue(EEPROM_XBERegionEuropeAustralia);
             break;
-        case EURO_AUSTRALIA:
-            gameRegion = setGameRegionValue(JAPAN);
+        case EEPROM_XBERegionEuropeAustralia:
+            gameRegion = setGameRegionValue(EEPROM_XBERegionJapan);
             break;
-        case JAPAN:
+        case EEPROM_XBERegionJapan:
         default:
-            gameRegion = setGameRegionValue(NORTH_AMERICA);
+            gameRegion = setGameRegionValue(EEPROM_XBERegionNorthAmerica);
             break;
         }
-    sprintf(itemStr, "%s",Gameregiontext[gameRegion]);
+    sprintf(itemStr, "%s",getGameRegionText(gameRegion));
 }
 
 void incrementDVDRegion(void * itemStr){
     if(eeprom.DVDPlaybackKitZone[0] < 8)
         eeprom.DVDPlaybackKitZone[0] += 1;
-    sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+    sprintf(itemStr, "%s",getDVDRegionText(eeprom.DVDPlaybackKitZone[0]));
     EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
 
 void decrementDVDRegion(void * itemStr){
     if(eeprom.DVDPlaybackKitZone[0]  > 0)
         eeprom.DVDPlaybackKitZone[0] -= 1;
-    sprintf(itemStr, "%s",DVDregiontext[eeprom.DVDPlaybackKitZone[0]]);
+    sprintf(itemStr, "%s",getDVDRegionText(eeprom.DVDPlaybackKitZone[0]));
     EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }

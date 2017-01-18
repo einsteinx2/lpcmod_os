@@ -19,7 +19,8 @@
 // configuration
 
 #include "consts.h"
-#include "stdint.h"
+#include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include "cromwell_types.h"
 #include "memory_layout.h"
@@ -338,25 +339,8 @@ typedef struct _xLCD {
 
 _xLCD xLCD;
 
-//Xbox motherboard revision enum.
-typedef enum {
-    DEVKIT = 0x00,    //Includes a bunch of revisions
-    DEBUGKIT = 0x01,        //2 known version ID
-    REV1_0 = 0x02,        //1.0
-    REV1_1 = 0x03,        //1.1
-    REV1_2 = 0x04,        //1.2/1.3
-    REV1_4 = 0x05,        //1.4/1.5
-    REV1_6 = 0x06,        //1.6/1.6b
-    REVUNKNOWN = 0x07    //dafuk?
-} XBOX_REVISION;
-
-
-//Put here to make it global (yeah yeah... I don't care. There are far worst things done in the VHDL code of the modchip trust me!)
-unsigned char mbVersion;
-
 //Global for convenience.
 unsigned char *videosavepage;
-unsigned char refreshIconMenu;
 //void * gobalGenericPtr;
 
 #endif // _Boot_H_

@@ -13,12 +13,9 @@
 
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "xblastDebug.h"
+#include "lpcmod_v1.h"
 #include "config.h"
 #include <stdbool.h>
-
-//Global to hide code when running in XBE without modchip detected.
-unsigned short fHasHardware;
-unsigned char fSpecialEdition;
 
 
 //Globals to save value of LPC register
@@ -27,7 +24,7 @@ unsigned char x00FFLPCRegister;
 
 bool TSOPRecoveryMode;
 
-unsigned char currentFlashBank;
+FlashBank currentFlashBank;
 unsigned char A19controlModBoot;
 
 struct _GenPurposeIOs{
@@ -50,5 +47,11 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename);
 void LPCMod_WriteIO(unsigned char port, unsigned char value);
 void LPCMod_FastWriteIO(unsigned char port, unsigned char value);
 void LPCMod_WriteGenPurposeIOs(void);
+
+void switchOSBank(FlashBank bank);
+void switchBootBank(FlashBank bank);
+
+void WriteToIO(unsigned short address, unsigned char data);
+unsigned char ReadFromIO(unsigned short address);
 
 #endif // _BootLPCMod_H_

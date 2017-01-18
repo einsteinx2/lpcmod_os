@@ -5,6 +5,10 @@
  *      Author: bennyboy
  */
 
+
+#ifdef __PC_SIMULATOR__
+#include </usr/include/string.h>
+#else
 #ifndef INCLUDE_STRING_H_
 #define INCLUDE_STRING_H_
 
@@ -43,4 +47,7 @@ size_t strlen (const char *__s);
 
 int sprintf(char * buf, const char *fmt, ...);
 
+char *strchr(const char *s, int c);
+
 #endif /* INCLUDE_STRING_H_ */
+#endif

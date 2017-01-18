@@ -34,6 +34,5 @@ extern int  eth_probe(struct dev *dev);
 extern int  eth_poll(void);
 extern void eth_transmit(const char *d, unsigned int t, unsigned int s, const void *p);
 extern void eth_disable(void);
-extern int eth_load_configuration(struct dev *dev, unsigned char flashType);
 extern int eth_load(struct dev *dev);;
 #endif	/* NIC_H */

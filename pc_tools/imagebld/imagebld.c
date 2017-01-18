@@ -15,23 +15,11 @@
 #include "md5.h"
 
 #include "../../include/config.h"
+#include "../../include/BiosIdentifier.h"
 #include "xbe-header.h"
 
 
 #define debug
-
-#define BiosID_Version10                0x01
-#define BiosID_Version11                0x02
-#define BiosID_Version12                0x04
-#define BiosID_Version13                0x08
-#define BiosID_Version14                0x10
-#define BiosID_Version15                0x20
-#define BiosID_Version16                0x40
-#define BiosID_Version17                0x80
-
-#define BiosID_VideoEncoder_Conexant    0x01
-#define BiosID_VideoEncoder_Focus       0x02
-#define BiosID_VideoEncoder_Xcalibur    0x04
 
 struct Checksumstruct {
     uint8_t Checksum[20];
@@ -40,22 +28,6 @@ struct Checksumstruct {
     uint32_t compressed_image_size;  // 28
     uint32_t Biossize_type;          //32
 }Checksumstruct;
-
-
-struct BiosIdentifier {
-            
-    uint8_t   Magic[4];               // AUTO
-    uint8_t   HeaderVersion;
-    uint8_t   XboxVersion;            // Which Xbox Version does it Work ? (Options)
-    uint8_t   VideoEncoder;
-    uint8_t   HeaderPatch;
-    uint8_t   Option1;
-    uint8_t   Option2;
-    uint8_t   Option3;
-    uint32_t    BiosSize;               // in Bytes
-    char Name[32];
-    uint8_t MD5Hash[16];
-};
 
 void showUsage();
 
@@ -70,13 +42,16 @@ void shax(uint8_t *result, uint8_t *data, uint32_t len)
 
 
 void writeBiosIdentifier(uint8_t *cromimage, int biosSize) {
-    struct BiosIdentifier *BiosHeader = (struct BiosIdentifier *)&cromimage[biosSize-sizeof(struct BiosIdentifier)];
+    struct BiosIdentifier *BiosHeader = (struct BiosIdentifier *)&cromimage[256*1024-sizeof(struct BiosIdentifier)];
     MD5_CTX hashcontext;
+    uint32_t md5Size = biosSize;
     uint8_t digest[16];
-    memcpy(BiosHeader->Magic,"AUTO",4);
-    BiosHeader->HeaderVersion=1;
-    BiosHeader->BiosSize= biosSize;
+    char temp[33];
+    memcpy(BiosHeader->Magic, MagicBiosHeaderValue,4);
+    BiosHeader->HeaderVersion = CurrentHeaderVersion;
+    BiosHeader->BiosSize = biosSize;
     sprintf(BiosHeader->Name,"%s %s",PROG_NAME, VERSION);
+    printf("\n");
                                        
     BiosHeader->XboxVersion =       BiosID_Version10 |
                                     BiosID_Version11 |
@@ -90,10 +65,46 @@ void writeBiosIdentifier(uint8_t *cromimage, int biosSize) {
     BiosHeader->VideoEncoder =      BiosID_VideoEncoder_Conexant |
                                     BiosID_VideoEncoder_Focus |
                                     BiosID_VideoEncoder_Xcalibur;
-                                    
+
+    BiosHeader->Option1 =           Option1_SaveSettingsLocationBit;
+
+    if(BiosHeader->HeaderVersion == HeaderVersionV2)
+    {
+        md5Size = BiosHeader->BiosSize;
+    }
+    else if(BiosHeader->HeaderVersion == HeaderVersionV1)
+    {
+        md5Size = 256 * 1024 - 0x1000;
+    }
+    else
+    {
+        printf("Invalid BiosIdentifier Header version. Aborting.\n");
+        return;
+    }
+
+
+
     MD5Init(&hashcontext);
-    MD5Update(&hashcontext, cromimage, biosSize-0x1000);
-    MD5Final(BiosHeader->MD5Hash, &hashcontext);      
+    MD5Update(&hashcontext, cromimage, md5Size);
+    MD5Final(BiosHeader->MD5Hash, &hashcontext);
+
+    memcpy(temp, BiosHeader->Magic, 4);
+    temp[4] = '\0';
+    printf("BiosIdentifier content\n");
+    printf("Magic:          %s\n", temp);
+    printf("HeaderVersion:  %u\n", BiosHeader->HeaderVersion);
+    printf("XboxVersion:    %u\n", BiosHeader->XboxVersion);
+    printf("VideoEncoder:   %u\n", BiosHeader->VideoEncoder);
+    printf("Option1:        %u\n", BiosHeader->Option1);
+    printf("Option2:        %u\n", BiosHeader->Option2);
+    printf("Option3:        %u\n", BiosHeader->Option3);
+    printf("BiosSize:       %u\n", BiosHeader->BiosSize);
+    memcpy(temp, BiosHeader->Name, 32);
+    temp[32] = '\0';
+    printf("Name:           %s\n", BiosHeader->Name);
+    printf("MD5Hash:        %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", BiosHeader->MD5Hash[0], BiosHeader->MD5Hash[1], BiosHeader->MD5Hash[2], BiosHeader->MD5Hash[3], BiosHeader->MD5Hash[4], BiosHeader->MD5Hash[5], BiosHeader->MD5Hash[6], BiosHeader->MD5Hash[7], BiosHeader->MD5Hash[8], BiosHeader->MD5Hash[9], BiosHeader->MD5Hash[10], BiosHeader->MD5Hash[11], BiosHeader->MD5Hash[12], BiosHeader->MD5Hash[13], BiosHeader->MD5Hash[14], BiosHeader->MD5Hash[15]);
+
+    printf("\nMD5 hash calculated on buffer size : 0x%X bytes\n\n", md5Size);
 }
 
 int xberepair (    uint8_t * xbeimage,
@@ -336,6 +347,7 @@ int romcopy (
     // Ok, we have loaded both images, we can continue
     
     // this is very nasty, but simple , we Dump a GDT to the TOP rom
+        // XXX: necessary? MCPX supposedly replace top 512 bytes with its own bootsect. Might free up some space.
         memset(&loaderimage[0x3fe00],0x90,512);
         memset(&loaderimage[0x3ffd0],0x00,32);
         loaderimage[0x3ffcf] = 0xfc;
@@ -477,20 +489,16 @@ int romcopy (
 #endif
      
     //Apply the SmartXX bios identifier data
-          writeBiosIdentifier(flash256, 256*1024);
-          //writeBiosIdentifier(flash1024, 1024*1024);
+    //V1 for now
+    writeBiosIdentifier(flash256, bootloaderstruct.compressed_image_start + bootloaderstruct.compressed_image_size + 20);
+    //writeBiosIdentifier(flash1024, 1024*1024);
     // Write the 256 /1024 Kbyte Image Back
-          f = fopen(binname256, "w");               
+    f = fopen(binname256, "w");
     fwrite(flash256, 1, 256*1024, f);
-           fclose(f);    
-    
-    //      f = fopen(binname1024, "w");
-    //fwrite(flash1024, 1, 1024*1024, f);
-    //       fclose(f);
+    fclose(f);
               
 #ifdef debug
     printf("Binary 256k File Created : %s\n\n",binname256);
-   // printf("Binary 1MB  File Created : %s\n",binname1024);
 #endif                  
     return 0;    
 }        

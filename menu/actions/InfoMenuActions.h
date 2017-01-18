@@ -13,7 +13,7 @@ void ShowTemperature(void *whatever);
 void ShowVideo(void *whatever);
 void ShowEeprom(void *whatever);
 void ShowFlashChip(void *whatever);
-void InfoHeader(char *title);
+#if 0
 void ShowUncommittedChanges(void *whatever);
-
+#endif
 #endif

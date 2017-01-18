@@ -8,7 +8,10 @@ GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)
 GCC_4.2 := $(shell expr `$(CC) -dumpversion` \>= 4.2)
 
 DEBUG ?= 0 #run make with "DEBUG=1" argument to enable extra debug
+TSOPCTRL ?= 0 #Override TSOP control availability based on Xbox Revision
+VGA ?= 0 #Generates VGA enabled by default image. Does not override existing setting in flash.
 ETHERBOOT := yes
+LWIPFOLDER := lwip-2.0.1
 
 INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/cdrom \
 	-I$(TOPDIR)/fs/fatx -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/eeprom -I$(TOPDIR)/lib/crypt \
@@ -16,15 +19,15 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 	-I$(TOPDIR)/boot_xbe/ -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/cromwell/font \
 	-I$(TOPDIR)/startuploader -I$(TOPDIR)/drivers/cpu -I$(TOPDIR)/menu \
 	-I$(TOPDIR)/lib/jpeg/ -I$(TOPDIR)/menu/actions -I$(TOPDIR)/menu/textmenu \
-	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/lwip -I$(TOPDIR)/lwip/src/include \
-	-I$(TOPDIR)/lwip/src/include/ipv4
+	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/$(LWIPFOLDER) -I$(TOPDIR)/$(LWIPFOLDER)/src/include \
+	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps
 
 #These are intended to be non-overridable.
 CROM_CFLAGS=$(INCLUDE)
 
 #You can override these if you wish.
-CFLAGS= -Os -march=pentium -m32 -pipe -fomit-frame-pointer -Wstrict-prototypes -DIPv4 -fpack-struct -Wreturn-type -ffreestanding
-
+CFLAGS= -Os -march=pentium -m32 -Werror -Wstrict-prototypes -Wreturn-type -pipe -fomit-frame-pointer  -DIPv4 -fpack-struct -ffreestanding
+2BL_CFLAGS= -O2 -march=pentium -m32 -Werror -Wstrict-prototypes -Wreturn-type -pipe -fomit-frame-pointer -fpack-struct -ffreestanding
 # add the option for gcc 3.3 only, again, non-overridable
 ifeq ($(GCC_3.3), 1)
 CROM_CFLAGS += -fno-zero-initialized-in-bss
@@ -41,7 +44,7 @@ OBJCOPY = ${PREFIX}objcopy
 export CC
 
 TOPDIR  := $(shell /bin/pwd)
-SUBDIRS	= boot_rom fs drivers lib boot menu lwip xblast
+SUBDIRS	= fs drivers lib boot menu $(LWIPFOLDER) xblast
 #### Etherboot specific stuff
 ifeq ($(ETHERBOOT), yes)
 ETH_SUBDIRS = etherboot
@@ -57,6 +60,15 @@ ifeq ($(DEBUG), 1)
 DEBUG_FLAGS = -DDEV_FEATURES -DSPITRACE
 CROM_CFLAGS += $(DEBUG_FLAGS)
 ETH_CFLAGS += $(DEBUG_FLAGS)
+endif
+
+ifeq ($(TSOPCTRL), 1)
+CROM_CFLAGS += -DCUSTOM_TSOP
+ETH_CFLAGS += -DCUSTOM_TSOP
+endif
+
+ifeq ($(VGA), 1)
+CROM_CFLAGS += -DDEFAULT_ENABLE_VGA
 endif
 endif
 
@@ -106,6 +118,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootVideoHelpers.o
 OBJECTS-CROM += $(TOPDIR)/obj/cromString.o
 OBJECTS-CROM += $(TOPDIR)/obj/string.o
 OBJECTS-CROM += $(TOPDIR)/obj/sortHelpers.o
+OBJECTS-CROM += $(TOPDIR)/obj/rand.o
 OBJECTS-CROM += $(TOPDIR)/obj/vsprintf.o
 OBJECTS-CROM += $(TOPDIR)/obj/timeManagement.o
 OBJECTS-CROM += $(TOPDIR)/obj/Gentoox.o
@@ -132,6 +145,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/LCDMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/EepromEditMenuInit.o
 #OBJECTS-CROM += $(TOPDIR)/obj/BFMBootMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/XBlastScriptMenuInit.o
+OBJECTS-CROM += $(TOPDIR)/obj/UncommittedChangesMenuInit.o
 OBJECTS-CROM += $(TOPDIR)/obj/MenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/VideoMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/InfoMenuActions.o
@@ -141,7 +155,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/HDDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/CDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LEDMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/ToolsMenuActions.o
-OBJECTS-CROM += $(TOPDIR)/obj/Confirm.o
+#OBJECTS-CROM += $(TOPDIR)/obj/Confirm.o
 OBJECTS-CROM += $(TOPDIR)/obj/OnScreenKeyboard.o
 OBJECTS-CROM += $(TOPDIR)/obj/ModchipMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDMenuActions.o
@@ -151,6 +165,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/NetworkMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/EepromEditMenuActions.o
 #OBJECTS-CROM += $(TOPDIR)/obj/BFMBootMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/XBlastScriptMenuActions.o
+OBJECTS-CROM += $(TOPDIR)/obj/UncommittedChangesMenuActions.o
 OBJECTS-CROM += $(TOPDIR)/obj/LoadLinux.o
 OBJECTS-CROM += $(TOPDIR)/obj/setup.o
 OBJECTS-CROM += $(TOPDIR)/obj/iso9660.o
@@ -160,8 +175,9 @@ OBJECTS-CROM += $(TOPDIR)/obj/microcode.o
 OBJECTS-CROM += $(TOPDIR)/obj/ioapic.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootInterrupts.o
 OBJECTS-CROM += $(TOPDIR)/obj/nanojpeg.o
-OBJECTS-CROM += $(TOPDIR)/obj/BootFlash.o
-OBJECTS-CROM += $(TOPDIR)/obj/BootFlashUi.o
+OBJECTS-CROM += $(TOPDIR)/obj/FlashLowLevel.o
+OBJECTS-CROM += $(TOPDIR)/obj/FlashDriver.o
+OBJECTS-CROM += $(TOPDIR)/obj/FlashUi.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootEEPROM.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLPCMod.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
@@ -169,11 +185,14 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
 OBJECTS-CROM += $(TOPDIR)/obj/md5.o
+OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 OBJECTS-CROM += $(TOPDIR)/obj/strtol.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettings.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsChangeTracker.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsImportExport.o
+OBJECTS-CROM += $(TOPDIR)/obj/PowerManagement.o
+OBJECTS-CROM += $(TOPDIR)/obj/HardwareIdentifier.o
 #USB
 OBJECTS-CROM += $(TOPDIR)/obj/config.o 
 OBJECTS-CROM += $(TOPDIR)/obj/hcd-pci.o
@@ -201,8 +220,9 @@ OBJECTS-CROM += $(TOPDIR)/obj/xbox_pci.o
 OBJECTS-CROM += $(TOPDIR)/obj/etherboot_config.o
 endif
 
-OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
-#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,ebd.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o webserver.o)# tcpListener.o netflash.o  webupdate.o)#netboot.o webboot.o webupdate.o)
+OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o err.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timeouts.o udp.o dhcp.o icmp.o ip4.o ip4_addr.o ip4_frag.o etharp.o fs.o httpd.o ethernet.o ip.o)
+#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o err.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o httpd.o)
+
 
 OBJECTS-CROM += $(OBJECTS-LWIP)
 
@@ -218,7 +238,7 @@ endif
 
 .PHONY: all clean
 
-all: clean
+all: makefsdata
 	@$(MAKE) -j16 --no-print-directory resources $(BOOT_ETH_SUBDIRS) cromsubdirs xbeboot xromwell.xbe vml_startup vmlboot $(BOOT_ETH_DIR) obj/image-crom.bin cromwell.bin imagecompress 256KBBinGen crcbin
 
 ifeq ($(ETHERBOOT), yes)
@@ -230,6 +250,10 @@ endif
 cromsubdirs: $(patsubst %, _dir_%, $(SUBDIRS))
 $(patsubst %, _dir_%, $(SUBDIRS)) : dummy
 	$(MAKE) CFLAGS="$(CFLAGS) $(CROM_CFLAGS)" -C $(patsubst _dir_%, %, $@)
+	
+2blsubdirs: $(patsubst %, _dir_%, boot_rom)
+$(patsubst %, _dir_%, boot_rom) : dummy
+	$(MAKE) CFLAGS="$(2BL_CFLAGS) $(INCLUDE)" -C $(patsubst _dir_%, %, $@)
 
 dummy:
 
@@ -252,7 +276,9 @@ clean:
 	rm -f $(TOPDIR)/bin/imagebld*
 	rm -f $(TOPDIR)/bin/crcbin*
 	rm -f $(TOPDIR)/bin/scriptChecker*
+	rm -f $(TOPDIR)/bin/makefsdata
 	rm -f $(TOPDIR)/boot_vml/disk/vmlboot
+	rm -f $(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fsdata.c
 	rm -f boot_eth/ethboot
 	mkdir -p $(TOPDIR)/xbe 
 	mkdir -p $(TOPDIR)/image
@@ -287,7 +313,7 @@ xromwell.xbe: xbeboot
 xbeboot:
 	$(CC) ${CFLAGS} -c -o ${OBJECTS-XBE} boot_xbe/xbeboot.S
 
-cromwell.bin: cromsubdirs
+cromwell.bin: cromsubdirs 2blsubdirs
 	${LD} -o $(TOPDIR)/obj/2lbimage.elf ${OBJECTS-ROMBOOT} ${LDFLAGS-ROMBOOT} -Map $(TOPDIR)/obj/2lbimage.map
 	${OBJCOPY} --output-target=binary --strip-all $(TOPDIR)/obj/2lbimage.elf $(TOPDIR)/obj/2blimage.bin
 
@@ -316,3 +342,12 @@ imagecompress: obj/image-crom.bin bin/imagebld
 256KBBinGen: imagecompress crcbin cromwell.bin
 	bin/imagebld -rom obj/2blimage.bin obj/c.gz image/cromwell.bin
 	bin/crcbin image/cromwell.bin image/crcwell.bin
+	
+makefsdata: clean
+	gcc -I"$(TOPDIR)/$(LWIPFOLDER)" -I"$(TOPDIR)/$(LWIPFOLDER)/src/include" -O2 -Wall -c -o "obj/makefsdata.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/makefsdata.c"
+	gcc -O2 -Wall -c -o "obj/findfirst.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/findfirst.c"
+	gcc -O2 -Wall -c -o "obj/spec.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/spec.c"
+	gcc -o bin/makefsdata obj/findfirst.o obj/spec.o obj/makefsdata.o
+	bin/makefsdata "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fs" -e -nossi
+	mv fsdata.c "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fsdata.c"
+	

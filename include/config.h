@@ -3,7 +3,7 @@
 #define PROG_NAME "XBlast OS"
 
 //XBlast OS version number
-#define VERSION "0.41 (beta)"
+#define VERSION "0.45 (beta)"
 
 // selects between the supported video modes, see boot.h for enum listing those available
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600
@@ -16,7 +16,7 @@
 #define ADVANCED_MENU
 
 //Time to wait in seconds before auto-selecting default boot item
-#define BOOT_TIMEWAIT 5
+#define BOOT_TIMEWAIT 0
 
 //Time to wait in seconds before auto-selecting default menu item
 #define MENU_TIMEWAIT 5

@@ -220,3 +220,11 @@ size_t strlen (const char *__s)
         :"=c" (__res), "=&D" (d0) :"1" (__s),"a" (0), "0" (0xffffffffu));
     return __res;
 }
+
+char *strchr(const char *s, int c)
+{
+    while (*s != (char)c)
+        if (!*s++)
+            return 0;
+    return (char *)s;
+}
