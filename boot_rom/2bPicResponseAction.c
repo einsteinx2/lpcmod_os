@@ -13,7 +13,7 @@
  ***************************************************************************/
 
 #include "2bload.h"
-
+#include <stdbool.h>
 
 // ----------------------------  I2C -----------------------------------------------------------
 //
@@ -22,29 +22,37 @@
 
 int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char bDataToWrite)
 {
-    int nRetriesToLive=400;
+    int nRetriesToLive = 400;
 
-    //if(IoInputWord(I2C_IO_BASE+0)&0x8000) {  }
-    while(IoInputWord(I2C_IO_BASE+0)&0x0800) ;  // Franz's spin while bus busy with any master traffic
+    while(IoInputWord(I2C_IO_BASE + 0) & 0x0800);  // Franz's spin while bus busy with any master traffic
 
-    while(nRetriesToLive--) {
+    while(nRetriesToLive--)
+    {
 
-        IoOutputByte(I2C_IO_BASE+4, (bPicAddressI2cFormat<<1)|1);
-        IoOutputByte(I2C_IO_BASE+8, bDataToWrite);
-        IoOutputWord(I2C_IO_BASE+0, 0xffff); // clear down all preexisting errors
-        IoOutputByte(I2C_IO_BASE+2, 0x0a);
+        IoOutputByte(I2C_IO_BASE + 4, (bPicAddressI2cFormat << 1) | 1);
+        IoOutputByte(I2C_IO_BASE + 8, bDataToWrite);
+        IoOutputWord(I2C_IO_BASE + 0, 0xffff); // clear down all preexisting errors
+        IoOutputByte(I2C_IO_BASE + 2, 0x0a);
 
         {
-            unsigned char b=0x0;
-            while( (b&0x36)==0 ) { b=IoInputByte(I2C_IO_BASE+0); }
+            unsigned char b = 0x0;
+            while((b & 0x36) == 0)
+            {
+                b = IoInputByte(I2C_IO_BASE + 0);
+            }
 
-            if(b&0x24) {
+            if(b & 0x24)
+            {
                 //bprintf("I2CTransmitByteGetReturn error %x\n", b);
             }
-            if(!(b&0x10)) {
+
+            if((b & 0x10) == false)
+            {
                 //bprintf("I2CTransmitByteGetReturn no complete, retry\n");
-            } else {
-                return (int)IoInputByte(I2C_IO_BASE+6);
+            }
+            else
+            {
+                return (int)IoInputByte(I2C_IO_BASE + 6);
             }
         }
     }
@@ -56,28 +64,36 @@ int I2CTransmitByteGetReturn(unsigned char bPicAddressI2cFormat, unsigned char b
 
 int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWrite)
 {
-    int nRetriesToLive=400;
+    int nRetriesToLive = 400;
 
-    while(IoInputWord(I2C_IO_BASE+0)&0x0800) ;  // Franz's spin while bus busy with any master traffic
+    while(IoInputWord(I2C_IO_BASE + 0) & 0x0800) ;  // Franz's spin while bus busy with any master traffic
 
-    while(nRetriesToLive--) {
-        IoOutputByte(I2C_IO_BASE+4, (bPicAddressI2cFormat<<1)|0);
+    while(nRetriesToLive--)
+    {
+        IoOutputByte(I2C_IO_BASE + 4, (bPicAddressI2cFormat << 1) | 0);
 
-        IoOutputByte(I2C_IO_BASE+8, (unsigned char)(wDataToWrite>>8));
-        IoOutputByte(I2C_IO_BASE+6, (unsigned char)wDataToWrite);
-        IoOutputWord(I2C_IO_BASE+0, 0xffff);  // clear down all preexisting errors
-        IoOutputByte(I2C_IO_BASE+2, 0x1a);
+        IoOutputByte(I2C_IO_BASE + 8, (unsigned char)(wDataToWrite >> 8));
+        IoOutputByte(I2C_IO_BASE + 6, (unsigned char)wDataToWrite);
+        IoOutputWord(I2C_IO_BASE + 0, 0xffff);  // clear down all preexisting errors
+        IoOutputByte(I2C_IO_BASE + 2, 0x1a);
 
         {
-            unsigned char b=0x0;
-            while( (b&0x36)==0 ) { b=IoInputByte(I2C_IO_BASE+0); }
+            unsigned char b = 0x0;
+            while((b & 0x36) == 0)
+            {
+                b = IoInputByte(I2C_IO_BASE + 0);
+            }
 
-            if(b&0x24) {
+            if(b & 0x24)
+            {
                 //bprintf("I2CTransmitWord error %x\n", b);
             }
-            if(!(b&0x10)) {
+            if((b & 0x10) == false)
+            {
                 //bprintf("I2CTransmitWord no complete, retry\n");
-            } else {
+            }
+            else
+            {
                 return ERR_SUCCESS;
             }
         }
@@ -90,8 +106,9 @@ int I2CTransmitWord(unsigned char bPicAddressI2cFormat, unsigned short wDataToWr
 // given four bytes, returns a unsigned short
 // LSB of return is the 'first' byte, MSB is the 'second' response byte
 
-unsigned short BootPicManipulation(unsigned char bC, unsigned char bD, unsigned char bE,    unsigned char bF) {
-    int n=4;
+unsigned short BootPicManipulation(unsigned char bC, unsigned char bD, unsigned char bE, unsigned char bF)
+{
+    int n = 4;
     unsigned char
         b1 = 0x33,
         b2 = 0xed,
@@ -99,12 +116,13 @@ unsigned short BootPicManipulation(unsigned char bC, unsigned char bD, unsigned 
         b4 = ((bC+0x0b) ^ (bD>>2) ^ (bE +0x1b))
     ;
 
-    while(n--) {
+    while(n--)
+    {
         b1 += b2 ^ b3;
         b2 += b1 ^ b4;
     }
 
-    return (unsigned short) ((((unsigned short)b2)<<8) | b1);
+    return (unsigned short)((((unsigned short)b2) << 8) | b1);
 }
 
 // actual business of getting I2C data from PIC and reissuing munged version
@@ -114,18 +132,21 @@ int BootPerformPicChallengeResponseAction()
 {
     unsigned char bC, bD, bE, bF;
 
-    bC=I2CTransmitByteGetReturn( 0x10, 0x1c );
-    bD=I2CTransmitByteGetReturn( 0x10, 0x1d );
-    bE=I2CTransmitByteGetReturn( 0x10, 0x1e );
-    bF=I2CTransmitByteGetReturn( 0x10, 0x1f );
-    if ((bC==0) && (bD==0) && (bE==0) && (bF==0)) I2CTransmitWord(0x10, 0x0240);
+    bC = I2CTransmitByteGetReturn( 0x10, 0x1c );
+    bD = I2CTransmitByteGetReturn( 0x10, 0x1d );
+    bE = I2CTransmitByteGetReturn( 0x10, 0x1e );
+    bF = I2CTransmitByteGetReturn( 0x10, 0x1f );
+    if ((bC == 0) && (bD == 0) && (bE == 0) && (bF == 0))
+    {
+        I2CTransmitWord(0x10, 0x0240);
+    }
 
     {
-        unsigned short w=BootPicManipulation(bC, bD, bE, bF);
+        unsigned short w = BootPicManipulation(bC, bD, bE, bF);
 
-        I2CTransmitWord( 0x10, 0x2000 | (w&0xff));
-        I2CTransmitWord( 0x10, 0x2100 | (w>>8) );
-        I2CTransmitWord( 0x10, 0x0100 );
+        I2CTransmitWord(0x10, 0x2000 | (w&0xff));
+        I2CTransmitWord(0x10, 0x2100 | (w>>8));
+        I2CTransmitWord(0x10, 0x0100);
     }
 
     // continues as part of video setup....
@@ -134,8 +155,8 @@ int BootPerformPicChallengeResponseAction()
 #if 0
 extern int I2cSetFrontpanelLed(unsigned char b)
 {
-    I2CTransmitWord( 0x10, 0x800 | b);  // sequencing thanks to Jarin the Penguin!
-    I2CTransmitWord( 0x10, 0x701);
+    I2CTransmitWord(0x10, 0x800 | b);  // sequencing thanks to Jarin the Penguin!
+    I2CTransmitWord(0x10, 0x701);
     return ERR_SUCCESS;
 }
 #endif

@@ -26,14 +26,17 @@ extern int decompress_kernel(char*out, char *data, int len);
 #define PROGRAMM_Memory_2bl 	 	0x00100000
 #define CROMWELL_compress_temploc 	0x02000000
 
-extern void BootStartBiosLoader ( void ) {
-    unsigned int cromwellidentify      =  1;
-    unsigned int flashbank             =  1;  // Default Bank
+#define SHA1Length 20
+
+extern void BootStartBiosLoader ( void )
+{
+    unsigned int cromwellidentify = 1;
+    unsigned int flashbank = 1;  // Default Bank
             
     struct SHA1Context context;
-    unsigned char SHA1_result[20];
+    unsigned char SHA1_result[SHA1Length];
         
-    unsigned char bootloaderChecksum[20];
+    unsigned char bootloaderChecksum[SHA1Length];
     unsigned int bootloadersize;
     unsigned int loadretry;
     unsigned int compressed_image_start;
@@ -50,61 +53,70 @@ extern void BootStartBiosLoader ( void ) {
     while(1);
 #endif
     
-    BootPerformPicChallengeResponseAction();
-    memcpy(&bootloaderChecksum[0],(void*)PROGRAMM_Memory_2bl,20);
-    memcpy(&bootloadersize,(void*)(PROGRAMM_Memory_2bl+20),4);
-    memcpy(&compressed_image_start,(void*)(PROGRAMM_Memory_2bl+24),4);
-    memcpy(&compressed_image_size,(void*)(PROGRAMM_Memory_2bl+28),4);
-    memcpy(&Biossize_type,(void*)(PROGRAMM_Memory_2bl+32),4);   //0 for 256KB image. 1 for 1MB image.
+    BootPerformPicChallengeResponseAction();    // MNust be done very quick. 1.0 boards have SMC with very strict timing.
+
+    memcpy(&bootloaderChecksum[0], (void*)PROGRAMM_Memory_2bl, SHA1Length);
+    memcpy(&bootloadersize, (void*)(PROGRAMM_Memory_2bl + SHA1Length), sizeof(unsigned int));
+    memcpy(&compressed_image_start, (void*)(PROGRAMM_Memory_2bl + SHA1Length + sizeof(bootloadersize)), sizeof(unsigned int));
+    memcpy(&compressed_image_size, (void*)(PROGRAMM_Memory_2bl + SHA1Length + sizeof(bootloadersize) + sizeof(compressed_image_start)), sizeof(unsigned int));
+    memcpy(&Biossize_type, (void*)(PROGRAMM_Memory_2bl + SHA1Length + sizeof(bootloadersize) + sizeof(compressed_image_start) + sizeof(compressed_image_size)), sizeof(unsigned int));   //0 for 256KB image. 1 for 1MB image.
 
 
     SHA1Reset(&context);
-    SHA1Input(&context,(void*)(PROGRAMM_Memory_2bl+20),bootloadersize-20);
-    SHA1Result(&context,SHA1_result);
+    SHA1Input(&context, (void*)(PROGRAMM_Memory_2bl + SHA1Length), bootloadersize - SHA1Length);
+    SHA1Result(&context, SHA1_result);
             
-    if (memcmp(&bootloaderChecksum[0],&SHA1_result[0],20)) {
+    if (memcmp(&bootloaderChecksum[0], &SHA1_result[0], 20 * sizeof(char)))
+    {
         // Bad, the checksum does not match, but we can nothing do now. Reset console.
         goto kill;
     }
     // HEHE, the Image we copy'd into ram is SHA-1 hash identical, this is Optimum
        
     // Sets the Graphics Card to 60 MB start address
-    (*(unsigned int*)0xFD600800) = (0xf0000000 | ((64*0x100000) - 0x00400000));
+    (*(unsigned int*)0xFD600800) = FB_START;
     
     // Lets go, we have finished, the Most important Startup, we have now a valid Micro-loder im Ram
     // we are quite happy now
     
-    for (loadretry=0;loadretry<10;loadretry++) {
+    for (loadretry = 0; loadretry < 10; loadretry++)
+    {
         // Copy From Flash To RAM
         //Copy Kernel SHA-1 checksum
-        memcpy(&bootloaderChecksum[0],(void*)(0xff000000+compressed_image_start),20);
+        memcpy(&bootloaderChecksum[0], (void*)(0xff000000 + compressed_image_start), SHA1Length);
 
         // Copy GZipped Kernel
-        memcpy((void*)CROMWELL_compress_temploc,(void*)(0xff000000+compressed_image_start+20),compressed_image_size);
+        memcpy((void*)CROMWELL_compress_temploc, (void*)(0xff000000+compressed_image_start + SHA1Length),compressed_image_size);
 
         // Set remaining space after compressed data to 0x0.
         //XXX: Is this necessary?
-        memset((void*)(CROMWELL_compress_temploc+compressed_image_size),0x00,20*1024);
+        memset((void*)(CROMWELL_compress_temploc + compressed_image_size), 0x00, 20*1024);
         
         // Lets Look, if we have got a Valid thing from Flash            
         SHA1Reset(&context);
-        SHA1Input(&context,(void*)(CROMWELL_compress_temploc),compressed_image_size);
-        SHA1Result(&context,SHA1_result);
+        SHA1Input(&context, (void*)(CROMWELL_compress_temploc), compressed_image_size);
+        SHA1Result(&context, SHA1_result);
         
 
-        if (memcmp(&bootloaderChecksum[0],SHA1_result,20)==0) {
+        if(memcmp(&bootloaderChecksum[0], SHA1_result, SHA1Length) == 0)
+        {
             // The Checksum is good                          
             // We start the Cromwell immediatly
             BufferIN = (unsigned char *)(CROMWELL_compress_temploc);
-            BufferINlen=compressed_image_size;
+            BufferINlen = compressed_image_size;
             BufferOUT = (unsigned char *)CROMWELL_Memory_pos;
+            memset((void *)CROMWELL_Memory_pos, 0x00, 0x400000);
             decompress_kernel(BufferOUT, BufferIN, BufferINlen);
             
             // This is a config bit in Cromwell, telling the Cromwell, that it is a Cromwell and not a Xromwell
-            memcpy((void*)(CROMWELL_Memory_pos+0x20),&cromwellidentify,4);  //Will be cromwell_config in Cromwell
-            memcpy((void*)(CROMWELL_Memory_pos+0x24),&loadretry,4);       //Will be cromwell_retryload in Cromwell
-            memcpy((void*)(CROMWELL_Memory_pos+0x28),&flashbank,4);        //Will be cromwell_loadbank in Cromwell
-            memcpy((void*)(CROMWELL_Memory_pos+0x2C),&Biossize_type,4);    //Will be cromwell_Biostype in Cromwell
+            // Will be cromwell_config in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos + 0x20), &cromwellidentify, sizeof(cromwellidentify));
+            // Will be cromwell_retryload in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos + 0x20 + sizeof(cromwellidentify)), &loadretry, sizeof(loadretry));
+            // Will be cromwell_loadbank in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos + 0x20 + sizeof(cromwellidentify) + sizeof(loadretry)), &flashbank, sizeof(flashbank));
+            // Will be cromwell_Biostype in Cromwell
+            memcpy((void*)(CROMWELL_Memory_pos + 0x20 + sizeof(cromwellidentify) + sizeof(loadretry) + sizeof(flashbank)), &Biossize_type, sizeof(Biossize_type));
 
 
             // We now jump to the cromwell, Good bye 2bl loader

@@ -24,7 +24,7 @@ TEXTMENU *ToolsMenuInit(void)
     menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Tools");
 
-    if(isXBE() == false || fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)
+    if(isXBE() == false || isXBlastOnLPC())
     {
         //Save EEPROM data to flash
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));

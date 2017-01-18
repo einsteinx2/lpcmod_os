@@ -68,7 +68,7 @@ TEXTMENU* XBlastScriptMenuInit(void)
     }
 
     //No need to show this item if there's no way to persist setting.
-    if(isXBE() == false || fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT)
+    if(isXBE() == false || isXBlastOnLPC())
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption,"Enable Boot script : ");

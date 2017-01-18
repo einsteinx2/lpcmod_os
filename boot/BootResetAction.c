@@ -171,7 +171,7 @@ extern void BootResetAction ( void )
 
     debugSPIPrint("XBlast OS is starting.\n");
 
-    A19controlModBoot=BNKFULLTSOP;        //Start assuming no control over A19 line.
+    A19controlModBoot = BNKFULLTSOP;        //Start assuming no control over A19 line.
 
     //Set to NULL as it's not used yet.
     //gobalGenericPtr = NULL;
@@ -196,10 +196,10 @@ extern void BootResetAction ( void )
     GenPurposeIOs.EN_5V = 0;
 #endif
 
-    memcpy(&cromwell_config,(void*)(CODE_LOC_START+0x20),4);
-    memcpy(&cromwell_retryload,(void*)(CODE_LOC_START+0x24),4);
-    memcpy(&cromwell_loadbank,(void*)(CODE_LOC_START+0x28),4);
-    memcpy(&cromwell_Biostype,(void*)(CODE_LOC_START+0x2C),4);
+    memcpy(&cromwell_config, (void*)(CODE_LOC_START + 0x20), sizeof(cromwell_config));
+    memcpy(&cromwell_retryload, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config)), sizeof(cromwell_retryload));
+    memcpy(&cromwell_loadbank, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config) + sizeof(cromwell_retryload)), sizeof(cromwell_loadbank));
+    memcpy(&cromwell_Biostype, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config) + sizeof(cromwell_retryload) + sizeof(cromwell_loadbank)), sizeof(cromwell_Biostype));
 
     VIDEO_CURSOR_POSX=40;
     VIDEO_CURSOR_POSY=140;
@@ -208,7 +208,7 @@ extern void BootResetAction ( void )
     nInteruptable = 0;
 
     // prep our BIOS console print state
-    VIDEO_ATTR=0xffffffff;
+    VIDEO_ATTR = 0xffffffff;
 
     // init malloc() and free() structures
     MemoryManagementInitialization((void *)MEMORYMANAGERSTART, MEMORYMANAGERSIZE);
@@ -232,7 +232,6 @@ extern void BootResetAction ( void )
     {
         LEDRed(NULL);        //Signal the user to press Eject button to avoid Quickboot.
     }
-
 
 
     Flash_Init();
