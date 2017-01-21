@@ -381,6 +381,8 @@ const EEPROMDATA* getRecoveryImage(void)
     case XboxMotherboardRevision_1_0:
         return EEPROMimg10;
     case XboxMotherboardRevision_1_1:
+    case XboxMotherboardRevision_1_2:
+    case XboxMotherboardRevision_1_4:
         return EEPROMimg11;
 /*    case REV1_2:
         return EEPROMimg12;
