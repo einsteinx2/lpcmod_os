@@ -16,12 +16,12 @@
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
+#include <dos.h>
 #else
 #include <dirent.h>
 #include <unistd.h>
 #include <errno.h>
 #endif
-//#include <dos.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -86,21 +86,6 @@ int deflate_level = 10; /* default compression level, can be changed via command
 #define CHDIR_SUCCEEDED(ret)          (ret == TRUE)
 
 #else
-
-#include "findfirst.h"
-#include "spec.h"
-
-
-#define FIND_T                        struct _finddata_t
-#define FIND_T_FILENAME(fInfo)        (fInfo.name)
-#define FIND_T_IS_DIR(fInfo)          ((fInfo.attrib & _A_SUBDIR) == _A_SUBDIR)
-#define FIND_T_IS_FILE(fInfo)         ((fInfo.attrib & _A_SUBDIR) == 0)
-#define FIND_RET_T                    int
-#define FINDFIRST_FILE(path, result)  _findfirst(path, result)
-#define FINDFIRST_DIR(path, result)   _findfirst(path, result)
-#define FINDNEXT(ff_res, result)      _findnext(ff_res, result)
-#define FINDFIRST_SUCCEEDED(ret)      (ret != 0)
-#define FINDNEXT_SUCCEEDED(ret)       (ret == 0)
 
 #define GETCWD(path, len)             getcwd(path, len)
 #define CHDIR(path)                   chdir(path)
@@ -448,65 +433,172 @@ void concat_files(const char *file1, const char *file2, const char *targetfile)
 
 int process_sub(FILE *data_file, FILE *struct_file)
 {
-  FIND_T fInfo;
-  FIND_RET_T fret;
-  int filesProcessed = 0;
+#ifdef WIN32
+    FIND_T fInfo;
+    FIND_RET_T fret;
+    int filesProcessed = 0;
 
-  if (processSubs) {
-    /* process subs recursively */
-    size_t sublen = strlen(curSubdir);
-    size_t freelen = sizeof(curSubdir) - sublen - 1;
-    LWIP_ASSERT("sublen < sizeof(curSubdir)", sublen < sizeof(curSubdir));
-    fret = FINDFIRST_DIR("*", &fInfo);
+    if (processSubs) {
+      /* process subs recursively */
+      size_t sublen = strlen(curSubdir);
+      size_t freelen = sizeof(curSubdir) - sublen - 1;
+      LWIP_ASSERT("sublen < sizeof(curSubdir)", sublen < sizeof(curSubdir));
+      fret = FINDFIRST_DIR("*", &fInfo);
+      if (FINDFIRST_SUCCEEDED(fret)) {
+        do {
+          const char *curName = FIND_T_FILENAME(fInfo);
+          if ((curName[0] == '.') || (strcmp(curName, "CVS") == 0)) {
+            continue;
+          }
+          if (!FIND_T_IS_DIR(fInfo)) {
+            continue;
+          }
+          if (freelen > 0) {
+             if(CHDIR(curName))
+             {
+                 printf("!!!Cannot change directory. Aborting...\n");
+                 return -1;
+             }
+             strncat(curSubdir, "/", freelen);
+             strncat(curSubdir, curName, freelen - 1);
+             curSubdir[sizeof(curSubdir) - 1] = 0;
+             printf("processing subdirectory %s/..." NEWLINE, curSubdir);
+             filesProcessed += process_sub(data_file, struct_file);
+             if(CHDIR(".."))
+             {
+                 printf("!!!Cannot change directory. Aborting...\n");
+                 return -1;
+             }
+             curSubdir[sublen] = 0;
+          } else {
+             printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, curName);
+          }
+        } while (FINDNEXT_SUCCEEDED(FINDNEXT(fret, &fInfo)));
+      }
+    }
+
+    fret = FINDFIRST_FILE("*.*", &fInfo);
     if (FINDFIRST_SUCCEEDED(fret)) {
+      /* at least one file in directory */
       do {
-        const char *curName = FIND_T_FILENAME(fInfo);
-        if ((curName[0] == '.') || (strcmp(curName, "CVS") == 0)) {
-          continue;
-        }
-        if (!FIND_T_IS_DIR(fInfo)) {
-          continue;
-        }
-        if (freelen > 0) {
-           if(CHDIR(curName))
-           {
-               printf("!!!Cannot change directory. Aborting...\n");
-               return -1;
-           }
-           strncat(curSubdir, "/", freelen);
-           strncat(curSubdir, curName, freelen - 1);
-           curSubdir[sizeof(curSubdir) - 1] = 0;
-           printf("processing subdirectory %s/..." NEWLINE, curSubdir);
-           filesProcessed += process_sub(data_file, struct_file);
-           if(CHDIR(".."))
-           {
-               printf("!!!Cannot change directory. Aborting...\n");
-               return -1;
-           }
-           curSubdir[sublen] = 0;
-        } else {
-           printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, curName);
+        if (FIND_T_IS_FILE(fInfo)) {
+          const char *curName = FIND_T_FILENAME(fInfo);
+          printf("processing %s/%s..." NEWLINE, curSubdir, curName);
+          if (process_file(data_file, struct_file, curName) < 0) {
+            printf(NEWLINE "Error... aborting" NEWLINE);
+            return -1;
+          }
+          filesProcessed++;
         }
       } while (FINDNEXT_SUCCEEDED(FINDNEXT(fret, &fInfo)));
     }
-  }
+#else
+    DIR* workingDir = NULL;
+    struct dirent* dirContent = NULL;
+    int filesProcessed = 0;
+    char currentDir[PATH_MAX];
 
-  fret = FINDFIRST_FILE("*.*", &fInfo);
-  if (FINDFIRST_SUCCEEDED(fret)) {
-    /* at least one file in directory */
-    do {
-      if (FIND_T_IS_FILE(fInfo)) {
-        const char *curName = FIND_T_FILENAME(fInfo);
-        printf("processing %s/%s..." NEWLINE, curSubdir, curName);
-        if (process_file(data_file, struct_file, curName) < 0) {
-          printf(NEWLINE "Error... aborting" NEWLINE);
-          return -1;
+    if (processSubs)
+    {
+        /* process subs recursively */
+        size_t sublen = strlen(curSubdir);
+        size_t freelen = sizeof(curSubdir) - sublen - 1;
+        LWIP_ASSERT("sublen < sizeof(curSubdir)", sublen < sizeof(curSubdir));
+        workingDir = opendir(getcwd(currentDir, PATH_MAX));
+
+        if(workingDir != NULL)
+        {
+            do
+            {
+                dirContent = readdir(workingDir);
+                if(dirContent == NULL)
+                {
+                    continue;
+                }
+
+                struct stat stDirInfo;
+                if (lstat( dirContent->d_name, &stDirInfo) < 0)
+                {
+                    perror (dirContent->d_name);
+                    return -1;
+                }
+
+                if ((dirContent->d_name[0] == '.') || (strcmp(dirContent->d_name, "CVS") == 0))
+                {
+                    continue;
+                }
+
+                if(S_ISDIR(stDirInfo.st_mode) == 0)
+                {
+                    continue;
+                }
+
+                if (freelen > 0)
+                {
+                    if(CHDIR(dirContent->d_name))
+                    {
+                        printf("!!!Cannot change directory. Aborting...\n");
+                        return -1;
+                    }
+                    strncat(curSubdir, "/", freelen);
+                    strncat(curSubdir, dirContent->d_name, freelen - 1);
+                    curSubdir[sizeof(curSubdir) - 1] = 0;
+                    printf("processing subdirectory %s/..." NEWLINE, curSubdir);
+                    filesProcessed += process_sub(data_file, struct_file);
+                    if(CHDIR(".."))
+                    {
+                        printf("!!!Cannot change directory. Aborting...\n");
+                        return -1;
+                    }
+                    curSubdir[sublen] = 0;
+                }
+                else
+                {
+                    printf("WARNING: cannot process sub due to path length restrictions: \"%s/%s\"\n", curSubdir, dirContent->d_name);
+                }
+            } while (dirContent != NULL);
         }
-        filesProcessed++;
-      }
-    } while (FINDNEXT_SUCCEEDED(FINDNEXT(fret, &fInfo)));
-  }
-  return filesProcessed;
+    }
+
+    workingDir = opendir(getcwd(currentDir, PATH_MAX));
+
+    if(workingDir != NULL)
+    {
+        /* at least one file in directory */
+        do
+        {
+            dirContent = readdir(workingDir);
+            if(dirContent == NULL)
+            {
+                continue;
+            }
+
+            struct stat stDirInfo;
+            if (lstat( dirContent->d_name, &stDirInfo) < 0)
+            {
+                perror (dirContent->d_name);
+                return -1;
+            }
+
+            if(S_ISDIR(stDirInfo.st_mode))
+            {
+                continue;
+            }
+
+            const char *curName = dirContent->d_name;
+            printf("processing %s/%s..." NEWLINE, curSubdir, curName);
+            if (process_file(data_file, struct_file, curName) < 0)
+            {
+                printf(NEWLINE "Error... aborting" NEWLINE);
+                return -1;
+            }
+
+            filesProcessed++;
+
+        } while (dirContent != NULL);
+    }
+#endif
+    return filesProcessed;
 }
 
 u8_t* get_file_data(const char* filename, int* file_size, int can_be_compressed, int* is_compressed)
