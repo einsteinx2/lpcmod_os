@@ -30,9 +30,9 @@
 
 typedef enum
 {
-    EraseSequenceMethod_Sector = FlashSectorSize_4KB,
-    EraseSequenceMethod_Block = FlashBlockSize_64KB,
-    EraseSequenceMethod_Chip = FlashChipSize_256KB
+    EraseSequenceMethod_Sector = 0U,
+    EraseSequenceMethod_Block,
+    EraseSequenceMethod_Chip
 } EraseSequenceMethod;
 
 // Variables
@@ -137,15 +137,17 @@ void Flash_executeFlashFSM(void)
                         switch(eraseSequenceMethod)
                         {
                         case EraseSequenceMethod_Sector:
-                            if(isXBlastOnLPC())
+                            if(flashDevice.flashType.m_support4KBErase)
                             {
                                 eraseSequenceMethod = EraseSequenceMethod_Block;
+                                debugSPIPrint("Switching to 64KB block erase.\n");
                             }
                             else
                             {
                                 eraseSequenceMethod = EraseSequenceMethod_Chip;
+                                debugSPIPrint("Switching to chip erase.\n");
                             }
-                            debugSPIPrint("Switching to sector erase.\n");
+
                             if(currentFlashTask == FlashTask_WriteSettings)
                             {
                                 evaluateReadBackRange();
@@ -825,7 +827,7 @@ static bool canWrite(unsigned char flashByte, unsigned char bufferByte)
 
 static unsigned int getEraseMethodSize(void)
 {
-    if(isXBlastOnLPC())
+    if(flashDevice.flashType.m_support4KBErase)
     {
         switch(eraseSequenceMethod)
         {

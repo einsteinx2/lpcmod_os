@@ -15,6 +15,7 @@
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/time/timeManagement.h"
 #include "xblast/HardwareIdentifier.h"
+#include "xblast/PowerManagement.h"
 
 volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
 volatile bool fSeenPowerdown;
@@ -204,26 +205,29 @@ void IntHandlerCSmc(void)
             unsigned char b=0x04;
                    switch(nBit) {
                 case 0: // POWERDOWN EVENT
-                    debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
-                    I2CTransmitWord(0x10, 0x0200);
-                    I2CTransmitWord(0x10, 0x0100|b);
-                    I2CTransmitWord(0x10, 0x0500|b);
-                    I2CTransmitWord(0x10, 0x0600|b);
-                    I2CTransmitWord(0x10, 0x0900|b);
-                    I2CTransmitWord(0x10, 0x0a00|b);
-                    I2CTransmitWord(0x10, 0x0b00|b);
-                    I2CTransmitWord(0x10, 0x0d00|b);
-                    I2CTransmitWord(0x10, 0x0e00|b);
-                    I2CTransmitWord(0x10, 0x0f00|b);
-                    I2CTransmitWord(0x10, 0x1000|b);
-                    I2CTransmitWord(0x10, 0x1200|b);
-                    I2CTransmitWord(0x10, 0x1300|b);
-                    I2CTransmitWord(0x10, 0x1400|b);
-                    I2CTransmitWord(0x10, 0x1500|b);
-                    I2CTransmitWord(0x10, 0x1600|b);
-                    I2CTransmitWord(0x10, 0x1700|b);
-                    I2CTransmitWord(0x10, 0x1800|b);
-                    fSeenPowerdown=true;
+                    if(canPowerDown())
+                    {
+                        debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
+                        I2CTransmitWord(0x10, 0x0200);
+                        I2CTransmitWord(0x10, 0x0100|b);
+                        I2CTransmitWord(0x10, 0x0500|b);
+                        I2CTransmitWord(0x10, 0x0600|b);
+                        I2CTransmitWord(0x10, 0x0900|b);
+                        I2CTransmitWord(0x10, 0x0a00|b);
+                        I2CTransmitWord(0x10, 0x0b00|b);
+                        I2CTransmitWord(0x10, 0x0d00|b);
+                        I2CTransmitWord(0x10, 0x0e00|b);
+                        I2CTransmitWord(0x10, 0x0f00|b);
+                        I2CTransmitWord(0x10, 0x1000|b);
+                        I2CTransmitWord(0x10, 0x1200|b);
+                        I2CTransmitWord(0x10, 0x1300|b);
+                        I2CTransmitWord(0x10, 0x1400|b);
+                        I2CTransmitWord(0x10, 0x1500|b);
+                        I2CTransmitWord(0x10, 0x1600|b);
+                        I2CTransmitWord(0x10, 0x1700|b);
+                        I2CTransmitWord(0x10, 0x1800|b);
+                        fSeenPowerdown=true;
+                    }
                     break;
 
                 case 1: // CDROM TRAY IS NOW CLOSED
