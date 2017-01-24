@@ -69,12 +69,13 @@ void enableNetflash (void *flashType) {
 #ifdef FLASH
     static bool nicInit = false;
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-    printk ("\n\n");
+    printk ("\n\n            Starting network interface. ");
     VIDEO_ATTR = 0xffc8c8c8;
 
     if(nicInit == true || etherboot() == 0)
     {
         nicInit = true;
+        cromwellSuccess();
         extern int run_lwip(unsigned char flashType);
         debugSPIPrint("Starting network service\n");
         while(run_lwip(*(unsigned char *)flashType) == 0);
@@ -82,9 +83,8 @@ void enableNetflash (void *flashType) {
         switch(currentWebServerOp)
         {
         case WebServerOps_BIOSFlash:
-            FlashPrintResult();
-
             switchOSBank(FlashBank_OSBank);
+            FlashPrintResult();
 
             break;
         case WebServerOps_EEPROMFlash:
