@@ -18,4 +18,6 @@ void GPIORead(void * ignored);
 
 void settingsPrintData(void * ignored);
 
+void printBiosIdentifier(void * ignored);
+
 #endif

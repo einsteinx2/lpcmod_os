@@ -34,7 +34,7 @@
 #define BiosID_VideoEncoder_Focus       0x02
 #define BiosID_VideoEncoder_Xcalibur    0x04
 
-const char* MagicBiosHeaderValue = "AUTO";
+static const char* MagicBiosHeaderValue = "AUTO";
 
 struct BiosIdentifier {
 

@@ -61,7 +61,7 @@ SECTIONS {
 		*(COMMON)
 		_ebss = . ;
 		_heap = . ;
-		ASSERT (_heap < 0x300000, "ROM placement does not fit in section.");
+		ASSERT (_heap < 4M, "ROM placement does not fit in section.");
 	}
 	
 	/DISCARD/ : { *(.eh_frame) }

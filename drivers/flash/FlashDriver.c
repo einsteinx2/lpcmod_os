@@ -14,7 +14,6 @@
 #include "xblast/scriptEngine/xblastScriptEngine.h"
 #include "xblast/settings/xblastSettings.h"
 #include "xblast/HardwareIdentifier.h"
-#include "BiosIdentifier.h"
 #include "config.h"
 #include "string.h"
 
@@ -41,7 +40,7 @@ static unsigned char biosBuffer[ImageSize1024KB];
 static unsigned int biosBufferSize;
 static FlashOp currentFlashOp;
 static FlashErrorcodes flashErrorCode;
-static unsigned startingOffset;
+static unsigned int startingOffset;
 static unsigned int currentAddr;
 static FlashTask currentFlashTask;
 static EraseSequenceMethod eraseSequenceMethod;
@@ -54,12 +53,12 @@ static FlashErrorcodes checkImageSize(unsigned int size);
 static void mirrorimage(FlashBank flashBank);
 static FlashErrorcodes validateOSImage(const unsigned char* inBuf, unsigned int size);
 static void evaluateReadBackRange(void);
-static struct BiosIdentifier getBiosIdentifierFromFlash(void);
 static struct BiosIdentifier getBiosIdentifierFromBuffer(const unsigned char* buf, unsigned int size);
 static unsigned int getXBlastOSSettingStartingOffset(struct BiosIdentifier biosID);
 static unsigned int calculateSettingsStructCRC32Value(const _LPCmodSettings* in);
 static void injectSettingsInBuf(unsigned int offset);
 static bool canWrite(unsigned char flashByte, unsigned char bufferByte);
+static unsigned int getEraseMethodSize(void);
 
 void Flash_Init(void)
 {
@@ -138,7 +137,14 @@ void Flash_executeFlashFSM(void)
                         switch(eraseSequenceMethod)
                         {
                         case EraseSequenceMethod_Sector:
-                            eraseSequenceMethod = EraseSequenceMethod_Block;
+                            if(isXBlastOnLPC())
+                            {
+                                eraseSequenceMethod = EraseSequenceMethod_Block;
+                            }
+                            else
+                            {
+                                eraseSequenceMethod = EraseSequenceMethod_Chip;
+                            }
                             debugSPIPrint("Switching to sector erase.\n");
                             if(currentFlashTask == FlashTask_WriteSettings)
                             {
@@ -517,7 +523,7 @@ FlashProgress Flash_SaveXBlastOSSettings(void)
                 eraseSequenceMethod = EraseSequenceMethod_Sector;
                 eraseBusyCount = 0;
                 firstEraseTry = true;
-                biosBufferSize = eraseSequenceMethod;
+                biosBufferSize = getEraseMethodSize();
 
                 currentFlashOp = FlashOp_PendingOp;
                 currentFlashTask = FlashTask_WriteSettings;
@@ -690,14 +696,14 @@ static void evaluateReadBackRange(void)
 {
     debugSPIPrint("Re-evaluating readback range.\n");
     // Previous read back data is obviously not covering the new range we're about to erase.
-    startingOffset &= ~(eraseSequenceMethod - 1);
-    biosBufferSize = eraseSequenceMethod;
+    startingOffset &= ~(getEraseMethodSize() - 1);
+    biosBufferSize = getEraseMethodSize();
     currentAddr = 0;
     currentFlashOp = FlashOp_ReadInProgress;
     debugSPIPrint("startingOffset=0x%X    erase size=%u\n", startingOffset, biosBufferSize);
 }
 
-static struct BiosIdentifier getBiosIdentifierFromFlash(void)
+struct BiosIdentifier getBiosIdentifierFromFlash(void)
 {
     struct BiosIdentifier out;
     unsigned char* ptr = (unsigned char *)&out;
@@ -816,3 +822,40 @@ static bool canWrite(unsigned char flashByte, unsigned char bufferByte)
 
     return true;
 }
+
+static unsigned int getEraseMethodSize(void)
+{
+    if(isXBlastOnLPC())
+    {
+        switch(eraseSequenceMethod)
+        {
+        case EraseSequenceMethod_Sector:
+            return FlashSectorSize_4KB;
+        case EraseSequenceMethod_Block:
+            return FlashBlockSize_64KB;
+        case EraseSequenceMethod_Chip:
+            return FlashChipSize_256KB;
+        }
+    }
+    else
+    {
+        switch(eraseSequenceMethod)
+        {
+        case EraseSequenceMethod_Sector:
+        case EraseSequenceMethod_Block:
+            return FlashBlockSize_64KB;
+        case EraseSequenceMethod_Chip:
+            return FlashChipSize_256KB;
+        }
+    }
+
+    return FlashChipSize_256KB;
+}
+
+#ifdef DEV_FEATURES
+unsigned int getBiosBufferSize(void) { return biosBufferSize; }
+unsigned int getStartingOffset(void) { return startingOffset; }
+unsigned int getCurrentAddr(void) { return currentAddr; }
+unsigned int getEraseSequenceMethod(void) { return eraseSequenceMethod; }
+bool getFirstEraseTry(void) { return firstEraseTry; }
+#endif

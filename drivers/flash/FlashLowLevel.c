@@ -32,8 +32,8 @@ static bool _MatchDevice(const KNOWN_FLASH_TYPE* output);
 static inline void _28xxxWriteBytes(unsigned char byte, unsigned int addr);
 static inline void _29xxxWriteBytes(unsigned char byte, unsigned int addr);
 
+static inline void _28xxxSectorErase(unsigned int addr);
 static inline void _29xxxSectorErase(unsigned int addr);
-static inline void _28xxxBlockErase(unsigned int addr);
 static inline void _29xxxBlockErase(unsigned int addr);
 static inline void _29xxxChipErase(void);
 static void _29xxxCommonEraseSequence(void);
@@ -279,10 +279,22 @@ void FlashLowLevel_InititiateSectorErase(unsigned int addr) // 4KB
 {
     if(is28xxxProtocol)
     {
-        // 28xxx does not support 4KB sector erase
-        return;
+        _28xxxSectorErase(addr);
     }
-    _29xxxSectorErase(addr);
+    else
+    {
+        _29xxxSectorErase(addr);
+    }
+}
+
+static inline void _28xxxSectorErase(unsigned int addr)
+{
+    flashDevice.m_pbMemoryMappedStartAddress[0x5555] = 0x50;
+    flashDevice.m_pbMemoryMappedStartAddress[addr] = 0x20;
+    flashDevice.m_pbMemoryMappedStartAddress[addr] = 0xd0;
+
+    // Sharp has a problem, does not go busy for ~500nS
+    wait_us(1);
 }
 
 static inline void _29xxxSectorErase(unsigned int addr)
@@ -295,22 +307,10 @@ void FlashLowLevel_InititiateBlockErase(unsigned int addr)  // 64KB
 {
     if(is28xxxProtocol)
     {
-        _28xxxBlockErase(addr);
+        return;
     }
-    else
-    {
-        _29xxxBlockErase(addr);
-    }
-}
 
-static inline void _28xxxBlockErase(unsigned int addr)
-{
-    flashDevice.m_pbMemoryMappedStartAddress[0x5555] = 0x50;
-    flashDevice.m_pbMemoryMappedStartAddress[addr] = 0x20;
-    flashDevice.m_pbMemoryMappedStartAddress[addr] = 0xd0;
-
-    // Sharp has a problem, does not go busy for ~500nS
-    wait_us(1);
+    _29xxxBlockErase(addr);
 }
 
 static inline void _29xxxBlockErase(unsigned int addr)
