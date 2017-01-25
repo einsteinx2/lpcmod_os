@@ -126,7 +126,7 @@ bool FlashPrintResult(void)
         debugSPIPrint("Flash update sequence restart system\n");
         // Set LED to oxox.
         inputLED();
-
+        Flash_freeFlashFSM();
         I2CRebootSlow();
         while(1);
     }

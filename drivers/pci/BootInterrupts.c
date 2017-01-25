@@ -205,7 +205,7 @@ void IntHandlerCSmc(void)
             unsigned char b=0x04;
                    switch(nBit) {
                 case 0: // POWERDOWN EVENT
-                    if(canPowerDown())
+                    //if(canPowerDown())
                     {
                         debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
                         I2CTransmitWord(0x10, 0x0200);
