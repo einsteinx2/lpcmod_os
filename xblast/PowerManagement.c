@@ -104,3 +104,9 @@ void BootModBios(FlashBank bank)
         I2CRebootQuick();
     }
 }
+
+bool canPowerDown(void)
+{
+    FlashProgress progress = Flash_getProgress();
+    return (progress.currentFlashOp == FlashOp_Idle);
+}

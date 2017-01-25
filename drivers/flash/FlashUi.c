@@ -22,6 +22,9 @@
 #include "menu/misc/ProgressBar.h"
 #include "xblast/HardwareIdentifier.h"
 #include "xblast/settings/xblastSettingsChangeTracker.h"
+#ifdef DEV_FEATURES
+#include "MenuActions.h"
+#endif
 
 static void BootFlashUserInterface(FlashOp ee, unsigned int dwPos, unsigned int dwExtent);
 
@@ -270,10 +273,26 @@ bool SaveXBlastOSSettings(void)
         if(flashProgress.currentFlashOp == FlashOp_Completed)
         {
             resultSuccess = true;
+#ifdef DEV_FEATURES
+            printk("\n\n\n         BiosBufferSize : %u", getBiosBufferSize());
+            printk("\n         StartingOffset : %u", getStartingOffset());
+            printk("\n         CurrentAddr : %u", getCurrentAddr());
+            printk("\n         EraseSequenceMethod : %u", getEraseSequenceMethod());
+            printk("\n         FirstEraseTry : %u", getFirstEraseTry());
+            UIFooter();
+#endif
             break;
         }
         else if(flashProgress.currentFlashOp == FlashOp_Error)
         {
+#ifdef DEV_FEATURES
+            printk("\n\n         BiosBufferSize : %u", getBiosBufferSize());
+            printk("\n         StartingOffset : %u", getStartingOffset());
+            printk("\n         CurrentAddr : %u", getCurrentAddr());
+            printk("\n         EraseSequenceMethod : %u", getEraseSequenceMethod());
+            printk("\n         FirstEraseTry : %u", getFirstEraseTry());
+            UIFooter();
+#endif
             printk("\n\n\n\n\n           \2Save Settings to flash failed...\n\2\n");
             VIDEO_ATTR=0xffffff;
             resultSuccess = FlashPrintResult() == false;

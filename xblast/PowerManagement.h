@@ -15,4 +15,6 @@ void assertBankScriptExecTSOPBoot(void * data);
 void BootOriginalBios(FlashBank bank) ;
 void BootModBios(FlashBank bank);
 
+bool canPowerDown(void);
+
 #endif /* POWERMANAGEMENT_H_ */

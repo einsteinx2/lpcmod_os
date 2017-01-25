@@ -127,7 +127,7 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 //Use this function only for in OS operations.
 void switchOSBank(FlashBank bank) {
     //Only send command if XBlast compatible device is found
-    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP)
+    if(isXBlastOnLPC())
     {
         currentFlashBank = bank;
         xF70ELPCRegister = bank;
@@ -140,7 +140,7 @@ void switchOSBank(FlashBank bank) {
 void switchBootBank(FlashBank bank)
 {
     //Only send command if XBlast compatible device is found
-    if(fHasHardware == SYSCON_ID_V1 || fHasHardware == SYSCON_ID_XT || fHasHardware == SYSCON_ID_V1_TSOP || fHasHardware == SYSCON_ID_XT_TSOP)
+    if(isXBlastCompatible())
     {
         unsigned char resultBank = bank;
         //currentFlashBank = NOBNKID;         //We won't be coming back from this!

@@ -17,6 +17,7 @@
 #include "lib/cromwell/cromString.h"
 #include "lib/time/timeManagement.h"
 #include "MenuActions.h"
+#include "FlashDriver.h"
 #include "string.h"
 
 void LPCIOWrite(void * ignored){
@@ -470,5 +471,30 @@ void settingsPrintData(void * ignored){
             }
         }
     }
+    UIFooter();
+}
+
+void printBiosIdentifier(void * ignored)
+{
+    UiHeader("Print BIOS Identifier");
+
+    struct BiosIdentifier biosID = getBiosIdentifierFromFlash();
+
+    printk("\n\n           Magic : %s", biosID.Magic);
+    printk("\n           Header Version : %u", biosID.HeaderVersion);
+    printk("\n           Xbox Version : %02X", biosID.XboxVersion);
+    printk("\n           Xbox Version : %02X", biosID.VideoEncoder);
+    printk("\n           Header Patch : %02X", biosID.HeaderPatch);
+    printk("\n           Option1 : %02X", biosID.Option1);
+    printk("\n           Option2 : %02X", biosID.Option2);
+    printk("\n           Option3 : %02X", biosID.Option3);
+    printk("\n           Bios Size : %u", biosID.BiosSize);
+    printk("\n           Bios Size : %s", biosID.Name);
+    printk("\n           MD5 :");
+    for(unsigned char i = 0; i < 16; i++)
+    {
+        printk(" %02X", biosID.MD5Hash[i]);
+    }
+
     UIFooter();
 }

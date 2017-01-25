@@ -62,6 +62,7 @@
 #include "WebServerOps.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lib/cromwell/cromString.h"
+#include "Gentoox.h"
 #include "FlashUi.h"
 #include "FlashDriver.h"
 #include "MenuActions.h"
@@ -458,9 +459,9 @@ run_lwip (unsigned char flashType) {
     	debugSPIPrint("currentNetworkState == NetworkState_Init\n");
     	break;
     case NetworkState_Init:
+        printk ("\n            TCP/IP initialization. ");
     	lwip_init();
-
-        printk ("\n            TCP/IP initialized.\n");
+    	cromwellSuccess();
 		netFlashOver = false;
 
 		netif = netif_find("eb");   //Trying to find previously configured network interface
@@ -488,8 +489,10 @@ run_lwip (unsigned char flashType) {
 		if (LPCmodSettings.OSsettings.useDHCP)
 		{
 			//Re-run DHCP discover anyways just in case lease was revoked.
+		    printk ("\n            Starting DHCP. ");
 			dhcp_start (netif);
-
+			cromwellSuccess();
+			printk ("\n            Acquiring IP address. ");
 			currentNetworkState = NetworkState_DHCPStart;
 			debugSPIPrint("currentNetworkState == NetworkState_DHCPStart\n");
 		}
@@ -547,6 +550,7 @@ run_lwip (unsigned char flashType) {
 				}
 				divisor=0;
 				currentNetworkState = NetworkState_ServerInit;
+				cromwellWarning();
 				debugSPIPrint("currentNetworkState == NetworkState_ServerInit\n");
 			}
 		}
@@ -554,6 +558,7 @@ run_lwip (unsigned char flashType) {
     	if(dhcp_supplied_address(netif))
     	{
     		currentNetworkState = NetworkState_ServerInit;
+			cromwellSuccess();
 			debugSPIPrint("currentNetworkState == NetworkState_ServerInit\n");
     	}
     	break;

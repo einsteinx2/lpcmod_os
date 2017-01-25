@@ -9,6 +9,7 @@
 #define FLASHDRIVER_H_
 
 #include "FlashLowLevel.h"
+#include "BiosIdentifier.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lpcmod_v1.h"
 
@@ -62,5 +63,15 @@ bool Flash_LoadXBlastOSSettings(_LPCmodSettings* input);
 bool bootReadXBlastOSSettings(void);
 
 FlashProgress Flash_SaveXBlastOSSettings(void);
+
+struct BiosIdentifier getBiosIdentifierFromFlash(void);
+
+#ifdef DEV_FEATURES
+unsigned int getBiosBufferSize(void);
+unsigned int getStartingOffset(void);
+unsigned int getCurrentAddr(void);
+unsigned int getEraseSequenceMethod(void);
+bool getFirstEraseTry(void);
+#endif
 
 #endif /* FLASHDRIVER_H_ */

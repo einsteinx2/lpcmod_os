@@ -54,6 +54,13 @@ TEXTMENU* DeveloperMenuInit(void)
 
     //Print LPCmodsettings struct data.
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Print BIOS Identifier");
+    itemPtr->functionPtr = printBiosIdentifier;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    //Print LPCmodsettings struct data.
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Print settings values");
     itemPtr->functionPtr = settingsPrintData;
     itemPtr->functionDataPtr = NULL;

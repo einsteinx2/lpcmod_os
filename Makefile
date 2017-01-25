@@ -7,6 +7,8 @@ GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)
 
 GCC_4.2 := $(shell expr `$(CC) -dumpversion` \>= 4.2)
 
+GCC_6.2 := $(shell expr `$(CC) -dumpversion` \>= 6.2)
+
 DEBUG ?= 0 #run make with "DEBUG=1" argument to enable extra debug
 TSOPCTRL ?= 0 #Override TSOP control availability based on Xbox Revision
 VGA ?= 0 #Generates VGA enabled by default image. Does not override existing setting in flash.
@@ -36,6 +38,12 @@ endif
 # add the option for gcc 4.2 only, again, non-overridable
 ifeq ($(GCC_4.2), 1)
 CFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
+endif
+
+# add the option for gcc 4.2 only, again, non-overridable
+ifeq ($(GCC_6.2), 1)
+CFLAGS += -fno-PIC
+2BL_CFLAGS += -fno-PIC
 endif
 
 LD      = ${PREFIX}ld
@@ -239,7 +247,7 @@ endif
 .PHONY: all clean
 
 all: makefsdata
-	@$(MAKE) -j16 --no-print-directory resources $(BOOT_ETH_SUBDIRS) cromsubdirs xbeboot xromwell.xbe vml_startup vmlboot $(BOOT_ETH_DIR) obj/image-crom.bin cromwell.bin imagecompress 256KBBinGen crcbin
+	@$(MAKE) --no-print-directory resources $(BOOT_ETH_SUBDIRS) cromsubdirs xbeboot xromwell.xbe vml_startup vmlboot $(BOOT_ETH_DIR) obj/image-crom.bin cromwell.bin imagecompress 256KBBinGen crcbin
 
 ifeq ($(ETHERBOOT), yes)
 ethsubdirs: $(patsubst %, _dir_%, $(ETH_SUBDIRS))
@@ -344,10 +352,8 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
 makefsdata: clean
-	gcc -I"$(TOPDIR)/$(LWIPFOLDER)" -I"$(TOPDIR)/$(LWIPFOLDER)/src/include" -O2 -Wall -c -o "obj/makefsdata.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/makefsdata.c"
-	gcc -O2 -Wall -c -o "obj/findfirst.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/findfirst.c"
-	gcc -O2 -Wall -c -o "obj/spec.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/spec.c"
-	gcc -o bin/makefsdata obj/findfirst.o obj/spec.o obj/makefsdata.o
+	gcc -I"$(TOPDIR)/$(LWIPFOLDER)" -I"$(TOPDIR)/$(LWIPFOLDER)/src/include" -Og -Wall -c -o "obj/makefsdata.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/makefsdata.c"
+	gcc -o bin/makefsdata obj/makefsdata.o
 	bin/makefsdata "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fs" -e -nossi
 	mv fsdata.c "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fsdata.c"
 	

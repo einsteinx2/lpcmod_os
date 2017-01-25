@@ -15,6 +15,7 @@ typedef struct {
     unsigned char m_bDeviceId;
      char m_szFlashDescription[32];
     unsigned int m_dwLengthInBytes;
+    unsigned char m_support4KBErase;
 } KNOWN_FLASH_TYPE;
 
 typedef struct {

@@ -20,15 +20,13 @@ SECTIONS {
 
 	.text LOW_ROM : AT ( 0 ){
 		_start_low_rom = . ;
-		*(.text);
-		*(.text.unlikely);
+		*(.text*);
 		_end_low_rom = . ;
 	}
 
 	.rodata (LOW_ROM + SIZEOF(.text)) : AT (SIZEOF(.text)) {
 		*(.rodata);
 		*(.rodata.str1.1);
-		*(.rodata.str1.32);
 		*(.rodata.str1.4);
 		*(.rodata.cst4);
 		*(.rodata.cst8);
@@ -46,10 +44,10 @@ SECTIONS {
 	
 	.data (LOW_ROM + SIZEOF(.text) + SIZEOF(.rodata)) : AT( SIZEOF(.text) + SIZEOF(.rodata) ) {
 		_start_data = .;
-		*(.data);
+		*(.data*);
 		*(.sdata);
 		*(.sdata2);
-		*(.got);
+		*(.got*);
 		_end_data = .;
 	}
 
@@ -63,7 +61,7 @@ SECTIONS {
 		*(COMMON)
 		_ebss = . ;
 		_heap = . ;
-		ASSERT (_heap < 0x300000, "ROM placement does not fit in section.");
+		ASSERT (_heap < 4M, "ROM placement does not fit in section.");
 	}
 	
 	/DISCARD/ : { *(.eh_frame) }
