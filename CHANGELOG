@@ -1,50 +1,54 @@
 v0.5Beta
-UI text placement fix.
-Fixed some typos.
-Display custom bank text under icons.
-Fix centering text under icons.
-Fixed freeze when toggling "Hide TSOP icon" option a couple of times.
-(1.0-1.1 only)Toggling TSOP control setting dynamically redraw menus.
-(1.0-1.3 only)Added Frosty's VGA mod support.
-(1.0-1.3 only)Added "Enable VGA" setting toggle in Video settings. Takes effect on reboot.
-Added Settings change tracker with notification in bottom-right corner of screen.
-Added "Uncommitted change(s)" Info menu to display all tracked setting changes.
-Added progress notification when saving settings on flash device
-Backported forcedeth driver from gpxe-1.0.1.
-Fixed network interface not working on certain Xbox motherboard in XBE version.
-Updated LwIP stack to 2.0.1.
-Updated HTTP server to contrib-2.0.1.
-Fixed DHCP assign issues.
-Fixed BIOS upload taking very long in Netflash.
-Fixed Web server not being transmit to client in Netflash.
-Added ability to type custom BIOS name for user BIOS banks via Netflash.
-Reworked Webserver management code to be non-blocking.
-Fixed Netflash not working for a second BIOS flash without rebooting.
-Fix EEPROM last resort recover for all Xbox revisions.
-Added EEPROM sanity check when loading a new EEPROM image.
-New flash read/write engine.
-New flash engine is now non-blocking.
-New flash engine is more descriptive in case of error.
-Better sanity check on OS update.
-Starting from this version, OS settings are carried over OS updates.
-Added OS settings versionning and migration mechanism for settings changes in the future.
-Added OS settings sanity check before loading into active config.
-Added simple wear leveling logic for saving settings onto flash. Most effective on 4-KB erasable flash chips (Such as XBlast Lite).
-BIOS Identifier's structure now reports actual used space in binary BIOS file.
-Moved CODE section in memory from 0x03A00000 to 0x03800000. Gives more room before hitting VGA framebuffer
-Code cleanup. Removed useless code, unused variables, etc...
-Code formatting cleanup.
-Now builds using latest gcc; either i686-linux-gnu or x86_64-linux-gnu.
-Removed all normal level warnings during compilation.
-Centralized reccurent strings.
-(DEBUG build) Menu entry to read from SMBus
-Increased heap reserved space
-Increased stack reserved space
-corrected stack top pointer
-Added switch in makefile to generate VGA enabled image by default. "make VGA=1"
-Added switch in makefile to bypass motherboard rev check on TSOP control setting usage. "make TSOPCTRL=1"
-Added switch in makefile to generate Debug image with output log to SPI. "make DEBUG=1"
-Added ability to swap lwip+httpserver implementation folder used for project build.
+-UI text placement fix.
+-Fixed some typos.
+-Display custom bank text under icons.
+-Fix centering text under icons.
+-Fixed freeze when toggling "Hide TSOP icon" option a couple of times.
+-(1.0-1.1 only)Toggling TSOP control setting dynamically redraw menus.
+-(1.0-1.3 only)Added Frosty's VGA mod support.
+-(1.0-1.3 only)Added "Enable VGA" setting toggle in Video settings.
+-Added Settings change tracker with notification in bottom-right corner of screen.
+-Added "Uncommitted change(s)" Info menu to display all tracked setting changes.
+-Backported forcedeth driver from gpxe-1.0.1.
+-Fixed network interface not working on certain Xbox motherboard in XBE version.
+-Updated LwIP stack to 2.0.1.
+-Updated HTTP server to contrib-2.0.1.
+-Fixed DHCP assign issues.
+-Fixed BIOS upload taking very long in Netflash.
+-Fixed Web server not being transmit to client in Netflash.
+-Added ability to type custom BIOS name for user BIOS banks via Netflash.
+-Reworked Webserver management code to be non-blocking.
+-Fixed Netflash not working for a second BIOS flash without rebooting.
+-Fix EEPROM last resort recover for all Xbox revisions.
+-Added EEPROM sanity check when loading a new EEPROM image.
+-New flash read/write engine.
+-New flash engine is now non-blocking.
+-New flash engine is more descriptive in case of error.
+-Better sanity check on OS update.
+-Starting from this version, OS settings are carried over OS updates.
+-Added OS settings versionning and migration mechanism for settings changes in the future.
+-Added OS settings sanity check before loading into active config.
+-Added simple wear leveling logic for saving settings onto flash. Most effective on 4-KB erasable flash chips (Such as XBlast Lite).
+-BIOS Identifier's structure now reports actual used space in binary BIOS file.
+-Moved CODE section in memory from 0x03A00000 to 0x03800000. Gives more room before hitting VGA framebuffer
+-Code cleanup. Removed useless code, unused variables, etc...
+-Code formatting cleanup.
+-Now builds using latest gcc; either i686-linux-gnu or x86_64-linux-gnu.
+-Removed all normal level warnings during compilation.
+-Centralized reccurent strings.
+-(DEBUG build) Menu entry to read from SMBus
+-Increased heap reserved space
+-Increased stack reserved space
+-corrected stack top pointer
+-Added switch in makefile to generate VGA enabled image by default. "make VGA=1"
+-Added switch in makefile to bypass motherboard rev check on TSOP control setting usage. "make TSOPCTRL=1"
+-Added switch in makefile to generate Debug image with output log to SPI. "make DEBUG=1"
+-Added ability to swap lwip+httpserver implementation folder used for project build.
+
+v0.35Beta
+-Added Support for "XBlast Lite Pre Edition" hardware
+-Added toggle for purple backdrop color in settings for Pre Edition
+-Added Settings change tracker with notification in bottom-right corner of screen.
 
 v0.31Beta
 -Fixed EEPROM encryption issues
