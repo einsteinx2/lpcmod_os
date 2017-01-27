@@ -25,7 +25,7 @@ void decrementActiveBank(void* itemStr)
 {
     switch(LPCmodSettings.OSsettings.activeBank)
     {
-    case BNK512:
+    case BNKOS:
         if(LPCmodSettings.OSsettings.TSOPcontrol)        //TSOP is split
         {
             LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT1;
@@ -34,6 +34,9 @@ void decrementActiveBank(void* itemStr)
         {
             LPCmodSettings.OSsettings.activeBank = BNKFULLTSOP;
         }
+        break;
+    case BNK512:
+        LPCmodSettings.OSsettings.activeBank = BNKOS;
         break;
     case BNK256:
         LPCmodSettings.OSsettings.activeBank = BNK512;
@@ -57,6 +60,9 @@ void incrementActiveBank(void* itemStr)
 {
     switch(LPCmodSettings.OSsettings.activeBank)
     {
+    case BNKOS:
+        LPCmodSettings.OSsettings.activeBank = BNK512;
+        break;
     case BNK512:
         LPCmodSettings.OSsettings.activeBank = BNK256;
         break;
@@ -73,7 +79,7 @@ void incrementActiveBank(void* itemStr)
         break;
     case BNKTSOPSPLIT1:
     case BNKFULLTSOP:
-        LPCmodSettings.OSsettings.activeBank = BNK512;
+        LPCmodSettings.OSsettings.activeBank = BNKOS;
         break;
     case BNKTSOPSPLIT0:
         LPCmodSettings.OSsettings.activeBank = BNKTSOPSPLIT1;

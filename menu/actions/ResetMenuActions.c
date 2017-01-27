@@ -12,7 +12,7 @@
 #include "boot.h"
 #include "i2c.h"
 
-void SlowReboot(void *ignored)
+void SlowReboot(void* ignored)
 {
     if(SaveXBlastOSSettings())
     {
@@ -22,7 +22,7 @@ void SlowReboot(void *ignored)
     }
 }
 
-void QuickReboot(void *ignored)
+void QuickReboot(void* ignored)
 {
     if(SaveXBlastOSSettings())
     {
@@ -32,11 +32,28 @@ void QuickReboot(void *ignored)
     }
 }
 
-void PowerOff(void *ignored)
+void PowerOff(void* ignored)
 {
     if(SaveXBlastOSSettings())
     {
         assertWriteEEPROM();
         I2CPowerOff();
     }
+}
+
+void SlowRebootNoSave(void* ignored)
+{
+    BootStopUSB();
+    I2CRebootSlow();
+}
+
+void QuickRebootNoSave(void* ignored)
+{
+    BootStopUSB();
+    I2CRebootQuick();
+}
+
+void PowerOffNoSave(void* ignored)
+{
+    I2CPowerOff();
 }

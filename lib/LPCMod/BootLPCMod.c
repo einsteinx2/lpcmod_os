@@ -16,6 +16,8 @@
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
 #include "stdlib.h"
+#include "i2c.h"
+#include "boot.h"
 #include "stdio.h"
 
 //Probes CPLD for chip revision and return a single byte ID.
@@ -91,6 +93,33 @@ void LPCMod_WriteGenPurposeIOs(void)
     WriteToIO(XBLAST_IO, (GenPurposeIOs.GPO3 << 7) | (GenPurposeIOs.GPO2 << 6) | (GenPurposeIOs.GPO1 << 5) | (GenPurposeIOs.GPO0 << 4) | GenPurposeIOs.EN_5V);
 }
 
+void quickboot(unsigned char bank)
+{
+    if(bank > BOOTFROMTSOP)
+    {
+        debugSPIPrint("Booting XBlast flash bank\n");
+        switchBootBank(bank);
+    }
+    else
+    {
+        debugSPIPrint("Booting TSOP flash bank\n");
+        //If booting from TSOP, use of the XODUS_CONTROL register is fine.
+        if(getMotherboardRevision() == XboxMotherboardRevision_1_6 || getMotherboardRevision() == XboxMotherboardRevision_UNKNOWN)
+        {
+            switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
+        }
+        else
+        {
+            switchBootBank(bank);    // switch to original bios but modchip listen to LPC commands.
+                                                                     // Lock flash bank control with OSBNKCTRLBIT.
+        }
+    }
+    I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
+    BootStopUSB();
+    I2CRebootQuick();
+    while(1);
+}
+
 int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 {
     FATXFILEINFO fileinfo;
@@ -145,7 +174,9 @@ void switchBootBank(FlashBank bank)
         unsigned char resultBank = bank;
         //currentFlashBank = NOBNKID;         //We won't be coming back from this!
         if(bank > BOOTFROMTSOP)       //We're asked to boot from XBlast's flash
+        {
             resultBank |= A19controlModBoot;  //Apply custom A19 control (if need be).
+        }
         WriteToIO (XBLAST_CONTROL, resultBank); // switch to proper bank from booting register
     }
 }

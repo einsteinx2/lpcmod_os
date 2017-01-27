@@ -38,5 +38,24 @@ TEXTMENU* ResetMenuInit(void) {
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
 
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Reboot without saving");
+    itemPtr->functionPtr=SlowRebootNoSave;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+#ifdef DEV_FEATURES
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Reboot without saving(fast)");
+    itemPtr->functionPtr=QuickRebootNoSave;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+#endif
+
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Power offwithout saving");
+    itemPtr->functionPtr=PowerOffNoSave;
+    itemPtr->functionDataPtr = NULL;
+    TextMenuAddItem(menuPtr, itemPtr);
+
     return menuPtr;
 }

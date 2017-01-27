@@ -18,7 +18,6 @@
 #include "xblast/PowerManagement.h"
 
 volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
-volatile bool fSeenPowerdown;
 volatile TRAY_STATE traystate;
 unsigned int wait_ms_time;
 
@@ -65,12 +64,14 @@ extern void IntHandlerException10(void);
 
 // structure defining our ISRs
 
-typedef struct {
+typedef struct
+{
     unsigned char m_bInterruptCpu;
     unsigned int m_dwpVector;
 } ISR_PREP;
 
-const ISR_PREP isrprep[] = {
+const ISR_PREP isrprep[] =
+{
     { 0x00, (unsigned int)IntHandlerException0 },
     { 0x01, (unsigned int)IntHandlerException1 },
     { 0x02, (unsigned int)IntHandlerException2 },
@@ -114,39 +115,45 @@ const ISR_PREP isrprep[] = {
     { 0, 0 }
 };
 
-void BootInterruptsWriteIdt() {
+void BootInterruptsWriteIdt(void)
+{
 
-    volatile ts_pm_interrupt * ptspmi=(volatile ts_pm_interrupt *)(0xb0000);  // ie, start of IDT area
-    int n, n1=0;
+    volatile ts_pm_interrupt* ptspmi = (volatile ts_pm_interrupt *)(0xb0000);  // ie, start of IDT area
+    int n, n1 = 0;
 
     // init storage used by ISRs
 
-    VIDEO_VSYNC_POSITION=0;
-    BIOS_TICK_COUNT=0;
-    VIDEO_VSYNC_DIR=0;
-    nCountI2cinterrupts=0;
-    nCountUnusedInterrupts=0;
-    nCountUnusedInterruptsPic2=0;
-    nCountInterruptsSmc=0;
-    nCountInterruptsIde=0;
-    fSeenPowerdown=false;
-    traystate=ETS_OPEN_OR_OPENING;
-    VIDEO_LUMASCALING=0;
-    VIDEO_RSCALING=0;
-    VIDEO_BSCALING=0;
+    VIDEO_VSYNC_POSITION = 0;
+    BIOS_TICK_COUNT = 0;
+    VIDEO_VSYNC_DIR = 0;
+    nCountI2cinterrupts = 0;
+    nCountUnusedInterrupts = 0;
+    nCountUnusedInterruptsPic2 = 0;
+    nCountInterruptsSmc = 0;
+    nCountInterruptsIde = 0;
+    fSeenPowerButtonPress = false;
+    fSeenEjectButtonPress = false;
+    traystate = ETS_OPEN_OR_OPENING;
+    VIDEO_LUMASCALING = 0;
+    VIDEO_RSCALING = 0;
+    VIDEO_BSCALING = 0;
 
         // set up default exception, interrupt vectors to dummy stubs
 
-    for(n=0;n<0x100;n++) {  // have to do 256
-        ptspmi[n].m_wSelector=0x10;
-        ptspmi[n].m_wType=0x8e00;  // interrupt gate, 32-bit
-        if(n==isrprep[n1].m_bInterruptCpu) {  // is it next on our prep list?  If so, stick it in
-            ptspmi[n].m_wHandlerHighAddressLow16=(unsigned short)isrprep[n1].m_dwpVector;
-            ptspmi[n].m_wHandlerLinearAddressHigh16=(unsigned short)(((unsigned int)isrprep[n1].m_dwpVector)>>16);
+    for(n = 0; n < 0x100; n++)   // have to do 256
+    {
+        ptspmi[n].m_wSelector = 0x10;
+        ptspmi[n].m_wType = 0x8e00;  // interrupt gate, 32-bit
+        if(n == isrprep[n1].m_bInterruptCpu)   // is it next on our prep list?  If so, stick it in
+        {
+            ptspmi[n].m_wHandlerHighAddressLow16 = (unsigned short)isrprep[n1].m_dwpVector;
+            ptspmi[n].m_wHandlerLinearAddressHigh16 = (unsigned short)(((unsigned int)isrprep[n1].m_dwpVector) >> 16);
             n1++;
-        } else { // otherwise default handler (pretty useless, but will catch it)
-            ptspmi[n].m_wHandlerHighAddressLow16=(unsigned short)((unsigned int)IntHandlerUnused);
-            ptspmi[n].m_wHandlerLinearAddressHigh16=(unsigned short)(((unsigned int)IntHandlerUnused)>>16);
+        }
+        else  // otherwise default handler (pretty useless, but will catch it)
+        {
+            ptspmi[n].m_wHandlerHighAddressLow16 = (unsigned short)((unsigned int)IntHandlerUnused);
+            ptspmi[n].m_wHandlerLinearAddressHigh16 = (unsigned short)(((unsigned int)IntHandlerUnused) >> 16);
         }
     }
 
@@ -163,8 +170,14 @@ void BootInterruptsWriteIdt() {
     IoOutputByte(0xa1, 0x02);  // am slave, hooked to INT2 on master
     IoOutputByte(0xa1, 0x01);  // x86 mode normal EOI
 
-    if (isXBE() == false)     IoOutputByte(0xa1, 0x00);    // enable int14(IDE) int12(SMI)
-    else IoOutputByte(0xa1, 0xaf);
+    if (isXBE() == false)
+    {
+        IoOutputByte(0xa1, 0x00);    // enable int14(IDE) int12(SMI)
+    }
+    else
+    {
+        IoOutputByte(0xa1, 0xaf);
+    }
 
     // enable interrupts
     intel_interrupts_on();
@@ -187,110 +200,123 @@ void IntHandlerCSmc(void)
    
         
     temp = IoInputWord(0x8000);
-    if (temp!=0x0) {
+    if (temp!=0x0)
+    {
         IoOutputWord(0x8000,temp);
         //printk("System Timer wants to sleep we kill him");
-    //    return;
-        }
+        //return;
+    }
         
    
     
     bStatus=I2CTransmitByteGetReturn(0x10, 0x11); // Query PIC for interrupt reason
     
     // we do nothing, if there is not Interrupt reason
-    if (bStatus==0x0) return;
+    if (bStatus==0x0)
+    {
+        return;
+    }
     
-    while(nBit<7) {
-        if(bStatus & 1) {
+    while(nBit<7)
+    {
+        if(bStatus & 1)
+        {
             unsigned char b=0x04;
-                   switch(nBit) {
-                case 0: // POWERDOWN EVENT
-                    //if(canPowerDown())
-                    {
-                        debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
-                        I2CTransmitWord(0x10, 0x0200);
-                        I2CTransmitWord(0x10, 0x0100|b);
-                        I2CTransmitWord(0x10, 0x0500|b);
-                        I2CTransmitWord(0x10, 0x0600|b);
-                        I2CTransmitWord(0x10, 0x0900|b);
-                        I2CTransmitWord(0x10, 0x0a00|b);
-                        I2CTransmitWord(0x10, 0x0b00|b);
-                        I2CTransmitWord(0x10, 0x0d00|b);
-                        I2CTransmitWord(0x10, 0x0e00|b);
-                        I2CTransmitWord(0x10, 0x0f00|b);
-                        I2CTransmitWord(0x10, 0x1000|b);
-                        I2CTransmitWord(0x10, 0x1200|b);
-                        I2CTransmitWord(0x10, 0x1300|b);
-                        I2CTransmitWord(0x10, 0x1400|b);
-                        I2CTransmitWord(0x10, 0x1500|b);
-                        I2CTransmitWord(0x10, 0x1600|b);
-                        I2CTransmitWord(0x10, 0x1700|b);
-                        I2CTransmitWord(0x10, 0x1800|b);
-                        fSeenPowerdown=true;
-                    }
-                    break;
+            switch(nBit)
+            {
+            case 0: // POWERDOWN EVENT
+                fSeenPowerButtonPress = true;
+                //if(canPowerDown())
+                {
+                    debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
+                    I2CTransmitWord(0x10, 0x0200);
+                    I2CTransmitWord(0x10, 0x0100|b);
+                    I2CTransmitWord(0x10, 0x0500|b);
+                    I2CTransmitWord(0x10, 0x0600|b);
+                    I2CTransmitWord(0x10, 0x0900|b);
+                    I2CTransmitWord(0x10, 0x0a00|b);
+                    I2CTransmitWord(0x10, 0x0b00|b);
+                    I2CTransmitWord(0x10, 0x0d00|b);
+                    I2CTransmitWord(0x10, 0x0e00|b);
+                    I2CTransmitWord(0x10, 0x0f00|b);
+                    I2CTransmitWord(0x10, 0x1000|b);
+                    I2CTransmitWord(0x10, 0x1200|b);
+                    I2CTransmitWord(0x10, 0x1300|b);
+                    I2CTransmitWord(0x10, 0x1400|b);
+                    I2CTransmitWord(0x10, 0x1500|b);
+                    I2CTransmitWord(0x10, 0x1600|b);
+                    I2CTransmitWord(0x10, 0x1700|b);
+                    I2CTransmitWord(0x10, 0x1800|b);
+                }
+                break;
 
-                case 1: // CDROM TRAY IS NOW CLOSED
-                    traystate=ETS_CLOSED;
-                    debugSPIPrintInt("SMC Interrupt %d: CDROM Tray now Closed\n", nCountInterruptsSmc);
-                    DVD_TRAY_STATE = DVD_CLOSED;
-                    break;
+            case 1: // CDROM TRAY IS NOW CLOSED
+                traystate = ETS_CLOSED;
+                debugSPIPrintInt("SMC Interrupt %d: CDROM Tray now Closed\n", nCountInterruptsSmc);
+                DVD_TRAY_STATE = DVD_CLOSED;
+                break;
 
-                case 2: // CDROM TRAY IS STARTING OPENING
-                    traystate=ETS_OPEN_OR_OPENING;
-                    DVD_TRAY_STATE = DVD_OPENING;
-                    I2CTransmitWord(0x10, 0x0d02);
-                    debugSPIPrintInt("SMC Interrupt %d: CDROM starting opening\n", nCountInterruptsSmc);
-                    break;
+            case 2: // CDROM TRAY IS STARTING OPENING
+                traystate = ETS_OPEN_OR_OPENING;
+                DVD_TRAY_STATE = DVD_OPENING;
+                I2CTransmitWord(0x10, 0x0d02);
+                debugSPIPrintInt("SMC Interrupt %d: CDROM starting opening\n", nCountInterruptsSmc);
+                break;
 
-                case 3: // AV CABLE HAS BEEN PLUGGED IN
-                           
-                    temp_AV_mode =I2CTransmitByteGetReturn(0x10, 0x04);
-                    // Compare to global variable
-                    if (VIDEO_AV_MODE != temp_AV_mode ) {
-                        VIDEO_AV_MODE = 0xff;
-                        wait_ms(30);
-                        VIDEO_AV_MODE = temp_AV_mode;
-                        BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
-                        wait_ms(200);
-                        BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
-                        
-                    }
-                    break;
+            case 3: // AV CABLE HAS BEEN PLUGGED IN
 
-                case 4: // AV CABLE HAS BEEN UNPLUGGED
-                    debugSPIPrintInt("SMC Interrupt %d: AV cable unplugged\n", nCountInterruptsSmc);
-                    VIDEO_AV_MODE=0xff;
-                    //vmode.m_bAvPack=0xff;
-                    break;
+                temp_AV_mode = I2CTransmitByteGetReturn(0x10, 0x04);
+                // Compare to global variable
+                if (VIDEO_AV_MODE != temp_AV_mode )
+                {
+                    VIDEO_AV_MODE = 0xff;
+                    wait_ms(30);
+                    VIDEO_AV_MODE = temp_AV_mode;
+                    BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
+                    wait_ms(200);
+                    BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
 
-                case 5: // BUTTON PRESSED REQUESTING TRAY OPEN
-                    traystate=ETS_OPEN_OR_OPENING;
-                    I2CTransmitWord(0x10, 0x0d04);
-                    I2CTransmitWord(0x10, 0x0c00);
-                    debugSPIPrintInt("SMC Interrupt %d: CDROM tray opening by Button press\n", nCountInterruptsSmc);
-                    bStatus&=~0x02; // kill possibility of conflicting closing report
-                    break;
+                }
+                break;
 
-                case 6: // CDROM TRAY IS STARTING CLOSING
-                    traystate=ETS_CLOSING;
-                    DVD_TRAY_STATE = DVD_CLOSING;
-                    debugSPIPrintInt("SMC Interrupt %d: CDROM tray starting closing\n", nCountInterruptsSmc);
-                    break;
+            case 4: // AV CABLE HAS BEEN UNPLUGGED
+                debugSPIPrintInt("SMC Interrupt %d: AV cable unplugged\n", nCountInterruptsSmc);
+                VIDEO_AV_MODE = 0xff;
+                //vmode.m_bAvPack=0xff;
+                break;
 
-                case 7: // UNKNOWN
-                    debugSPIPrintInt("SMC Interrupt %d: b7 Reason code\n", nCountInterruptsSmc);
-                    break;
+            case 5: // BUTTON PRESSED REQUESTING TRAY OPEN
+                fSeenEjectButtonPress = true;
+                traystate = ETS_OPEN_OR_OPENING;
+                I2CTransmitWord(0x10, 0x0d04);
+                I2CTransmitWord(0x10, 0x0c00);
+                debugSPIPrintInt("SMC Interrupt %d: CDROM tray opening by Button press\n", nCountInterruptsSmc);
+                bStatus&=~0x02; // kill possibility of conflicting closing report
+                break;
+
+            case 6: // CDROM TRAY IS STARTING CLOSING
+                traystate = ETS_CLOSING;
+                DVD_TRAY_STATE = DVD_CLOSING;
+                debugSPIPrintInt("SMC Interrupt %d: CDROM tray starting closing\n", nCountInterruptsSmc);
+                break;
+
+            case 7: // UNKNOWN
+                debugSPIPrintInt("SMC Interrupt %d: b7 Reason code\n", nCountInterruptsSmc);
+                break;
             }
         }
         nBit++;
-        bStatus>>=1;
+        bStatus >>= 1;
     }
 }
 
 void IntHandlerCIde(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
+
     IoInputByte(0x1f7);
     debugSPIPrintInt("IDE Interrupt\n");
     nCountInterruptsIde++;
@@ -298,12 +324,18 @@ void IntHandlerCIde(void)
 
 void IntHandlerCI2C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     nCountI2cinterrupts++;
 }
 void IntHandlerUnusedC(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Unhandled Interrupt\n");
     //printk("Unhandled Interrupt");
     nCountUnusedInterrupts++;
@@ -313,7 +345,10 @@ void IntHandlerUnusedC(void)
 
 void IntHandlerUnusedC2(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
 
     debugSPIPrintInt("Unhandled Interrupt 2\n");
     nCountUnusedInterruptsPic2++;
@@ -334,14 +369,20 @@ void IntHandlerCTimer0(void)
 void IntHandler1C(void)
 {
     // Interrupt for OHCI controller located on 0xfed00000
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("USB Interrupt 1C\n");
     USBGetEvents();
 }
 void IntHandler9C(void)
 {
     // Interrupt for OHCI controller located on 0xfed08000
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("USB Interrupt 9C\n");
     USBGetEvents();
 }
@@ -349,7 +390,10 @@ void IntHandler9C(void)
 
 void IntHandler2C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Interrupt 2\n");
 }
 
@@ -361,23 +405,33 @@ void IntHandler3VsyncC(void)  // video VSYNC
 
 void IntHandler4C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Interrupt 4\n");
 }
 void IntHandler5C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Interrupt 5\n");
 }
 
-void IntHandler6C(void) {
+void IntHandler6C(void)
+{
 
     debugSPIPrintInt("Interrupt 6\n");
 }
 
 void IntHandler7C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Interrupt 7\n");
 }
 
@@ -389,7 +443,10 @@ void IntHandler8C(void)
 
 void IntHandler10C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Interrupt 10\n");
 }
 
@@ -400,36 +457,89 @@ void IntHandler13C(void)
 
 void IntHandler15C(void)
 {
-    if(!nInteruptable) return;
+    if(!nInteruptable)
+    {
+        return;
+    }
     debugSPIPrintInt("Unhandled Interrupt 15\n");
 }
 
 //void IntHandlerException0C(void) {    debugSPIPrintInt("CPU Exc: Divide by Zero\n");    while(1) ; }
-void IntHandlerException0C(void) {    debugSPIPrintInt("CPU Exc: Divide by Zero\n");}
-void IntHandlerException1C(void) {    debugSPIPrintInt("CPU Exc: Single Step\n");    while(1) ; }
-void IntHandlerException2C(void) {    debugSPIPrintInt("CPU Exc: NMI\n");    while(1) ; }
-void IntHandlerException3C(void) {    debugSPIPrintInt("CPU Exc: Breakpoint\n");    while(1) ; }
-void IntHandlerException4C(void) {    debugSPIPrintInt("CPU Exc: Overflow Trap\n");    while(1) ; }
-void IntHandlerException5C(void) {    debugSPIPrintInt("CPU Exc: BOUND exceeded\n");    while(1) ; }
-void IntHandlerException6C(void) {
-    unsigned int dwEbp=0;
-    debugSPIPrintInt("CPU Exc: Invalid Opcode\n");
-        __asm__ __volatile__ ( " mov %%esp, %%eax\n " : "=a" (dwEbp) );
-        debugSPIPrintInt("   %08lX:%08lX\n", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
+void IntHandlerException0C(void)
+{
+    debugSPIPrint("CPU Exc: Divide by Zero\n");
+}
+void IntHandlerException1C(void)
+{
+    debugSPIPrint("CPU Exc: Single Step\n");    while(1) ;
+}
+
+void IntHandlerException2C(void)
+{
+    debugSPIPrint("CPU Exc: NMI\n");    while(1) ;
+}
+void IntHandlerException3C(void)
+{
+    debugSPIPrint("CPU Exc: Breakpoint\n");    while(1) ;
+}
+void IntHandlerException4C(void)
+{
+    debugSPIPrint("CPU Exc: Overflow Trap\n");    while(1) ;
+}
+void IntHandlerException5C(void)
+{
+    debugSPIPrint("CPU Exc: BOUND exceeded\n");    while(1) ;
+}
+void IntHandlerException6C(void)
+{
+    unsigned int dwEbp = 0;
+    debugSPIPrint("CPU Exc: Invalid Opcode\n");
+    __asm__ __volatile__ ( " mov %%esp, %%eax\n " : "=a" (dwEbp) );
+    debugSPIPrint("   %08lX:%08lX\n", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
     while(1) ;
 }
-//void IntHandlerException7C(void) {    debugSPIPrintInt("CPU Exc: Coprocessor Absent\n");    while(1) ; }
-void IntHandlerException7C(void) {    debugSPIPrintInt("CPU Exc: Coprocessor Absent\n");}
-void IntHandlerException8C(void) {    debugSPIPrintInt("CPU Exc: Double Fault\n");    while(1) ; }
-//void IntHandlerException9C(void) {    debugSPIPrintInt("CPU Exc: Copro Seg Overrun\n");    while(1) ; }
-void IntHandlerException9C(void) {    debugSPIPrintInt("CPU Exc: Copro Seg Overrun\n");}
-void IntHandlerExceptionAC(void) {    debugSPIPrintInt("CPU Exc: Invalid TSS\n");    while(1) ; }
-void IntHandlerExceptionBC(void) {    debugSPIPrintInt("CPU Exc: Segment not present\n");    while(1) ; }
-void IntHandlerExceptionCC(void) {    debugSPIPrintInt("CPU Exc: Stack Exception\n");    while(1) ; }
-void IntHandlerExceptionDC(void) {    debugSPIPrintInt("CPU Exc: General Protection Fault\n");    while(1) ; }
-void IntHandlerExceptionEC(void) {    debugSPIPrintInt("CPU Exc: Page Fault\n");    while(1) ; }
-void IntHandlerExceptionFC(void) {    debugSPIPrintInt("CPU Exc: Reserved\n");    while(1) ; }
-//void IntHandlerException10C(void) {    debugSPIPrintInt("CPU Exc: Copro Error\n");    while(1) ; }
-void IntHandlerException10C(void) {    debugSPIPrintInt("CPU Exc: Copro Error\n");}
 
+//void IntHandlerException7C(void) {    debugSPIPrintInt("CPU Exc: Coprocessor Absent\n");    while(1) ; }
+void IntHandlerException7C(void)
+{
+    debugSPIPrint("CPU Exc: Coprocessor Absent\n");
+}
+void IntHandlerException8C(void)
+{
+    debugSPIPrint("CPU Exc: Double Fault\n");    while(1) ;
+}
+//void IntHandlerException9C(void) {    debugSPIPrint("CPU Exc: Copro Seg Overrun\n");    while(1) ; }
+void IntHandlerException9C(void)
+{
+    debugSPIPrint("CPU Exc: Copro Seg Overrun\n");
+}
+void IntHandlerExceptionAC(void)
+{
+    debugSPIPrint("CPU Exc: Invalid TSS\n");    while(1) ;
+}
+void IntHandlerExceptionBC(void)
+{
+    debugSPIPrint("CPU Exc: Segment not present\n");    while(1) ;
+}
+void IntHandlerExceptionCC(void)
+{
+    debugSPIPrint("CPU Exc: Stack Exception\n");    while(1) ;
+}
+void IntHandlerExceptionDC(void)
+{
+    debugSPIPrint("CPU Exc: General Protection Fault\n");    while(1) ;
+}
+void IntHandlerExceptionEC(void)
+{
+    debugSPIPrint("CPU Exc: Page Fault\n");    while(1) ;
+}
+void IntHandlerExceptionFC(void)
+{
+    debugSPIPrint("CPU Exc: Reserved\n");    while(1) ;
+}
+//void IntHandlerException10C(void) {    debugSPIPrint("CPU Exc: Copro Error\n");    while(1) ; }
+void IntHandlerException10C(void)
+{
+    debugSPIPrint("CPU Exc: Copro Error\n");
+}
 

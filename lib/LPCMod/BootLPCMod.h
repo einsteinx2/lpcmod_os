@@ -48,6 +48,8 @@ void LPCMod_WriteIO(unsigned char port, unsigned char value);
 void LPCMod_FastWriteIO(unsigned char port, unsigned char value);
 void LPCMod_WriteGenPurposeIOs(void);
 
+void quickboot(unsigned char bank);
+
 void switchOSBank(FlashBank bank);
 void switchBootBank(FlashBank bank);
 

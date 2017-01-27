@@ -10,6 +10,9 @@
 
 #include "FlashDriver.h"
 
+bool fSeenPowerButtonPress;
+bool fSeenEjectButtonPress;
+
 void assertBankScriptExecBankBoot(void * data);
 void assertBankScriptExecTSOPBoot(void * data);
 void BootOriginalBios(FlashBank bank) ;

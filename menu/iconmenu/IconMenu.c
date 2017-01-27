@@ -277,12 +277,12 @@ static void IconMenuDraw(int nXOffset, int nYOffset)
 
     if(temp != 0)
     {
-        printk("\2Select from Menu \2 (%i)", iconTimeRemain);    
+        printk("\2Please select from menu \2 (%i)", iconTimeRemain);
     }
     else
     {
         VIDEO_CURSOR_POSX += 52;
-        printk("\2Select from Menu \2");    
+        printk("\2Please select from menu \2");
     }
 
     if(uncommittedChanges > 0)

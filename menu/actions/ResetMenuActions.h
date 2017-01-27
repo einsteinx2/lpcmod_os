@@ -9,8 +9,12 @@
  *                                                                         *
  ***************************************************************************/
 
-void QuickReboot(void *);
-void SlowReboot(void *);
-void PowerOff(void *);
+void QuickReboot(void* ignored);
+void SlowReboot(void* ignored);
+void PowerOff(void* ignored);
+
+void SlowRebootNoSave(void* ignored);
+void QuickRebootNoSave(void* ignored);
+void PowerOffNoSave(void* ignored);
 
 #endif

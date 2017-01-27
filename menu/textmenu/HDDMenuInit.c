@@ -20,7 +20,7 @@ void HDDLockUnlockMenuDynamic(void * drive);
 
 TEXTMENU* HDDMenuInit(void)
 {
-    TEXTMENUITEM* itemPtr;
+    TEXTMENUITEM* itemPtr = NULL;
     TEXTMENU* menuPtr;
     int i = 0;
 
@@ -42,6 +42,14 @@ TEXTMENU* HDDMenuInit(void)
             itemPtr->dataPtrAlloc = true;
             TextMenuAddItem(menuPtr, itemPtr);
         }
+    }
+
+    if(itemPtr == NULL)
+    {
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+        sprintf(itemPtr->szCaption, "No Hard Drive");
+        itemPtr->noSelect = NOSELECTERROR;
+        TextMenuAddItem(menuPtr, itemPtr);
     }
 
     return menuPtr;

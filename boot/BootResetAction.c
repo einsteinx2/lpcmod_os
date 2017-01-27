@@ -37,6 +37,7 @@
 #include "FlashMenuActions.h"
 #include "string.h"
 #include "xblast/HardwareIdentifier.h"
+#include "xblast/PowerManagement.h"
 #include "FlashDriver.h"
 
 JPEG jpegBackdrop;
@@ -221,9 +222,12 @@ extern void BootResetAction ( void )
     // Reset the AGP bus and start with good condition
     BootAGPBUSInitialization();
     EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-    I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-    I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
-    I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+    if(EjectButtonPressed)
+    {
+        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+        I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
+        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+    }
     
     
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
@@ -333,6 +337,14 @@ extern void BootResetAction ( void )
     BootStartUSB();
     debugSPIPrint("USB init done.\n");
 
+    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+    if(EjectButtonPressed)
+    {
+        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
+        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+    }
+
     //Load up some more custom settings right before booting to OS.
     if(fFirstBoot == false)
     {
@@ -350,64 +362,31 @@ extern void BootResetAction ( void )
         if(isXBlastOnLPC() && isXBE() == false)       //Quickboot only if on the right hardware.
         {
             debugSPIPrint("Check any Quickboot or EjectButton boot rule.\n");
-            if(EjectButtonPressed && LPCmodSettings.OSsettings.altBank != BNKOS)              //Xbox was started from eject button and eject button quick boot is enabled.
+
+            if(LPCmodSettings.OSsettings.Quickboot)
             {
-                debugSPIPrint("Eject button press boot detected.\n");
-                if(LPCmodSettings.OSsettings.altBank > BOOTFROMTSOP)
+                // No quickboot if both button pressed at that point.
+                if(fSeenPowerButtonPress != fSeenEjectButtonPress)
                 {
-                    debugSPIPrint("Booting XBlast flash bank\n");
-                    switchBootBank(LPCmodSettings.OSsettings.altBank);
-              	}
-                else
-                {
-                    debugSPIPrint("Booting TSOP flash bank\n");
-                    //WriteToIO(XODUS_CONTROL, RELEASED0);    //Release D0
-                    //If booting from TSOP, use of the XODUS_CONTROL register is fine.
-                    if(getMotherboardRevision() == XboxMotherboardRevision_1_6 || getMotherboardRevision() == XboxMotherboardRevision_UNKNOWN)
+                    if(LPCmodSettings.OSsettings.activeBank != BNKOS)
                     {
-                        switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
+                        if(fSeenPowerButtonPress == true)
+                        {
+                            debugSPIPrint("Going to Quickboot.\n");
+                            quickboot(LPCmodSettings.OSsettings.activeBank);
+                        }
                     }
-                    else
+
+                    if(LPCmodSettings.OSsettings.altBank != BNKOS)
                     {
-                        switchBootBank(LPCmodSettings.OSsettings.altBank);    // switch to original bios but modchip listen to LPC commands.
-                                                                              // Lock flash bank control with OSBNKCTRLBIT.
-                    }
-                }
-                I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-                BootStopUSB();
-                I2CRebootQuick();
-                while(1);	//Hang there.
-            }
-            EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-            I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-            I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
-            I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-            if(EjectButtonPressed == false && LPCmodSettings.OSsettings.Quickboot)
-            {       //Eject button NOT pressed and Quickboot ON.
-                debugSPIPrint("Going to Quickboot.\n");
-                if(LPCmodSettings.OSsettings.activeBank > BOOTFROMTSOP)
-                {
-                    debugSPIPrint("Booting XBlast flash bank\n");
-                    switchBootBank(LPCmodSettings.OSsettings.activeBank);
-              	}
-                else
-                {
-                    debugSPIPrint("Booting TSOP flash bank\n");
-                    //If booting from TSOP, use of the XODUS_CONTROL register is fine.
-                    if(getMotherboardRevision() == XboxMotherboardRevision_1_6 || getMotherboardRevision() == XboxMotherboardRevision_UNKNOWN)
-                    {
-                        switchBootBank(KILL_MOD);    // switch to original bios. Mute modchip.
-                    }
-                    else
-                    {
-                        switchBootBank(LPCmodSettings.OSsettings.activeBank);    // switch to original bios but modchip listen to LPC commands.
-																			     // Lock flash bank control with OSBNKCTRLBIT.
+                        debugSPIPrint("Eject button press boot detected.\n");
+                        if(fSeenEjectButtonPress == true)
+                        {
+                            debugSPIPrint("Going to alt Quickboot.\n");
+                            quickboot(LPCmodSettings.OSsettings.altBank);
+                        }
                     }
                 }
-                I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
-                BootStopUSB();
-                I2CRebootQuick();
-                while(1);
             }
         }
         debugSPIPrint("No Quickboot or EjectButton boot this time.\n");

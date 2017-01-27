@@ -291,7 +291,6 @@ void * malloc(size_t size);
 void free(void *);
 
 extern volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
-extern volatile bool fSeenPowerdown;
 typedef enum {
     ETS_OPEN_OR_OPENING=0,
     ETS_CLOSING,
