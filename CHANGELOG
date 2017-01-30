@@ -1,4 +1,8 @@
-v0.5Beta
+v0.49Beta2
+-Fix LCD on XBlast/SmartXX hardware
+-Fix for timeout boot countdown
+
+v0.49Beta
 -UI text placement fix.
 -Fixed some typos.
 -Display custom bank text under icons.
