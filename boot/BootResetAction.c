@@ -366,11 +366,11 @@ extern void BootResetAction ( void )
             if(LPCmodSettings.OSsettings.Quickboot)
             {
                 // No quickboot if both button pressed at that point.
-                if(fSeenPowerButtonPress != fSeenEjectButtonPress)
+                if(0)
                 {
                     if(LPCmodSettings.OSsettings.activeBank != BNKOS)
                     {
-                        if(fSeenPowerButtonPress == true)
+                        if(1 == true)
                         {
                             debugSPIPrint("Going to Quickboot.\n");
                             quickboot(LPCmodSettings.OSsettings.activeBank);
@@ -380,7 +380,7 @@ extern void BootResetAction ( void )
                     if(LPCmodSettings.OSsettings.altBank != BNKOS)
                     {
                         debugSPIPrint("Eject button press boot detected.\n");
-                        if(fSeenEjectButtonPress == true)
+                        if(1 == true)
                         {
                             debugSPIPrint("Going to alt Quickboot.\n");
                             quickboot(LPCmodSettings.OSsettings.altBank);

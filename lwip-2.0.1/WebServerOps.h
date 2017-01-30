@@ -8,6 +8,8 @@
 #ifndef LWIP_WEBSERVEROPS_H_
 #define LWIP_WEBSERVEROPS_H_
 
+#include <stdbool.h>
+
 typedef enum
 {
     WebServerOps_BIOSFlash = 0U,
@@ -15,6 +17,10 @@ typedef enum
     WebServerOps_HDD0Lock = 2U,
     WebServerOps_HDD1Lock = 3U
 }WebServerOps;
+
+void startNetFlash(WebServerOps flashType);
+bool netflashPostProcess(void);
+void run_lwip(void);
 
 extern WebServerOps currentWebServerOp;
 

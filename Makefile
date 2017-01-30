@@ -195,6 +195,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
 OBJECTS-CROM += $(TOPDIR)/obj/md5.o
 OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 OBJECTS-CROM += $(TOPDIR)/obj/strtol.o
+OBJECTS-CROM += $(TOPDIR)/obj/cromSystem.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettings.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsChangeTracker.o

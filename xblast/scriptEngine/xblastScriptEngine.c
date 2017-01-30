@@ -14,6 +14,7 @@
 #include "stdlib.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "lib/cromwell/cromSystem.h"
 #include "lib/time/timeManagement.h"
 #include "xblast/PowerManagement.h"
 #include "MenuActions.h"
@@ -250,7 +251,7 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
     //printf("\n\nTotal IF/ELSE/ENDIF statements found : %u", ifStatementList.count);
     //printf("\n\nBegin script execution");
 
-    while(stringStopPtr < fileSize){      //We stay in file
+    while(stringStopPtr < fileSize && cromwellLoop()){      //We stay in file
         tempCounter = 0;
         while(file[stringStopPtr] != '\n' && stringStopPtr < fileSize && tempCounter < 100){        //While we don't hit a new line and still in file
             stringStopPtr++;        //Move on to next character in file.

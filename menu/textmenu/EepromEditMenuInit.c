@@ -64,8 +64,8 @@ TEXTMENU* eepromEditMenuDynamic(void)
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Restore from network");
     itemPtr->functionPtr = enableNetflash;
-    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
-    *(unsigned char *)itemPtr->functionDataPtr= WebServerOps_EEPROMFlash;
+    itemPtr->functionDataPtr = malloc(sizeof(WebServerOps));
+    *(WebServerOps *)itemPtr->functionDataPtr= WebServerOps_EEPROMFlash;
     itemPtr->dataPtrAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 

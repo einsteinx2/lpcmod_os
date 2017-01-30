@@ -11,6 +11,7 @@
 #include "boot.h"
 #include "video.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "lib/cromwell/cromSystem.h"
 #include "string.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "xblast/settings/xblastSettingsChangeTracker.h"
@@ -159,7 +160,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem)
     TextMenuDraw(menu, firstVisibleMenuItem, selectedMenuItem);
     
     //Main menu event loop.
-    while(1)
+    while(cromwellLoop())
     {
         wait_ms(10);
 

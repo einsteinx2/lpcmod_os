@@ -17,6 +17,7 @@
 #include "iso_fs.h"
 #include "lib/time/timeManagement.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromSystem.h"
 #include "FlashMenuActions.h"
 #include "string.h"
 #include "Gentoox.h"
@@ -507,7 +508,7 @@ int BootLoadFlashCD(int cdromId) {
 
         wait_ms(1000); // Wait for DVD to become responsive to inject command
 
-        while(1) {
+        while(cromwellLoop()) {
             // Make button 'A' close the DVD tray
             if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) {
                 I2CTransmitWord(0x10, 0x0c01);

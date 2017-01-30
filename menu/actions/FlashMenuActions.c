@@ -21,6 +21,7 @@
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromSystem.h"
 #include "LEDMenuActions.h"
 #include "WebServerOps.h"
 
@@ -76,20 +77,25 @@ void enableNetflash (void *flashType) {
     {
         nicInit = true;
         cromwellSuccess();
-        extern int run_lwip(unsigned char flashType);
         debugSPIPrint("Starting network service\n");
-        while(run_lwip(*(unsigned char *)flashType) == 0);
-        debugSPIPrint("Killing network service\n");
-        switch(currentWebServerOp)
+        startNetFlash(*(WebServerOps *)flashType);
+        while(cromwellLoop())
         {
-        case WebServerOps_BIOSFlash:
-            switchOSBank(FlashBank_OSBank);
-            FlashPrintResult();
-
-            break;
-        case WebServerOps_EEPROMFlash:
-            UIFooter();
-            break;
+            if(netflashPostProcess())
+            {
+                debugSPIPrint("Killing network service\n");
+                switch(currentWebServerOp)
+                {
+                case WebServerOps_BIOSFlash:
+                    switchOSBank(FlashBank_OSBank);
+                    FlashPrintResult();
+                    Flash_freeFlashFSM();
+                    return;
+                case WebServerOps_EEPROMFlash:
+                    UIFooter();
+                    return;
+                }
+            }
         }
 
     }

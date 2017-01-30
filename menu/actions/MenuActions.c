@@ -11,6 +11,7 @@
 #include "video.h"
 #include "MenuInits.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromSystem.h"
 #include "lib/time/timeManagement.h"
 #include "lib/LPCMod/xblastDebug.h"
 #include <stddef.h>
@@ -80,5 +81,11 @@ void UIFooter(void)
 {
     VIDEO_ATTR=0xffc8c8c8;
     printk("\n\n           Press Button 'B' or 'Back' to return.");
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_STATE(XPAD_STATE_BACK) != 1)) wait_ms(10);
+    while(cromwellLoop())
+    {
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1)
+        {
+            break;
+        }
+    }
 }

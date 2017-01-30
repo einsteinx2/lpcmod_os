@@ -50,7 +50,7 @@ void AssertLockUnlockFromNetwork(void* customStructPtr)
 {
     LockUnlockCommonParams* tempItemPtr = (LockUnlockCommonParams*)customStructPtr;
     unsigned char nIndexDrive = tempItemPtr->driveIndex;
-    char temp = WebServerOps_HDD1Lock;
+    WebServerOps temp = WebServerOps_HDD1Lock;
     unsigned char *eepromPtr;
 
     if(nIndexDrive == 0)

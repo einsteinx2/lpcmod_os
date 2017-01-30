@@ -6,7 +6,9 @@
  */
 
 #include "timeManagement.h"
+#include "lib/cromwell/cromSystem.h"
 #include "boot.h"
+#include <limits.h>
 
 static unsigned int currentHeldTime_ms = 0;
 
@@ -41,7 +43,8 @@ void wait_us(unsigned int ticks) {
     COUNT_TO = (unsigned int) ((float)(ticks*3.579545));
     COUNT_start = getAPICCount();
 
-    while(1) {
+    while(cromwellLoop())
+    {
         HH = getAPICCount();
         temp = HH-COUNT_start;
 
@@ -76,7 +79,7 @@ void wait_ms(unsigned int ticks) {
     COUNT_TO = (unsigned int) ((float)(ticks*3579.545));
     COUNT_start = getAPICCount();
 
-    while(1)
+    while(cromwellLoop())
     {
         HH = getAPICCount();
         temp = HH-COUNT_start;
@@ -99,15 +102,31 @@ unsigned int getMS(void)
 	return currentHeldTime_ms;
 }
 
+unsigned int getUS(void)
+{
+    return (unsigned int)((float)(getAPICCount() / 3.579545));
+}
+
 unsigned int getElapsedTimeSince(unsigned int startValue_ms)
 {
 	return currentHeldTime_ms - startValue_ms;
 }
 
+unsigned int getElapseMicroSecondsSince(unsigned startValue_us)
+{
+    unsigned int currentTime = getUS();
+    if(startValue_us > currentTime) // rollover
+    {
+        currentTime += (UINT_MAX - startValue_us);
+        startValue_us = 0;
+    }
+    return currentTime - startValue_us;
+}
+
 //To accomodate lwip
 unsigned int sys_now(void)
 {
-	return (unsigned int)(getAPICCount() / 3579.545);
+	return getMS();
 }
 
 unsigned int getRandSeed(void)

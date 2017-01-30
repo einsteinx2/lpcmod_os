@@ -17,6 +17,7 @@
 #include "BootHddKey.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromSystem.h"
 #include "xblast/settings/xblastSettingsImportExport.h"
 #include "string.h"
 #include "menu/misc/ConfirmDialog.h"
@@ -135,7 +136,7 @@ int testBank(int bank)
             membasetop[counter+subCounter+bank*4] = lastValue;                         //Set it all to 0x1
     }
 
-    while(lastValue < 0x80000000)                                      //Test every data bit pins.
+    while(lastValue < 0x80000000 && cromwellLoop())                                      //Test every data bit pins.
     {
         for (counter= 0; counter < (64*1024*1024/4);counter+=16)       //Test every address bit pin. 4194304 * 8 = 32MB
         {

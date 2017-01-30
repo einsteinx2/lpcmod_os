@@ -13,6 +13,7 @@
 #include "cromwell.h"
 #include "string.h"
 #include "lib/LPCMod/xblastDebug.h"
+#include "lib/cromwell/cromSystem.h"
 
 #define ComparebufSize 100
 char bypassConfirmDialog[ComparebufSize];        //Arbitrary length
@@ -36,7 +37,7 @@ bool ConfirmDialog(char * string, bool critical)
     yPos = centerScreenPrintk(yPos, "Hold RT, LT, Start and White to confirm\n");
     centerScreenPrintk(yPos, "Press Back to cancel");
     
-    while(risefall_xpad_STATE(XPAD_STATE_BACK) == false)
+    while(cromwellLoop())
     {
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
            risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
@@ -48,8 +49,11 @@ bool ConfirmDialog(char * string, bool critical)
             result = false;
             break;
         }
-           
-    
+
+        if(risefall_xpad_STATE(XPAD_STATE_BACK) == 1)
+        {
+            break;
+        }
     }
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     

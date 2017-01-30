@@ -16,7 +16,7 @@ bool SaveXBlastOSSettings(void);
 
 
 void setBiosJob(const unsigned char *data, unsigned int size, bool askConfirm);
-void executeFlashDriver(void);
+bool executeFlashDriver(void);
 
 bool FlashPrintResult(void);
 

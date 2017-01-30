@@ -33,7 +33,9 @@ void wait_us(unsigned int ticks);
 void updateTime(void);
 
 unsigned int getMS(void);
+unsigned int getUS(void);
 unsigned int getElapsedTimeSince(unsigned int startValue_ms);
+unsigned int getElapseMicroSecondsSince(unsigned startValue_us);
 
 
 #endif /* LIB_TIME_TIMEMANAGEMENT_H_ */

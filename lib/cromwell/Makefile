@@ -1,3 +1,3 @@
-O_TARGET := cromString.o string.o strtol.o
+O_TARGET := cromString.o string.o strtol.o cromSystem.o
 
 include $(TOPDIR)/Rules.make

@@ -14,6 +14,7 @@
 #include "xblast/scriptEngine/xblastScriptEngine.h"
 #include "xblast/settings/xblastSettings.h"
 #include "xblast/HardwareIdentifier.h"
+#include "lib/cromwell/cromSystem.h"
 #include "config.h"
 #include "string.h"
 
@@ -284,6 +285,7 @@ void Flash_freeFlashFSM(void)
     flashErrorCode = FlashErrorcodes_NoError;
     currentAddr = 0;
     currentFlashTask = FlashTask_NoTask;
+    switchOSBank(FlashBank_OSBank);
 }
 
 void Flash_forceUserAbort(void)
@@ -297,6 +299,7 @@ FlashProgress Flash_getProgress(void)
     FlashProgress result;
 
     result.currentFlashOp = currentFlashOp;
+    result.currentFlashTask = currentFlashTask;
     result.flashErrorCode = flashErrorCode;
     if(biosBufferSize == 0)
     {
@@ -493,7 +496,7 @@ bool bootReadXBlastOSSettings(void)
 
     FlashProgress progress = Flash_ReadXBlastOSSettingsRequest();
 
-    while(progress.currentFlashOp != FlashOp_Idle)
+    while(cromwellLoop())
     {
         if(progress.currentFlashOp == FlashOp_Completed || progress.currentFlashOp == FlashOp_Error)
         {
@@ -501,9 +504,10 @@ bool bootReadXBlastOSSettings(void)
             returnValue = Flash_LoadXBlastOSSettings(&LPCmodSettings);
 
             Flash_freeFlashFSM();
+
+            break;
         }
 
-        Flash_executeFlashFSM();
         progress = Flash_getProgress();
     }
     memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));

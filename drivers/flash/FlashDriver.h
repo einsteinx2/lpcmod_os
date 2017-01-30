@@ -25,6 +25,7 @@ typedef enum
 typedef struct
 {
     FlashOp currentFlashOp;
+    FlashTask currentFlashTask;
     unsigned char progressInPercent;
     FlashErrorcodes flashErrorCode;
 } FlashProgress;

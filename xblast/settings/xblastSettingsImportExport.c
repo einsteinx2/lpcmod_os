@@ -21,6 +21,7 @@
 #include "Gentoox.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "lib/cromwell/cromSystem.h"
 #include "i2c.h"
 #include "xblast/HardwareIdentifier.h"
 
@@ -104,7 +105,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
             }
             //partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
             if(LoadFATXFile(partition, (char *)cfgFileName, &fileinfo)){
-                while(stringStopPtr < fileinfo.fileSize){      //We stay in file
+                while(stringStopPtr < fileinfo.fileSize && cromwellLoop()){      //We stay in file
                     while(fileinfo.buffer[stringStopPtr] != '\n' && stringStopPtr < fileinfo.fileSize){        //While we don't hit a new line and still in file
                         stringStopPtr++;        //Move on to next character in file.
                     }

@@ -15,41 +15,59 @@
 #include "lpcmod_v1.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromSystem.h"
 #include "lib/time/timeManagement.h"
 #include "MenuActions.h"
 #include "FlashDriver.h"
 #include "string.h"
 
-void LPCIOWrite(void * ignored){
+void LPCIOWrite(void* ignored)
+{
     unsigned short address = 0x00FF;
     unsigned char data = 0x00;
     unsigned char line = 0;
     bool refresh = true;
-    while((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) &&
-          (risefall_xpad_STATE(XPAD_STATE_BACK) != 1)){
-        if(refresh){
+
+    while(cromwellLoop())
+    {
+        if(refresh)
+        {
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_ATTR=0xffffffff;
             UiHeader("Write LPC I/O");
             if(line == 0)
+            {
        	        VIDEO_ATTR=0xffffef37;    //In yellow
+            }
        	    else
+       	    {
        	        VIDEO_ATTR=0xffffffff;
+       	    }
             printk("\n\n\2           Address : 0x%04X", address);
             if(line == 1)
+            {
        	        VIDEO_ATTR=0xffffef37;    //In yellow
+            }
        	    else
+       	    {
        	        VIDEO_ATTR=0xffffffff;
+       	    }
             printk("\n\n\2           Data    : 0x%02X", data);
             if(line == 2)
+            {
        	        VIDEO_ATTR=0xffffef37;    //In yellow
+            }
        	    else
+       	    {
        	        VIDEO_ATTR=0xffffffff;
+       	    }
             printk("\n\n\2           Send");
             
             refresh = false;
         }
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1){
+
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1)
+        {
             if(line == 0)
                 address += 16;
             else if(line == 1)
@@ -59,118 +77,163 @@ void LPCIOWrite(void * ignored){
                 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 ||
-                 risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
             if(line == 0)
+            {
                 address += 1;
+            }
             else if(line == 1 || line == 2)
+            {
                 data += 1;
+            }
                 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 ||
-                 risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1)
+        {
             if(line == 0)
+            {
                 address -= 1;
+            }
             else if(line == 1 || line == 2)
+            {
                 data -= 1;
+            }
                 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y)) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y))
+        {
             address += 0x1000;
             
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X)) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X))
+        {
             address -= 0x1000;
             
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1)
+        {
             if(line < 2)
+            {
                 line += 1;
+            }
                 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1)
+        {
             if(line > 0)
+            {
             	line -= 1;
+            }
             	
             refresh = true;
         }
+        else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1)
+        {
+            break;
+        }
     }
-    return;
 }
 
-void LPCIORead(void * ignored){
+void LPCIORead(void* ignored)
+{
     unsigned short address = 0x00FF;
     unsigned char data = 0x00;
     unsigned char line = 0;
     bool refresh = true;
-    while((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) &&
-          (risefall_xpad_STATE(XPAD_STATE_BACK) != 1)){
-        if(refresh){
+    while(cromwellLoop())
+    {
+        if(refresh)
+        {
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_ATTR=0xffffffff;
             UiHeader("Read LPC I/O");
             if(line == 0)
+            {
        	        VIDEO_ATTR=0xffffef37;    //In yellow
+            }
        	    else
+       	    {
        	        VIDEO_ATTR=0xffffffff;
+       	    }
             printk("\n\n\2           Address : 0x%04X", address);
             if(line == 1)
+            {
        	        VIDEO_ATTR=0xffffef37;    //In yellow
+            }
        	    else
+       	    {
        	        VIDEO_ATTR=0xffffffff;
+       	    }
             printk("\n\n\2           Send");
-        
 
- 	    VIDEO_ATTR=0xffffffff;
+            VIDEO_ATTR=0xffffffff;
             printk("\n\n\n\n\n\2           Data    : 0x%02X", data);
             refresh = false;
         }
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1){
+
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1)
+        {
             if(line == 0)
+            {
                 address += 16;
+            }
             else if(line == 1)
+            {
                 data = ReadFromIO(address);
+            }
                 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 ||
-                 risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1)
+        {
             address += 1;
             
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 ||
-                 risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1)
+        {
             address -= 1;
             
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y)) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y))
+        {
             address += 0x1000;
             
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X)) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X))
+        {
             address -= 0x1000;
             
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1)
+        {
             if(line < 1)
+            {
                 line += 1;
+            }
                 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1) {
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1)
+        {
             if(line > 0)
+            {
             	line -= 1;
+            }
             	
             refresh = true;
+        }
+        else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1)
+        {
+            break;
         }
     }
     return;
@@ -188,8 +251,7 @@ void SMBusRead(void * ignored)
 
     memset(data, 0xff, 16);
 
-    while((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) &&
-          (risefall_xpad_STATE(XPAD_STATE_BACK) != 1))
+    while(cromwellLoop())
     {
         if(refresh)
         {
@@ -277,8 +339,7 @@ void SMBusRead(void * ignored)
 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 ||
-                 risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1)
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1)
         {
             if(line == 0)
             {
@@ -298,8 +359,7 @@ void SMBusRead(void * ignored)
 
             refresh = true;
         }
-        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 ||
-                 risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1)
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1)
         {
             if(line == 0)
             {
@@ -366,6 +426,10 @@ void SMBusRead(void * ignored)
             }
 
             refresh = true;
+        }
+        else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1)
+        {
+            break;
         }
     }
 }

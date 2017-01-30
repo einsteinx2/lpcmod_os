@@ -31,6 +31,7 @@
 #include "xblast/settings/xblastSettings.h"
 #include "xblast/settings/xblastSettingsChangeTracker.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/cromwell/cromSystem.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
 
@@ -363,7 +364,7 @@ bool IconMenu(void)
     }
     COUNT_start = getMS();
     //Main menu event loop.
-    while(1)
+    while(cromwellLoop())
     {
         int changed=0;
         wait_ms(10);    

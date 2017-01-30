@@ -176,8 +176,8 @@ void BankSelectDynamic(void* bank)
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     sprintf(itemPtr->szCaption, "Net Flash");
     itemPtr->functionPtr = enableNetflash;
-    itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
-    *(unsigned char *)itemPtr->functionDataPtr = WebServerOps_BIOSFlash;
+    itemPtr->functionDataPtr = malloc(sizeof(WebServerOps));
+    *(WebServerOps *)itemPtr->functionDataPtr = WebServerOps_BIOSFlash;
     itemPtr->dataPtrAlloc = true;
     TextMenuAddItem(menuPtr, itemPtr);
 #ifdef DEV_FEATURES

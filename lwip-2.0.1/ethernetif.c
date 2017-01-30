@@ -72,6 +72,7 @@
 #include <stdarg.h>
 
 bool netFlashOver;
+bool netFlashOperationOver;
 WebServerOps currentWebServerOp;
 
 #define LINK_SPEED_OF_YOUR_NETIF_IN_BPS 100000000
@@ -419,10 +420,7 @@ ebd_wait (u16_t time) {
 }
 
 
-int
-run_lwip (unsigned char flashType) {
-
-    bool returnResult = 0;
+void run_lwip(void) {
 
     static unsigned char buttonCount;
 
@@ -436,33 +434,13 @@ run_lwip (unsigned char flashType) {
     switch(currentNetworkState)
     {
     case NetworkState_Idle:
-		debugSPIPrint("currentNetworkState == NetworkState_Idle\n");
-		currentWebServerOp = flashType;
-    	//Init a couple of Lwip globals because they seem to assume declared pointers are set to NULL by default.
-		//From tcp.c
-		tcp_bound_pcbs = NULL;
-		tcp_listen_pcbs.listen_pcbs = NULL;
-		tcp_active_pcbs = NULL;
-		tcp_tw_pcbs = NULL;
-		//tcp_tmp_pcb = NULL; //Not needed anymore in 2.0.0
 
-		//from netif.c
-		netif_list = NULL;
-		netif_default = NULL;
-
-		//From udp.c
-		udp_pcbs = NULL;
-
-		divisor = 0;
-		buttonCount = 0;
-		currentNetworkState = NetworkState_Init;
-    	debugSPIPrint("currentNetworkState == NetworkState_Init\n");
     	break;
     case NetworkState_Init:
         printk ("\n            TCP/IP initialization. ");
     	lwip_init();
     	cromwellSuccess();
-		netFlashOver = false;
+		buttonCount = 0;
 
 		netif = netif_find("eb");   //Trying to find previously configured network interface
 
@@ -596,14 +574,13 @@ run_lwip (unsigned char flashType) {
             FlashProgress flashProgress = Flash_getProgress();
             if(flashProgress.currentFlashOp == FlashOp_Completed || flashProgress.currentFlashOp == FlashOp_Error)
             {
-                returnResult = 1;
+                netFlashOperationOver = true;
 
                 currentNetworkState = NetworkState_Idle;
             }
         }
         break;
         default:
-            returnResult = 1;
             currentNetworkState = NetworkState_Idle;
             break;
         }
@@ -611,7 +588,37 @@ run_lwip (unsigned char flashType) {
     }
 
     sys_check_timeouts();
-    executeFlashDriver();
+}
 
-    return returnResult;   //Keep compiler happy
+void startNetFlash(WebServerOps flashType)
+{
+    currentWebServerOp = flashType;
+    //Init a couple of Lwip globals because they seem to assume declared pointers are set to NULL by default.
+    //From tcp.c
+    tcp_bound_pcbs = NULL;
+    tcp_listen_pcbs.listen_pcbs = NULL;
+    tcp_active_pcbs = NULL;
+    tcp_tw_pcbs = NULL;
+    //tcp_tmp_pcb = NULL; //Not needed anymore in 2.0.0
+
+    //from netif.c
+    netif_list = NULL;
+    netif_default = NULL;
+
+    //From udp.c
+    udp_pcbs = NULL;
+
+    divisor = 0;
+    currentNetworkState = NetworkState_Init;
+    netFlashOperationOver = false;
+    netFlashOver = false;
+    debugSPIPrint("currentNetworkState == NetworkState_Init\n");
+}
+
+bool netflashPostProcess(void)
+{
+    bool temp = netFlashOperationOver;
+    netFlashOperationOver = false;
+
+    return temp;
 }

@@ -11,6 +11,7 @@
 #include "boot.h"
 #include "video.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "lib/cromwell/cromSystem.h"
 #include "lib/time/timeManagement.h"
 #include "NetworkMenuActions.h"
 #include "cromwell.h"
@@ -65,7 +66,7 @@ void OnScreenKeyboard(char * string, unsigned char maxLength, unsigned char line
     else
         rowLength = 10; //Full keyboard by default;
 
-    while(1){
+    while(cromwellLoop()){
         if(refresh){
             BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
             VIDEO_CURSOR_POSX=50;

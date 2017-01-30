@@ -16,6 +16,7 @@
 #include "cromwell.h"
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "lib/cromwell/cromSystem.h"
 #include "Gentoox.h"
 #include "FlashMenuActions.h"
 #include "menu/misc/ConfirmDialog.h"
@@ -199,9 +200,7 @@ bool FlashPrintResult(void)
         printk ("\n           %s", string);
     }
 
-    Flash_freeFlashFSM();
-
-    FlashFooter ();
+    FlashFooter();
 
     return isCritical;
 }
@@ -209,8 +208,6 @@ bool FlashPrintResult(void)
 bool SaveXBlastOSSettings(void)
 {
     bool resultSuccess = false;
-    char previousPercent = -1;
-    FlashOp previousFlashOp = FlashOp_PendingOp;
 
     if(memcmp(&LPCmodSettings, &LPCmodSettingsOrigFromFlash, sizeof(_LPCmodSettings)) == 0)
     {
@@ -234,83 +231,15 @@ bool SaveXBlastOSSettings(void)
 
     FlashProgress flashProgress =  Flash_SaveXBlastOSSettings();
 
-    while(flashProgress.currentFlashOp != FlashOp_Idle)
+    while(cromwellLoop())
     {
-        if(previousPercent == -1)
-        {
-            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-            printk("\n\n           Saving Settings to flash.");
-            printk("\n           Do not manually power off your Xbox.");
-            printk("\n\n           ");
-            previousPercent = 0;
-        }
-        if(previousPercent != flashProgress.progressInPercent)
-        {
-            previousPercent = flashProgress.progressInPercent;
-            printk(".");
-        }
-
-        if(previousFlashOp != flashProgress.currentFlashOp)
-        {
-            previousFlashOp = flashProgress.currentFlashOp;
-            switch(flashProgress.currentFlashOp)
-            {
-            case FlashOp_EraseInProgress:
-                printk("\n\n           Erasing\n           ");
-                break;
-            case FlashOp_WriteInProgress:
-                printk("\n\n           Writing\n           ");
-                break;
-            case FlashOp_VerifyInProgress:
-                printk("\n\n           Verifying\n           ");
-                break;
-            default:
-                break;
-            }
-        }
-
-
-        if(flashProgress.currentFlashOp == FlashOp_Completed)
-        {
-            resultSuccess = true;
-#ifdef DEV_FEATURES
-            printk("\n\n\n         BiosBufferSize : %u", getBiosBufferSize());
-            printk("\n         StartingOffset : %u", getStartingOffset());
-            printk("\n         CurrentAddr : %u", getCurrentAddr());
-            printk("\n         EraseSequenceMethod : %u", getEraseSequenceMethod());
-            printk("\n         FirstEraseTry : %u", getFirstEraseTry());
-            UIFooter();
-#endif
-            break;
-        }
-        else if(flashProgress.currentFlashOp == FlashOp_Error)
-        {
-#ifdef DEV_FEATURES
-            printk("\n\n         BiosBufferSize : %u", getBiosBufferSize());
-            printk("\n         StartingOffset : %u", getStartingOffset());
-            printk("\n         CurrentAddr : %u", getCurrentAddr());
-            printk("\n         EraseSequenceMethod : %u", getEraseSequenceMethod());
-            printk("\n         FirstEraseTry : %u", getFirstEraseTry());
-            UIFooter();
-#endif
-            printk("\n\n\n\n\n           \2Save Settings to flash failed...\n\2\n");
-            VIDEO_ATTR=0xffffff;
-            resultSuccess = FlashPrintResult() == false;
-
-            if(resultSuccess)
-            {
-                if(ConfirmDialog("Settings not saved.\n\2Continue anyway?", 1))
-                {
-                    resultSuccess = false;
-                }
-            }
-            break;
-        }
-
-
-        Flash_executeFlashFSM();
-
         flashProgress = Flash_getProgress();
+
+        if(flashProgress.currentFlashOp == FlashOp_Idle)
+        {
+            break;
+        }
+        resultSuccess = executeFlashDriver();
     }
 
     Flash_freeFlashFSM();
@@ -412,70 +341,150 @@ void blockExecuteFlashJob(void)
 {
     FlashProgress flashProgress = Flash_getProgress();
 
-    while(flashProgress.currentFlashOp != FlashOp_Idle)
+    while(cromwellLoop())
     {
         flashProgress = Flash_getProgress();
 
-        if(flashProgress.currentFlashOp == FlashOp_Completed || flashProgress.currentFlashOp == FlashOp_Error)
+        if(flashProgress.currentFlashOp == FlashOp_Idle)
         {
             break;
         }
 
         executeFlashDriver();
     }
-
-    FlashPrintResult();
-
-    switchOSBank(FlashBank_OSBank);
 }
 
-void executeFlashDriver(void)
+bool executeFlashDriver(void)
 {
+    bool resultSuccess = true;
     FlashProgress flashProgress = Flash_getProgress();
-    if(flashProgress.currentFlashOp == FlashOp_PendingOp)
-    {
-        debugSPIPrint("Flash update sequence pending op\n");
-        VIDEO_ATTR=0xffef37;
 
-        if(mustRestart)
+    switch(flashProgress.currentFlashTask)
+    {
+    case FlashTask_WriteBios:
+        if(flashProgress.currentFlashOp == FlashOp_PendingOp)
         {
-            printk("\n           \2%s\n\2\n", (isXBlastOnLPC())?"Updating XBlast OS...":"Updating flash bank...");
-            VIDEO_ATTR=0xffffff;
-            printk("\n\n\n           WARNING!\n");
-            printk("           Do not turn off your console during this process!\n");
-            printk("           Your console should automatically reboot when this\n");
-            printk("           is done.  However, if it does not, please manually\n");
-            printk("           do so by pressing the power button once the LED has\n");
-            printk("           turned flashing amber (oxox)\n");
+            debugSPIPrint("Flash update sequence pending op\n");
+            VIDEO_ATTR=0xffef37;
+
+            if(mustRestart)
+            {
+                printk("\n           \2%s\n\2\n", (isXBlastOnLPC())?"Updating XBlast OS...":"Updating flash bank...");
+                VIDEO_ATTR=0xffffff;
+                printk("\n\n\n           WARNING!\n");
+                printk("           Do not turn off your console during this process!\n");
+                printk("           Your console should automatically reboot when this\n");
+                printk("           is done.  However, if it does not, please manually\n");
+                printk("           do so by pressing the power button once the LED has\n");
+                printk("           turned flashing amber (oxox)\n");
+            }
+            else
+            {
+                printk("\n           \2Updating BIOS bank...\n\2\n");
+                VIDEO_ATTR=0xffffff;
+                printk("\n\n\n           WARNING!\n");
+                printk("           Do not turn off your console during this process!\n");
+            }
+        }
+        else if(flashProgress.currentFlashOp == FlashOp_Completed)
+        {
+            debugSPIPrint("Flash update sequence completed\n");
+            FlashPrintResult();
+            Flash_freeFlashFSM();
+        }
+        else if(flashProgress.currentFlashOp == FlashOp_Error)
+        {
+            debugSPIPrint("!!Flash update sequence error!! errorCode=%u\n", flashProgress.flashErrorCode);
+            FlashPrintResult();
+            Flash_freeFlashFSM();
         }
         else
         {
-            printk("\n           \2Updating BIOS bank...\n\2\n");
-            VIDEO_ATTR=0xffffff;
-            printk("\n\n\n           WARNING!\n");
-            printk("           Do not turn off your console during this process!\n");
+            if(previousPercent != flashProgress.progressInPercent)
+            {
+                previousPercent = flashProgress.progressInPercent;
+                BootFlashUserInterface(flashProgress.currentFlashOp, flashProgress.progressInPercent, 100);
+            }
         }
-    }
-    else if(flashProgress.currentFlashOp == FlashOp_Completed)
+        break;
+    case FlashTask_WriteSettings:
     {
-        debugSPIPrint("Flash update sequence completed\n");
-        if(flashProgress.flashErrorCode == FlashErrorcodes_NoError)
+        static char previousPercent = -1;
+        static FlashOp previousFlashOp = FlashOp_PendingOp;
+
+        if(previousPercent == -1)
         {
-            debugSPIPrint("Flash update sequence error-free\n");
+            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+            printk("\n\n           Saving Settings to flash.");
+            printk("\n           Do not manually power off your Xbox.");
+            printk("\n\n           ");
+            previousPercent = 0;
         }
-    }
-    else if(flashProgress.currentFlashOp == FlashOp_Error)
-    {
-        debugSPIPrint("!!Flash update sequence error!! errorCode=%u\n", flashProgress.flashErrorCode);
-    }
-    else
-    {
         if(previousPercent != flashProgress.progressInPercent)
         {
             previousPercent = flashProgress.progressInPercent;
-            BootFlashUserInterface(flashProgress.currentFlashOp, flashProgress.progressInPercent, 100);
+            printk(".");
+        }
+
+        if(previousFlashOp != flashProgress.currentFlashOp)
+        {
+            previousFlashOp = flashProgress.currentFlashOp;
+            switch(flashProgress.currentFlashOp)
+            {
+            case FlashOp_EraseInProgress:
+                printk("\n\n           Erasing\n           ");
+                break;
+            case FlashOp_WriteInProgress:
+                printk("\n\n           Writing\n           ");
+                break;
+            case FlashOp_VerifyInProgress:
+                printk("\n\n           Verifying\n           ");
+                break;
+            default:
+                break;
+            }
+        }
+
+        if(flashProgress.currentFlashOp == FlashOp_Completed)
+        {
+#ifdef DEV_FEATURES
+            printk("\n\n\n          BiosBufferSize : %u", getBiosBufferSize());
+            printk("\n          StartingOffset : %u", getStartingOffset());
+            printk("\n          CurrentAddr : %u", getCurrentAddr());
+            printk("\n          EraseSequenceMethod : %u", getEraseSequenceMethod());
+            printk("\n          FirstEraseTry : %u", getFirstEraseTry());
+            UIFooter();
+#endif
+            Flash_freeFlashFSM();
+        }
+        else if(flashProgress.currentFlashOp == FlashOp_Error)
+        {
+#ifdef DEV_FEATURES
+            printk("\n\n          BiosBufferSize : %u", getBiosBufferSize());
+            printk("\n          StartingOffset : %u", getStartingOffset());
+            printk("\n          CurrentAddr : %u", getCurrentAddr());
+            printk("\n          EraseSequenceMethod : %u", getEraseSequenceMethod());
+            printk("\n          FirstEraseTry : %u", getFirstEraseTry());
+            UIFooter();
+#endif
+            printk("\n\n\n\n\n           \2Save Settings to flash failed...\n\2\n");
+            VIDEO_ATTR=0xffffff;
+            resultSuccess = FlashPrintResult() == false;
+
+            if(resultSuccess)
+            {
+                if(ConfirmDialog("Settings not saved.\n\2Continue anyway?", 1))
+                {
+                    resultSuccess = false; //Do not continue
+                }
+            }
+            Flash_freeFlashFSM();
         }
     }
+        break;
+    default:
+        break;
+    }
 
-    Flash_executeFlashFSM();
+    return resultSuccess;
 }
