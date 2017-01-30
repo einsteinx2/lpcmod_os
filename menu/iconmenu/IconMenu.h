@@ -44,9 +44,6 @@ ICON* iconSplitTSOPBank0Icon;
 ICON* iconSplitTSOPBank1Icon;
 ICON* advancedMenuIcon;
 
-//If this is set, the menu item was chosen automatically, due to timeout
-extern int timedOut;
-
 //Adds a new icon into the menu - they are displayed in the order added.
 void AddIcon(ICON *newIcon);
 

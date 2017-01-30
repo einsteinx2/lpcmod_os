@@ -34,9 +34,15 @@ void BootLCDInit(void){
     xLCD.Command = WriteLCDCommand;
     xLCD.Data = WriteLCDData;
     if(isXecuter3())    //Xecuter 3 interface differently from other modchips.
+    {
+        debugSPIPrint("Init LCD for Xecuter3 protocol\n");
         xLCD.WriteIO = X3WriteLCDIO;
+    }
     else
+    {
+        debugSPIPrint("Init LCD for SmartXX protocol\n");
         xLCD.WriteIO = WriteLCDIO;
+    }
     xLCD.PrintLine[0] = WriteLCDLine0;
     xLCD.PrintLine[1] = WriteLCDLine1;
     xLCD.PrintLine[2] = WriteLCDLine2;
@@ -90,10 +96,14 @@ void setLCDBacklight(unsigned char value){
 void assertInitLCD(void){
     if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1){    //Display should be ON but is not initialized.
         if(isPureXBlast())     //XBlast Mod only.
+        {
             toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
+        }
         xLCD.enable = 1;
         if(isLCDContrastSupport())
+        {
             setLCDContrast(LPCmodSettings.LCDsettings.contrast);
+        }
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
         wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
         WriteLCDInit();
@@ -132,21 +142,21 @@ void WriteLCDInit(void)
                         //Second write could be shorter but meh...
 
     //LCD is now in 4-bit mode.
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_FUNCTION_SET | DISP_N_FLAG | DISP_RE_FLAG);    //2 lines and 5x8 dots character resolution.
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_SEGRAM_SET);            //Display OFF, Cursor OFF, Cursor blink OFF.
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_EXT_CONTROL | DISP_NW_FLAG);
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_FUNCTION_SET | DISP_N_FLAG);    //Entry mode,Increment cursor, shift right
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_CONTROL | DISP_D_FLAG);        //Display ON.
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_CLEAR);
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_ENTRY_MODE_SET | DISP_ID_FLAG);  
-    wait_us(1);
+    wait_us(90);
     xLCD.Command(DISP_HOME);  
    
     
@@ -164,7 +174,7 @@ void WriteLCDData(unsigned char value){
     xLCD.WriteIO(value, isXecuter3()?X3_DISPLAY_RS:DISPLAY_RS, xLCD.TimingData);
 }
 
-void WriteLCDIO(unsigned char data, bool RS, unsigned short wait){
+void WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
     unsigned char lsbNibble = 0;
     unsigned char msbNibble = 0;
     
@@ -207,7 +217,7 @@ void WriteLCDIO(unsigned char data, bool RS, unsigned short wait){
     wait_us(wait);
 }
 
-void X3WriteLCDIO(unsigned char data, bool RS, unsigned short wait){
+void X3WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
         unsigned char lsbNibble = 0;
         unsigned char msbNibble = 0;
 

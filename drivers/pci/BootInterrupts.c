@@ -131,8 +131,6 @@ void BootInterruptsWriteIdt(void)
     nCountUnusedInterruptsPic2 = 0;
     nCountInterruptsSmc = 0;
     nCountInterruptsIde = 0;
-    fSeenPowerButtonPress = false;
-    fSeenEjectButtonPress = false;
     traystate = ETS_OPEN_OR_OPENING;
     VIDEO_LUMASCALING = 0;
     VIDEO_RSCALING = 0;
@@ -225,7 +223,6 @@ void IntHandlerCSmc(void)
             switch(nBit)
             {
             case 0: // POWERDOWN EVENT
-                fSeenPowerButtonPress = true;
                 //if(canPowerDown())
                 {
                     debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
@@ -286,7 +283,6 @@ void IntHandlerCSmc(void)
                 break;
 
             case 5: // BUTTON PRESSED REQUESTING TRAY OPEN
-                fSeenEjectButtonPress = true;
                 traystate = ETS_OPEN_OR_OPENING;
                 I2CTransmitWord(0x10, 0x0d04);
                 I2CTransmitWord(0x10, 0x0c00);
@@ -361,6 +357,7 @@ void IntHandlerUnusedC2(void)
 void IntHandlerCTimer0(void)
 {
     BIOS_TICK_COUNT++;
+    updateTime();
 }
  
  

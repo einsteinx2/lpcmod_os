@@ -37,7 +37,6 @@
 #include "FlashMenuActions.h"
 #include "string.h"
 #include "xblast/HardwareIdentifier.h"
-#include "xblast/PowerManagement.h"
 #include "FlashDriver.h"
 
 JPEG jpegBackdrop;
@@ -164,6 +163,14 @@ extern void BootResetAction ( void )
 
     unsigned char EjectButtonPressed=0;
 
+    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+    if(EjectButtonPressed)
+    {
+        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
+        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+    }
+
 #ifdef SPITRACE
     //Required to populate GenPurposeIOs before toggling GPIOs.
     LPCMod_WriteIO(0x4, 0x4); // /CS to '1'
@@ -221,13 +228,6 @@ extern void BootResetAction ( void )
     BootPciPeripheralInitialization();
     // Reset the AGP bus and start with good condition
     BootAGPBUSInitialization();
-    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-    if(EjectButtonPressed)
-    {
-        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-        I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
-        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-    }
     
     
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
@@ -337,13 +337,6 @@ extern void BootResetAction ( void )
     BootStartUSB();
     debugSPIPrint("USB init done.\n");
 
-    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-    if(EjectButtonPressed)
-    {
-        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
-        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-    }
 
     //Load up some more custom settings right before booting to OS.
     if(fFirstBoot == false)
@@ -366,29 +359,40 @@ extern void BootResetAction ( void )
             if(LPCmodSettings.OSsettings.Quickboot)
             {
                 // No quickboot if both button pressed at that point.
-                if(fSeenPowerButtonPress != fSeenEjectButtonPress)
+                if(EjectButtonPressed == 1)
                 {
-                    if(LPCmodSettings.OSsettings.activeBank != BNKOS)
-                    {
-                        if(fSeenPowerButtonPress == true)
-                        {
-                            debugSPIPrint("Going to Quickboot.\n");
-                            quickboot(LPCmodSettings.OSsettings.activeBank);
-                        }
-                    }
-
                     if(LPCmodSettings.OSsettings.altBank != BNKOS)
                     {
                         debugSPIPrint("Eject button press boot detected.\n");
-                        if(fSeenEjectButtonPress == true)
-                        {
-                            debugSPIPrint("Going to alt Quickboot.\n");
-                            quickboot(LPCmodSettings.OSsettings.altBank);
-                        }
+                        debugSPIPrint("Going to alt Quickboot.\n");
+                        quickboot(LPCmodSettings.OSsettings.altBank);
                     }
                 }
             }
         }
+
+        //Check if eject button was pressed during quickboot override period.
+        EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+        if(EjectButtonPressed)
+        {
+            I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+            I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
+            I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+        }
+
+        if(LPCmodSettings.OSsettings.Quickboot)
+        {
+            // No quickboot if both button pressed at that point.
+            if(EjectButtonPressed == 0)
+            {
+                if(LPCmodSettings.OSsettings.activeBank != BNKOS)
+                {
+                    debugSPIPrint("Going to Quickboot.\n");
+                    quickboot(LPCmodSettings.OSsettings.activeBank);
+                }
+            }
+        }
+
         debugSPIPrint("No Quickboot or EjectButton boot this time.\n");
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
     }

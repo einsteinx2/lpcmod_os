@@ -329,7 +329,7 @@ typedef struct _xLCD {
     void    (*Command)(unsigned char value);
     void    (*Data)(unsigned char value);
 
-    void    (*WriteIO)(unsigned char data, bool RS, unsigned short wait);
+    void    (*WriteIO)(unsigned char data, unsigned char RS, unsigned short wait);
 
     void    (*PrintLine[4])(bool centered, char *lineText);
 
