@@ -220,6 +220,7 @@ extern void BootResetAction ( void )
 
     // init malloc() and free() structures
     MemoryManagementInitialization((void *)MEMORYMANAGERSTART, MEMORYMANAGERSIZE);
+    debugSPIPrint("Init soft MMU.\n");
 
     BootInterruptsWriteIdt();
 
@@ -228,6 +229,7 @@ extern void BootResetAction ( void )
     BootPciPeripheralInitialization();
     // Reset the AGP bus and start with good condition
     BootAGPBUSInitialization();
+    debugSPIPrint("Init PCI.\n");
     
     
     I2CTransmitWord(0x10, 0x1901); // no reset on eject

@@ -431,6 +431,7 @@ FlashProgress Flash_ReadXBlastOSSettingsRequest(void)
 
             switchOSBank(FlashBank_OSBank);
             biosBufferSize = sizeof(_LPCmodSettings);
+            debugSPIPrint("Get settings offset.\n");
             startingOffset = getXBlastOSSettingStartingOffset(getBiosIdentifierFromFlash());
 
             debugSPIPrint("Size of Settings struct to read = %u\n", biosBufferSize);
@@ -440,8 +441,6 @@ FlashProgress Flash_ReadXBlastOSSettingsRequest(void)
                 currentFlashOp = FlashOp_Completed;
                 *biosBuffer = 0xff;
             }
-            debugSPIPrint("test\n");
-            while(1);
         }
         else
         {

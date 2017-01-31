@@ -43,7 +43,7 @@ void wait_us(unsigned int ticks) {
     COUNT_TO = (unsigned int) ((float)(ticks*3.579545));
     COUNT_start = getAPICCount();
 
-    while(cromwellLoop())
+    while(1)
     {
         HH = getAPICCount();
         temp = HH-COUNT_start;
@@ -79,7 +79,7 @@ void wait_ms(unsigned int ticks) {
     COUNT_TO = (unsigned int) ((float)(ticks*3579.545));
     COUNT_start = getAPICCount();
 
-    while(cromwellLoop())
+    while(1)
     {
         HH = getAPICCount();
         temp = HH-COUNT_start;
