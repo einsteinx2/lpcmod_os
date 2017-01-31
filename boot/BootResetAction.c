@@ -91,8 +91,8 @@ void printMainMenuHeader(void)
     switch(fSpecialEdition)
     {
     case SYSCON_ID_V1_PRE_EDITION:
-        VIDEO_ATTR=0xffef37;
-        break;
+    	VIDEO_ATTR=0xffef37;
+    	break;
     default:
         break;
     }
@@ -382,15 +382,18 @@ extern void BootResetAction ( void )
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
         }
 
-        if(LPCmodSettings.OSsettings.Quickboot)
-        {
-            // No quickboot if both button pressed at that point.
-            if(EjectButtonPressed == 0)
+        if(isXBlastOnLPC() && isXBE() == false)       //Quickboot only if on the right hardware.
+		{
+            if(LPCmodSettings.OSsettings.Quickboot)
             {
-                if(LPCmodSettings.OSsettings.activeBank != BNKOS)
+                // No quickboot if both button pressed at that point.
+                if(EjectButtonPressed == 0)
                 {
-                    debugSPIPrint("Going to Quickboot.\n");
-                    quickboot(LPCmodSettings.OSsettings.activeBank);
+                    if(LPCmodSettings.OSsettings.activeBank != BNKOS)
+                    {
+                        debugSPIPrint("Going to Quickboot.\n");
+                        quickboot(LPCmodSettings.OSsettings.activeBank);
+                    }
                 }
             }
         }

@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <SPI.h>
 
-#define ringBufferSize 800 // To accommodate ATMega168 devices with 1KB SRAM
+#define ringBufferSize 750 // To accommodate ATMega168 devices with 1KB SRAM
 unsigned char buf[ringBufferSize];
 
 unsigned short dataInPos = 0;
@@ -63,16 +63,16 @@ void setup (void)
 // SPI interrupt routine
 ISR (SPI_STC_vect)
 {
-    if(ringBufRollOver == false || dataInPos < dataOutPos)
+    if(ringBufRollOver == false || (dataInPos + 1) < dataOutPos)
     {
         // Drop byte if ring buffer is full
-	    buf[dataInPos++] = SPDR;
-	    
-	    if(dataInPos >= ringBufferSize)
-	    {
-	        dataInPos = 0;
-	        ringBufRollOver = true;
-	    }
+      buf[dataInPos++] = SPDR;
+      
+      if(dataInPos >= ringBufferSize)
+      {
+          dataInPos = 0;
+          ringBufRollOver = true;
+      }
     }
 }
 
@@ -84,10 +84,11 @@ void loop (void)
         if((dataOutPos != dataInPos) || (dataOutPos == 0 && dataInPos == 0 && ringBufRollOver == true))
         {
             Serial.write(buf[dataOutPos++]);   
-	    	if(dataOutPos >= ringBufferSize)
-	    	{
-	    	    ringBufRollOver = false;
-	    	}
+            if(dataOutPos >= ringBufferSize)
+            {
+                dataOutPos = 0;
+                ringBufRollOver = false;
+            }
         } 
     }
 }
