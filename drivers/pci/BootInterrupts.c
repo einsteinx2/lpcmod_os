@@ -357,6 +357,7 @@ void IntHandlerUnusedC2(void)
 void IntHandlerCTimer0(void)
 {
     BIOS_TICK_COUNT++;
+    updateTime();
 }
  
  

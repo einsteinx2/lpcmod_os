@@ -38,7 +38,6 @@
 #define TRANSPARENTNESS 0x30
 #define SELECTED 0xff
 
-int timedOut = 0;
 int iconTimeRemain = 0;
 unsigned int temp = 1;
 
@@ -278,12 +277,11 @@ static void IconMenuDraw(int nXOffset, int nYOffset)
 
     if(temp != 0)
     {
-        printk("\2Please select from menu \2 (%i)", iconTimeRemain);
+        centerScreenPrintk(VIDEO_CURSOR_POSY, "\2Please select from menu \2 (%i)", iconTimeRemain);
     }
     else
     {
-        VIDEO_CURSOR_POSX += 52;
-        printk("\2Please select from menu \2");
+        centerScreenPrintk(VIDEO_CURSOR_POSY, "\2Please select from menu \2");
     }
 
     if(uncommittedChanges > 0)
@@ -309,7 +307,7 @@ bool IconMenu(void)
     int nTempCursorResumeX, nTempCursorResumeY ;
     int nTempCursorX, nTempCursorY;
     int nModeDependentOffset=(vmode.width-640)/2;  
-    unsigned char varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;        //Just to have a default value.
+    unsigned int varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout * 1000;        //Just to have a default value.
     char timeoutString[21];                            //To display timeout countdown on xLCD
     timeoutString[20] = 0;
     
@@ -327,18 +325,16 @@ bool IconMenu(void)
     VIDEO_CURSOR_POSX=((252+nModeDependentOffset)<<2);
     VIDEO_CURSOR_POSY=nTempCursorY-100;
 
-    if(LPCmodSettings.OSsettings.bootTimeout == 0 || isXBE() ||
+    if(LPCmodSettings.OSsettings.bootTimeout == 0 || isXBE() || LPCmodSettings.OSsettings.activeBank == BNKOS ||
             //No countdown if activeBank is set to a TSOP bank and TSOP boot icon are hidden.
        (LPCmodSettings.OSsettings.TSOPhide && (LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT0 ||
                                                LPCmodSettings.OSsettings.activeBank == BNKTSOPSPLIT1 ||
                                                LPCmodSettings.OSsettings.activeBank == BNKFULLTSOP)))
     {
-        temp = 0;  //Disable boot timeout
+        varBootTimeWait = 0;  //Disable boot timeout
+        temp = 0;
     }
-    else
-    {
-        varBootTimeWait = LPCmodSettings.OSsettings.bootTimeout;
-    }
+
 
 //#ifndef SILENT_MODE
     //In silent mode, don't draw the menu the first time.
@@ -376,7 +372,7 @@ bool IconMenu(void)
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);
                 changed=1;
             }
-            temp=0;
+            temp = 0;
         }
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1)
         {
@@ -386,14 +382,14 @@ bool IconMenu(void)
                 selectedIcon = selectedIcon->previousIcon;
                 changed=1;
             }
-            temp=0;
+            temp = 0;
         }
         //If anybody has toggled the xpad left/right, disable the timeout.
         if(temp != 0)
         {
             temp = getMS() - COUNT_start;
             oldIconTimeRemain = iconTimeRemain;
-            iconTimeRemain = varBootTimeWait - temp/1000;
+            iconTimeRemain = (varBootTimeWait - temp)/1000;
             if(oldIconTimeRemain != iconTimeRemain)
             {
                 changed = 1;
@@ -402,17 +398,12 @@ bool IconMenu(void)
         }
         
         if ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1) || risefall_xpad_STATE(XPAD_STATE_START) == 1 || 
-            (unsigned int)(temp>(0x369E99*varBootTimeWait)))
+            (temp > varBootTimeWait && varBootTimeWait > 0))
         {
             memcpy((void*)FB_START,videosavepage,FB_SIZE);
             VIDEO_CURSOR_POSX=nTempCursorResumeX;
             VIDEO_CURSOR_POSY=nTempCursorResumeY;
             
-            if (temp>(0x369E99*varBootTimeWait))
-            {
-                timedOut=1;
-
-            }
 
             // Display custom boot message on LCD
             if(xLCD.enable == 1)

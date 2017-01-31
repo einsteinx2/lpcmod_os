@@ -440,6 +440,8 @@ FlashProgress Flash_ReadXBlastOSSettingsRequest(void)
                 currentFlashOp = FlashOp_Completed;
                 *biosBuffer = 0xff;
             }
+            debugSPIPrint("test\n");
+            while(1);
         }
         else
         {
@@ -498,6 +500,8 @@ bool bootReadXBlastOSSettings(void)
 
     while(cromwellLoop())
     {
+        progress = Flash_getProgress();
+
         if(progress.currentFlashOp == FlashOp_Completed || progress.currentFlashOp == FlashOp_Error)
         {
             debugSPIPrint("Read Settings from flash completed.\n");
@@ -507,8 +511,6 @@ bool bootReadXBlastOSSettings(void)
 
             break;
         }
-
-        progress = Flash_getProgress();
     }
     memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
 
@@ -715,12 +717,13 @@ struct BiosIdentifier getBiosIdentifierFromFlash(void)
     unsigned char* ptr = (unsigned char *)&out;
     memset(ptr, 0xFF, sizeof(struct BiosIdentifier));
 
-    debugSPIPrint("Flash FSM idle.\n");
+    debugSPIPrint("Reading BIOS Identifier from flash.\n");
     for(unsigned int i = 0; i < sizeof(struct BiosIdentifier); i++)
     {
         ptr[i] = FlashLowLevel_ReadByte(ImageSize256KB - sizeof(struct BiosIdentifier) + i);
     }
 
+    debugSPIPrint("Complete.\n");
     return out;
 }
 

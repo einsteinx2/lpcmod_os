@@ -37,7 +37,6 @@
 #include "FlashMenuActions.h"
 #include "string.h"
 #include "xblast/HardwareIdentifier.h"
-#include "xblast/PowerManagement.h"
 #include "FlashDriver.h"
 
 JPEG jpegBackdrop;
@@ -92,12 +91,12 @@ void printMainMenuHeader(void)
     switch(fSpecialEdition)
     {
     case SYSCON_ID_V1_PRE_EDITION:
-    	VIDEO_ATTR=0xffef37;
-    	break;
+        VIDEO_ATTR=0xffef37;
+        break;
     default:
-    	break;
+        break;
     }
-    	printk("%s\n",getModchipName());
+        printk("%s\n",getModchipName());
 #endif
     VIDEO_ATTR=0xff00ff00;
 
@@ -164,6 +163,14 @@ extern void BootResetAction ( void )
 
     unsigned char EjectButtonPressed=0;
 
+    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+    if(EjectButtonPressed)
+    {
+        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
+        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+    }
+
 #ifdef SPITRACE
     //Required to populate GenPurposeIOs before toggling GPIOs.
     LPCMod_WriteIO(0x4, 0x4); // /CS to '1'
@@ -221,13 +228,6 @@ extern void BootResetAction ( void )
     BootPciPeripheralInitialization();
     // Reset the AGP bus and start with good condition
     BootAGPBUSInitialization();
-    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-    if(EjectButtonPressed)
-    {
-        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-        I2CWriteBytetoRegister(0x10, 0x03,0x00);	// Clear Tray Register
-        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-    }
     
     
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
@@ -256,17 +256,17 @@ extern void BootResetAction ( void )
 
     if(isXBE() && isXBlastOnLPC() == false) //If coming from XBE and no XBlast Mod is detected
     {
-    	tempFanSpeed = I2CGetFanSpeed();
-    	if(tempFanSpeed < 10)
-    	{
-    	    tempFanSpeed = 10;
-    	}
-    	else if(tempFanSpeed > 100)
-    	{
-    	    tempFanSpeed = 100;
-    	}
-    	    
-    	LPCmodSettings.OSsettings.fanSpeed = tempFanSpeed;		//Get previously set fan speed
+        tempFanSpeed = I2CGetFanSpeed();
+        if(tempFanSpeed < 10)
+        {
+            tempFanSpeed = 10;
+        }
+        else if(tempFanSpeed > 100)
+        {
+            tempFanSpeed = 100;
+        }
+
+        LPCmodSettings.OSsettings.fanSpeed = tempFanSpeed;      //Get previously set fan speed
     }
     else
     {
@@ -279,13 +279,13 @@ extern void BootResetAction ( void )
         {
             LPCmodSettings.OSsettings.fanSpeed = 100;
         }
-    	I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);		//Else we're booting in ROM mode and have a fan speed to set.
+        I2CSetFanSpeed(LPCmodSettings.OSsettings.fanSpeed);     //Else we're booting in ROM mode and have a fan speed to set.
     }
     debugSPIPrint("Fan speed adjustment if needed.\n");
 
     if(isPureXBlast() && isXBlastOnTSOP())
     {
-    	//LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20) >> 5;     //A19ctrl maps to bit5
+        //LPCmodSettings.OSsettings.TSOPcontrol = (ReadFromIO(XODUS_CONTROL) & 0x20) >> 5;     //A19ctrl maps to bit5
         LPCmodSettings.OSsettings.TSOPcontrol = (unsigned char)GenPurposeIOs.A19BufEn;
         debugSPIPrint("Buffer enable for A19 control : %sabled.\n", GenPurposeIOs.A19BufEn? "En" : "Dis");
     }
@@ -337,13 +337,6 @@ extern void BootResetAction ( void )
     BootStartUSB();
     debugSPIPrint("USB init done.\n");
 
-    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-    if(EjectButtonPressed)
-    {
-        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
-        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-    }
 
     //Load up some more custom settings right before booting to OS.
     if(fFirstBoot == false)
@@ -366,29 +359,40 @@ extern void BootResetAction ( void )
             if(LPCmodSettings.OSsettings.Quickboot)
             {
                 // No quickboot if both button pressed at that point.
-                if(0)
+                if(EjectButtonPressed == 1)
                 {
-                    if(LPCmodSettings.OSsettings.activeBank != BNKOS)
-                    {
-                        if(1 == true)
-                        {
-                            debugSPIPrint("Going to Quickboot.\n");
-                            quickboot(LPCmodSettings.OSsettings.activeBank);
-                        }
-                    }
-
                     if(LPCmodSettings.OSsettings.altBank != BNKOS)
                     {
                         debugSPIPrint("Eject button press boot detected.\n");
-                        if(1 == true)
-                        {
-                            debugSPIPrint("Going to alt Quickboot.\n");
-                            quickboot(LPCmodSettings.OSsettings.altBank);
-                        }
+                        debugSPIPrint("Going to alt Quickboot.\n");
+                        quickboot(LPCmodSettings.OSsettings.altBank);
                     }
                 }
             }
         }
+
+        //Check if eject button was pressed during quickboot override period.
+        EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
+        if(EjectButtonPressed)
+        {
+            I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+            I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
+            I2CTransmitWord(0x10, 0x0c01); // close DVD tray
+        }
+
+        if(LPCmodSettings.OSsettings.Quickboot)
+        {
+            // No quickboot if both button pressed at that point.
+            if(EjectButtonPressed == 0)
+            {
+                if(LPCmodSettings.OSsettings.activeBank != BNKOS)
+                {
+                    debugSPIPrint("Going to Quickboot.\n");
+                    quickboot(LPCmodSettings.OSsettings.activeBank);
+                }
+            }
+        }
+
         debugSPIPrint("No Quickboot or EjectButton boot this time.\n");
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
     }
@@ -410,7 +414,7 @@ extern void BootResetAction ( void )
         BootVideoJpegUnpackAsRgb(
             (unsigned char *)&_start_backdrop,
              &jpegBackdrop,
-	    _end_backdrop - _start_backdrop
+        _end_backdrop - _start_backdrop
         );
     }
     // paint the backdrop
@@ -453,13 +457,13 @@ extern void BootResetAction ( void )
         debugSPIPrint("Trying to load new JPEG from HDD.\n");
         if(LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg") == false)
         {
-            debugSPIPrint("\"ìcons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
+            debugSPIPrint("\"Ã¬cons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
         }
         if(LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg") == false)
         {
             debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.\n");
             printMainMenuHeader();
-    	}
+        }
 
         if(isXBE() && isXBlastOnLPC() == false)
         {
@@ -572,8 +576,8 @@ extern void BootResetAction ( void )
     debugSPIPrint("Starting IconMenu.\n");
     while(IconMenu())
     {
-		ClearScreen();
-		printMainMenuHeader();
+        ClearScreen();
+        printMainMenuHeader();
     }
     //Good practice.
     free(videosavepage);
