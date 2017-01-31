@@ -380,18 +380,21 @@ extern void BootResetAction ( void )
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
         }
 
-        if(LPCmodSettings.OSsettings.Quickboot)
-        {
-            // No quickboot if both button pressed at that point.
-            if(EjectButtonPressed == 0)
-            {
-                if(LPCmodSettings.OSsettings.activeBank != BNKOS)
-                {
-                    debugSPIPrint("Going to Quickboot.\n");
-                    quickboot(LPCmodSettings.OSsettings.activeBank);
-                }
-            }
-        }
+		if(isXBlastOnLPC() && isXBE() == false)       //Quickboot only if on the right hardware.
+		{
+		    if(LPCmodSettings.OSsettings.Quickboot)
+		    {
+			    // No quickboot if both button pressed at that point.
+			    if(EjectButtonPressed == 0)
+			    {
+				    if(LPCmodSettings.OSsettings.activeBank != BNKOS)
+					{
+						debugSPIPrint("Going to Quickboot.\n");
+						quickboot(LPCmodSettings.OSsettings.activeBank);
+					}
+				}
+			}
+		}
 
         debugSPIPrint("No Quickboot or EjectButton boot this time.\n");
         initialSetLED(LPCmodSettings.OSsettings.LEDColor);
