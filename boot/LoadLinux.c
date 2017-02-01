@@ -311,7 +311,7 @@ int LoadKernelFatX(CONFIGENTRY *config) {
         printk("           Boot: Loading initrd '%s'", config->szInitrd);
         dots();
         printk("\t ");
-        wait_ms(50);
+        wait_ms_blocking(50);
 
         if(! LoadFATXFile(partition,config->szInitrd,&infoinitrd)) {
             cromwellError();
@@ -355,7 +355,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
             configLoaded=1;
             break;
         }
-        wait_ms(250);
+        wait_ms_blocking(250);
     }
 
     if (!configLoaded) {
@@ -367,7 +367,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
         printk("           Please insert a boot disc and close the DVD tray");
         dots();
 
-        wait_ms(1000); // Wait for DVD to become responsive to inject command
+        wait_ms_blocking(1000); // Wait for DVD to become responsive to inject command
 
         while(1) {
             // Make button 'A' close the DVD tray
@@ -376,7 +376,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
                 // May as well break here too incase the drive is
                 // a non-standard Xbox drive and can't report whether the
                 // tray is closing or not.
-                wait_ms(500);
+                wait_ms_blocking(500);
                 break;
             }
 
@@ -384,10 +384,10 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
             // for people pushing the drive shut or even pressing the eject
             // button.
             if (DVD_TRAY_STATE == DVD_CLOSING) {
-                wait_ms(500);
+                wait_ms_blocking(500);
                 break;
             }
-            wait_ms(10);
+            wait_ms_blocking(10);
         }
 
         busyLED();
@@ -401,7 +401,7 @@ CONFIGENTRY *LoadConfigCD(int cdromId) {
                 configLoaded=1;
                 break;
             }
-            wait_ms(250);
+            wait_ms_blocking(250);
         }
     }
 

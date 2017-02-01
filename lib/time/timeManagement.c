@@ -22,7 +22,7 @@ static inline unsigned int getAPICCount(void)
 	return IoInputDword(0x8008);
 }
 
-void wait_us(unsigned int ticks) {
+void wait_us_blocking(unsigned int ticks) {
 /*
 	  32 Bit range = 1200 sec ! => 20 min
 	1. sec = 0x369E99
@@ -58,7 +58,7 @@ void wait_us(unsigned int ticks) {
 
 }
 
-void wait_ms(unsigned int ticks) {
+void wait_ms_blocking(unsigned int ticks) {
 /*
 	  32 Bit range = 1200 sec ! => 20 min
 	1. sec = 0x369E99
@@ -90,6 +90,19 @@ void wait_ms(unsigned int ticks) {
         	break;
 		}
     };
+}
+
+void wait_ms(unsigned int waitTime_ms)
+{
+    const unsigned int startTime = currentHeldTime_ms;
+
+    while(cromwellLoop())
+    {
+        if(currentHeldTime_ms >= (startTime + waitTime_ms))
+        {
+            break;
+        }
+    }
 }
 
 void updateTime(void)

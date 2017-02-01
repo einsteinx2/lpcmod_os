@@ -162,8 +162,6 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem)
     //Main menu event loop.
     while(cromwellLoop())
     {
-        wait_ms(10);
-
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1)
         {
             oldTemp = temp;

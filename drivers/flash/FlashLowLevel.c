@@ -259,7 +259,7 @@ static inline void _28xxxWriteBytes(unsigned char byte, unsigned int addr)
     flashDevice.m_pbMemoryMappedStartAddress[addr]=byte;
 
     // Sharp has a problem, does not go busy for ~500nS
-    wait_us(1);
+    wait_us_blocking(1);
 }
 
 static inline void _29xxxWriteBytes(unsigned char byte, unsigned int addr)
@@ -294,7 +294,7 @@ static inline void _28xxxSectorErase(unsigned int addr)
     flashDevice.m_pbMemoryMappedStartAddress[addr] = 0xd0;
 
     // Sharp has a problem, does not go busy for ~500nS
-    wait_us(1);
+    wait_us_blocking(1);
 }
 
 static inline void _29xxxSectorErase(unsigned int addr)

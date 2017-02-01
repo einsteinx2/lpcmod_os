@@ -109,7 +109,7 @@ unsigned long currticks(void)
 
 void udelay(unsigned int usecs)
 {
-	wait_us(usecs);
+	wait_us_blocking(usecs);
 }
 
 void restart_etherboot(int status)

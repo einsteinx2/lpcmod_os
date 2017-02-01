@@ -75,7 +75,7 @@ int WriteToSMBus(unsigned char Address,unsigned char bRegister,unsigned char Siz
         
         }
         
-        wait_us(1);
+        wait_us_blocking(1);
     }
         
     return ERR_I2C_ERROR_BUS;
@@ -299,9 +299,9 @@ void I2CSetFanSpeed(unsigned char speed){
     }while((I2CGetFanSpeed() != (speed >> 1)) && giveUp++ < 10);    //If the Xbox is hard of hearing, repeat max 10 times.
 */
 	WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC, divide incoming value by 2.
-	wait_us(5);
+	wait_us_blocking(5);
         WriteToSMBus(0x10,0x05,1,1);             //Activate manual fan speed control
-        wait_us(5);
+        wait_us_blocking(5);
         WriteToSMBus(0x10,0x06,1,speed >> 1);    //Send new speed to PIC
 }
 

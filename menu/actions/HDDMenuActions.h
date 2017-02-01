@@ -6,10 +6,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-#include "boot.h"
-#include "BootIde.h"
-#include "video.h"
-#include "BootFATX.h"
+#include <stdbool.h>
 
 #define F_GEQUAL 0x10
 #define FMAX_G 0x20

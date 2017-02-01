@@ -81,7 +81,7 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
     }
     if(fileSize != 1048576){
         printk("\n              Wrong fileSize = %u", fileSize);
-        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1)) wait_ms(10);
+        while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) != 1));
         return;
     }
 
@@ -110,7 +110,7 @@ void decodeAndSetupBFMBios(unsigned char *fileBuf, unsigned int fileSize){
     printk("\n              shadowRomPos addr = 0x%08X.    0 contains 0x%02X vs 0x09", shadowRomPos, *(shadowRomPos + 0x80000000));
     printk("\n              PhysicalRomPos addr = 0x%08X.", PhysicalRomPos);
     printk("\n\n           Press Button 'B' or 'Back' to continue.");
-    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms(10);
+    while ((risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) != 1) && (risefall_xpad_BUTTON(XPAD_STATE_BACK) != 1)) wait_ms_blocking(10);
     I2CTransmitByteGetReturn(0x54, 0x58); /* "Fuck me gently with a chainsaw"*/
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
 

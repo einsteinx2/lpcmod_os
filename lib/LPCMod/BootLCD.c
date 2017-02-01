@@ -142,21 +142,21 @@ void WriteLCDInit(void)
                         //Second write could be shorter but meh...
 
     //LCD is now in 4-bit mode.
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_FUNCTION_SET | DISP_N_FLAG | DISP_RE_FLAG);    //2 lines and 5x8 dots character resolution.
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_SEGRAM_SET);            //Display OFF, Cursor OFF, Cursor blink OFF.
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_EXT_CONTROL | DISP_NW_FLAG);
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_FUNCTION_SET | DISP_N_FLAG);    //Entry mode,Increment cursor, shift right
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_CONTROL | DISP_D_FLAG);        //Display ON.
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_CLEAR);
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_ENTRY_MODE_SET | DISP_ID_FLAG);  
-    wait_us(90);
+    wait_us_blocking(90);
     xLCD.Command(DISP_HOME);  
    
     
@@ -189,32 +189,32 @@ void WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
     //High nibble first
     //Initially place the data
     WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
-    wait_us(90);    //needs to be at least 40ns
+    wait_us_blocking(90);    //needs to be at least 40ns
     
     msbNibble |= DISPLAY_E;
     //Raise E signal line
     WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
-    wait_us(90);    //needs to be at least 230ns
+    wait_us_blocking(90);    //needs to be at least 230ns
     
     msbNibble ^= DISPLAY_E;
     //Drop E signal line
     WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
-    wait_us(wait);
+    wait_us_blocking(wait);
     
     //Low nibble in second
     //Initially place the data
     WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-    wait_us(90);    //needs to be at least 40ns
+    wait_us_blocking(90);    //needs to be at least 40ns
     
     lsbNibble |= DISPLAY_E;
     //Raise E signal line
     WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-    wait_us(90);    //needs to be at least 230ns
+    wait_us_blocking(90);    //needs to be at least 230ns
     
     lsbNibble ^= DISPLAY_E;
     //Drop E signal line
     WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-    wait_us(wait);
+    wait_us_blocking(wait);
 }
 
 void X3WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
@@ -233,29 +233,29 @@ void X3WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
 
 
         WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us(90);    //needs to be at least 40ns
+        wait_us_blocking(90);    //needs to be at least 40ns
         //Raise E signal line
         WriteToIO(X3_DISP_O_CMD, RS | DISPLAY_E);
-        wait_us(90);    //needs to be at least 230ns
+        wait_us_blocking(90);    //needs to be at least 230ns
 
         //Drop E signal line
         WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us(wait);
+        wait_us_blocking(wait);
 
         //Low nibble in second
         //Initially place the data
         WriteToIO(X3_DISP_O_DAT, lsbNibble); //Place b2,b3,b0,b1,x,x,x,x
-        wait_us(90);    //needs to be at least 40ns
+        wait_us_blocking(90);    //needs to be at least 40ns
 
         WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us(90);    //needs to be at least 40ns
+        wait_us_blocking(90);    //needs to be at least 40ns
         //Raise E signal line
         WriteToIO(X3_DISP_O_CMD, RS | DISPLAY_E);
-        wait_us(90);    //needs to be at least 230ns
+        wait_us_blocking(90);    //needs to be at least 230ns
 
         //Drop E signal line
         WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us(wait);
+        wait_us_blocking(wait);
 }
 
 void WriteLCDLine0(bool centered, char *lineText){

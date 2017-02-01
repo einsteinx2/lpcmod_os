@@ -284,7 +284,7 @@ static void hub_power_on(struct usb_hub *hub)
         set_port_feature(dev, i + 1, USB_PORT_FEAT_POWER);
 
     /* Wait for power to be enabled */
-    wait_ms(hub->descriptor->bPwrOn2PwrGood * 2);
+    wait_ms_blocking(hub->descriptor->bPwrOn2PwrGood * 2);
 }
 
 static int hub_hub_status(struct usb_hub *hub,
@@ -737,7 +737,7 @@ static int hub_port_wait_reset(struct usb_device *hub, int port,
             delay_time < HUB_RESET_TIMEOUT;
             delay_time += delay) {
         /* wait to give the device a chance to reset */
-        wait_ms(delay);
+        wait_ms_blocking(delay);
 
         /* read and decode port status */
         ret = hub_port_status(hub, port, &portstatus, &portchange);
@@ -852,7 +852,7 @@ static int hub_port_debounce(struct usb_device *hub, int port)
     connection = 0;
     stable_count = 0;
     for (delay_time = 0; delay_time < HUB_DEBOUNCE_TIMEOUT; delay_time += HUB_DEBOUNCE_STEP) {
-        wait_ms(HUB_DEBOUNCE_STEP);
+        wait_ms_blocking(HUB_DEBOUNCE_STEP);
 
         ret = hub_port_status(hub, port, &portstatus, &portchange);
         if (ret < 0)
@@ -1129,7 +1129,7 @@ static void hub_events(void)
             }
             if (hubchange & HUB_CHANGE_OVERCURRENT) {
                 dev_dbg (&hub->intf->dev, "overcurrent change\n");
-                wait_ms(500);    /* Cool down */
+                wait_ms_blocking(500);    /* Cool down */
                 clear_hub_feature(dev, C_HUB_OVER_CURRENT);
                             hub_power_on(hub);
             }

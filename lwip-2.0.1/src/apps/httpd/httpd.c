@@ -103,14 +103,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "lib/LPCMod/BootLPCMod.h"
 #include "WebServerOps.h"
 extern bool netFlashOver;
-
-#include "HDDMenuActions.h"
-#include "EepromEditMenuActions.h"
-#include "Gentoox.h"
-#include "FlashUi.h"
-#include "lib/LPCMod/BootLPCMod.h"
 
 static bool killHttpd = false;
 static u8_t postBuf[1024 * 1024 + 512];
@@ -2814,13 +2809,13 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
                     i += strlen(biosNameMarker) - 1;
                     parseState = BufParseState_WaitForBiosNameStart;
                 }
-
-                if(strncmp(hs->post_data_start + i, biosDataMarker, strlen(biosDataMarker)) == false)
+                else if(strncmp(hs->post_data_start + i, biosDataMarker, strlen(biosDataMarker)) == false)
                 {
                     LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Bios Data Marker at pos %u\n", i));
                     i += strlen(biosDataMarker) - 1;
                     parseState = BufParseState_WaitForBiosDataStart;
                 }
+                //Add other field names parsing here
                 break;
             case BufParseState_WaitForBiosNameStart:
                 if(strncmp(hs->post_data_start + i, CRLF CRLF, strlen(CRLF CRLF)) == false)
@@ -2884,21 +2879,17 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
 
         unsigned int biosSize = biosDataEnd - biosDataStart;
 
-        extern void ClearScreen (void);
-
         switch(currentWebServerOp)
         {
         case WebServerOps_BIOSFlash:
 
             if(biosSize != 256 *1024 && biosSize != 512 * 1024 && biosSize != 1024 *1024)
             {
-
                 invalidFile = true;
                 break;
             }
 
-            ClearScreen();
-            setBiosJob(hs->post_data_start + biosDataStart, biosSize, false);
+            newPostProcessData(WebServerOps_BIOSFlash, hs->post_data_start + biosDataStart, biosSize);
 
             if(biosNameSize > 0)
             {
@@ -2938,8 +2929,7 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
                 invalidFile = true;
                 break;
             }
-            ClearScreen ();
-            updateEEPROMEditBufferFromInputBuffer(hs->post_data_start + biosDataStart, biosSize, true);
+            newPostProcessData(WebServerOps_EEPROMFlash, hs->post_data_start + biosDataStart, biosSize);
             killHttpd = true;
             break;
         case WebServerOps_HDD0Lock:
@@ -2949,16 +2939,8 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
                 break;
             }
 
-            ClearScreen ();
+            newPostProcessData(WebServerOps_HDD0Lock, hs->post_data_start + biosDataStart, biosSize);
 
-            if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
-            {
-                UnlockHDD(0, 0, hs->post_data_start + biosDataStart, false);    //Attempt Unlock only if SECURITY_UNLOCK was successful.
-            }
-            else
-            {
-                LockHDD(0, 0, hs->post_data_start + biosDataStart);
-            }
             killHttpd = true;
             break;
         case WebServerOps_HDD1Lock:
@@ -2968,16 +2950,8 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
                 break;
             }
 
-            ClearScreen ();
+            newPostProcessData(WebServerOps_HDD1Lock, hs->post_data_start + biosDataStart, biosSize);
 
-            if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
-            {
-                UnlockHDD(1, 1, hs->post_data_start + biosDataStart,false);       //Attempt Unlock only if SECURITY_UNLOCK was successful.
-            }
-            else
-            {
-                LockHDD(1, 1, hs->post_data_start + biosDataStart);
-            }
             killHttpd = true;
             break;
         default:

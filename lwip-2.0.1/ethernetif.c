@@ -63,17 +63,22 @@
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lib/cromwell/cromString.h"
 #include "Gentoox.h"
+#include "HDDMenuActions.h"
+#include "EepromEditMenuActions.h"
+#include "Gentoox.h"
 #include "FlashUi.h"
 #include "FlashDriver.h"
 #include "MenuActions.h"
-#include "xpad.h"
+#include "BootIde.h"
+#include "video.h"
 #include "string.h"
 #include "stdlib.h"
 #include <stdarg.h>
 
 bool netFlashOver;
-bool netFlashOperationOver;
 WebServerOps currentWebServerOp;
+unsigned char* postProcessBuf;
+unsigned int postProcessBufSize;
 
 #define LINK_SPEED_OF_YOUR_NETIF_IN_BPS 100000000
 
@@ -420,16 +425,9 @@ ebd_wait (u16_t time) {
 }
 
 
-void run_lwip(void) {
+void run_lwip(void)
+{
 
-    static unsigned char buttonCount;
-
-    if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X) == 1) {
-        if(buttonCount >= 3) {
-            netFlashOver = true;
-        }
-        buttonCount++;
-    }
 
     switch(currentNetworkState)
     {
@@ -440,7 +438,6 @@ void run_lwip(void) {
         printk ("\n            TCP/IP initialization. ");
     	lwip_init();
     	cromwellSuccess();
-		buttonCount = 0;
 
 		netif = netif_find("eb");   //Trying to find previously configured network interface
 
@@ -572,10 +569,8 @@ void run_lwip(void) {
         case WebServerOps_BIOSFlash:
         {
             FlashProgress flashProgress = Flash_getProgress();
-            if(flashProgress.currentFlashOp == FlashOp_Completed || flashProgress.currentFlashOp == FlashOp_Error)
+            if(flashProgress.currentFlashOp == FlashOp_Idle)
             {
-                netFlashOperationOver = true;
-
                 currentNetworkState = NetworkState_Idle;
             }
         }
@@ -610,15 +605,78 @@ void startNetFlash(WebServerOps flashType)
 
     divisor = 0;
     currentNetworkState = NetworkState_Init;
-    netFlashOperationOver = false;
+    postProcessBuf = NULL;
+    postProcessBufSize = 0;
     netFlashOver = false;
     debugSPIPrint("currentNetworkState == NetworkState_Init\n");
 }
 
+bool newPostProcessData(WebServerOps op, const unsigned char* buf, unsigned int size)
+{
+    //op param will be used in the future
+    //Maybe chain up operations?
+
+    // Do not overwrite a pending operation
+    if(postProcessBuf != NULL || postProcessBufSize != 0)
+    {
+        return false;
+    }
+
+    postProcessBuf = malloc(size);
+    memcpy(postProcessBuf, buf, size);
+    postProcessBufSize = size;
+
+    return true;
+}
+
 bool netflashPostProcess(void)
 {
-    bool temp = netFlashOperationOver;
-    netFlashOperationOver = false;
+    extern void ClearScreen (void);
 
-    return temp;
+    if(netFlashOver)
+    {
+        switch(currentWebServerOp)
+        {
+        case WebServerOps_BIOSFlash:
+            FlashFileFromBuffer(postProcessBuf, postProcessBufSize, false);
+            break;
+        case WebServerOps_EEPROMFlash:
+            ClearScreen ();
+            updateEEPROMEditBufferFromInputBuffer(postProcessBuf, postProcessBufSize, true);
+            UIFooter();
+            break;
+        case WebServerOps_HDD0Lock:
+            ClearScreen ();
+
+            if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
+            {
+                UnlockHDD(0, 0, postProcessBuf, false);    //Attempt Unlock only if SECURITY_UNLOCK was successful.
+            }
+            else
+            {
+                LockHDD(0, 0, postProcessBuf);
+            }
+            break;
+        case WebServerOps_HDD1Lock:
+            ClearScreen ();
+
+            if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
+            {
+                UnlockHDD(1, 1, postProcessBuf, false);       //Attempt Unlock only if SECURITY_UNLOCK was successful.
+            }
+            else
+            {
+                LockHDD(1, 1, postProcessBuf);
+            }
+            break;
+        }
+
+        free(postProcessBuf);
+        postProcessBuf = NULL;
+        postProcessBufSize = 0;
+
+        return true;
+    }
+
+    return false;
 }

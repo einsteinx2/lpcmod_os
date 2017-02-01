@@ -410,7 +410,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode)
                     I2CWriteBytetoRegister(0x45,i, regs[n1]);
                     break;
                 }
-                wait_us(500);
+                wait_us_blocking(500);
             }
                     // Timing Reset
             b=I2CTransmitByteGetReturn(0x45,0x6c) & (0x7f);
@@ -423,7 +423,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode)
             for (i=0; i<0xc4; ++i)
             {
                 I2CWriteBytetoRegister(0x6a, i, regs[i]);
-                wait_us(500);
+                wait_us_blocking(500);
             }
             break;
         case ENCODER_XCALIBUR:
@@ -445,7 +445,7 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode)
                 memcpy(regs+3,(unsigned char *)(&XCal_Reg[i]),0x01);
 
                 WriteToSMBus(0x70, i, 4, *(unsigned long*)regs);
-                wait_us(500);
+                wait_us_blocking(500);
             }
             free(regs);
             break;

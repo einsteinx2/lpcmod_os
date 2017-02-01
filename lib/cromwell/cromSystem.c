@@ -5,13 +5,13 @@
  *      Author: cromwelldev
  */
 
+#include "FlashUi.h"
 #include "FlashDriver.h"
 #include "lib/time/timeManagement.h"
 #include "WebServerOps.h"
 
 unsigned char cromwellLoop(void)
 {
-    Flash_executeFlashFSM();
     updateTime();
     run_lwip();
 

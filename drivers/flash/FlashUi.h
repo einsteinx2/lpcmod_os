@@ -15,12 +15,6 @@ void BootShowFlashDevice(void);
 bool SaveXBlastOSSettings(void);
 
 
-void setBiosJob(const unsigned char *data, unsigned int size, bool askConfirm);
-bool executeFlashDriver(void);
-
-bool FlashPrintResult(void);
-
-// Temp only
-void blockExecuteFlashJob(void);
+bool executeFlashDriverUI(void);
 
 #endif /* FLASHUI_H_ */

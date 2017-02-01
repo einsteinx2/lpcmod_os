@@ -363,7 +363,6 @@ bool IconMenu(void)
     while(cromwellLoop())
     {
         int changed=0;
-        wait_ms(10);    
         if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1)
         {
             if (selectedIcon->nextIcon!=NULL)

@@ -77,7 +77,7 @@ extern unsigned long getCPUFreq(void){
     Tcpu_fsb = RDTSC();
     Twin_fsb = IoInputDword(0x8008);
 
-    wait_ms(200);
+    wait_ms(200); //TODO: check for consistency
 
     Tcpu_result = RDTSC();
     Twin_result = IoInputDword(0x8008);

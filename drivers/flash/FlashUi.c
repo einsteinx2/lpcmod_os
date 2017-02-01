@@ -28,6 +28,9 @@
 #endif
 
 static void BootFlashUserInterface(FlashOp ee, unsigned int dwPos, unsigned int dwExtent);
+static void setBiosJob(const unsigned char *data, unsigned int size, bool askConfirm);
+static bool FlashPrintResult(void);
+static void blockExecuteFlashJob(void);
 
 static bool mustRestart = false;
 static unsigned char previousPercent = 0;
@@ -43,8 +46,6 @@ void FlashFileFromBuffer(unsigned char *fileBuf, unsigned int fileSize, bool ask
     }
 
     blockExecuteFlashJob();
-
-    return;
 }
 
 
@@ -112,7 +113,7 @@ void BootShowFlashDevice(void)
     return;
 }
 
-bool FlashPrintResult(void)
+static bool FlashPrintResult(void)
 {
     bool isError = false;
     bool isCritical = false;
@@ -229,7 +230,7 @@ bool SaveXBlastOSSettings(void)
 
     switchOSBank(FlashBank_OSBank);
 
-    FlashProgress flashProgress =  Flash_SaveXBlastOSSettings();
+    FlashProgress flashProgress = Flash_SaveXBlastOSSettings();
 
     while(cromwellLoop())
     {
@@ -239,15 +240,13 @@ bool SaveXBlastOSSettings(void)
         {
             break;
         }
-        resultSuccess = executeFlashDriver();
+        resultSuccess = executeFlashDriverUI();
     }
-
-    Flash_freeFlashFSM();
 
     return resultSuccess;
 }
 
-void setBiosJob(const unsigned char *data, unsigned int size, bool askConfirm)
+static void setBiosJob(const unsigned char *data, unsigned int size, bool askConfirm)
 {
     FlashProgress flashProgress;
     flashProgress.flashErrorCode = FlashErrorcodes_UserAbort;
@@ -337,7 +336,7 @@ void setBiosJob(const unsigned char *data, unsigned int size, bool askConfirm)
     }
 }
 
-void blockExecuteFlashJob(void)
+static void blockExecuteFlashJob(void)
 {
     FlashProgress flashProgress = Flash_getProgress();
 
@@ -350,11 +349,13 @@ void blockExecuteFlashJob(void)
             break;
         }
 
-        executeFlashDriver();
+        executeFlashDriverUI();
     }
+
+    switchOSBank(FlashBank_OSBank);
 }
 
-bool executeFlashDriver(void)
+bool executeFlashDriverUI(void)
 {
     bool resultSuccess = true;
     FlashProgress flashProgress = Flash_getProgress();

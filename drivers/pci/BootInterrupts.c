@@ -267,10 +267,10 @@ void IntHandlerCSmc(void)
                 if (VIDEO_AV_MODE != temp_AV_mode )
                 {
                     VIDEO_AV_MODE = 0xff;
-                    wait_ms(30);
+                    wait_ms_blocking(30);
                     VIDEO_AV_MODE = temp_AV_mode;
                     BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
-                    wait_ms(200);
+                    wait_ms_blocking(200);
                     BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
 
                 }

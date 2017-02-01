@@ -419,7 +419,7 @@ static int hc_reset (struct ohci_hcd *ohci)
     writel (ohci->hc_control, &ohci->regs->control);
     // flush those pci writes
     (void) readl (&ohci->regs->control);
-    wait_ms (50);
+    wait_ms_blocking (50);
 
     /* HC Reset requires max 10 us delay */
     writel (OHCI_HCR,  &ohci->regs->cmdstatus);

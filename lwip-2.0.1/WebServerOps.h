@@ -15,10 +15,12 @@ typedef enum
     WebServerOps_BIOSFlash = 0U,
     WebServerOps_EEPROMFlash = 1U,
     WebServerOps_HDD0Lock = 2U,
-    WebServerOps_HDD1Lock = 3U
+    WebServerOps_HDD1Lock = 3U,
+    WebServerOps_NoOp = 0xFF
 }WebServerOps;
 
 void startNetFlash(WebServerOps flashType);
+bool newPostProcessData(WebServerOps op, const unsigned char* buf, unsigned int size);
 bool netflashPostProcess(void);
 void run_lwip(void);
 

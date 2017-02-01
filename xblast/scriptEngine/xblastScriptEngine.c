@@ -716,7 +716,16 @@ bool gpoFunction(unsigned char port, unsigned char value){
     return true;
 }
 bool waitFunction(int ms){
-    wait_ms(ms);
+
+    unsigned int startTime = getMS();
+
+    while(cromwellLoop())
+    {
+        if(getMS() >= (startTime + ms))
+        {
+            break;
+        }
+    }
     //printk("\n     wait function called : %ums",ms);
     return true;
 }

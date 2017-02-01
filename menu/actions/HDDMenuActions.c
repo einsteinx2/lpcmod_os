@@ -8,6 +8,9 @@
  ***************************************************************************/
 #include "HDDMenuActions.h"
 #include "boot.h"
+#include "BootIde.h"
+#include "video.h"
+#include "BootFATX.h"
 #include "TextMenu.h"
 #include "lpcmod_v1.h"
 #include "string.h"

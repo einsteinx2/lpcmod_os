@@ -27,8 +27,10 @@
 #ifndef LIB_TIME_TIMEMANAGEMENT_H_
 #define LIB_TIME_TIMEMANAGEMENT_H_
 
-void wait_ms(unsigned int ticks);
-void wait_us(unsigned int ticks);
+void wait_ms_blocking(unsigned int ticks);
+void wait_us_blocking(unsigned int ticks);
+
+void wait_ms(unsigned int waitTime_ms);
 
 void updateTime(void);
 

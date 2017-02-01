@@ -294,7 +294,7 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 //        printk("BootIdeWriteAtapiData error before data ready ret %d\n", n);
 //        return 1;
 //    }
-    wait_us(1);
+    wait_us_blocking(1);
 
     w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
     w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;
@@ -317,14 +317,14 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 //        printk("BootIdeWriteAtapiData Error after writing data err=0x%X\n", n);
         return 1;
     }
-    wait_us(1);
+    wait_us_blocking(1);
     n=BootIdeWaitNotBusy(uIoBase);
     if(n) {
 //        printk("BootIdeWriteAtapiData timeout or error before not busy ret %d\n", n);
         debugSPIPrint("Waiting for good status reg returned error : %d\n", n);
         return n;
     }
-    wait_us(1);
+    wait_us_blocking(1);
 
    if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) return 2;
     
@@ -1896,7 +1896,7 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
 
     BootIdeWaitNotBusy(uIoBase);
 
-    wait_us(1);
+    wait_us_blocking(1);
 
     w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
     w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;

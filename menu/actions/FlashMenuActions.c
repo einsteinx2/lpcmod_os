@@ -84,17 +84,7 @@ void enableNetflash (void *flashType) {
             if(netflashPostProcess())
             {
                 debugSPIPrint("Killing network service\n");
-                switch(currentWebServerOp)
-                {
-                case WebServerOps_BIOSFlash:
-                    switchOSBank(FlashBank_OSBank);
-                    FlashPrintResult();
-                    Flash_freeFlashFSM();
-                    return;
-                case WebServerOps_EEPROMFlash:
-                    UIFooter();
-                    return;
-                }
+                break;
             }
         }
 

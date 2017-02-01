@@ -227,7 +227,7 @@ void my_wait_for_completion(struct completion *x)
         handle_irqs(-1);
 
 #endif
-        wait_ms(10);    
+        wait_ms(10);
         n--;
     }
 //    printk("wait for completion done %i\n",x->done);
