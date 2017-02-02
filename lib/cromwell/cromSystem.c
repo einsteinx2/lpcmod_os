@@ -12,8 +12,10 @@
 
 unsigned char cromwellLoop(void)
 {
-    updateTime();
-    run_lwip();
+    if(currentNetworkState != NetworkState_Idle)
+    {
+        run_lwip();
+    }
 
     //debugSPIPrint loop
     //LCD loop

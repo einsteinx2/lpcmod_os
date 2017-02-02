@@ -241,6 +241,7 @@ bool SaveXBlastOSSettings(void)
             break;
         }
         resultSuccess = executeFlashDriverUI();
+        Flash_executeFlashFSM();
     }
 
     return resultSuccess;
@@ -350,6 +351,7 @@ static void blockExecuteFlashJob(void)
         }
 
         executeFlashDriverUI();
+        Flash_executeFlashFSM();
     }
 
     switchOSBank(FlashBank_OSBank);

@@ -86,18 +86,7 @@ unsigned int postProcessBufSize;
 #define IFNAME0 'e'
 #define IFNAME1 'b'
 
-typedef enum
-{
-	NetworkState_Idle = 0U,
-	NetworkState_Init = 1,
-	NetworkState_DHCPStart = 2,
-	NetworkState_ServerInit = 3,
-	NetworkState_ServerRunning = 4,
-	NetworkState_ServerShuttingDown = 5,
-	NetworkState_Cleanup = 6
-}NetworkState;
-
-static NetworkState currentNetworkState = NetworkState_Idle;
+NetworkState currentNetworkState = NetworkState_Idle;
 static struct ip4_addr ipaddr, netmask, gw;
 static struct netif *netif = NULL;
 static int divisor = 0;
@@ -638,6 +627,7 @@ bool netflashPostProcess(void)
         switch(currentWebServerOp)
         {
         case WebServerOps_BIOSFlash:
+            ClearScreen ();
             FlashFileFromBuffer(postProcessBuf, postProcessBufSize, false);
             break;
         case WebServerOps_EEPROMFlash:

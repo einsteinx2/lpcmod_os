@@ -228,7 +228,7 @@ void printTextSPI(const char * functionName, char * buffer, ...)
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
     }
     //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
-    wait_us(50);
+    wait_us_blocking(50);
 }
 #endif
 

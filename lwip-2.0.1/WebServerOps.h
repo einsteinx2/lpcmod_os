@@ -12,6 +12,17 @@
 
 typedef enum
 {
+    NetworkState_Idle = 0U,
+    NetworkState_Init = 1,
+    NetworkState_DHCPStart = 2,
+    NetworkState_ServerInit = 3,
+    NetworkState_ServerRunning = 4,
+    NetworkState_ServerShuttingDown = 5,
+    NetworkState_Cleanup = 6
+}NetworkState;
+
+typedef enum
+{
     WebServerOps_BIOSFlash = 0U,
     WebServerOps_EEPROMFlash = 1U,
     WebServerOps_HDD0Lock = 2U,
@@ -24,6 +35,7 @@ bool newPostProcessData(WebServerOps op, const unsigned char* buf, unsigned int 
 bool netflashPostProcess(void);
 void run_lwip(void);
 
+extern NetworkState currentNetworkState;
 extern WebServerOps currentWebServerOp;
 
 #endif /* LWIP_WEBSERVEROPS_H_ */

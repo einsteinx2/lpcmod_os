@@ -294,18 +294,7 @@ extern void BootResetAction ( void )
 
     BootLCDInit();    //Basic init. Do it even if no LCD is connected on the system.
     debugSPIPrint("BootLCDInit done.\n");
-    
-    //Stuff to do right after loading persistent settings from flash.
-    if(fFirstBoot == false)
-    {
-        if(isLCDSupported())
-        {
-            debugSPIPrint("Check if we need to drive the LCD.\n");
-            assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
-            debugSPIPrint("assertInitLCD done.\n");
-        }
-        //further init here.
-    }
+
 
 
     // We disable The CPU Cache
@@ -331,6 +320,18 @@ extern void BootResetAction ( void )
     /* We allow interrupts */
     nInteruptable = 1;
     
+    //Stuff to do right after loading persistent settings from flash.
+    if(fFirstBoot == false)
+    {
+        if(isLCDSupported())
+        {
+            debugSPIPrint("Check if we need to drive the LCD.\n");
+            assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+            debugSPIPrint("assertInitLCD done.\n");
+        }
+        //further init here.
+    }
+
 
 #ifndef SILENT_MODE
     printk("           BOOT: start USB init\n");

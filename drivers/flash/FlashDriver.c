@@ -506,12 +506,16 @@ bool bootReadXBlastOSSettings(void)
             debugSPIPrint("Read Settings from flash completed.\n");
             returnValue = Flash_LoadXBlastOSSettings(&LPCmodSettings);
 
-            Flash_freeFlashFSM();
+
 
             break;
         }
+
+        Flash_executeFlashFSM();
     }
+
     memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
+    Flash_freeFlashFSM();
 
     return returnValue;
 }

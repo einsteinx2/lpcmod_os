@@ -7,6 +7,7 @@
 
 #include "timeManagement.h"
 #include "lib/cromwell/cromSystem.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include "boot.h"
 #include <limits.h>
 
@@ -94,6 +95,7 @@ void wait_ms_blocking(unsigned int ticks) {
 
 void wait_ms(unsigned int waitTime_ms)
 {
+    bool rolloverOccured = false;
     const unsigned int startTime = currentHeldTime_ms;
 
     while(cromwellLoop())
@@ -101,6 +103,12 @@ void wait_ms(unsigned int waitTime_ms)
         if(currentHeldTime_ms >= (startTime + waitTime_ms))
         {
             break;
+        }
+
+        if(currentHeldTime_ms == 0 && startTime != 0 && rolloverOccured == false)
+        {
+            rolloverOccured = true;
+            waitTime_ms += (UINT_MAX - startTime);
         }
     }
 }

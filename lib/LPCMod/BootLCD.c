@@ -105,7 +105,9 @@ void assertInitLCD(void){
             setLCDContrast(LPCmodSettings.LCDsettings.contrast);
         }
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
+        debugSPIPrint("test1\n");
         wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
+        debugSPIPrint("test2\n");
         WriteLCDInit();
         xLCD.LineSize = LPCmodSettings.LCDsettings.lineLength;
         initialLCDPrint();
