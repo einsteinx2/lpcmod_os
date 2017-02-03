@@ -1,6 +1,9 @@
 v0.49Beta2
 -Fix LCD on XBlast/SmartXX hardware
 -Fix for timeout boot countdown
+-XBlast OS entry selectable on power button action for quickboot
+-Fix for Web server not sending result web page to client if Downgrade warning is shown on monitor
+-Initial support for background(always ON) web server
 
 v0.49Beta
 -UI text placement fix.
