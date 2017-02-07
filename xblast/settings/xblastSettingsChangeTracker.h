@@ -32,6 +32,7 @@ void settingsTrackerInit(void);
 
 unsigned char LPCMod_CountNumberOfChangesInSettings(bool generateChangeStruct, OSSettingsChangeList* output);
 bool LPCMod_checkForBootScriptChanges(void);
+bool LPCMod_checkForBackupEEPROMChange(void);
 void cleanOSSettingsChangeListStruct(OSSettingsChangeList* input);
 
 #endif /* XBLASTSETTINGSCHANGETRACKER_H_ */

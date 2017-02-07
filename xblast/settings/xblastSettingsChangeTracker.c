@@ -150,6 +150,17 @@ bool LPCMod_checkForBootScriptChanges(void){
     return false;
 }
 
+bool LPCMod_checkForBackupEEPROMChange(void)
+{
+    if(memcmp(&LPCmodSettings.bakeeprom, &LPCmodSettingsOrigFromFlash.bakeeprom, sizeof(EEPROMDATA)))
+    {
+        return true;
+    }
+
+    //Both EEPROM backups are identical.
+    return false;
+}
+
 void cleanOSSettingsChangeListStruct(OSSettingsChangeList* input)
 {
     OSSettingsChangeEntry_t* nextEntry;

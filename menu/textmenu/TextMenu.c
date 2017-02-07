@@ -131,6 +131,11 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
             uncommittedChanges += 1;
         }
 
+        if(LPCMod_checkForBackupEEPROMChange())
+        {
+            uncommittedChanges += 1;
+        }
+
         if(uncommittedChanges > 0)
         {
             //There are settings that have changed.

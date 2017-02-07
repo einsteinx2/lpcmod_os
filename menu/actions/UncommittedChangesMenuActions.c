@@ -38,7 +38,8 @@ TEXTMENU* generateMenuEntries(void)
     cleanEEPROMSettingsChangeListStruct(&eepromChangeList);
     unsigned char eepromChanges = generateEEPROMChangeList(true, &eepromChangeList); // generate strings
     unsigned char bootScriptChange = LPCMod_checkForBootScriptChanges() ? 1 : 0;
-    int totalChangesCount = uncommittedChanges + eepromChanges + bootScriptChange;
+    unsigned char backupEEPROMChange = LPCMod_checkForBackupEEPROMChange() ? 1 : 0;
+    int totalChangesCount = uncommittedChanges + eepromChanges + bootScriptChange + backupEEPROMChange;
     unsigned int i;
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
@@ -94,7 +95,19 @@ TEXTMENU* generateMenuEntries(void)
 #endif
                 TextMenuAddItem(menuPtr, itemPtr);
             }
-            else if(i < (uncommittedChanges + bootScriptChange + eepromChanges))
+            else if(i < (uncommittedChanges + bootScriptChange + backupEEPROMChange))
+            {
+                debugSPIPrint("Backup EEPROM modified\n");
+                itemPtr = malloc(sizeof(TEXTMENUITEM));
+                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption, "Backup EEPROM modified");
+#ifdef DEV_FEATURES
+                itemPtr->functionPtr = revertBackupEEPROMChange;
+                itemPtr->functionDataPtr = &menuPtr;
+#endif
+                TextMenuAddItem(menuPtr, itemPtr);
+            }
+            else if(i < (uncommittedChanges + bootScriptChange + backupEEPROMChange + eepromChanges))
             {
                 debugSPIPrint("New EEPROM change #%u\n", i);
                 if(currentEEPROMChangeEntry != NULL)
@@ -152,7 +165,22 @@ void revertBootScriptChange(void* menuPtr)
     }
 
     LPCmodSettings.flashScript.scriptSize = LPCmodSettingsOrigFromFlash.flashScript.scriptSize;
-    memcpy(LPCmodSettingsOrigFromFlash.flashScript.scriptData, LPCmodSettingsOrigFromFlash.flashScript.scriptData, LPCmodSettings.flashScript.scriptSize);
+    memcpy(LPCmodSettings.flashScript.scriptData, LPCmodSettingsOrigFromFlash.flashScript.scriptData, LPCmodSettings.flashScript.scriptSize);
+
+    freeTextMenuAllocMem(*menu);
+    *menu = generateMenuEntries();
+}
+
+void revertBackupEEPROMChange(void* menuPtr)
+{
+    TEXTMENU** menu = (TEXTMENU **)menuPtr;
+
+    if(ConfirmDialog("Revert change :\nBackup EEPROM modified", true))
+    {
+        return;
+    }
+
+    memcpy(&LPCmodSettings.bakeeprom, &LPCmodSettingsOrigFromFlash.bakeeprom, sizeof(EEPROMDATA));
 
     freeTextMenuAllocMem(*menu);
     *menu = generateMenuEntries();

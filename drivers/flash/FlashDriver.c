@@ -290,6 +290,7 @@ void Flash_freeFlashFSM(void)
 
 void Flash_forceUserAbort(void)
 {
+    currentFlashTask = FlashTask_WriteBios;
     currentFlashOp = FlashOp_Error;
     flashErrorCode = FlashErrorcodes_UserAbort;
 }

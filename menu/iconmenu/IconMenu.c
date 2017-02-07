@@ -85,6 +85,11 @@ static void IconMenuDraw(int nXOffset, int nYOffset)
         uncommittedChanges += 1;
     }
 
+    if(LPCMod_checkForBackupEEPROMChange())
+    {
+        uncommittedChanges += 1;
+    }
+
     generateIconMenuStructure();
 
     //Seeking icon with desired bankID value must be done when both firstVisibleIcon and selectedIcon are NULL.
