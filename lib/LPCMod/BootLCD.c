@@ -105,6 +105,8 @@ void setLCDBacklight(unsigned char value)
 
 void assertInitLCD(void)
 {
+    LCDRingBufferInit();
+
     if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1)    //Display should be ON but is not initialized.
     {
         if(isPureXBlast())     //XBlast Mod only.
@@ -120,7 +122,6 @@ void assertInitLCD(void)
         }
 
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
-        LCDRingBufferInit();
         debugSPIPrint("test1\n");
         wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
         debugSPIPrint("test2\n");

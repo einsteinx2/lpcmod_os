@@ -6,7 +6,6 @@
  */
 
 #include "LCDRingBuffer.h"
-#include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/time/timeManagement.h"
 #include "xblast/HardwareIdentifier.h"
@@ -54,7 +53,6 @@ void putInLCDRingBuffer(unsigned char data, unsigned char RS, unsigned short del
 
 void LCDRingBufferInit(void)
 {
-    memset(ringBuf, 0x00, ringBufSize);
     inPos = 0;
     outPos = 0;
     rollOver = false;
@@ -71,7 +69,7 @@ void updateLCDRingBuffer(void)
         {
         default:
         case InternalOp_ReadyForNewOp:
-            if(outPos != inPos)
+            if(outPos != inPos || rollOver)
             {
                 getFromBuf(&currentOp);
                 internalOp = InternalOp_WriteHighNibble;
@@ -118,7 +116,11 @@ static void putInBuf(DataOperation_t* input)
 {
     unsigned char* data = (unsigned char*)input;
 
-    if((rollOver || (outPos == 0 && (inPos + sizeof(DataOperation_t) > ringBufSize))) && (((inPos + sizeof(DataOperation_t)) % ringBufSize) > outPos))
+    const unsigned short projectedEnd = inPos + sizeof(DataOperation_t);
+
+    //Drop if no space left.
+    if((rollOver && (projectedEnd > outPos)) ||
+    (rollOver == false && ((projectedEnd % ringBufSize) < projectedEnd && (projectedEnd % ringBufSize) > outPos)))
     {
         debugSPIPrint("LCD RingBuf overflow. inPos=%u  outPos=%u   size=%u   rollOver=%u\n", inPos, outPos, size, rollOver);
         return;
