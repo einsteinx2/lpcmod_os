@@ -309,35 +309,6 @@ void HMAC_SHA1( unsigned char *result,
 
 void setLED(char *pattern);
 
-
-typedef struct _xLCD {
-    int DisplayType;
-    int enable;
-    int    LineSize;
-    int    nbLines;
-    int    TimingCMD;
-    int    TimingData;
-
-    unsigned char    Line1Start;
-    unsigned char    Line2Start;
-    unsigned char    Line3Start;
-    unsigned char    Line4Start;
-
-    unsigned char  LineOwner[4];
-
-    void    (*Init)(void);
-    void    (*Command)(unsigned char value);
-    void    (*Data)(unsigned char value);
-
-    void    (*WriteIO)(unsigned char data, unsigned char RS, unsigned short wait);
-
-    void    (*PrintLine[4])(bool centered, char *lineText);
-
-    void    (*ClearLine)(unsigned char line);
-}__attribute__((packed)) _xLCD;    //Will be know as xLCD from now on.
-
-_xLCD xLCD;
-
 //Global for convenience.
 unsigned char *videosavepage;
 //void * gobalGenericPtr;

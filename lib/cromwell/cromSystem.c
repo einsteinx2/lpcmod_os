@@ -10,6 +10,7 @@
 #include "lib/time/timeManagement.h"
 #include "lib/LPCMod/LCDRingBuffer.h"
 #include "WebServerOps.h"
+#include "lib/LPCMod/BootLCD.h"
 
 unsigned char cromwellLoop(void)
 {
@@ -18,7 +19,10 @@ unsigned char cromwellLoop(void)
         run_lwip();
     }
 
-    updateLCDRingBuffer();
+    if(xLCD.enable)
+    {
+        updateLCDRingBuffer();
+    }
 
     //debugSPIPrint loop
     //LCD loop

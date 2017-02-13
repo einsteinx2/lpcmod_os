@@ -8,8 +8,7 @@
 #ifndef LIB_LPCMOD_LCDRINGBUFFER_H_
 #define LIB_LPCMOD_LCDRINGBUFFER_H_
 
-void putDelay(unsigned short microseconds);
-void putByte(unsigned char addr, unsigned char data);
+void putInLCDRingBuffer(unsigned char data, unsigned char RS, unsigned short delay);
 
 void LCDRingBufferInit(void);
 void updateLCDRingBuffer(void);

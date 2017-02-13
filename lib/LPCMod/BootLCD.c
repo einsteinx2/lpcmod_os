@@ -23,7 +23,7 @@ void BootLCDInit(void)
 {
     xLCD.enable = 0;            //Set it unintialized for now.
     xLCD.TimingCMD = 1500;      //Arbitrary but safe.
-    xLCD.TimingData = 90;
+    xLCD.TimingData = 50;
 
     BootLCDUpdateLinesOwnership(0, 0);
     BootLCDUpdateLinesOwnership(1, 0);
@@ -36,16 +36,7 @@ void BootLCDInit(void)
     xLCD.Command = WriteLCDCommand;
     xLCD.Data = WriteLCDData;
 
-    if(isXecuter3())    //Xecuter 3 interface differently from other modchips.
-    {
-        debugSPIPrint("Init LCD for Xecuter3 protocol\n");
-        xLCD.WriteIO = X3WriteLCDIO;
-    }
-    else
-    {
-        debugSPIPrint("Init LCD for SmartXX protocol\n");
-        xLCD.WriteIO = WriteLCDIO;
-    }
+    xLCD.WriteIO = WriteLCDIO;
 
     xLCD.PrintLine[0] = WriteLCDLine0;
     xLCD.PrintLine[1] = WriteLCDLine1;
@@ -165,27 +156,17 @@ void WriteLCDInit(void)
     //Start of init, with delay
     xLCD.WriteIO(0x33,0,4100);    //Use a single call to write twice function set 0b0011 with 4.1ms delay
 
-    xLCD.WriteIO(0x32,0,1500);    //Again a single call to write but this time write 0b0011 in first and 0b0010 in second
-                        //Second write could be shorter but meh...
+    xLCD.WriteIO(0x32,0,100);    //Again a single call to write but this time write 0b0011 in first and 0b0010 in second
 
     //LCD is now in 4-bit mode.
-    wait_us_blocking(90);
     xLCD.Command(DISP_FUNCTION_SET | DISP_N_FLAG | DISP_RE_FLAG);    //2 lines and 5x8 dots character resolution.
-    wait_us_blocking(90);
     xLCD.Command(DISP_SEGRAM_SET);            //Display OFF, Cursor OFF, Cursor blink OFF.
-    wait_us_blocking(90);
     xLCD.Command(DISP_EXT_CONTROL | DISP_NW_FLAG);
-    wait_us_blocking(90);
     xLCD.Command(DISP_FUNCTION_SET | DISP_N_FLAG);    //Entry mode,Increment cursor, shift right
-    wait_us_blocking(90);
     xLCD.Command(DISP_CONTROL | DISP_D_FLAG);        //Display ON.
-    wait_us_blocking(90);
     xLCD.Command(DISP_CLEAR);
-    wait_us_blocking(90);
     xLCD.Command(DISP_ENTRY_MODE_SET | DISP_ID_FLAG);  
-    wait_us_blocking(90);
     xLCD.Command(DISP_HOME);  
-   
     
 }
 
@@ -201,88 +182,9 @@ void WriteLCDData(unsigned char value){
     xLCD.WriteIO(value, isXecuter3()?X3_DISPLAY_RS:DISPLAY_RS, xLCD.TimingData);
 }
 
-void WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
-    unsigned char lsbNibble = 0;
-    unsigned char msbNibble = 0;
-    
-    if(xLCD.enable != 1)
-        return;
-                            //data is b7,b6,b5,b4,b3,b2,b1,b0
-    msbNibble = ((data >> 2) & 0x28) | RS;   //Maps     0,b6,b7,b4,b5,E,RS,0
-    msbNibble |= (data >> 0) & 0x50;
-    lsbNibble = ((data << 2) & 0x28) | RS;   //Maps     0,b2,b3,b0,b1,E,RS,0
-    lsbNibble |= (data << 4) & 0x50;                                                    //data must be x,D7,D6,D5,D4,E,RS,x
-                                                    //E signal value is added below as it's the "clock"
-    //High nibble first
-    //Initially place the data
-    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
-    wait_us_blocking(90);    //needs to be at least 40ns
-    
-    msbNibble |= DISPLAY_E;
-    //Raise E signal line
-    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
-    wait_us_blocking(90);    //needs to be at least 230ns
-    
-    msbNibble ^= DISPLAY_E;
-    //Drop E signal line
-    WriteToIO(LCD_DATA, msbNibble); //Place bit7,bit6,bit5,bit4,E,RS,x
-    wait_us_blocking(wait);
-    
-    //Low nibble in second
-    //Initially place the data
-    WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-    wait_us_blocking(90);    //needs to be at least 40ns
-    
-    lsbNibble |= DISPLAY_E;
-    //Raise E signal line
-    WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-    wait_us_blocking(90);    //needs to be at least 230ns
-    
-    lsbNibble ^= DISPLAY_E;
-    //Drop E signal line
-    WriteToIO(LCD_DATA, lsbNibble); //Place bit3,bit2,bit1,bit0,E,RS,x
-    wait_us_blocking(wait);
-}
-
-void X3WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait){
-        unsigned char lsbNibble = 0;
-        unsigned char msbNibble = 0;
-
-        if(xLCD.enable != 1)
-            return;
-                                //data is b7,b6,b5,b4,b3,b2,b1,b0
-        msbNibble = (data  & 0xF0);   //Maps     b6,b7,b4,b5,0,0,0,0
-        lsbNibble = (data << 4);   //Maps     b2,b3,b0,b1,0,0,0,0          //data must be D7,D6,D5,D4,x,x,x,x
-                                                        //E signal value is added below as it's the "clock"
-        //High nibble first
-        //Initially place the data
-        WriteToIO(X3_DISP_O_DAT, msbNibble); //Place b6,b7,b4,b5,x,x,x,x
-
-
-        WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us_blocking(90);    //needs to be at least 40ns
-        //Raise E signal line
-        WriteToIO(X3_DISP_O_CMD, RS | DISPLAY_E);
-        wait_us_blocking(90);    //needs to be at least 230ns
-
-        //Drop E signal line
-        WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us_blocking(wait);
-
-        //Low nibble in second
-        //Initially place the data
-        WriteToIO(X3_DISP_O_DAT, lsbNibble); //Place b2,b3,b0,b1,x,x,x,x
-        wait_us_blocking(90);    //needs to be at least 40ns
-
-        WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us_blocking(90);    //needs to be at least 40ns
-        //Raise E signal line
-        WriteToIO(X3_DISP_O_CMD, RS | DISPLAY_E);
-        wait_us_blocking(90);    //needs to be at least 230ns
-
-        //Drop E signal line
-        WriteToIO(X3_DISP_O_CMD, RS);
-        wait_us_blocking(wait);
+void WriteLCDIO(unsigned char data, unsigned char RS, unsigned short wait)
+{
+    putInLCDRingBuffer(data, RS, wait);
 }
 
 void WriteLCDLine0(bool centered, char *lineText){
