@@ -8,6 +8,7 @@
 #include "FlashUi.h"
 #include "FlashDriver.h"
 #include "lib/time/timeManagement.h"
+#include "lib/LPCMod/LCDRingBuffer.h"
 #include "WebServerOps.h"
 
 unsigned char cromwellLoop(void)
@@ -16,6 +17,8 @@ unsigned char cromwellLoop(void)
     {
         run_lwip();
     }
+
+    updateLCDRingBuffer();
 
     //debugSPIPrint loop
     //LCD loop

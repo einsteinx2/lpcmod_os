@@ -189,6 +189,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/FlashUi.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootEEPROM.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLPCMod.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
+OBJECTS-CROM += $(TOPDIR)/obj/LCDRingBuffer.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o

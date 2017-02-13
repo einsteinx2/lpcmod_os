@@ -16,9 +16,11 @@
 #include "xblast/HardwareIdentifier.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lib/LPCMod/BootLPCMod.h"
+#include "lib/LPCMod/LCDRingBuffer.h"
 #include "string.h"
 
-void BootLCDInit(void){
+void BootLCDInit(void)
+{
     xLCD.enable = 0;            //Set it unintialized for now.
     xLCD.TimingCMD = 1500;      //Arbitrary but safe.
     xLCD.TimingData = 90;
@@ -33,6 +35,7 @@ void BootLCDInit(void){
     xLCD.Init = WriteLCDInit;
     xLCD.Command = WriteLCDCommand;
     xLCD.Data = WriteLCDData;
+
     if(isXecuter3())    //Xecuter 3 interface differently from other modchips.
     {
         debugSPIPrint("Init LCD for Xecuter3 protocol\n");
@@ -43,6 +46,7 @@ void BootLCDInit(void){
         debugSPIPrint("Init LCD for SmartXX protocol\n");
         xLCD.WriteIO = WriteLCDIO;
     }
+
     xLCD.PrintLine[0] = WriteLCDLine0;
     xLCD.PrintLine[1] = WriteLCDLine1;
     xLCD.PrintLine[2] = WriteLCDLine2;
@@ -50,10 +54,13 @@ void BootLCDInit(void){
     xLCD.ClearLine = WriteLCDClearLine;
 }
 
-void BootLCDSwitchType(void){
+void BootLCDSwitchType(void)
+{
     xLCD.LineSize = LPCmodSettings.LCDsettings.lineLength;    //Defaults to 4 lines LCDs
     xLCD.nbLines = LPCmodSettings.LCDsettings.nbLines;        //Defaults to 20 chars/line
-    switch(LPCmodSettings.LCDsettings.lcdType){
+
+    switch(LPCmodSettings.LCDsettings.lcdType)
+    {
         case LCDTYPE_KS0073:
             xLCD.Line1Start = 0x00;
             xLCD.Line2Start = 0x20;    //Check the datasheet if you don't believe me.
@@ -68,43 +75,61 @@ void BootLCDSwitchType(void){
         }
 }
 
-void toggleEN5V(unsigned char value){
+void toggleEN5V(unsigned char value)
+{
     GenPurposeIOs.EN_5V = value;
     LPCMod_WriteGenPurposeIOs();     //Write to LPC register
 }
 
-void setLCDContrast(unsigned char value){
-    float fContrast=((float)value)/100.0f;
-    fContrast*=127.0f;
-    unsigned char newValue=(unsigned char)fContrast;
-    if (newValue==63) newValue=64;
+void setLCDContrast(unsigned char value)
+{
+    float fContrast = ((float)value) / 100.0f;
+    fContrast *= 127.0f;
+    unsigned char newValue = (unsigned char)fContrast;
+    if (newValue == 63)
+    {
+        newValue = 64;
+    }
     WriteToIO(LCD_CT, newValue);
 }
 
-void setLCDBacklight(unsigned char value){
-    if(isXecuter3() == false){  //Everything but Xecuter 3
-        float fBackLight=((float)value)/100.0f;
-        fBackLight*=127.0f;
-        unsigned char newValue=(unsigned char)fBackLight;
-        if (newValue==63) newValue=64;
+void setLCDBacklight(unsigned char value)
+{
+    if(isXecuter3() == false)  //Everything but Xecuter 3
+    {
+        float fBackLight = ((float)value) / 100.0f;
+        fBackLight *= 127.0f;
+        unsigned char newValue = (unsigned char)fBackLight;
+        if (newValue == 63)
+        {
+            newValue = 64;
+        }
         WriteToIO(LCD_BL, newValue);
     }
     else                                               //Xecuter 3
-        WriteToIO(X3_DISP_O_LIGHT, (unsigned char)(2.55*(double)value) );
+    {
+        WriteToIO(X3_DISP_O_LIGHT, (unsigned char)(2.55 * (double)value));
+    }
 }
 
-void assertInitLCD(void){
-    if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1){    //Display should be ON but is not initialized.
+void assertInitLCD(void)
+{
+    if(LPCmodSettings.LCDsettings.enable5V == 1 && xLCD.enable != 1)    //Display should be ON but is not initialized.
+    {
         if(isPureXBlast())     //XBlast Mod only.
         {
             toggleEN5V(LPCmodSettings.LCDsettings.enable5V);
         }
+
         xLCD.enable = 1;
+
         if(isLCDContrastSupport())
         {
             setLCDContrast(LPCmodSettings.LCDsettings.contrast);
         }
+
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
+        LCDRingBufferInit();
         debugSPIPrint("test1\n");
         wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
         debugSPIPrint("test2\n");
