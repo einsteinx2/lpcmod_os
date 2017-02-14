@@ -22,7 +22,7 @@
 void BootLCDInit(void)
 {
     xLCD.enable = 0;            //Set it unintialized for now.
-    xLCD.TimingCMD = 1500;      //Arbitrary but safe.
+    xLCD.TimingCMD = 1700;      //Arbitrary but safe.
     xLCD.TimingData = 50;
 
     BootLCDUpdateLinesOwnership(0, 0);
@@ -122,9 +122,7 @@ void assertInitLCD(void)
         }
 
         setLCDBacklight(LPCmodSettings.LCDsettings.backlight);
-        debugSPIPrint("test1\n");
         wait_ms(10);                    //Wait a precautionary 10ms before initializing the LCD to let power stabilize.
-        debugSPIPrint("test2\n");
         WriteLCDInit();
         xLCD.LineSize = LPCmodSettings.LCDsettings.lineLength;
         initialLCDPrint();

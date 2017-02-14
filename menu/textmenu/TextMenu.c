@@ -304,6 +304,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem)
         }
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1)
         {
+            wait_ms(50);
             oldTemp = temp;
             temp = 0;
             if(oldTemp != 0)
@@ -331,6 +332,7 @@ void TextMenu(TEXTMENU *menu, TEXTMENUITEM *selectedItem)
         }
         else if (risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1)
         {
+            wait_ms(50);
             oldTemp = temp;
             temp = 0;
             if(oldTemp != 0)

@@ -26,15 +26,15 @@ typedef enum
     InternalOp_WriteLowNibble
 }InternalOp;
 
-#define _ringBufSize 512
+#define _ringBufSize 1024
 static const unsigned short ringBufSize = _ringBufSize;
 static unsigned char ringBuf[_ringBufSize];
-static unsigned short inPos;
-static unsigned short outPos;
-static bool rollOver;
-static InternalOp internalOp;
+static unsigned short inPos = 0;
+static unsigned short outPos = 0;
+static bool rollOver = false;
+static InternalOp internalOp = InternalOp_ReadyForNewOp;
 static DataOperation_t currentOp;
-static unsigned int systickStartValue;
+static unsigned int systickStartValue = 0;
 
 static void putInBuf(DataOperation_t* input);
 static void getFromBuf(DataOperation_t* output);
@@ -120,9 +120,9 @@ static void putInBuf(DataOperation_t* input)
 
     //Drop if no space left.
     if((rollOver && (projectedEnd > outPos)) ||
-    (rollOver == false && ((projectedEnd % ringBufSize) < projectedEnd && (projectedEnd % ringBufSize) > outPos)))
+    (rollOver == false && (projectedEnd % ringBufSize) < projectedEnd && (projectedEnd % ringBufSize) > outPos))
     {
-        debugSPIPrint("LCD RingBuf overflow. inPos=%u  outPos=%u   size=%u   rollOver=%u\n", inPos, outPos, size, rollOver);
+        debugSPIPrint("LCD RingBuf overflow. inPos=%u  outPos=%u    rollOver=%u\n", inPos, outPos, rollOver);
         return;
     }
 
