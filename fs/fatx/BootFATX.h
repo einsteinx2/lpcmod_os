@@ -41,7 +41,7 @@
 #define PE_PARTFLAGS_IN_USE 0x80000000
 
 
-// Size of FATX partition header
+// Size of FATX partition header (boot sector/superblock)
 #define FATX_PARTITION_HEADERSIZE 0x1000
 
 // FATX partition magic
