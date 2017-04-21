@@ -15,7 +15,7 @@
 #define HeaderVersionV2 2U   //MD5 hash is calculated on the real used range inside the 256KB bin image.
                              //BiosSize in identifier is the size in bytes of the compressed cromwell image.
 
-#define CurrentHeaderVersion HeaderVersionV1
+#define CurrentHeaderVersion HeaderVersionV2
 
 
 #define Option1_SaveSettingsLocationBit 0x01    //Instruct flash engine to calculates save settings location in flash

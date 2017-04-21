@@ -1590,13 +1590,11 @@ void FATXFormatExtendedDrive(unsigned char driveId, unsigned char partition, uns
         //Start by writing 0 everywhere, skip the first 144 sectors to write 9*256 sectors up to the end,
         //Reuse n times memory allocated (all set to 0x00) of 256*512 bytes in size in the event (chainmapSize % 256) != 0.
         //If (chainmapSize % 256) == 0, start of buffer contains initial chainmap initialization.
-if(partition != 6){
         if(BootIdeWriteMultiple(driveId, ptrBuffer, lbaStart+8+(chainmapSize % 256)+(i << 8), 256, DEFAULT_WRITE_RETRY)){   //Initial Cluster chain map write.
             printk("\n           Write error, Cluster Chainmap   ");                               //Length for E: drive is fixed at 2448 sectors
             cromwellWarning();
             return;
         }
-}
     }
 
     if(chainmapSize % 256){                       //If there's a partial WRITE MULTIPLE COMMAND to be issued.
