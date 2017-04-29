@@ -131,7 +131,7 @@ void BootInterruptsWriteIdt(void)
     nCountUnusedInterruptsPic2 = 0;
     nCountInterruptsSmc = 0;
     nCountInterruptsIde = 0;
-    traystate = ETS_OPEN_OR_OPENING;
+    traystate = ETS_NOTHING;
     VIDEO_LUMASCALING = 0;
     VIDEO_RSCALING = 0;
     VIDEO_BSCALING = 0;
@@ -209,12 +209,14 @@ void IntHandlerCSmc(void)
     
     bStatus=I2CTransmitByteGetReturn(0x10, 0x11); // Query PIC for interrupt reason
     
+    debugSPIPrintInt("\n\nreturn byte : 0x%02X\n\n", bStatus);
     // we do nothing, if there is not Interrupt reason
     if (bStatus==0x0)
     {
         return;
     }
     
+
     while(nBit<7)
     {
         if(bStatus & 1)

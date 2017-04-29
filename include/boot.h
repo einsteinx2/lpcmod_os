@@ -292,7 +292,8 @@ void free(void *);
 
 extern volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
 typedef enum {
-    ETS_OPEN_OR_OPENING=0,
+    ETS_NOTHING = 0,
+    ETS_OPEN_OR_OPENING,
     ETS_CLOSING,
     ETS_CLOSED
 } TRAY_STATE;

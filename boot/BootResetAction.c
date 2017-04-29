@@ -163,14 +163,6 @@ extern void BootResetAction ( void )
 
     unsigned char EjectButtonPressed=0;
 
-    EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-    if(EjectButtonPressed)
-    {
-        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
-        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-    }
-
 #ifdef SPITRACE
     //Required to populate GenPurposeIOs before toggling GPIOs.
     LPCMod_WriteIO(0x4, 0x4); // /CS to '1'
@@ -227,18 +219,15 @@ extern void BootResetAction ( void )
     // initialize the PCI devices
     //bprintf("BOOT: starting PCI init\n\r");
     BootPciPeripheralInitialization();
-    // Reset the AGP bus and start with good condition
-    BootAGPBUSInitialization();
-    debugSPIPrint("Init PCI.\n");
-    
     
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
-    
-    if(isXBE() == false)
+    if(I2CTransmitByteGetReturn(0x10, 0x03) & 0x01)
     {
-        LEDRed(NULL);        //Signal the user to press Eject button to avoid Quickboot.
+        EjectButtonPressed = 1;
+        I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+        I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
+        I2CTransmitWord(0x10, 0x0c01); // close DVD tray
     }
-
 
     Flash_Init();
 
@@ -251,6 +240,27 @@ extern void BootResetAction ( void )
             fFirstBoot = true;
             LEDFirstBoot(NULL);
     }
+
+
+    // Reset the AGP bus and start with good condition
+    BootAGPBUSInitialization();
+
+
+    /* Here, the interrupts are Switched on now */
+    BootPciInterruptEnable();
+    /* We allow interrupts */
+    nInteruptable = 1;
+
+    I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+    I2CTransmitWord(0x10, 0x1a01); // Enable PIC interrupts. Cannot be deactivated once set.
+    if(EjectButtonPressed == 0 && LPCmodSettings.OSsettings.Quickboot)
+    {
+        if(isXBE() == false)
+        {
+            setLED("rrrr");       //Signal the user to press Eject button to avoid Quickboot.
+        }
+    }
+
 
     //Let's set that up right here.
     settingsTrackerInit();
@@ -312,13 +322,8 @@ extern void BootResetAction ( void )
     memcpy(&origEeprom, &eeprom, sizeof(EEPROMDATA));
     debugSPIPrint("EEprom read.\n");
         
-    I2CTransmitWord(0x10, 0x1a01); // unknown, done immediately after reading out eeprom data
     I2CTransmitWord(0x10, 0x1b04); // unknown
         
-    /* Here, the interrupts are Switched on now */
-    BootPciInterruptEnable();
-    /* We allow interrupts */
-    nInteruptable = 1;
     
     //Stuff to do right after loading persistent settings from flash.
     if(fFirstBoot == false)
@@ -332,6 +337,14 @@ extern void BootResetAction ( void )
         //further init here.
     }
 
+    // Load and Init the Background image
+    // clear the Video Ram
+    memset((void *)FB_START,0x00,FB_SIZE);
+
+    BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
+    jpegBackdrop.pData =NULL;
+    jpegBackdrop.pBackdrop = NULL; //Static memory alloc now.
+
 
 #ifndef SILENT_MODE
     printk("           BOOT: start USB init\n");
@@ -340,6 +353,10 @@ extern void BootResetAction ( void )
     BootStartUSB();
     debugSPIPrint("USB init done.\n");
 
+    if(isTSOPSplitCapable() == false)
+    {
+       LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
+    }
 
     //Load up some more custom settings right before booting to OS.
     if(fFirstBoot == false)
@@ -356,13 +373,21 @@ extern void BootResetAction ( void )
         }
 
         if(isXBlastOnLPC() && isXBE() == false)       //Quickboot only if on the right hardware.
-        {
-            debugSPIPrint("Check any Quickboot or EjectButton boot rule.\n");
-
+		{
             if(LPCmodSettings.OSsettings.Quickboot)
             {
+                debugSPIPrint("Check any Quickboot or EjectButton boot rule.\n");
+
                 // No quickboot if both button pressed at that point.
-                if(EjectButtonPressed == 1)
+                if(EjectButtonPressed == 0)
+                {
+                    if(traystate == ETS_NOTHING && LPCmodSettings.OSsettings.activeBank != BNKOS)
+                    {
+                        debugSPIPrint("Going to Quickboot.\n");
+                        quickboot(LPCmodSettings.OSsettings.activeBank);
+                    }
+                }
+                else
                 {
                     if(LPCmodSettings.OSsettings.altBank != BNKOS)
                     {
@@ -372,31 +397,9 @@ extern void BootResetAction ( void )
                     }
                 }
             }
-        }
 
-        //Check if eject button was pressed during quickboot override period.
-        EjectButtonPressed = I2CTransmitByteGetReturn(0x10, 0x03) & 0x01;
-        if(EjectButtonPressed)
-        {
-            I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
             I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
-        }
-
-        if(isXBlastOnLPC() && isXBE() == false)       //Quickboot only if on the right hardware.
-		{
-            if(LPCmodSettings.OSsettings.Quickboot)
-            {
-                // No quickboot if both button pressed at that point.
-                if(EjectButtonPressed == 0)
-                {
-                    if(LPCmodSettings.OSsettings.activeBank != BNKOS)
-                    {
-                        debugSPIPrint("Going to Quickboot.\n");
-                        quickboot(LPCmodSettings.OSsettings.activeBank);
-                    }
-                }
-            }
         }
 
         debugSPIPrint("No Quickboot or EjectButton boot this time.\n");
@@ -406,13 +409,7 @@ extern void BootResetAction ( void )
     {
         debugSPIPrint("First boot so no script or bank loading before going to OS at least once.\n");
     }
-    // Load and Init the Background image
-    // clear the Video Ram
-    memset((void *)FB_START,0x00,FB_SIZE);
 
-    BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
-    jpegBackdrop.pData =NULL;
-    jpegBackdrop.pBackdrop = NULL; //Static memory alloc now.
     if(BootVideoInitJPEGBackdropBuffer(&jpegBackdrop))
     { // decode and malloc backdrop bitmap
         extern int _start_backdrop;
@@ -522,11 +519,6 @@ extern void BootResetAction ( void )
     VIDEO_CURSOR_POSY=nTempCursorY;
     VIDEO_CURSOR_POSX=vmode.xmargin;
     VIDEO_CURSOR_POSY=vmode.ymargin;
-
-    if(isTSOPSplitCapable() == false)
-    {
-       LPCmodSettings.OSsettings.TSOPcontrol = 0;       //Make sure to not show split TSOP options. Useful if modchip was moved from 1 console to another.
-    }
 
     printk("\n\n\n\n");
 
