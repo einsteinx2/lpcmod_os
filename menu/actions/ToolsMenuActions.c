@@ -22,6 +22,9 @@
 #include "string.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "menu/misc/ProgressBar.h"
+TEXTMENUITEM* saveEEPROMPtr;
+TEXTMENUITEM* restoreEEPROMPtr;
+TEXTMENUITEM* editEEPROMPtr;
 
 void saveEEPromToFlash(void* ignored)
 {
@@ -36,8 +39,16 @@ void saveEEPromToFlash(void* ignored)
         }
     }
 
+    saveEEPROMPtr->nextMenuItem = restoreEEPROMPtr;
+#ifdef DEV_FEATURES
+    editEEPROMPtr->previousMenuItem = eraseEEPROMPtr;
+#else
+    editEEPROMPtr->previousMenuItem = restoreEEPROMPtr;
+#endif
+
     memcpy(&(LPCmodSettings.bakeeprom),&eeprom,sizeof(EEPROMDATA));
     UiHeader("Back up to flash successful");
+
     UIFooter();
 }
 
@@ -58,6 +69,19 @@ void restoreEEPromFromFlash(void* ignored){
     free(editeeprom);
     editeeprom = NULL;
 }
+
+#ifdef DEV_FEATURES
+void eraseEEPromFromFlash(void* ignored)
+{
+    memset(&LPCmodSettings.bakeeprom, 0xFF, sizeof(EEPROMDATA));
+
+    saveEEPROMPtr->nextMenuItem = editEEPROMPtr;
+    editEEPROMPtr->previousMenuItem = saveEEPROMPtr;
+
+    UiHeader("EEPROM backup on modchip erased.");
+    UIFooter();
+}
+#endif
 
 void warningDisplayEepromEditMenu(void* ignored)
 {

@@ -9,10 +9,14 @@
  *                                                                         *
  ***************************************************************************/
 #include "BootEEPROM.h"
+#include "TextMenu.h"
 #include <stdbool.h>
 
 void saveEEPromToFlash(void* ignored);
 void restoreEEPromFromFlash(void* ignored);
+#ifdef DEV_FEATURES
+void eraseEEPromFromFlash(void* ignored);
+#endif
 void warningDisplayEepromEditMenu(void* ignored);
 void wipeEEPromUserSettings(void* ignored);
 
@@ -29,5 +33,13 @@ void prevA19controlModBootValue(void* itemPtr);
 void nextA19controlModBootValue(void* itemPtr);
 
 bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr);
+
+TEXTMENUITEM* saveEEPROMPtr;
+TEXTMENUITEM* restoreEEPROMPtr;
+TEXTMENUITEM* editEEPROMPtr;
+
+#ifdef DEV_FEATURES
+TEXTMENUITEM* eraseEEPROMPtr;
+#endif
 
 #endif

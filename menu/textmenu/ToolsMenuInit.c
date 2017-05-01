@@ -15,6 +15,7 @@
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "xblast/HardwareIdentifier.h"
 
+
 TEXTMENU *ToolsMenuInit(void)
 {
     TEXTMENUITEM *itemPtr;
@@ -30,8 +31,8 @@ TEXTMENU *ToolsMenuInit(void)
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Save EEPROM to modchip");
         itemPtr->functionPtr = saveEEPromToFlash;
-        itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
+        saveEEPROMPtr = itemPtr;
 
         //Restore EEPROM data from flash
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -39,6 +40,17 @@ TEXTMENU *ToolsMenuInit(void)
         itemPtr->functionPtr = restoreEEPromFromFlash;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
+        restoreEEPROMPtr = itemPtr;
+
+#ifdef DEV_FEATURES
+        //Erase EEPROM data from flash
+        itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+        strcpy(itemPtr->szCaption, "Erase EEPROM from modchip");
+        itemPtr->functionPtr = eraseEEPromFromFlash;
+        itemPtr->functionDataPtr = NULL;
+        TextMenuAddItem(menuPtr, itemPtr);
+        eraseEEPROMPtr = itemPtr;
+#endif
     }
 
     //Dangerous stuff is going on in there.
@@ -47,6 +59,7 @@ TEXTMENU *ToolsMenuInit(void)
     itemPtr->functionPtr = warningDisplayEepromEditMenu;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+    editEEPROMPtr = itemPtr;
 
     //Wipe EEPROM section that holds non-vital data.
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -131,6 +144,12 @@ TEXTMENU *ToolsMenuInit(void)
         TextMenuAddItem(menuPtr, itemPtr);
     }
 #endif
+
+    if(EepromSanityCheck(&LPCmodSettings.bakeeprom) == EEPROM_EncryptInvalid)
+    {
+        saveEEPROMPtr->nextMenuItem = editEEPROMPtr;
+        editEEPROMPtr->previousMenuItem = saveEEPROMPtr;
+    }
 
     return menuPtr;
 }
