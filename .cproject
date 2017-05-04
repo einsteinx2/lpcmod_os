@@ -121,6 +121,15 @@
 			<path value=""/>
 		</doc-comment-owner>
 	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.160924882;cdt.managedbuild.toolchain.gnu.base.160924882.1435761822;cdt.managedbuild.tool.gnu.c.compiler.base.462120281;cdt.managedbuild.tool.gnu.c.compiler.input.693483933">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.105854008;cdt.managedbuild.toolchain.gnu.base.105854008.900934402;cdt.managedbuild.tool.gnu.c.compiler.base.763747837;cdt.managedbuild.tool.gnu.c.compiler.input.229067442">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
 			<target name="release" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
@@ -133,6 +142,7 @@
 			</target>
 			<target name="clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
+				<buildArguments>-j4</buildArguments>
 				<buildTarget>clean</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
@@ -140,7 +150,7 @@
 			</target>
 			<target name="scriptchecker" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
-				<buildArguments/>
+				<buildArguments>DEBUG=1 -j16</buildArguments>
 				<buildTarget>scriptchecker</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
@@ -155,14 +165,5 @@
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 		</buildTargets>
-	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.160924882;cdt.managedbuild.toolchain.gnu.base.160924882.1435761822;cdt.managedbuild.tool.gnu.c.compiler.base.462120281;cdt.managedbuild.tool.gnu.c.compiler.input.693483933">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.105854008;cdt.managedbuild.toolchain.gnu.base.105854008.900934402;cdt.managedbuild.tool.gnu.c.compiler.base.763747837;cdt.managedbuild.tool.gnu.c.compiler.input.229067442">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>

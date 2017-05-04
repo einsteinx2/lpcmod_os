@@ -28,8 +28,8 @@
 
 unsigned int cromwell_config;
 unsigned int cromwell_retryload;
-unsigned int cromwell_loadbank;
-unsigned int cromwell_Biostype;
+unsigned int cromwell_2blversion;
+unsigned int cromwell_2blsize;
 
 unsigned int xbox_ram;
 

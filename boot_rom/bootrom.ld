@@ -49,6 +49,7 @@ SECTIONS {
         *(.rodata.str1.32);
         *(.rodata.cst4);
         *(.rodata.cst8);
+        _size_code_2bl = .;
     }
         
     .bss ( RAM_CODE + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.rodata) ) : AT ( SIZEOF(.low_rom) + SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.rodata)) {
@@ -60,19 +61,13 @@ SECTIONS {
         _heap = . ;
     }
     
+        /* We need to copy the .data section to to upper memory */
+    _size_ramcopy = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.rodata) + SIZEOF(.bss);
+    _size_2bl = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.rodata);                
+    
     /DISCARD/ : { *(.eh_frame) }
 
-        /* We need to copy the .data section to to upper memory */
 
-        _size_ramcopy = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.rodata) + SIZEOF(.bss);
-    _size_sha1hash = SIZEOF(.text) + SIZEOF(.data) + SIZEOF(.rodata);                
-/*
-    .high_rom TOP_ROM : AT (TOP_ROM_LOAD) {
-        _start_top_rom = . ;
-        . = . + ( 512 - sizeof_top );
-        *(.high_rom);
-        _end_top_rom = . ;
-    } = 0x90909090      
-*/
+
 
 }

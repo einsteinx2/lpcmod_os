@@ -198,8 +198,8 @@ extern void BootResetAction ( void )
 
     memcpy(&cromwell_config, (void*)(CODE_LOC_START + 0x20), sizeof(cromwell_config));
     memcpy(&cromwell_retryload, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config)), sizeof(cromwell_retryload));
-    memcpy(&cromwell_loadbank, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config) + sizeof(cromwell_retryload)), sizeof(cromwell_loadbank));
-    memcpy(&cromwell_Biostype, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config) + sizeof(cromwell_retryload) + sizeof(cromwell_loadbank)), sizeof(cromwell_Biostype));
+    memcpy(&cromwell_2blversion, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config) + sizeof(cromwell_retryload)), sizeof(cromwell_2blversion));
+    memcpy(&cromwell_2blsize, (void*)(CODE_LOC_START + 0x20 + sizeof(cromwell_config) + sizeof(cromwell_retryload) + sizeof(cromwell_2blversion)), sizeof(cromwell_2blsize));
 
     VIDEO_CURSOR_POSX=40;
     VIDEO_CURSOR_POSY=140;

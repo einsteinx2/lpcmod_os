@@ -1104,6 +1104,8 @@ static int gunzip(void)
         while(1);  //Error... stall.
         return -1;
     }
+
+#if 0
     (ulg)get_byte();    /* Get timestamp */
     ((ulg)get_byte()) << 8;
     ((ulg)get_byte()) << 16;
@@ -1111,11 +1113,15 @@ static int gunzip(void)
 
     (void)get_byte();  /* Ignore extra flags for the moment */
     (void)get_byte();  /* Ignore OS type for the moment */
+#else
+    inptr += 6;
+#endif
 
     if ((flags & EXTRA_FIELD) != 0) {
         unsigned len = (unsigned)get_byte();
         len |= ((unsigned)get_byte())<<8;
         while (len--) (void)get_byte();
+        //XXX: optimize
     }
 
     /* Get original file name if it was truncated */

@@ -707,7 +707,7 @@ xcode_END(0x00000806);
 
 	mov 	$_ram_location, %edi
 	mov 	$_start_ramcopy, %esi
-	mov 	$(_size_ramcopy +10), %ecx
+	mov 	$(_size_ramcopy + 6), %ecx
 	shr	$2,%ecx    // We dividy / 4, as we copy Dword oriented
 	rep 	movsl
 	
@@ -727,14 +727,11 @@ xcode_END(0x00000806);
 	.global	MemoryChecksum
 MemoryChecksum:      	
 	// The SHA-1 Hashsum is dumped here after with ImageBLD
-	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
-	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x00
-	.long _size_sha1hash
-	.long 0x00  // Will be dumped in by imagebld ->compressed_image_start;
-	.long 0x00  // Will be dumped in by imagebld ->compressed_image_size;
-	.long 0x00  // Will be dumped in by imagebld ->0 .. 256kb image, 1 .. 1MB image
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	.long _size_2bl
 	
-	.org 0x40  // We have linkbase for this programm = 0x100000 + 0x40 = divisable /4 .. so CPU likes it
+	.org 0x19  // We have linkbase for this programm = 0x100000 + 0x40 = divisable /4 .. so CPU likes it
 tableGdt:
 
 	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // 0x00 dummy
@@ -832,5 +829,5 @@ reload_cs:
 	movl 	$0x100, %eax 
 	outl	%eax, %dx 
         
-	// this can be found in BootResetAction.c
+	// this can be found in 2bBootStartBios.c
 	jmp 	BootStartBiosLoader

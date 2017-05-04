@@ -191,6 +191,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootLPCMod.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDRingBuffer.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
+#OBJECTS-CROM += $(TOPDIR)/obj/ff.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
 OBJECTS-CROM += $(TOPDIR)/obj/md5.o
@@ -231,7 +232,6 @@ OBJECTS-CROM += $(TOPDIR)/obj/etherboot_config.o
 endif
 
 OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o err.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timeouts.o udp.o dhcp.o icmp.o ip4.o ip4_addr.o ip4_frag.o etharp.o fs.o httpd.o ethernet.o ip.o)
-#OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o err.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timers.o udp.o dhcp.o icmp.o ip.o inet.o ip_addr.o ip_frag.o etharp.o httpd.o)
 
 
 OBJECTS-CROM += $(OBJECTS-LWIP)
@@ -350,7 +350,8 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin f
 
 256KBBinGen: imagecompress crcbin cromwell.bin
-	bin/imagebld -rom obj/2blimage.bin obj/c.gz image/cromwell.bin
+	cmp bin/2blimage.bin obj/2blimage.bin # We still build a 2blimage.bin copy just to make sure the 2bl stays identical
+	bin/imagebld -rom bin/2blimage.bin obj/c.gz image/cromwell.bin
 	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
 makefsdata: clean

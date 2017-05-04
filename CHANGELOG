@@ -1,3 +1,13 @@
+v0.54
+-Fixed quickboot.
+-Front panel led will only turn red at boot if quickboot is enabled and console was powered ON by the power button
+-Hide Restore EEPROM from modchip menu entry if no valid EEPROM backup found
+-Optimized 2bl size and execution speed
+-Added recovery in 2bl in case of bad OS flash (XBlast compatible devices only)
+
+v0.50
+Release build
+
 v0.49Beta2
 -Fix LCD on XBlast/SmartXX hardware
 -Fix for timeout boot countdown
