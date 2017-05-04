@@ -350,7 +350,6 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	bin/imagebld -vml boot_vml/disk/vmlboot obj/image-crom.bin f
 
 256KBBinGen: imagecompress crcbin cromwell.bin
-	cmp bin/2blimage.bin obj/2blimage.bin # We still build a 2blimage.bin copy just to make sure the 2bl stays identical
 	bin/imagebld -rom bin/2blimage.bin obj/c.gz image/cromwell.bin
 	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
