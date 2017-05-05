@@ -776,7 +776,7 @@ static unsigned int getXBlastOSSettingStartingOffset(struct BiosIdentifier biosI
     {
         if(memcmp(biosID.Name, PROG_NAME, strlen(PROG_NAME)) == 0)
         {
-            if(biosID.Option1 |= Option1_SaveSettingsLocationBit)
+            if(biosID.Option1 & Option1_SaveSettingsLocationBit)
             {
                 settingsOffset = biosID.BiosSize;
 
