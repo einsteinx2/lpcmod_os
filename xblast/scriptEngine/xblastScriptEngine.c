@@ -138,7 +138,7 @@ bool lcdBacklightFunction(unsigned char value);
 bool lcdPowerFunction(unsigned char value);
 unsigned char SPIRead(void);
 bool SPIWrite(unsigned char data);
-unsigned char XPADRead(void);
+unsigned char XPADRead(int xpadVariable);
 bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly);
 bool checkEndOfArgument(char * compareBuf, int position);
 bool updateVariable(char * name, int value, _variableList * variableList);
@@ -534,9 +534,29 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
                         //}
                         break;
                     case FUNCTION_XPAD:
-                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist){
-                            arithAccumulator = XPADRead();
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist)
+                        {
                             accumulatorInUse = true;
+
+                            if(argumentList[2].exist == false)
+                            {
+                                for(unsigned char cycleButtons = TRIGGER_XPAD_KEY_A + 1; cycleButtons <= TRIGGER_XPAD_KEY_WHITE + 1; cycleButtons++)
+                                {
+                                    arithAccumulator = XPADRead(cycleButtons);
+                                    if(arithAccumulator != 0)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            else if(argumentList[2].type == ARGTYPE_VARIABLE && argumentList[2].value >= TRIGGER_XPAD_KEY_A + 1 && argumentList[2].value <= TRIGGER_XPAD_KEY_WHITE + 1)
+                            {
+                                arithAccumulator = XPADRead(argumentList[2].value);
+                            }
+                            else
+                            {
+                                arithAccumulator = 0;
+                            }
                         }
                         break;
                     case FUNCTION_END:
@@ -836,13 +856,15 @@ bool SPIWrite(unsigned char data){
     return true;
 }
 
-unsigned char XPADRead(void){
+unsigned char XPADRead(int xpadVariable){
     //printf("\n****Controller Pad read");
-    int i;
-    
-    for(i = TRIGGER_XPAD_KEY_A; i <= TRIGGER_XPAD_KEY_WHITE; i++){
-        if(risefall_xpad_BUTTON(i) == 1)
-            return i + 1;
+    xpadVariable--;
+    if(xpadVariable >= TRIGGER_XPAD_KEY_A && xpadVariable <= TRIGGER_XPAD_KEY_WHITE)
+    {
+        if(risefall_xpad_BUTTON(xpadVariable) == 1)
+        {
+            return xpadVariable + 1;
+        }
     }
     return 0;
 }

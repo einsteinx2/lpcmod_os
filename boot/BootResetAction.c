@@ -220,6 +220,13 @@ extern void BootResetAction ( void )
     //bprintf("BOOT: starting PCI init\n\r");
     BootPciPeripheralInitialization();
     
+#ifndef SILENT_MODE
+    printk("           BOOT: start USB init\n");
+#endif
+
+    BootStartUSB();
+    debugSPIPrint("USB init done.\n");
+
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
     if(I2CTransmitByteGetReturn(0x10, 0x03) & 0x01)
     {
@@ -229,9 +236,18 @@ extern void BootResetAction ( void )
         I2CTransmitWord(0x10, 0x0c01); // close DVD tray
     }
 
+    /* Here, the interrupts are Switched on now */
+    BootPciInterruptEnable();
+    /* We allow interrupts */
+    nInteruptable = 1;
+
+
     Flash_Init();
 
     identifyModchipHardware();
+
+    // Reset the AGP bus and start with good condition
+    BootAGPBUSInitialization();
 
     debugSPIPrint("Read persistent OS settings from flash.\n");
     if(bootReadXBlastOSSettings() == false)
@@ -241,15 +257,6 @@ extern void BootResetAction ( void )
             LEDFirstBoot(NULL);
     }
 
-
-    // Reset the AGP bus and start with good condition
-    BootAGPBUSInitialization();
-
-
-    /* Here, the interrupts are Switched on now */
-    BootPciInterruptEnable();
-    /* We allow interrupts */
-    nInteruptable = 1;
 
     I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
     I2CTransmitWord(0x10, 0x1a01); // Enable PIC interrupts. Cannot be deactivated once set.
@@ -345,13 +352,6 @@ extern void BootResetAction ( void )
     jpegBackdrop.pData =NULL;
     jpegBackdrop.pBackdrop = NULL; //Static memory alloc now.
 
-
-#ifndef SILENT_MODE
-    printk("           BOOT: start USB init\n");
-#endif
-    
-    BootStartUSB();
-    debugSPIPrint("USB init done.\n");
 
     if(isTSOPSplitCapable() == false)
     {

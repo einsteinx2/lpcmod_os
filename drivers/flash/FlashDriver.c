@@ -17,6 +17,7 @@
 #include "lib/cromwell/cromSystem.h"
 #include "config.h"
 #include "string.h"
+#include "boot.h"
 
 // Constants
 #define ImageSize256KB 256 * 1024
@@ -495,6 +496,14 @@ bool bootReadXBlastOSSettings(void)
     debugSPIPrint("Initiate Read XBlast OS settings.\n");
 
     populateSettingsStructWithDefault(&LPCmodSettings);
+
+    if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
+       risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
+       risefall_xpad_STATE(XPAD_STATE_START)
+       && XPAD_current[0].keys[5]) //white button
+    {
+        return returnValue;
+    }
 
     FlashProgress progress = Flash_ReadXBlastOSSettingsRequest();
 

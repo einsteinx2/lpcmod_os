@@ -589,9 +589,29 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
                         //}
                         break;
                     case FUNCTION_XPAD:
-                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist){
-                            arithAccumulator = XPADRead();
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist)
+                        {
                             accumulatorInUse = true;
+
+                            if(argumentList[2].exist == false)
+                            {
+                                for(unsigned char cycleButtons = TRIGGER_XPAD_KEY_A + 1; cycleButtons <= TRIGGER_XPAD_KEY_WHITE + 1; cycleButtons++)
+                                {
+                                    arithAccumulator = XPADRead(cycleButtons);
+                                    if(arithAccumulator != 0)
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                            else if(argumentList[2].type == ARGTYPE_VARIABLE && argumentList[2].value >= TRIGGER_XPAD_KEY_A + 1 && argumentList[2].value <= TRIGGER_XPAD_KEY_WHITE + 1)
+                            {
+                                arithAccumulator = XPADRead(argumentList[2].value);
+                            }
+                            else
+                            {
+                                arithAccumulator = 0;
+                            }
                         }
                         break;
                     case FUNCTION_END:
@@ -823,8 +843,8 @@ bool SPIWrite(unsigned char data){
     return true;
 }
 
-unsigned char XPADRead(void){
-    printf("\n****Controller Pad read");
+unsigned char XPADRead(int data){
+    printf("\n****XPADRead: %08X", data);
     return 0;
 }
 
@@ -1892,8 +1912,8 @@ void runScript(u8 * file, u32 fileSize, int paramCount, int * param){
                         //}
                         break;
                     case FUNCTION_XPAD:
-                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist){
-                            arithAccumulator = XPADRead();
+                        if(argumentList[0].type == ARGTYPE_VARIABLE && argumentList[1].exist && (argumentList[2].exist && argumentList[2].type == ARGTYPE_VARIABLE)){
+                            arithAccumulator = XPADRead(argumentList[2].value);
                             accumulatorInUse = true;
                         }
                         break;
