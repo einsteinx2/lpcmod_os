@@ -497,34 +497,29 @@ bool bootReadXBlastOSSettings(void)
 
     populateSettingsStructWithDefault(&LPCmodSettings);
 
-    if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
-       risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
-       risefall_xpad_STATE(XPAD_STATE_START)
-       && XPAD_current[0].keys[5]) //white button
+    if(returnValue)
     {
-        return returnValue;
-    }
+        FlashProgress progress = Flash_ReadXBlastOSSettingsRequest();
 
-    FlashProgress progress = Flash_ReadXBlastOSSettingsRequest();
-
-    while(cromwellLoop())
-    {
-        progress = Flash_getProgress();
-
-        if(progress.currentFlashOp == FlashOp_Completed || progress.currentFlashOp == FlashOp_Error)
+        while(cromwellLoop())
         {
-            debugSPIPrint("Read Settings from flash completed.\n");
-            returnValue = Flash_LoadXBlastOSSettings(&LPCmodSettings);
+            progress = Flash_getProgress();
+
+            if(progress.currentFlashOp == FlashOp_Completed || progress.currentFlashOp == FlashOp_Error)
+            {
+                debugSPIPrint("Read Settings from flash completed.\n");
+                returnValue = Flash_LoadXBlastOSSettings(&LPCmodSettings);
 
 
 
-            break;
+                break;
+            }
+
+            Flash_executeFlashFSM();
         }
-
-        Flash_executeFlashFSM();
+        memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
     }
 
-    memcpy(&LPCmodSettingsOrigFromFlash, &LPCmodSettings, sizeof(_LPCmodSettings));
     Flash_freeFlashFSM();
 
     return returnValue;

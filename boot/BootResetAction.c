@@ -38,6 +38,7 @@
 #include "string.h"
 #include "xblast/HardwareIdentifier.h"
 #include "FlashDriver.h"
+#include "lib/time/timeManagement.h"
 
 JPEG jpegBackdrop;
 
@@ -249,6 +250,16 @@ extern void BootResetAction ( void )
     // Reset the AGP bus and start with good condition
     BootAGPBUSInitialization();
 
+    I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
+    I2CTransmitWord(0x10, 0x1a01); // Enable PIC interrupts. Cannot be deactivated once set.
+
+    unsigned char readUSB = 0;
+    if(EjectButtonPressed == 0 && isXBE() == false)
+    {
+        setLED("rrrr");       //Signal the user to press Eject button to avoid Quickboot.
+    }
+    wait_us_blocking(760000);
+
     debugSPIPrint("Read persistent OS settings from flash.\n");
     if(bootReadXBlastOSSettings() == false)
     {
@@ -257,9 +268,8 @@ extern void BootResetAction ( void )
             LEDFirstBoot(NULL);
     }
 
-
-    I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
-    I2CTransmitWord(0x10, 0x1a01); // Enable PIC interrupts. Cannot be deactivated once set.
+#if 0
+    /* We'll be doing it invariably berfore the 750ms delay instead...*/
     if(EjectButtonPressed == 0 && LPCmodSettings.OSsettings.Quickboot)
     {
         if(isXBE() == false)
@@ -267,11 +277,8 @@ extern void BootResetAction ( void )
             setLED("rrrr");       //Signal the user to press Eject button to avoid Quickboot.
         }
     }
+#endif
 
-
-    //Let's set that up right here.
-    settingsTrackerInit();
-    setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
 
     if(isXBE() && isXBlastOnLPC() == false) //If coming from XBE and no XBlast Mod is detected
     {
@@ -312,6 +319,24 @@ extern void BootResetAction ( void )
     BootLCDInit();    //Basic init. Do it even if no LCD is connected on the system.
     debugSPIPrint("BootLCDInit done.\n");
 
+    //Stuff to do right after loading persistent settings from flash.
+    if(fFirstBoot == false)
+    {
+        if(emergencyRecoverSettings())
+        {
+                debugSPIPrint("Emergency recover triggered. Resetting settings.\n");
+                fFirstBoot = true;
+                LEDFirstBoot(NULL);
+        }
+
+        if(isLCDSupported())
+        {
+            debugSPIPrint("Check if we need to drive the LCD.\n");
+            assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
+            debugSPIPrint("assertInitLCD done.\n");
+        }
+        //further init here.
+    }
 
 
     // We disable The CPU Cache
@@ -331,18 +356,9 @@ extern void BootResetAction ( void )
         
     I2CTransmitWord(0x10, 0x1b04); // unknown
         
-    
-    //Stuff to do right after loading persistent settings from flash.
-    if(fFirstBoot == false)
-    {
-        if(isLCDSupported())
-        {
-            debugSPIPrint("Check if we need to drive the LCD.\n");
-            assertInitLCD();                            //Function in charge of checking if a init of LCD is needed.
-            debugSPIPrint("assertInitLCD done.\n");
-        }
-        //further init here.
-    }
+    //Let's set that up right here.
+    settingsTrackerInit();
+    setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
 
     // Load and Init the Background image
     // clear the Video Ram
@@ -456,60 +472,63 @@ extern void BootResetAction ( void )
     if(tsaHarddiskInfo[0].m_fDriveExists && tsaHarddiskInfo[0].m_fAtapi == false)
     {
         debugSPIPrint("Master HDD exist.\n");
-        //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
-        debugSPIPrint("Trying to load new JPEG from HDD.\n");
-        if(LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg") == false)
+        if(fFirstBoot == false)
         {
-            debugSPIPrint("\"Ã¬cons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
-        }
-        if(LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg") == false)
-        {
-            debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.\n");
-            printMainMenuHeader();
-        }
-
-        if(isXBE() && isXBlastOnLPC() == false)
-        {
-            debugSPIPrint("Trying to load settings from cfg file on HDD.\n");
-            _LPCmodSettings tempLPCmodSettings;
-            returnValue = LPCMod_ReadCFGFromHDD(&tempLPCmodSettings, &settingsPtrStruct);
-            if(returnValue == 0)
+            //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
+            debugSPIPrint("Trying to load new JPEG from HDD.\n");
+            if(LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg") == false)
             {
-                importNewSettingsFromCFGLoad(&tempLPCmodSettings);
-                
-                partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-                if(partition != NULL)
+                debugSPIPrint("\"Ã¬cons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
+            }
+            if(LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg") == false)
+            {
+                debugSPIPrint("\"backdrop.jpg\" loaded. Repainting.\n");
+                printMainMenuHeader();
+            }
+
+            if(isXBE() && isXBlastOnLPC() == false)
+            {
+                debugSPIPrint("Trying to load settings from cfg file on HDD.\n");
+                _LPCmodSettings tempLPCmodSettings;
+                returnValue = LPCMod_ReadCFGFromHDD(&tempLPCmodSettings, &settingsPtrStruct);
+                if(returnValue == 0)
                 {
-                    dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-                    if((dcluster != -1) && (dcluster != 1))
+                    importNewSettingsFromCFGLoad(&tempLPCmodSettings);
+
+                    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
+                    if(partition != NULL)
                     {
-                        dcluster = FATXFindDir(partition, dcluster, "scripts");
-                    }
-                    if((dcluster != -1) && (dcluster != 1))
-                    {
-                        res = FATXFindFile(partition, "bank.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
-                        if(res == 0 || fileinfo.fileSize == 0)
+                        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
+                        if((dcluster != -1) && (dcluster != 1))
                         {
-                            LPCmodSettings.OSsettings.runBankScript = 0;
+                            dcluster = FATXFindDir(partition, dcluster, "scripts");
                         }
-                        res = FATXFindFile(partition, "boot.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
-                        if(res == 0 || fileinfo.fileSize == 0)
+                        if((dcluster != -1) && (dcluster != 1))
                         {
-                            LPCmodSettings.OSsettings.runBootScript = 0;
+                            res = FATXFindFile(partition, "bank.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+                            if(res == 0 || fileinfo.fileSize == 0)
+                            {
+                                LPCmodSettings.OSsettings.runBankScript = 0;
+                            }
+                            res = FATXFindFile(partition, "boot.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
+                            if(res == 0 || fileinfo.fileSize == 0)
+                            {
+                                LPCmodSettings.OSsettings.runBootScript = 0;
+                            }
                         }
+                            CloseFATXPartition(partition);
                     }
-                        CloseFATXPartition(partition);
-                }
-                //bootScriptSize should not have changed if we're here.
-                if(LPCmodSettings.OSsettings.runBootScript && LPCmodSettings.flashScript.scriptSize == 0)
-                {
-                    debugSPIPrint("Running boot script.\n");
-                    if(loadScriptFromHDD("\\XBlast\\scripts\\boot.script", &fileinfo))
+                    //bootScriptSize should not have changed if we're here.
+                    if(LPCmodSettings.OSsettings.runBootScript && LPCmodSettings.flashScript.scriptSize == 0)
                     {
-                        i = BNKOS;
-                        runScript(fileinfo.buffer, fileinfo.fileSize, 1, &i);
+                        debugSPIPrint("Running boot script.\n");
+                        if(loadScriptFromHDD("\\XBlast\\scripts\\boot.script", &fileinfo))
+                        {
+                            i = BNKOS;
+                            runScript(fileinfo.buffer, fileinfo.fileSize, 1, &i);
+                        }
+                        debugSPIPrint("Boot script execution done.\n");
                     }
-                    debugSPIPrint("Boot script execution done.\n");
                 }
             }
         }

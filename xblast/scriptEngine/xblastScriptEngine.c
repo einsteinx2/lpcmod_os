@@ -1,23 +1,27 @@
 /*
- * xblastScriptEngine.c
  *
  *  Created on: Jan 14, 2015
  *      Author: bennydiamond
  */
 
+#ifdef SCRIPTCHECKER
+#include "functionsAccessor.h"
+#include "wrapper.h"
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#else
 #include "boot.h"
-#include "i2c.h"
-#include "xblastScriptEngine.h"
 #include "lpcmod_v1.h"
+#include "lib/cromwell/cromSystem.h"
 #include "lib/LPCMod/BootLCD.h"
+#include "xblastScriptEngine.h"
 #include "string.h"
 #include "stdlib.h"
 #include "xblast/settings/xblastSettingsDefs.h"
-#include "lib/LPCMod/BootLPCMod.h"
-#include "lib/cromwell/cromSystem.h"
-#include "lib/time/timeManagement.h"
-#include "xblast/PowerManagement.h"
 #include "MenuActions.h"
+#endif
+#include "functionsAccessor.h"
 
 
 #define ARGTYPE_UNKNOWN -1
@@ -124,24 +128,10 @@ typedef struct _ifStatementList{
 
 bool stringDeclaration;
 
-bool ifFunction(int param1, unsigned char op, int param2);
-bool gpiFunction(unsigned char port);
-bool gpoFunction(unsigned char port, unsigned char value);
-bool waitFunction(int ms);
-bool bootFunction(FlashBank bank);
-bool fanFunction(unsigned char value);
-bool ledFunction(char * value);
-bool lcdPrintFunction(unsigned char line, char * text, unsigned char stringLength);
-bool lcdClearLineFunction(unsigned char line);
-bool lcdResetFunction(void);
-bool lcdBacklightFunction(unsigned char value);
-bool lcdPowerFunction(unsigned char value);
-unsigned char SPIRead(void);
-bool SPIWrite(unsigned char data);
-unsigned char XPADRead(int xpadVariable);
-bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly);
-bool checkEndOfArgument(char * compareBuf, int position);
-bool updateVariable(char * name, int value, _variableList * variableList);
+static bool ifFunction(int param1, unsigned char op, int param2);
+static bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly);
+static bool checkEndOfArgument(char * compareBuf, int position);
+static bool updateVariable(char * name, int value, _variableList * variableList);
 
 
 char * functionCallList[NBFUNCTIONCALLS] = {
@@ -290,10 +280,7 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
         nbArguments = 0;
 
         //Emergency escape. Right after the last possible malloc have been freed.
-        if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
-           risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
-           risefall_xpad_STATE(XPAD_STATE_START)&&
-           XPAD_current[0].keys[5]){        //white button
+        if(emergencyEscape()){        //white button
             goto endExecution;
         }
 
@@ -538,7 +525,7 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
                         {
                             accumulatorInUse = true;
 
-                            if(argumentList[2].exist == false)
+                            if(argumentList[3].exist == false)
                             {
                                 for(unsigned char cycleButtons = TRIGGER_XPAD_KEY_A + 1; cycleButtons <= TRIGGER_XPAD_KEY_WHITE + 1; cycleButtons++)
                                 {
@@ -549,9 +536,9 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
                                     }
                                 }
                             }
-                            else if(argumentList[2].type == ARGTYPE_VARIABLE && argumentList[2].value >= TRIGGER_XPAD_KEY_A + 1 && argumentList[2].value <= TRIGGER_XPAD_KEY_WHITE + 1)
+                            else if(argumentList[3].type == ARGTYPE_VARIABLE && argumentList[3].value >= TRIGGER_XPAD_KEY_A + 1 && argumentList[3].value <= TRIGGER_XPAD_KEY_WHITE + 1)
                             {
-                                arithAccumulator = XPADRead(argumentList[2].value);
+                                arithAccumulator = XPADRead(argumentList[3].value);
                             }
                             else
                             {
@@ -697,7 +684,7 @@ endExecution:
     return;
 }
 
-bool ifFunction(int param1, unsigned char op, int param2){
+static bool ifFunction(int param1, unsigned char op, int param2){
 	//printk("\n     if function called : %u %u %u",param1, op, param2);
     switch(op){
         case OPTYPE_EQ_EQ: //==
@@ -723,151 +710,7 @@ bool ifFunction(int param1, unsigned char op, int param2){
     }
     return false;
 }
-bool gpiFunction(unsigned char port){
-    //printf("\n****GPI function called, return 1");
-    LPCMod_ReadIO(NULL);
-    if(port)
-        return GenPurposeIOs.GPI1;
-    return GenPurposeIOs.GPI0;
-}
-bool gpoFunction(unsigned char port, unsigned char value){
-    //printf("\n****Set GPO port 0x%X with value 0x%X", port, value);
-    LPCMod_WriteIO(port, value);
-    return true;
-}
-bool waitFunction(int ms){
 
-    unsigned int startTime = getMS();
-
-    while(cromwellLoop())
-    {
-        if(getMS() >= (startTime + ms))
-        {
-            break;
-        }
-    }
-    //printk("\n     wait function called : %ums",ms);
-    return true;
-}
-bool bootFunction(FlashBank bank){
-    //printf("\n****Boot bank: %u", bank);
-	//printk("\n     boot function called : %u",bank);
-    if(bank == FlashBank_512Bank || bank == FlashBank_256Bank || bank == FlashBank_OSBank){
-        BootModBios(bank);
-    }
-    else if(bank == FlashBank_SplitTSOP0Bank || bank == FlashBank_SplitTSOP1Bank || bank == FlashBank_FullTSOPBank){
-        BootOriginalBios(bank);
-    }
-    else
-        return false;
-    return true;
-}
-bool fanFunction(unsigned char value){
-    //printf("\n****Fan speed: %u", value);
-    //printk("\n     fan function called : %u\%",value);
-    if(value >=10 && value <= 100)
-        I2CSetFanSpeed(value);
-    return true;
-}
-bool ledFunction(char * value){
-    //printk("\n     LED function called : %s", value);
-    //printf("\n****LED pattern: %s", value);
-    setLED(value);
-    return true;
-}
-bool lcdPrintFunction(unsigned char line, char * text, unsigned char stringLength){
-    //printf("\n****LCD Print at line %u : %s", line, text);
-    //printk("\n     lcdPrint function called : %s",text);
-    char tempString[xLCD.LineSize + 1];
-    unsigned char inputStringLength;
-    if(line > (xLCD.nbLines - 1))
-        return false;
-
-    if(stringLength < xLCD.LineSize){
-        inputStringLength = strlen(text);
-        if(inputStringLength < stringLength)
-            stringLength = inputStringLength;
-    }
-    else{
-        stringLength = xLCD.LineSize;
-    }
-
-    strncpy(tempString, text, stringLength);
-    tempString[stringLength] = '\0';
-
-    BootLCDUpdateLinesOwnership(line, SCRIPT_OWNER);
-    xLCD.PrintLine[line](0, tempString);      //0 for justify text on left
-
-    return true;
-}
-bool lcdClearLineFunction(unsigned char line){
-	//printk("\n     lcdClearLine function called : %u",line);
-    //printf("\n****LCD clear line %u", line);
-    if(line > (xLCD.nbLines - 1))
-        return false;
-
-    WriteLCDClearLine(line);
-    return true;
-}
-bool lcdResetFunction(void){
-    //printf("\n****LCD reset screen");
-	//printk("\n     lcdReset function called");
-    WriteLCDCommand(0x01);      //CLEAR command
-    return true;
-}
-bool lcdBacklightFunction(unsigned char value){
-	//printk("\n     lcdBacklight function called : %u\%",value);
-    //printf("\n****LCD backlight value: %u", value);
-    setLCDBacklight(value);
-    return true;
-}
-bool lcdPowerFunction(unsigned char value){
-	//printk("\n     lcdPower function called : %u",value);
-    //printf("\n****LCD power %s", value ? "ON": "OFF");
-    LPCmodSettings.LCDsettings.enable5V = (value? 1 : 0);
-    assertInitLCD();
-    return true;
-}
-
-unsigned char SPIRead(void){
-    unsigned char i, result = 0;
-    for(i = 0; i < 8; i++){
-        result = result << 1;
-        LPCMod_FastWriteIO(0x2, 0);     //Reset CLK to 0
-        //wait_us(1);
-        LPCMod_FastWriteIO(0x2, 0x2);
-        LPCMod_ReadIO(NULL);
-        result |= GenPurposeIOs.GPI1 << i;
-        //wait_us(1);    //This will need to be verified.
-    }
-    return result;
-}
-
-bool SPIWrite(unsigned char data){
-    char i;
-    for(i = 7; i >= 0; i--){
-        //LPCMod_WriteIO(0x2, 0);     //Reset CLK to 0
-        LPCMod_FastWriteIO(0x3, (data >> i)&0x01);
-        //wait_us(1);
-        LPCMod_FastWriteIO(0x2, 0x2);
-        //wait_us(1);
-    }
-    LPCMod_FastWriteIO(0x3, 0);
-    return true;
-}
-
-unsigned char XPADRead(int xpadVariable){
-    //printf("\n****Controller Pad read");
-    xpadVariable--;
-    if(xpadVariable >= TRIGGER_XPAD_KEY_A && xpadVariable <= TRIGGER_XPAD_KEY_WHITE)
-    {
-        if(risefall_xpad_BUTTON(xpadVariable) == 1)
-        {
-            return xpadVariable + 1;
-        }
-    }
-    return 0;
-}
 
 bool variableFunction(char * name, int initValue, _variableList * variableList, bool readOnly){
     variableEntry * newEntry;
@@ -1220,7 +1063,8 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
         }
 */
         //Is it a number?
-        if((inputArg[0] >= '0' && inputArg[0] <= '9') || (inputArg[0] == '0' && inputArg[1] == 'x') || (inputArg[0] == '-')){
+        if((inputArg[0] >= '0' && inputArg[0] <= '9') || (inputArg[0] == '0' && inputArg[1] == 'x') || (inputArg[0] == '-'))
+        {
 			*outNum = strtol(inputArg, NULL, 0);
 			return ARGTYPE_NUMERIC;
         }
@@ -1230,7 +1074,7 @@ int decodeArgument(char * inputArg, int * outNum, char ** string, _variableList 
         i = 2;  //Skip both leading and ending "\""
     }
 
-    //Must be variable call.
+    //Must be string.
     i = strlen(inputArg) - i;
     *string = (char *)malloc(i + 1);
     strncpy(*string, inputArg[0] == '\"' ? &inputArg[1] : inputArg, i);

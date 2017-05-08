@@ -1,7 +1,7 @@
 VAR padButton = 0
 VAR newFanSpeed = 20
 VAR changeFanSpeed = 0
-VAR newLEDColor = 0
+VAR newLedColor = 0
 VAR quit = 0
 
 $buttonReleaseLoop

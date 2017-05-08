@@ -12,6 +12,7 @@
 #include "LEDMenuActions.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
+#include "boot.h"
 
 #define HDD4780_DEFAULT_NBLINES    4
 #define HDD4780_DEFAULT_LINELGTH    20
@@ -203,4 +204,19 @@ const char* getSpecialSettingString(unsigned char SpecialSettingindex, unsigned 
     }
 
     return NULL;
+}
+
+bool emergencyRecoverSettings(void)
+{
+    if(risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) &&
+       risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) &&
+       risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X) &&
+       risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y))
+    {
+        populateSettingsStructWithDefault(&LPCmodSettings);
+
+        return true;
+    }
+
+    return false;
 }

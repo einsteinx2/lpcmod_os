@@ -199,6 +199,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 OBJECTS-CROM += $(TOPDIR)/obj/strtol.o
 OBJECTS-CROM += $(TOPDIR)/obj/cromSystem.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
+OBJECTS-CROM += $(TOPDIR)/obj/functionsAccessor.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettings.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsChangeTracker.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsImportExport.o
@@ -341,7 +342,10 @@ crcbin:
 	gcc -o bin/crcbin bin/crcbin.o bin/crc32.o
 	
 scriptchecker:
-	gcc -g -o bin/scriptChecker pc_tools/scriptChecker/scriptChecker.c
+	gcc -g -Iinclude -o pc_tools/scriptChecker/functionsAccessor.o -c pc_tools/scriptChecker/functionsAccessor.c
+	gcc -g -o pc_tools/scriptChecker/scriptChecker.o -c pc_tools/scriptChecker/scriptChecker.c
+	gcc -g -DSCRIPTCHECKER -Iinclude -Ipc_tools/scriptChecker -o pc_tools/scriptChecker/xblastScriptEngine.o -c xblast/scriptEngine/xblastScriptEngine.c
+	gcc -g -o bin/scriptChecker pc_tools/scriptChecker/functionsAccessor.o pc_tools/scriptChecker/scriptChecker.o pc_tools/scriptChecker/xblastScriptEngine.o
 	
 imagecompress: obj/image-crom.bin bin/imagebld
 	cp obj/image-crom.bin obj/c
