@@ -164,6 +164,7 @@ static struct usb_device_id xpad_ids [] = {
     { USB_DEVICE(0x10c6, 0x8015) },//Intec Cyber Shock
     { USB_DEVICE(0x12ab, 0x8809) },//Xbox DDR dancepad
     { USB_DEVICE(0xffff, 0xffff) },//Chinese-made Xbox Controller
+    //{ USB_DEVICE_XBLAST(0x0000, 0x0000, 0xb1a5) }, //Cheap Chinese-made Xbox Controller
     { USB_DEVICE(0x0000, 0x0000) }, // nothing detected - FAIL
     { }                            /* Terminating entry */
 };

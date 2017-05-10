@@ -221,12 +221,6 @@ extern void BootResetAction ( void )
     //bprintf("BOOT: starting PCI init\n\r");
     BootPciPeripheralInitialization();
     
-#ifndef SILENT_MODE
-    printk("           BOOT: start USB init\n");
-#endif
-
-    BootStartUSB();
-    debugSPIPrint("USB init done.\n");
 
     I2CTransmitWord(0x10, 0x1901); // no reset on eject
     if(I2CTransmitByteGetReturn(0x10, 0x03) & 0x01)
@@ -241,7 +235,12 @@ extern void BootResetAction ( void )
     BootPciInterruptEnable();
     /* We allow interrupts */
     nInteruptable = 1;
+#ifndef SILENT_MODE
+    printk("           BOOT: start USB init\n");
+#endif
 
+    BootStartUSB();
+    debugSPIPrint("USB init done.\n");
 
     Flash_Init();
 

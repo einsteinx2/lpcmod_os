@@ -56,4 +56,15 @@ void switchBootBank(FlashBank bank);
 void WriteToIO(unsigned short address, unsigned char data);
 unsigned char ReadFromIO(unsigned short address);
 
+/**
+ * USB_DEVICE - macro used to describe a specific usb device
+ * @vend: the 16 bit USB Vendor ID
+ * @prod: the 16 bit USB Product ID
+ *
+ * This macro is used to create a struct usb_device_id that matches a
+ * specific device.
+ */
+#define USB_DEVICE_XBLAST(vend,prod, extra) \
+    .match_flags = USB_DEVICE_ID_MATCH_DEVICE, .idVendor = (vend), .idProduct = (prod), .driver_info = extra
+
 #endif // _BootLPCMod_H_
