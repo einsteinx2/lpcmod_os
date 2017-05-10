@@ -413,6 +413,7 @@ extern void BootResetAction ( void )
                 }
             }
 
+            I2CTransmitByteGetReturn(0x10, 0x11);       // dummy Query IRQ
             I2CWriteBytetoRegister(0x10, 0x03,0x00);    // Clear Tray Register
             I2CTransmitWord(0x10, 0x0c01); // close DVD tray
         }
