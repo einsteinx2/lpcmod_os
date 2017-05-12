@@ -114,8 +114,9 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode)
     xbox_video_mode encoder_mode;
     
     tv_encoding = DetectVideoStd();
+    debugSPIPrint(DEBUG_VIDEO_DRIVER, "Detected Video Standard:%s\n", tv_encoding == TV_ENC_NTSC ? "NTSC" : "PAL");
     DetectVideoEncoder();
-    debugSPIPrint("Detected Video Encoder: %s\n", VideoEncoderName());
+    debugSPIPrint(DEBUG_VIDEO_DRIVER, "Detected Video Encoder: %s\n", VideoEncoderName());
     
     if(isFrostySupport() == false)
     {
@@ -127,19 +128,19 @@ void BootVgaInitializationKernelNG(CURRENT_VIDEO_MODE_DETAILS * pvmode)
     av_type = DetectAvType();
     gpu.av_type = av_type;
 
-    debugSPIPrint("Detected Video Cable: %s\n", AvCableName());
+    debugSPIPrint(DEBUG_VIDEO_DRIVER, "Detected Video Cable: %s\n", AvCableName());
 
     memset((void *)pvmode,0,sizeof(CURRENT_VIDEO_MODE_DETAILS));
 
     //Focus driver (presumably XLB also) doesnt do widescreen yet - only blackscreens otherwise.
     if((((unsigned char *)&eeprom)[0x96]&0x01) && video_encoder == ENCODER_CONEXANT) // 16:9 widescreen TV
     {
-        debugSPIPrint("Screen format set to 16:9\n");
+        debugSPIPrint(DEBUG_VIDEO_DRIVER, "Screen format set to 16:9\n");
         pvmode->m_nVideoModeIndex=VIDEO_MODE_1024x576;
     }
     else // 4:3 TV
     {
-        debugSPIPrint("Screen format set to 4:3\n");
+        debugSPIPrint(DEBUG_VIDEO_DRIVER, "Screen format set to 4:3\n");
         pvmode->m_nVideoModeIndex=VIDEO_PREFERRED_MODE;
     }
 

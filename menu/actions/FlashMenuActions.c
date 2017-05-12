@@ -77,13 +77,13 @@ void enableNetflash (void *flashType) {
     {
         nicInit = true;
         cromwellSuccess();
-        debugSPIPrint("Starting network service\n");
+        debugSPIPrint(DEBUG_GENERAL_UI, "Starting network service\n");
         startNetFlash(*(WebServerOps *)flashType);
         while(cromwellLoop())
         {
             if(netflashPostProcess())
             {
-                debugSPIPrint("Killing network service\n");
+                debugSPIPrint(DEBUG_GENERAL_UI, "Killing network service\n");
                 break;
             }
         }

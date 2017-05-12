@@ -60,10 +60,8 @@ xbox_tv_encoding DetectVideoStd(void) {
     unsigned char b=I2CTransmitByteGetReturn(0x54, 0x5A); // the eeprom defines the TV standard for the box
     if(b == 0x40) {
         videoStd = TV_ENC_NTSC;
-        debugSPIPrint("Detected Video Standard: NTSC\n");
     } else {
         videoStd = TV_ENC_PALBDGHI;
-        debugSPIPrint("Detected Video Standard: PAL\n");
     }
 
     return videoStd;

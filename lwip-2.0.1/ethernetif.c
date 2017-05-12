@@ -73,6 +73,7 @@
 #include "video.h"
 #include "string.h"
 #include "stdlib.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include <stdarg.h>
 
 bool netFlashOver;
@@ -432,7 +433,7 @@ void run_lwip(void)
 
 		if(netif == NULL)
 		{
-			debugSPIPrint("No configured network interface found. Creating one.\n");
+			debugSPIPrint(DEBUG_LWIP, "No configured network interface found. Creating one.\n");
 			netif = (struct netif *)malloc(sizeof(struct netif));
 			//Will never be removed for entire duration of program execution so no free()...
 
@@ -445,7 +446,7 @@ void run_lwip(void)
 		}
 		else
 		{
-			debugSPIPrint("Found previously configured network interface.\n");
+			debugSPIPrint(DEBUG_LWIP, "Found previously configured network interface.\n");
 		}
 
 		netif_set_up(netif);
@@ -458,7 +459,7 @@ void run_lwip(void)
 			cromwellSuccess();
 			printk ("\n            Acquiring IP address. ");
 			currentNetworkState = NetworkState_DHCPStart;
-			debugSPIPrint("currentNetworkState == NetworkState_DHCPStart\n");
+			debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_DHCPStart\n");
 		}
 		else
 		{
@@ -481,7 +482,7 @@ void run_lwip(void)
 			dhcp_inform (netif);
 
 			currentNetworkState = NetworkState_ServerInit;
-			debugSPIPrint("currentNetworkState == NetworkState_ServerInit\n");
+			debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_ServerInit\n");
 		}
 		netif_set_default (netif);
     	break;
@@ -515,7 +516,7 @@ void run_lwip(void)
 				divisor=0;
 				currentNetworkState = NetworkState_ServerInit;
 				cromwellWarning();
-				debugSPIPrint("currentNetworkState == NetworkState_ServerInit\n");
+				debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_ServerInit\n");
 			}
 		}
 
@@ -523,7 +524,7 @@ void run_lwip(void)
     	{
     		currentNetworkState = NetworkState_ServerInit;
 			cromwellSuccess();
-			debugSPIPrint("currentNetworkState == NetworkState_ServerInit\n");
+			debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_ServerInit\n");
     	}
     	break;
     case NetworkState_ServerInit:
@@ -536,7 +537,7 @@ void run_lwip(void)
 		httpd_init();
 
 		currentNetworkState = NetworkState_ServerRunning;
-    	debugSPIPrint("currentNetworkState == NetworkState_ServerRunning\n");
+    	debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_ServerRunning\n");
     	break;
     case NetworkState_ServerRunning:
 	    ethernetif_input(netif);
@@ -544,13 +545,13 @@ void run_lwip(void)
     	if(netFlashOver == true)
     	{
     		currentNetworkState = NetworkState_ServerShuttingDown;
-			debugSPIPrint("currentNetworkState == NetworkState_ServerShuttingDown\n");
+			debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_ServerShuttingDown\n");
     	}
     	break;
     case NetworkState_ServerShuttingDown:
     	dhcp_stop(netif);
     	currentNetworkState = NetworkState_Cleanup;
-    	debugSPIPrint("currentNetworkState == NetworkState_Cleanup\n");
+    	debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_Cleanup\n");
     	break;
     case NetworkState_Cleanup:
         switch(currentWebServerOp)
@@ -597,7 +598,7 @@ void startNetFlash(WebServerOps flashType)
     postProcessBuf = NULL;
     postProcessBufSize = 0;
     netFlashOver = false;
-    debugSPIPrint("currentNetworkState == NetworkState_Init\n");
+    debugSPIPrint(DEBUG_LWIP, "currentNetworkState == NetworkState_Init\n");
 }
 
 bool newPostProcessData(WebServerOps op, const unsigned char* buf, unsigned int size)

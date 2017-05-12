@@ -43,7 +43,7 @@ void identifyModchipHardware(void)
     {
         fHasHardware = SYSCON_ID_UNKNOWN;
     }
-    debugSPIPrint("Modchip hardware ID is: 0x%04X\n", fHasHardware);
+    debugSPIPrint(DEBUG_HW_ID, "Modchip hardware ID is: 0x%04X\n", fHasHardware);
 
     //Check which flash chip is detected by system.
     Flash_ReadDeviceInfo(&bootFlash);
@@ -51,10 +51,10 @@ void identifyModchipHardware(void)
     switch(fHasHardware)
     {
     case SYSCON_ID_V1:
-        debugSPIPrint("XBlast Lite V1 detected on LPC bus.\n");
+        debugSPIPrint(DEBUG_HW_ID, "XBlast Lite V1 detected on LPC bus.\n");
         goto nextStepXBLASTV1;
     case SYSCON_ID_V1_PRE_EDITION:
-        debugSPIPrint("XBlast Lite V1 Pre detected on LPC bus.\n");
+        debugSPIPrint(DEBUG_HW_ID, "XBlast Lite V1 Pre detected on LPC bus.\n");
         fSpecialEdition = SYSCON_ID_V1_PRE_EDITION;
         //Since Pre-Edition is the same device functionality-wise, we just force fHasHardware back to plain V1 to offer same features in OS.
         fHasHardware = SYSCON_ID_V1;
@@ -62,44 +62,44 @@ nextStepXBLASTV1:
 
         if(bootFlash->flashType.m_bManufacturerId == 0xbf && bootFlash->flashType.m_bDeviceId == 0x5b)
         {     //If we detected a SST49LF080A
-            debugSPIPrint("XBlast Lite V1 flash chip detected. We booted from LPC indeed.\n");
+            debugSPIPrint(DEBUG_HW_ID, "XBlast Lite V1 flash chip detected. We booted from LPC indeed.\n");
             //Make sure we'll be reading from OS Bank
             switchOSBank(FlashBank_OSBank);
         }
         else
         {  //SST49LF080A flash chip was NOT detected.
-            debugSPIPrint("XBlast Lite V1 flash chip NOT detected. Assuming we booted from TSOP\n");
+            debugSPIPrint(DEBUG_HW_ID, "XBlast Lite V1 flash chip NOT detected. Assuming we booted from TSOP\n");
             fHasHardware = SYSCON_ID_V1_TSOP;
             WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
         }
 
         LPCMod_ReadIO(NULL);
-        debugSPIPrint("Read XBlast Lite V1 IO status.\n");
+        debugSPIPrint(DEBUG_HW_ID, "Read XBlast Lite V1 IO status.\n");
         break;
     case SYSCON_ID_XT:
-       debugSPIPrint("Aladdin XBlast detected on LPC bus.\n");
+       debugSPIPrint(DEBUG_HW_ID, "Aladdin XBlast detected on LPC bus.\n");
 
        if(bootFlash->flashType.m_bManufacturerId == 0xbf && bootFlash->flashType.m_bDeviceId == 0x5b)
        {     //If we detected a SST49LF080A
-           debugSPIPrint("Aladdin XBlast flash chip detected. We booted from LPC indeed.\n");
+           debugSPIPrint(DEBUG_HW_ID, "Aladdin XBlast flash chip detected. We booted from LPC indeed.\n");
            //Make sure we'll be reading from OS Bank
            switchOSBank(FlashBank_OSBank);
        }
        else
        {  //SST49LF080A flash chip was NOT detected.
-           debugSPIPrint("Aladdin XBlast flash chip NOT detected. Assuming we booted from TSOP\n");
+           debugSPIPrint(DEBUG_HW_ID, "Aladdin XBlast flash chip NOT detected. Assuming we booted from TSOP\n");
            fHasHardware = SYSCON_ID_XT_TSOP;
            WriteToIO(XODUS_CONTROL, RELEASED0); //Make sure D0/A15 is not grounded.
        }
        break;
     default:
-        debugSPIPrint("No XBlast OS compatible hardware found.\n");
+        debugSPIPrint(DEBUG_HW_ID, "No XBlast OS compatible hardware found.\n");
         unsigned int x3probe = I2CTransmitByteGetReturn(0x51, 0x0);  //Xecuter 3 will send out 0xff
-        debugSPIPrint("Probing for X3 EEprom. Result: 0x%08X\n", x3probe);
+        debugSPIPrint(DEBUG_HW_ID, "Probing for X3 EEprom. Result: 0x%08X\n", x3probe);
         if(x3probe != 0xff && x3probe != ERR_I2C_ERROR_BUS && x3probe != ERR_I2C_ERROR_TIMEOUT) //Another (hacky) way to detect is to probe SMBus at addresses
         {
             fHasHardware = SYSCON_ID_X3;                    //normally unused by the Xbox. By my own experimentation, address
-            debugSPIPrint("Assuming X3 chip detected.\n");  //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
+            debugSPIPrint(DEBUG_HW_ID, "Assuming X3 chip detected.\n");  //0x51 isn't used when X3 is NOT plugged. Then probing the SMBus
         }                                                   //offset 0 of address 0x51 will return either 0xff or 0x80000002.
                                                             //Any other value will be assumed coming from the (encrypted?)
                                                             //X3 eeprom and thus instructing the program that a X3 is detected.
@@ -120,12 +120,12 @@ void identifyXboxHardware(void)
 {
     // We look how much memory we have ..
     BootDetectMemorySize();
-    debugSPIPrint("Detected RAM size : %uMB.\n", xbox_ram);
+    debugSPIPrint(DEBUG_HW_ID, "Detected RAM size : %uMB.\n", xbox_ram);
 
     cpuSpeed = getCPUFreq();
 
     mbVersion = I2CGetXboxMBRev();
-    debugSPIPrint("Xbox motherboad rev: %s.\n", xbox_mb_rev[mbVersion]);
+    debugSPIPrint(DEBUG_HW_ID, "Xbox motherboad rev: %s.\n", xbox_mb_rev[mbVersion]);
 }
 
 bool isXBlastOnTSOP(void)

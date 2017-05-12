@@ -391,12 +391,10 @@ void DisplayHDDInfo(void* driveId)
         if(BootIdeReadSector(nIndexDrive, MBRBuffer, 0x00, 0, 512))
         {
             //VIDEO_ATTR=0xffff0000;
-            //debugSPIPrint("Unable to read MBR sector...\n");
             printk("\n                Unable to read MBR sector...\n");
         }
         else
         {
-            //debugSPIPrint("MBR sector read. Printing results on screen.\n");
             for(i = 0; i < 7; i++)     //Print only info for C, E, F, G, X, Y and Z
             {
                 if(mbr->TableEntries[i].Name[0] != ' ' && mbr->TableEntries[i].LBAStart != 0)    //Valid partition entry only
@@ -487,14 +485,12 @@ void FormatDriveFG(void* driveId)
     if(ConfirmDialog(buffer, 1) == false)
     {
         UiHeader("Format F: drive");
-        //debugSPIPrint("Formatting F: drive. Partition start : 0x%X, size : 0x%X\n", SECTOR_EXTEND, fsize);
         FATXFormatExtendedDrive(nDriveIndex, 5, SECTOR_EXTEND, fsize);          //F: drive is partition 5 in table
         UIFooter();
 
         if(formatOption != F_NOG)
         {
             UiHeader("Format G: drive");
-            //debugSPIPrint("Formatting G: drive. Partition start : 0x%X, size : 0x%X\n", gstart, gsize);
             FATXFormatExtendedDrive(nDriveIndex, 6, gstart, gsize);             //G: drive is partition 6 in table
             UIFooter();
         }

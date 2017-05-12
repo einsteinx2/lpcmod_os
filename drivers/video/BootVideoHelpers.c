@@ -293,18 +293,6 @@ bool BootVideoJpegUnpackAsRgb(unsigned char *pbaJpegFileImage, JPEG * pJpeg, int
 {
     int i;
     unsigned char *tempPtr;
-/*
-    char temp[200];
-
-    debugSPIPrint("JPEG Image Decode. Input data is...\n");
-    for(i = 0; i < 64; i++){
-    if(i % 16){
-        sprintf(temp, "0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", pbaJpegFileImage[i], pbaJpegFileImage[i+1], pbaJpegFileImage[i+2], pbaJpegFileImage[i+3], pbaJpegFileImage[i+4], pbaJpegFileImage[i+5], pbaJpegFileImage[i+6], pbaJpegFileImage[i+7], pbaJpegFileImage[i+8], pbaJpegFileImage[i+9], pbaJpegFileImage[i+10], pbaJpegFileImage[i+11], pbaJpegFileImage[i+12], pbaJpegFileImage[i+13], pbaJpegFileImage[i+14], pbaJpegFileImage[i+15]);
-        debugSPIPrint(temp);
-        }
-    }
-    debugSPIPrint("\n\n\n\n");
-*/
     njInit();
     if (njDecode(pbaJpegFileImage, size))
     {

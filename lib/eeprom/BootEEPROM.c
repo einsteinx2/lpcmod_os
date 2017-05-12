@@ -238,11 +238,11 @@ EEPROM_EncryptVersion EepromSanityCheck(EEPROMDATA * eepromPtr)
 {
     EEPROMDATA decryptBuf;
     EEPROM_EncryptVersion version = decryptEEPROMData((unsigned char *)eepromPtr, (unsigned char *)&decryptBuf);
-    debugSPIPrint("Encrypt version = %u\n", version);
+    debugSPIPrint(DEBUG_EEPROM_DRIVER, "Encrypt version = %u\n", version);
     if(version >= EEPROM_EncryptV1_0 && version <= EEPROM_EncryptV1_6)
     {
         unsigned int fourBytesParam = *(unsigned int *)(decryptBuf.XBERegion);
-        debugSPIPrint("XBE Region = %u\n", fourBytesParam);
+        debugSPIPrint(DEBUG_EEPROM_DRIVER, "XBE Region = %u\n", fourBytesParam);
         if(fourBytesParam != EEPROM_XBERegionEuropeAustralia &&
            fourBytesParam != EEPROM_XBERegionJapan &&
            fourBytesParam != EEPROM_XBERegionNorthAmerica)
@@ -251,7 +251,7 @@ EEPROM_EncryptVersion EepromSanityCheck(EEPROMDATA * eepromPtr)
         }
 
         fourBytesParam = *(unsigned int *)(eepromPtr->VideoStandard);
-        debugSPIPrint("Video Standard = %08X\n", fourBytesParam);
+        debugSPIPrint(DEBUG_EEPROM_DRIVER, "Video Standard = %08X\n", fourBytesParam);
         if(fourBytesParam != EEPROM_VideoStandardNTSC_J &&
            fourBytesParam != EEPROM_VideoStandardNTSC_M &&
            fourBytesParam != EEPROM_VideoStandardPAL_I)
@@ -259,7 +259,7 @@ EEPROM_EncryptVersion EepromSanityCheck(EEPROMDATA * eepromPtr)
             return EEPROM_EncryptInvalid;
         }
 
-        debugSPIPrint("Video flags = %02X %02X %02X %02X\n", eepromPtr->VideoFlags[0],
+        debugSPIPrint(DEBUG_EEPROM_DRIVER, "Video flags = %02X %02X %02X %02X\n", eepromPtr->VideoFlags[0],
                                                              eepromPtr->VideoFlags[1],
                                                              eepromPtr->VideoFlags[2],
                                                              eepromPtr->VideoFlags[3]);
@@ -274,7 +274,7 @@ EEPROM_EncryptVersion EepromSanityCheck(EEPROMDATA * eepromPtr)
             return EEPROM_EncryptInvalid;
         }
 
-        debugSPIPrint("DVD playback zone = %02X %02X %02X %02X\n", eepromPtr->DVDPlaybackKitZone[0],
+        debugSPIPrint(DEBUG_EEPROM_DRIVER, "DVD playback zone = %02X %02X %02X %02X\n", eepromPtr->DVDPlaybackKitZone[0],
                                                                    eepromPtr->DVDPlaybackKitZone[1],
                                                                    eepromPtr->DVDPlaybackKitZone[2],
                                                                    eepromPtr->DVDPlaybackKitZone[3]);
@@ -339,7 +339,7 @@ EEPROM_EncryptVersion decryptEEPROMData(unsigned char* eepromPtr, unsigned char*
         memcpy(decryptedBuf, baEepromDataLocalCopy, 0x30);
     }
 
-    debugSPIPrint("EEPROM decrypt %s!!   Version value : %u\n", counter > EEPROM_EncryptV1_6 ? "failure" : "success", version);
+    debugSPIPrint(DEBUG_EEPROM_DRIVER, "EEPROM decrypt %s!!   Version value : %u\n", counter > EEPROM_EncryptV1_6 ? "failure" : "success", version);
 
     return version;
 }

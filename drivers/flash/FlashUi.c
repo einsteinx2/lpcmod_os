@@ -38,7 +38,7 @@ static unsigned char previousPercent = 0;
 //Selects which function should be called for flashing.
 void FlashFileFromBuffer(unsigned char *fileBuf, unsigned int fileSize, bool askConfirm)
 {
-    debugSPIPrint("New image to flash. size=%u\n", fileSize);
+    debugSPIPrint(DEBUG_FLASH_UI,"New image to flash. size=%u\n", fileSize);
 
     if(Flash_getProgress().currentFlashOp == FlashOp_Idle)
     {
@@ -125,7 +125,7 @@ static bool FlashPrintResult(void)
 #ifndef DEV_FEATURES
     if(mustRestart == true)
     {
-        debugSPIPrint("Flash update sequence restart system\n");
+        debugSPIPrint(DEBUG_FLASH_UI,"Flash update sequence restart system\n");
         // Set LED to oxox.
         inputLED();
         Flash_freeFlashFSM();
@@ -212,19 +212,19 @@ bool SaveXBlastOSSettings(void)
 
     if(memcmp(&LPCmodSettings, &LPCmodSettingsOrigFromFlash, sizeof(_LPCmodSettings)) == 0)
     {
-        debugSPIPrint("No setting changed since last boot. Skipping save to flash.\n");
+        debugSPIPrint(DEBUG_FLASH_UI,"No setting changed since last boot. Skipping save to flash.\n");
         return true;
     }
 
     if(isXBlastOnTSOP())
     {
-        debugSPIPrint("XBlast detected but running from TSOP. Can't save to LPC flash.\n");
+        debugSPIPrint(DEBUG_FLASH_UI,"XBlast detected but running from TSOP. Can't save to LPC flash.\n");
         return true;
     }
 
     if(isXBlastCompatible() == false && isXBE())
     {
-        debugSPIPrint("No XBlast HW detected.Came from XBE. Assume no flash to same to.\n");
+        debugSPIPrint(DEBUG_FLASH_UI,"No XBlast HW detected.Came from XBE. Assume no flash to same to.\n");
         return true;
     }
 
@@ -367,7 +367,7 @@ bool executeFlashDriverUI(void)
     case FlashTask_WriteBios:
         if(flashProgress.currentFlashOp == FlashOp_PendingOp)
         {
-            debugSPIPrint("Flash update sequence pending op\n");
+            debugSPIPrint(DEBUG_FLASH_UI,"Flash update sequence pending op\n");
             VIDEO_ATTR=0xffef37;
 
             if(mustRestart)
@@ -391,13 +391,13 @@ bool executeFlashDriverUI(void)
         }
         else if(flashProgress.currentFlashOp == FlashOp_Completed)
         {
-            debugSPIPrint("Flash update sequence completed\n");
+            debugSPIPrint(DEBUG_FLASH_UI,"Flash update sequence completed\n");
             FlashPrintResult();
             Flash_freeFlashFSM();
         }
         else if(flashProgress.currentFlashOp == FlashOp_Error)
         {
-            debugSPIPrint("!!Flash update sequence error!! errorCode=%u\n", flashProgress.flashErrorCode);
+            debugSPIPrint(DEBUG_FLASH_UI,"!!Flash update sequence error!! errorCode=%u\n", flashProgress.flashErrorCode);
             FlashPrintResult();
             Flash_freeFlashFSM();
         }

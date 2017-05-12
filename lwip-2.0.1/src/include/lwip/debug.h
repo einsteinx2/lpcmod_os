@@ -46,8 +46,8 @@
  * @{
  */
 
-#ifdef SPITRACE
-#define LWIP_DEBUG 1
+#if DEBUG_LWIP >= 1
+#define LWIP_DEBUG
 #endif
 
 /** @name Debug level (LWIP_DBG_MIN_LEVEL)

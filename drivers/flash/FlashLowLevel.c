@@ -44,7 +44,7 @@ void FlashLowLevel_Init(void)
     is28xxxProtocol = false;
     memset(&flashDevice, 0x00, sizeof(flashDevice));
 	flashDevice.m_pbMemoryMappedStartAddress = (unsigned char *)LPCFlashadress;
-	debugSPIPrint("Setting LPC address to 0x%08X\n", LPCFlashadress);
+	debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Setting LPC address to 0x%08X\n", LPCFlashadress);
 }
 
 bool FlashLowLevel_ReadDevice(void)
@@ -59,14 +59,14 @@ bool FlashLowLevel_ReadDevice(void)
         _ResetFlashICStateMachine();
         _ReadDeviceIDBytes(&flashRead);
 
-        debugSPIPrint("Read device ID. manf=0x%02X  dev=0x%02X\n", flashRead.m_bManufacturerId, flashRead.m_bDeviceId);
+        debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Read device ID. manf=0x%02X  dev=0x%02X\n", flashRead.m_bManufacturerId, flashRead.m_bDeviceId);
 
         if(_MatchDevice(&flashRead))
         {
             // Found Device.
-            debugSPIPrint("Found matching device: %s\n", flashDevice.flashType.m_szFlashDescription);
-            debugSPIPrint("Additional info: %s\n", flashDevice.m_szAdditionalErrorInfo);
-            debugSPIPrint("Can Erase/Write: %s\n", flashDevice.m_fIsBelievedCapableOfWriteAndErase ? "Yes" : "No");
+            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Found matching device: %s\n", flashDevice.flashType.m_szFlashDescription);
+            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Additional info: %s\n", flashDevice.m_szAdditionalErrorInfo);
+            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Can Erase/Write: %s\n", flashDevice.m_fIsBelievedCapableOfWriteAndErase ? "Yes" : "No");
             return true;
         }
 
@@ -74,13 +74,13 @@ bool FlashLowLevel_ReadDevice(void)
         {
             // Device not found, try other method.
             is28xxxProtocol = !is28xxxProtocol;
-            debugSPIPrint("is28xxxProtocol: %s\n", is28xxxProtocol ? "true" : "false");
+            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"is28xxxProtocol: %s\n", is28xxxProtocol ? "true" : "false");
             retry = false;
         }
         else
         {
             // Tried both method. No device found.
-            debugSPIPrint("Device not found...\n");
+            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Device not found...\n");
             return false;
         }
     }

@@ -66,15 +66,14 @@ extern int rand (void);
 #define PACK_STRUCT_STRUCT __attribute__((packed))
 
 /* Plaform specific diagnostic output */
-#ifdef SPITRACE
-#define LWIP_PLATFORM_DIAG(x)	do {debugSPIPrint x;} while(0) //Replaced printf
+#ifdef LWIP_DEBUG
+#define LWIP_PLATFORM_DIAG(x)	do {lwipSPIPrint x;} while(0) //Replaced printf
 
-#define LWIP_PLATFORM_ASSERT(x) do {debugSPIPrint("Assertion \"%s\" failed at line %d in %s\n", \
+#define LWIP_PLATFORM_ASSERT(x) do {lwipSPIPrint("Assertion \"%s\" failed at line %d in %s\n", \
                                      x, __LINE__, __FILE__); /*fflush(NULL); abort();*/} while(0)
 #else
 #define LWIP_PLATFORM_DIAG(x)
 #define LWIP_PLATFORM_ASSERT(x)
-#define debugSPIPrint(...)
 #endif
 
 //#define LWIP_PLATFORM_ASSERT(x)

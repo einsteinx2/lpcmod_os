@@ -122,7 +122,7 @@ static void putInBuf(DataOperation_t* input)
     if((rollOver && (projectedEnd > outPos)) ||
     (rollOver == false && (projectedEnd % ringBufSize) < projectedEnd && (projectedEnd % ringBufSize) > outPos))
     {
-        debugSPIPrint("LCD RingBuf overflow. inPos=%u  outPos=%u    rollOver=%u\n", inPos, outPos, rollOver);
+        debugSPIPrint(DEBUG_MISC, "LCD RingBuf overflow. inPos=%u  outPos=%u    rollOver=%u\n", inPos, outPos, rollOver);
         return;
     }
 

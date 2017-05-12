@@ -65,7 +65,7 @@ TEXTMENU* generateMenuEntries(void)
             {
               if(currentOSChangeEntry != NULL)
               {
-                  debugSPIPrint("%s%s\n", currentOSChangeEntry->label, currentOSChangeEntry->changeString);
+                  debugSPIPrint(DEBUG_GENERAL_UI, "%s%s\n", currentOSChangeEntry->label, currentOSChangeEntry->changeString);
                   itemPtr = malloc(sizeof(TEXTMENUITEM));
                   memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
                   sprintf(itemPtr->szCaption, "%s ", currentOSChangeEntry->label);
@@ -85,7 +85,7 @@ TEXTMENU* generateMenuEntries(void)
             }
             else if(i < (uncommittedChanges + bootScriptChange))
             {
-                debugSPIPrint("Boot script in flash change\n");
+                debugSPIPrint(DEBUG_GENERAL_UI, "Boot script in flash change\n");
                 itemPtr = malloc(sizeof(TEXTMENUITEM));
                 memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
                 sprintf(itemPtr->szCaption, "Boot script in flash modified");
@@ -97,7 +97,7 @@ TEXTMENU* generateMenuEntries(void)
             }
             else if(i < (uncommittedChanges + bootScriptChange + backupEEPROMChange))
             {
-                debugSPIPrint("Backup EEPROM modified\n");
+                debugSPIPrint(DEBUG_GENERAL_UI, "Backup EEPROM modified\n");
                 itemPtr = malloc(sizeof(TEXTMENUITEM));
                 memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
                 sprintf(itemPtr->szCaption, "Backup EEPROM modified");
@@ -109,10 +109,10 @@ TEXTMENU* generateMenuEntries(void)
             }
             else if(i < (uncommittedChanges + bootScriptChange + backupEEPROMChange + eepromChanges))
             {
-                debugSPIPrint("New EEPROM change #%u\n", i);
+                debugSPIPrint(DEBUG_GENERAL_UI, "New EEPROM change #%u\n", i);
                 if(currentEEPROMChangeEntry != NULL)
                 {
-                    debugSPIPrint("%s%s\n", currentEEPROMChangeEntry->label, currentEEPROMChangeEntry->changeString);
+                    debugSPIPrint(DEBUG_GENERAL_UI, "%s%s\n", currentEEPROMChangeEntry->label, currentEEPROMChangeEntry->changeString);
                     itemPtr = malloc(sizeof(TEXTMENUITEM));
                     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
                     sprintf(itemPtr->szCaption,"%s", currentEEPROMChangeEntry->label);

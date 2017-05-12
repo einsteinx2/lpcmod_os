@@ -275,7 +275,7 @@ int updateEEPROMEditBufferFromInputBuffer(unsigned char *buffer, unsigned int si
     else
     {
         newVersion = EepromSanityCheck((EEPROMDATA *)buffer);
-        debugSPIPrint("Input EEPROM image version : %u\n", newVersion);
+        debugSPIPrint(DEBUG_GENERAL_UI, "Input EEPROM image version : %u\n", newVersion);
 
         if(newVersion >= EEPROM_EncryptV1_0 && newVersion <= EEPROM_EncryptV1_6)   //Current content in eeprom is valid.
         {
@@ -315,7 +315,7 @@ int updateEEPROMEditBufferFromInputBuffer(unsigned char *buffer, unsigned int si
                 }
             }
 
-            debugSPIPrint("Encrypt new image into version : %u\n", hostVersion);
+            debugSPIPrint(DEBUG_GENERAL_UI, "Encrypt new image into version : %u\n", hostVersion);
             encryptEEPROMData(decryptedData, &result, hostVersion);
 
             // Save back to EEprom

@@ -308,7 +308,7 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr)
             unlockConfirm[i] = 0;       //Won't relock as no HDD was detected on that port.
         }
 
-        debugSPIPrint("Drive %u  lock assert result %u\n", i, unlockConfirm[i]);
+        debugSPIPrint(DEBUG_GENERAL_UI, "Drive %u  lock assert result %u\n", i, unlockConfirm[i]);
     }
 
     if(unlockConfirm[0] == 255 || unlockConfirm[1] == 255)      //error in unlocking one of 2 drives.
@@ -324,7 +324,7 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr)
         {
             if(unlockConfirm[i] == 1)
             {
-                debugSPIPrint("Relocking drive %u with new HDDKey\n", i);
+                debugSPIPrint(DEBUG_GENERAL_UI, "Relocking drive %u with new HDDKey\n", i);
                 LockHDD(i, 0, (unsigned char *)&eeprom);    //0 is for silent mode.
             }
         }

@@ -64,7 +64,7 @@ static unsigned int getEraseMethodSize(void);
 
 void Flash_Init(void)
 {
-    debugSPIPrint("init called.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"init called.\n");
     FlashLowLevel_Init();
 
     Flash_freeFlashFSM();
@@ -81,22 +81,22 @@ void Flash_executeFlashFSM(void)
     case FlashOp_PendingOp:
         if(currentFlashTask == FlashTask_WriteBios)
         {
-            debugSPIPrint("Starting WriteBIOS sequence\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Starting WriteBIOS sequence\n");
             currentFlashOp = FlashOp_EraseInProgress;
         }
         else if(currentFlashTask == FlashTask_ReadBios)
         {
-            debugSPIPrint("Starting ReadBIOS sequence\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Starting ReadBIOS sequence\n");
             currentFlashOp = FlashOp_ReadInProgress;
         }
         else if(currentFlashTask == FlashTask_WriteSettings)
         {
-            debugSPIPrint("Starting WriteSettings sequence\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Starting WriteSettings sequence\n");
             currentFlashOp = FlashOp_ReadInProgress;
         }
         else if(currentFlashTask == FlashTask_ReadSettings)
         {
-            debugSPIPrint("Starting ReadSettings sequence\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Starting ReadSettings sequence\n");
             currentFlashOp = FlashOp_ReadInProgress;
         }
         break;
@@ -118,7 +118,7 @@ void Flash_executeFlashFSM(void)
 
                 if(currentAddr >= biosBufferSize) // Erase is actually over
                 {
-                    debugSPIPrint("Desired range erased! Moving to Write.   biosBufferSize=%u\n", biosBufferSize);
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Desired range erased! Moving to Write.   biosBufferSize=%u\n", biosBufferSize);
                     currentFlashOp = FlashOp_WriteInProgress;
                     currentAddr = 0;
                     return;
@@ -126,14 +126,14 @@ void Flash_executeFlashFSM(void)
             }
             else
             {
-                debugSPIPrint("Require Erase on address: %u\n", startingOffset + currentAddr);
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Require Erase on address: %u\n", startingOffset + currentAddr);
                 if(firstEraseTry == false) // It't not the first time we got here for the same byte.
                 {
-                    debugSPIPrint("Second try for same address.\n");
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Second try for same address.\n");
                     if(eraseBusyCount < EraseBusyCountMin)
                     {
                         firstEraseTry = true;
-                        debugSPIPrint("Busy flag not set enough times.\n");
+                        debugSPIPrint(DEBUG_FLASH_DRIVER,"Busy flag not set enough times.\n");
                         eraseBusyCount = 0;
                         // Erasing never happened. Command not supported? Moving to next possible command.
                         switch(eraseSequenceMethod)
@@ -142,12 +142,12 @@ void Flash_executeFlashFSM(void)
                             if(flashDevice.flashType.m_support4KBErase)
                             {
                                 eraseSequenceMethod = EraseSequenceMethod_Block;
-                                debugSPIPrint("Switching to 64KB block erase.\n");
+                                debugSPIPrint(DEBUG_FLASH_DRIVER,"Switching to 64KB block erase.\n");
                             }
                             else
                             {
                                 eraseSequenceMethod = EraseSequenceMethod_Chip;
-                                debugSPIPrint("Switching to chip erase.\n");
+                                debugSPIPrint(DEBUG_FLASH_DRIVER,"Switching to chip erase.\n");
                             }
 
                             if(currentFlashTask == FlashTask_WriteSettings)
@@ -158,7 +158,7 @@ void Flash_executeFlashFSM(void)
                             break;
                         case EraseSequenceMethod_Block:
                             eraseSequenceMethod = EraseSequenceMethod_Chip;
-                            debugSPIPrint("Switching to chip erase.\n");
+                            debugSPIPrint(DEBUG_FLASH_DRIVER,"Switching to chip erase.\n");
                             if(currentFlashTask == FlashTask_WriteSettings)
                             {
                                 evaluateReadBackRange();
@@ -168,7 +168,7 @@ void Flash_executeFlashFSM(void)
                         case EraseSequenceMethod_Chip:
                             currentFlashOp = FlashOp_Error;
                             flashErrorCode = FlashErrorcodes_FailedErase;
-                            debugSPIPrint("Halt erase. No possible solution.\n");
+                            debugSPIPrint(DEBUG_FLASH_DRIVER,"Halt erase. No possible solution.\n");
                             return;
                         }
                     }
@@ -177,15 +177,15 @@ void Flash_executeFlashFSM(void)
                 switch(eraseSequenceMethod)
                 {
                 case EraseSequenceMethod_Sector:
-                    debugSPIPrint("Block erase on address: %u\n", startingOffset + currentAddr);
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Block erase on address: %u\n", startingOffset + currentAddr);
                     FlashLowLevel_InititiateSectorErase(startingOffset + currentAddr);
                     break;
                 case EraseSequenceMethod_Block:
-                    debugSPIPrint("Sector erase on address: %u\n", startingOffset + currentAddr);
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Sector erase on address: %u\n", startingOffset + currentAddr);
                     FlashLowLevel_InititiateBlockErase(startingOffset + currentAddr);
                     break;
                 case EraseSequenceMethod_Chip:
-                    debugSPIPrint("Chip erase\n");
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Chip erase\n");
                     FlashLowLevel_InititiateChipErase();
                     break;
                 }
@@ -199,7 +199,7 @@ void Flash_executeFlashFSM(void)
         {
             if(currentAddr >= biosBufferSize)
             {
-                debugSPIPrint("Desired range wrote! Moving to Verify.\n");
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Desired range wrote! Moving to Verify.\n");
                 currentFlashOp = FlashOp_VerifyInProgress;
                 currentAddr = 0;
             }
@@ -220,7 +220,7 @@ void Flash_executeFlashFSM(void)
         {
             if(currentAddr >= biosBufferSize)
             {
-                debugSPIPrint("Verify completed.\n");
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Verify completed.\n");
                 currentFlashOp = FlashOp_Completed;
             }
             else
@@ -232,7 +232,7 @@ void Flash_executeFlashFSM(void)
                 }
                 else
                 {
-                    debugSPIPrint("Data mismatch.   startingOffset=%u   currentAddr=%u   flash=%02X   buf=%02X\n", startingOffset, currentAddr, byteFromFlash, biosBuffer[currentAddr]);
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Data mismatch.   startingOffset=%u   currentAddr=%u   flash=%02X   buf=%02X\n", startingOffset, currentAddr, byteFromFlash, biosBuffer[currentAddr]);
                     currentFlashOp = FlashOp_Error;
                     flashErrorCode = FlashErrorcodes_FailedVerify;
                 }
@@ -251,17 +251,17 @@ void Flash_executeFlashFSM(void)
                 currentAddr = 0;
                 if(currentFlashTask == FlashTask_ReadBios)
                 {
-                    debugSPIPrint("Read BIOS completed.\n");
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Read BIOS completed.\n");
                     currentFlashOp = FlashOp_Completed;
                 }
                 else if(currentFlashTask == FlashTask_ReadSettings)
                 {
-                    debugSPIPrint("Read Settings completed.\n");
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Read Settings completed.\n");
                     currentFlashOp = FlashOp_Completed;
                 }
                 else if(currentFlashTask == FlashTask_WriteSettings)
                 {
-                    debugSPIPrint("Readback flash for context save.\n");
+                    debugSPIPrint(DEBUG_FLASH_DRIVER,"Readback flash for context save.\n");
                     injectSettingsInBuf(getXBlastOSSettingStartingOffset(getBiosIdentifierFromFlash()));
                     currentFlashOp = FlashOp_EraseInProgress;
                 }
@@ -280,7 +280,7 @@ void Flash_executeFlashFSM(void)
 
 void Flash_freeFlashFSM(void)
 {
-    debugSPIPrint("Reset flash FSM.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Reset flash FSM.\n");
     biosBufferSize = 0;
     currentFlashOp = FlashOp_Idle;
     flashErrorCode = FlashErrorcodes_NoError;
@@ -321,15 +321,15 @@ FlashProgress Flash_ReadDeviceInfo(const OBJECT_FLASH* *const output)
     FlashProgress result;
 
     result.currentFlashOp = FlashOp_Error;
-    debugSPIPrint("Enter\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Enter\n");
 
     if(currentFlashOp == FlashOp_Idle)
     {
-        debugSPIPrint("Flash FSM idle.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Flash FSM idle.\n");
         if(FlashLowLevel_ReadDevice())
         {
             result.currentFlashOp = FlashOp_Completed;
-            debugSPIPrint("Device read.\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Device read.\n");
             *output = &flashDevice;
             result.flashErrorCode = FlashErrorcodes_NoError;
             result.progressInPercent = 100;
@@ -339,7 +339,7 @@ FlashProgress Flash_ReadDeviceInfo(const OBJECT_FLASH* *const output)
         }
     }
 
-    debugSPIPrint("Error! Flash FSM NOT idle.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Error! Flash FSM NOT idle.\n");
 
     result.flashErrorCode = FlashErrorcodes_UnknownFlash;
     result.progressInPercent = 0;
@@ -352,7 +352,7 @@ FlashProgress Flash_ReadBIOSBank(FlashBank bank)
 {
     if(currentFlashOp == FlashOp_Idle)
     {
-        debugSPIPrint("Flash FSM idle.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Flash FSM idle.\n");
         if(FlashLowLevel_ReadDevice())
         {
             currentFlashOp = FlashOp_PendingOp;
@@ -390,7 +390,7 @@ unsigned int getBiosBuffer(const unsigned char* *const output)
 
 FlashProgress Flash_XBlastOSBankFlash(const unsigned char* inBuf, unsigned int size, unsigned int offset, bool overrideChecks)
 {
-    debugSPIPrint("Initiate XBlast OS update.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Initiate XBlast OS update.\n");
     if(overrideChecks == false)
     {
         flashErrorCode = validateOSImage(inBuf, size);
@@ -425,7 +425,7 @@ FlashProgress Flash_ReadXBlastOSSettingsRequest(void)
 {
     if(currentFlashOp == FlashOp_Idle)
     {
-        debugSPIPrint("Flash FSM idle.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Flash FSM idle.\n");
         if(FlashLowLevel_ReadDevice() || isXecuter3()) // in an attempt to read settings when X3 flash protect is on.
         {
             currentFlashOp = FlashOp_PendingOp;
@@ -433,13 +433,13 @@ FlashProgress Flash_ReadXBlastOSSettingsRequest(void)
 
             switchOSBank(FlashBank_OSBank);
             biosBufferSize = sizeof(_LPCmodSettings);
-            debugSPIPrint("Get settings offset.\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Get settings offset.\n");
             startingOffset = getXBlastOSSettingStartingOffset(getBiosIdentifierFromFlash());
 
-            debugSPIPrint("Size of Settings struct to read = %u\n", biosBufferSize);
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Size of Settings struct to read = %u\n", biosBufferSize);
             if(startingOffset == 0)
             {
-                debugSPIPrint("Error! Could not locate proper save location.\n");
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Error! Could not locate proper save location.\n");
                 currentFlashOp = FlashOp_Completed;
                 *biosBuffer = 0xff;
             }
@@ -460,16 +460,16 @@ bool Flash_LoadXBlastOSSettings(_LPCmodSettings* input)
     {
         const _LPCmodSettings* seeker = (const _LPCmodSettings*)biosBuffer;
 
-        debugSPIPrint("Settings Version in Flash = %u   Expected:%u\n", seeker->settingsVersion, CurrentSettingsVersionNumber);
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Settings Version in Flash = %u   Expected:%u\n", seeker->settingsVersion, CurrentSettingsVersionNumber);
         if(seeker->settingsVersion == CurrentSettingsVersionNumber)
         {
             unsigned int calculatedCRC32 = calculateSettingsStructCRC32Value(seeker);
-            debugSPIPrint("Calculated CRC32 : 0x%08X\n", calculatedCRC32);
-            debugSPIPrint("Stored CRC32     : 0x%08X\n", seeker->crc32Value);
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Calculated CRC32 : 0x%08X\n", calculatedCRC32);
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"Stored CRC32     : 0x%08X\n", seeker->crc32Value);
 
             if(calculatedCRC32 == seeker->crc32Value)
             {
-                debugSPIPrint("Settings accepted in biosBuf. Size of buf = %u\n", biosBufferSize);
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Settings accepted in biosBuf. Size of buf = %u\n", biosBufferSize);
                 memcpy(input, biosBuffer, sizeof(_LPCmodSettings));
                 returnValue = true;
             }
@@ -484,7 +484,7 @@ bool Flash_LoadXBlastOSSettings(_LPCmodSettings* input)
 
     if(returnValue == false)
     {
-        debugSPIPrint("Error? No settings in biosBuf...\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Error? No settings in biosBuf...\n");
         populateSettingsStructWithDefault(input);
     }
     return returnValue;
@@ -493,7 +493,7 @@ bool Flash_LoadXBlastOSSettings(_LPCmodSettings* input)
 bool bootReadXBlastOSSettings(void)
 {
     bool returnValue = true;
-    debugSPIPrint("Initiate Read XBlast OS settings.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Initiate Read XBlast OS settings.\n");
 
     populateSettingsStructWithDefault(&LPCmodSettings);
 
@@ -507,7 +507,7 @@ bool bootReadXBlastOSSettings(void)
 
             if(progress.currentFlashOp == FlashOp_Completed || progress.currentFlashOp == FlashOp_Error)
             {
-                debugSPIPrint("Read Settings from flash completed.\n");
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Read Settings from flash completed.\n");
                 returnValue = Flash_LoadXBlastOSSettings(&LPCmodSettings);
 
 
@@ -529,7 +529,7 @@ FlashProgress Flash_SaveXBlastOSSettings(void)
 {
     if(currentFlashOp == FlashOp_Idle)
     {
-        debugSPIPrint("Flash FSM idle.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Flash FSM idle.\n");
         if(FlashLowLevel_ReadDevice())
         {
             startingOffset = getXBlastOSSettingStartingOffset(getBiosIdentifierFromFlash());
@@ -544,11 +544,11 @@ FlashProgress Flash_SaveXBlastOSSettings(void)
                 currentFlashOp = FlashOp_PendingOp;
                 currentFlashTask = FlashTask_WriteSettings;
 
-                debugSPIPrint("WriteSettings param set.\n");
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"WriteSettings param set.\n");
             }
             else
             {
-                debugSPIPrint("Flash does not contain XBlast OS image on selected bank. Aborting.\n");
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"Flash does not contain XBlast OS image on selected bank. Aborting.\n");
                 currentFlashOp = FlashOp_Error;
                 flashErrorCode = FlashErrorcodes_FlashContentError;
             }
@@ -570,7 +570,7 @@ static FlashErrorcodes Flash_WriteBios(const unsigned char* buf, unsigned int si
 {
     if(currentFlashOp == FlashOp_Idle)
     {
-        debugSPIPrint("Flash FSM idle.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Flash FSM idle.\n");
         if(FlashLowLevel_ReadDevice())
         {
             flashErrorCode = checkImageSize(size);
@@ -589,12 +589,12 @@ static FlashErrorcodes Flash_WriteBios(const unsigned char* buf, unsigned int si
                 memcpy(biosBuffer, buf, size);
                 mirrorimage(flashBank);
 
-                debugSPIPrint("WriteBIOS param set. flashBank=%02X    biosBufferSize=%u    startingOffset=%u.\n", flashBank, biosBufferSize, startingOffset);
+                debugSPIPrint(DEBUG_FLASH_DRIVER,"WriteBIOS param set. flashBank=%02X    biosBufferSize=%u    startingOffset=%u.\n", flashBank, biosBufferSize, startingOffset);
             }
             return flashErrorCode;
         }
     }
-    debugSPIPrint("Error! Flash FSM **NOT** idle.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Error! Flash FSM **NOT** idle.\n");
 
     return FlashErrorcodes_UndefinedError;
 }
@@ -641,7 +641,7 @@ static void mirrorimage(FlashBank flashBank)
     {
         memcpy(biosBuffer + biosBufferSize, biosBuffer, biosBufferSize);
         biosBufferSize += biosBufferSize;
-        debugSPIPrint("Mirroring image to fill size. NewSize=%u\n", biosBufferSize);
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Mirroring image to fill size. NewSize=%u\n", biosBufferSize);
     }
 }
 
@@ -652,11 +652,11 @@ static FlashErrorcodes validateOSImage(const unsigned char* inBuf, unsigned int 
     MD5_CTX hashcontext;
     int i;
     FlashErrorcodes exitCode = FlashErrorcodes_NoError;
-    debugSPIPrint("Validating XBlast OS image in various ways.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Validating XBlast OS image in various ways.\n");
 
     if(size != ImageSize256KB)
     {
-        debugSPIPrint("Incorrect image file size. Aborting.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Incorrect image file size. Aborting.\n");
         return FlashErrorcodes_FileSizeError;
     }
 
@@ -664,7 +664,7 @@ static FlashErrorcodes validateOSImage(const unsigned char* inBuf, unsigned int 
 
     if(strncmp(biosID->Name, PROG_NAME, strlen(PROG_NAME)))
     {
-        debugSPIPrint("Detected device not XBlast Mod compatible. Aborting.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Detected device not XBlast Mod compatible. Aborting.\n");
         return FlashErrorcodes_InvalidUpdateFile;
     }
 
@@ -673,7 +673,7 @@ static FlashErrorcodes validateOSImage(const unsigned char* inBuf, unsigned int 
           //return FlashErrorcodes_CRCMismatch;
     //}
 
-    debugSPIPrint("BiosIdentifier Header v%u.\n", biosID->HeaderVersion);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"BiosIdentifier Header v%u.\n", biosID->HeaderVersion);
     if(biosID->HeaderVersion == HeaderVersionV2)
     {
         md5Size = biosID->BiosSize;
@@ -685,38 +685,38 @@ static FlashErrorcodes validateOSImage(const unsigned char* inBuf, unsigned int 
     }
     else
     {
-        debugSPIPrint("Invalid BiosIdentifier Header version. Aborting.\n");
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Invalid BiosIdentifier Header version. Aborting.\n");
         return FlashErrorcodes_InvalidUpdateFile;
     }
 
     MD5Init(&hashcontext);
-    debugSPIPrint("Calculating md5 hash on buffer size %u.\n", md5Size);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Calculating md5 hash on buffer size %u.\n", md5Size);
     MD5Update(&hashcontext, inBuf, md5Size);
     MD5Final(md5result, &hashcontext);
     for(i = 0; i < 16; i++)
     {
         if(md5result[i] != biosID->MD5Hash[i])
         {
-            debugSPIPrint("MD5 value mismatch!\n");
+            debugSPIPrint(DEBUG_FLASH_DRIVER,"MD5 value mismatch!\n");
             exitCode = FlashErrorcodes_MD5Mismatch;
             break;
         }
     }
 
-    debugSPIPrint("XBlast OS image appears to be valid.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"XBlast OS image appears to be valid.\n");
 
     return exitCode;
 }
 
 static void evaluateReadBackRange(void)
 {
-    debugSPIPrint("Re-evaluating readback range.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Re-evaluating readback range.\n");
     // Previous read back data is obviously not covering the new range we're about to erase.
     startingOffset &= ~(getEraseMethodSize() - 1);
     biosBufferSize = getEraseMethodSize();
     currentAddr = 0;
     currentFlashOp = FlashOp_ReadInProgress;
-    debugSPIPrint("startingOffset=0x%X    erase size=%u\n", startingOffset, biosBufferSize);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"startingOffset=0x%X    erase size=%u\n", startingOffset, biosBufferSize);
 }
 
 struct BiosIdentifier getBiosIdentifierFromFlash(void)
@@ -725,13 +725,13 @@ struct BiosIdentifier getBiosIdentifierFromFlash(void)
     unsigned char* ptr = (unsigned char *)&out;
     memset(ptr, 0xFF, sizeof(struct BiosIdentifier));
 
-    debugSPIPrint("Reading BIOS Identifier from flash.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Reading BIOS Identifier from flash.\n");
     for(unsigned int i = 0; i < sizeof(struct BiosIdentifier); i++)
     {
         ptr[i] = FlashLowLevel_ReadByte(ImageSize256KB - sizeof(struct BiosIdentifier) + i);
     }
 
-    debugSPIPrint("Complete.\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Complete.\n");
     return out;
 }
 
@@ -761,19 +761,19 @@ static unsigned int getXBlastOSSettingStartingOffset(struct BiosIdentifier biosI
 
     memcpy(temp, biosID.Magic, 4);
     temp[4] = '\0';
-    debugSPIPrint("BiosIdentifier content\n");
-    debugSPIPrint("Magic:          %s\n", temp);
-    debugSPIPrint("HeaderVersion:  %u\n", biosID.HeaderVersion);
-    debugSPIPrint("XboxVersion:    %u\n", biosID.XboxVersion);
-    debugSPIPrint("VideoEncoder:   %u\n", biosID.VideoEncoder);
-    debugSPIPrint("Option1:        %u\n", biosID.Option1);
-    debugSPIPrint("Option2:        %u\n", biosID.Option2);
-    debugSPIPrint("Option3:        %u\n", biosID.Option3);
-    debugSPIPrint("BiosSize:       %u\n", biosID.BiosSize);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"BiosIdentifier content\n");
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Magic:          %s\n", temp);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"HeaderVersion:  %u\n", biosID.HeaderVersion);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"XboxVersion:    %u\n", biosID.XboxVersion);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"VideoEncoder:   %u\n", biosID.VideoEncoder);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Option1:        %u\n", biosID.Option1);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Option2:        %u\n", biosID.Option2);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Option3:        %u\n", biosID.Option3);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"BiosSize:       %u\n", biosID.BiosSize);
     memcpy(temp, biosID.Name, 32);
     temp[32] = '\0';
-    debugSPIPrint("Name:           %s\n", biosID.Name);
-    debugSPIPrint("MD5Hash:        %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", biosID.MD5Hash[0], biosID.MD5Hash[1], biosID.MD5Hash[2], biosID.MD5Hash[3], biosID.MD5Hash[4], biosID.MD5Hash[5], biosID.MD5Hash[6], biosID.MD5Hash[7], biosID.MD5Hash[8], biosID.MD5Hash[9], biosID.MD5Hash[10], biosID.MD5Hash[11], biosID.MD5Hash[12], biosID.MD5Hash[13], biosID.MD5Hash[14], biosID.MD5Hash[15]);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"Name:           %s\n", biosID.Name);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"MD5Hash:        %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n", biosID.MD5Hash[0], biosID.MD5Hash[1], biosID.MD5Hash[2], biosID.MD5Hash[3], biosID.MD5Hash[4], biosID.MD5Hash[5], biosID.MD5Hash[6], biosID.MD5Hash[7], biosID.MD5Hash[8], biosID.MD5Hash[9], biosID.MD5Hash[10], biosID.MD5Hash[11], biosID.MD5Hash[12], biosID.MD5Hash[13], biosID.MD5Hash[14], biosID.MD5Hash[15]);
 
     //Settings location is calculated the same way for both HeaderVersion 1 and 2
     if(biosID.HeaderVersion == HeaderVersionV2 || biosID.HeaderVersion == HeaderVersionV1)
@@ -804,7 +804,7 @@ static unsigned int getXBlastOSSettingStartingOffset(struct BiosIdentifier biosI
     }
     //TODO: Put else statement for BiosHeader migration from previous to current version.
 
-    debugSPIPrint("XBlast OS settings starting offset is %u\n", settingsOffset);
+    debugSPIPrint(DEBUG_FLASH_DRIVER,"XBlast OS settings starting offset is %u\n", settingsOffset);
 
     return settingsOffset;
 }
@@ -822,8 +822,8 @@ static void injectSettingsInBuf(unsigned int offset)
     if(offset != 0)
     {
         LPCmodSettings.crc32Value = calculateSettingsStructCRC32Value(&LPCmodSettings);
-        debugSPIPrint("Calculated Settings CRC32 value to write : 0x%08X\n", LPCmodSettings.crc32Value);
-        debugSPIPrint("Copying settings data (%u bytes) at offset %u in biosBuffer\n", sizeof(_LPCmodSettings), (offset % biosBufferSize));
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Calculated Settings CRC32 value to write : 0x%08X\n", LPCmodSettings.crc32Value);
+        debugSPIPrint(DEBUG_FLASH_DRIVER,"Copying settings data (%u bytes) at offset %u in biosBuffer\n", sizeof(_LPCmodSettings), (offset % biosBufferSize));
 
         memcpy(biosBuffer + (offset % biosBufferSize), (const void*)&LPCmodSettings, sizeof(_LPCmodSettings));
     }

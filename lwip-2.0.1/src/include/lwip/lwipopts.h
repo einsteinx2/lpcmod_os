@@ -33,6 +33,7 @@
 #define __LWIPOPTS_H__
 
 #include "string.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include <stddef.h>
 
 #define NO_SYS 1

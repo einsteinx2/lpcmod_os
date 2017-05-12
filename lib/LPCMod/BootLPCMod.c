@@ -97,12 +97,12 @@ void quickboot(unsigned char bank)
 {
     if(bank > BOOTFROMTSOP)
     {
-        debugSPIPrint("Booting XBlast flash bank\n");
+        debugSPIPrint(DEBUG_BOOT_LOG, "Booting XBlast flash bank\n");
         switchBootBank(bank);
     }
     else
     {
-        debugSPIPrint("Booting TSOP flash bank\n");
+        debugSPIPrint(DEBUG_BOOT_LOG, "Booting TSOP flash bank\n");
         //If booting from TSOP, use of the XODUS_CONTROL register is fine.
         if(getMotherboardRevision() == XboxMotherboardRevision_1_6 || getMotherboardRevision() == XboxMotherboardRevision_UNKNOWN)
         {

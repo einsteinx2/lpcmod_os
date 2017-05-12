@@ -358,7 +358,7 @@ imagecompress: obj/image-crom.bin bin/imagebld
 	bin/crcbin image/cromwell.bin image/crcwell.bin
 	
 makefsdata: clean
-	gcc -I"$(TOPDIR)/$(LWIPFOLDER)" -I"$(TOPDIR)/$(LWIPFOLDER)/src/include" -Og -Wall -c -o "obj/makefsdata.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/makefsdata.c"
+	gcc -I"$(TOPDIR)/$(LWIPFOLDER)" -I"$(TOPDIR)/$(LWIPFOLDER)/src/include" -I"$(TOPDIR)" -Og -Wall -c -o "obj/makefsdata.o" "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/makefsdata/makefsdata.c"
 	gcc -o bin/makefsdata obj/makefsdata.o
 	bin/makefsdata "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fs" -e -nossi
 	mv fsdata.c "$(TOPDIR)/$(LWIPFOLDER)/src/apps/httpd/fsdata.c"

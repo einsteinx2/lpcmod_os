@@ -466,79 +466,79 @@ void IntHandler15C(void)
 //void IntHandlerException0C(void) {    debugSPIPrintInt("CPU Exc: Divide by Zero\n");    while(1) ; }
 void IntHandlerException0C(void)
 {
-    debugSPIPrint("CPU Exc: Divide by Zero\n");
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Divide by Zero\n");
 }
 void IntHandlerException1C(void)
 {
-    debugSPIPrint("CPU Exc: Single Step\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Single Step\n");    while(1) ;
 }
 
 void IntHandlerException2C(void)
 {
-    debugSPIPrint("CPU Exc: NMI\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: NMI\n");    while(1) ;
 }
 void IntHandlerException3C(void)
 {
-    debugSPIPrint("CPU Exc: Breakpoint\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Breakpoint\n");    while(1) ;
 }
 void IntHandlerException4C(void)
 {
-    debugSPIPrint("CPU Exc: Overflow Trap\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Overflow Trap\n");    while(1) ;
 }
 void IntHandlerException5C(void)
 {
-    debugSPIPrint("CPU Exc: BOUND exceeded\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: BOUND exceeded\n");    while(1) ;
 }
 void IntHandlerException6C(void)
 {
     unsigned int dwEbp = 0;
-    debugSPIPrint("CPU Exc: Invalid Opcode\n");
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Invalid Opcode\n");
     __asm__ __volatile__ ( " mov %%esp, %%eax\n " : "=a" (dwEbp) );
-    debugSPIPrint("   %08lX:%08lX\n", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
+    debugSPIPrint(DEBUG_EXCEPTIONS,"   %08lX:%08lX\n", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
     while(1) ;
 }
 
 //void IntHandlerException7C(void) {    debugSPIPrintInt("CPU Exc: Coprocessor Absent\n");    while(1) ; }
 void IntHandlerException7C(void)
 {
-    debugSPIPrint("CPU Exc: Coprocessor Absent\n");
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Coprocessor Absent\n");
 }
 void IntHandlerException8C(void)
 {
-    debugSPIPrint("CPU Exc: Double Fault\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Double Fault\n");    while(1) ;
 }
-//void IntHandlerException9C(void) {    debugSPIPrint("CPU Exc: Copro Seg Overrun\n");    while(1) ; }
+//void IntHandlerException9C(void) {    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Copro Seg Overrun\n");    while(1) ; }
 void IntHandlerException9C(void)
 {
-    debugSPIPrint("CPU Exc: Copro Seg Overrun\n");
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Copro Seg Overrun\n");
 }
 void IntHandlerExceptionAC(void)
 {
-    debugSPIPrint("CPU Exc: Invalid TSS\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Invalid TSS\n");    while(1) ;
 }
 void IntHandlerExceptionBC(void)
 {
-    debugSPIPrint("CPU Exc: Segment not present\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Segment not present\n");    while(1) ;
 }
 void IntHandlerExceptionCC(void)
 {
-    debugSPIPrint("CPU Exc: Stack Exception\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Stack Exception\n");    while(1) ;
 }
 void IntHandlerExceptionDC(void)
 {
-    debugSPIPrint("CPU Exc: General Protection Fault\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: General Protection Fault\n");    while(1) ;
 }
 void IntHandlerExceptionEC(void)
 {
-    debugSPIPrint("CPU Exc: Page Fault\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Page Fault\n");    while(1) ;
 }
 void IntHandlerExceptionFC(void)
 {
-    debugSPIPrint("CPU Exc: Reserved\n");    while(1) ;
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Reserved\n");    while(1) ;
 }
-//void IntHandlerException10C(void) {    debugSPIPrint("CPU Exc: Copro Error\n");    while(1) ; }
+//void IntHandlerException10C(void) {    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Copro Error\n");    while(1) ; }
 void IntHandlerException10C(void)
 {
-    debugSPIPrint("CPU Exc: Copro Error\n");
+    debugSPIPrint(DEBUG_EXCEPTIONS,"CPU Exc: Copro Error\n");
 }
 

@@ -32,7 +32,7 @@ void ResetDrawChildTextMenu(TEXTMENU* menu)
 {
     TextMenu(menu, menu->firstMenuItem);
     freeTextMenuAllocMem(menu);
-    debugSPIPrint("Returning to previous menu\n");
+    debugSPIPrint(DEBUG_GENERAL_UI, "Returning to previous menu\n");
 }
 
 void DrawLargeHDDTextMenu(unsigned char drive)
@@ -50,14 +50,14 @@ void freeTextMenuAllocMem(TEXTMENU* menu)
 
     if(menu != NULL)
     {
-        debugSPIPrint("freeing menu %s\n", menu->szCaption);
+        debugSPIPrint(DEBUG_GENERAL_UI, "freeing menu %s\n", menu->szCaption);
         while(currentItem != NULL)
         {
             nextItem = currentItem->nextMenuItem;
-            debugSPIPrint("free menu item : %s\n", currentItem->szCaption);
+            debugSPIPrint(DEBUG_GENERAL_UI, "free menu item : %s\n", currentItem->szCaption);
             if(currentItem->functionDataPtr != NULL && currentItem->dataPtrAlloc)
             {
-                debugSPIPrint("free alloc param\n");
+                debugSPIPrint(DEBUG_GENERAL_UI, "free alloc param\n");
                 free(currentItem->functionDataPtr);
             }
             free(currentItem);
