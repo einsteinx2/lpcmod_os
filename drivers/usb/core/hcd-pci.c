@@ -33,7 +33,6 @@
 #include <linux/usb.h>
 #include "hcd.h"
 #else
-#define DEBUG
 #include "../usb_wrapper.h"
 #include "hcd.h"
 #endif

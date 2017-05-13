@@ -20,6 +20,7 @@
 /*------------------------------------------------------------------------*/ 
 #include "cromwell_types.h"
 
+
 typedef unsigned int __u32;
 //typedef __u32 unsigned int;
 typedef unsigned short __u16;
@@ -527,13 +528,13 @@ void my_wait_for_completion(struct completion*);
 //#define DEBUG_MODE
 #include "lib/LPCMod/xblastDebug.h"
 #ifdef DEBUG_MODE
-#define dev_printk(lvl,x,f,arg...) debugSPIPrint(f, ## arg)
-#define dev_dbg(x,f,arg...) debugSPIPrint(f, ## arg)
-#define dev_info(x,f,arg...) debugSPIPrint(f,## arg)
-#define dev_warn(x,f,arg...) debugSPIPrint(f,## arg)
-#define dev_err(x,f,arg...) debugSPIPrint(f,## arg)
-#define pr_debug(x,f,arg...) debugSPIPrint(f,## arg)
-#define usbprintk debugSPIPrint
+#define dev_printk(lvl,x,f,arg...) usbSPIPrint(f, ## arg)
+#define dev_dbg(x,f,arg...) usbSPIPrint(f, ## arg)
+#define dev_info(x,f,arg...) usbSPIPrint(f,## arg)
+#define dev_warn(x,f,arg...) usbSPIPrint(f,## arg)
+#define dev_err(x,f,arg...) usbSPIPrint(f,## arg)
+#define pr_debug(f,arg...) usbSPIPrint(f,## arg)
+#define usbprintk usbSPIPrint
 #endif
 
 #ifndef DEBUG_MODE

@@ -54,21 +54,12 @@ static unsigned outcnt = 0;  /* bytes in output buffer */
 #define get_byte()  (inptr < insize ? inbuf[inptr++] : fill_inbuf())
         
 /* Diagnostic functions */
-#ifdef DEBUG
-#  define Assert(cond,msg) {if(!(cond)) error(msg);}
-#  define Trace(x) fprintf x
-#  define Tracev(x) {if (verbose) fprintf x ;}
-#  define Tracevv(x) {if (verbose>1) fprintf x ;}
-#  define Tracec(c,x) {if (verbose && (c)) fprintf x ;}
-#  define Tracecv(c,x) {if (verbose>1 && (c)) fprintf x ;}
-#else
 #  define Assert(cond,msg)
 #  define Trace(x)
 #  define Tracev(x)
 #  define Tracevv(x)
 #  define Tracec(c,x)
 #  define Tracecv(c,x)
-#endif
 
 static int  fill_inbuf(void);
 static void flush_window(void);

@@ -997,9 +997,6 @@ STATIC int inflate()
 
 
   /* return success */
-#ifdef DEBUG
-  fprintf(stderr, "<%u> ", h);
-#endif /* DEBUG */
   return 0;
 }
 

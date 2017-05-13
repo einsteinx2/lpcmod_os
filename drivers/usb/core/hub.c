@@ -7,7 +7,6 @@
  * (C) Copyright 2001 Brad Hards (bhards@bigpond.net.au)
  *
  */
-#define DEBUG
 #if 0
 #include <linux/config.h>
 #include <linux/kernel.h>
@@ -39,7 +38,6 @@
 #include "hcd.h"
 #include "hub.h"
 #include "string.h"
-#define DEBUG
 #endif
 
 #include "lib/LPCMod/BootLPCMod.h"

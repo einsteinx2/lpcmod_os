@@ -166,11 +166,11 @@ extern void BootResetAction ( void )
 
 #ifdef SPITRACE
     //Required to populate GenPurposeIOs before toggling GPIOs.
+    WriteToIO (XBLAST_CONTROL, FlashBank_OSBank);    // switch to proper bank
     LPCMod_WriteIO(0x4, 0x4); // /CS to '1'
-    switchOSBank(FlashBank_OSBank);
 #endif
 
-    debugSPIPrint(DEBUG_ALWAYS_SHOW,"XBlast OS is starting.\n");
+    debugSPIPrint(DEBUG_ALWAYS_SHOW, "XBlast OS is starting.\n");
 
     A19controlModBoot = BNKFULLTSOP;        //Start assuming no control over A19 line.
 
