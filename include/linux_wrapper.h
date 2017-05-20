@@ -250,7 +250,7 @@ struct usbdevfs_hub_portinfo
 /*------------------------------------------------------------------------*/ 
 
 #define TASK_UNINTERRUPTIBLE 0
-#define HZ 100    /* Don't rely on that... */
+#define HZ 1000    /* Don't rely on that... */
 #define KERN_DEBUG "DBG: "
 #define KERN_ERR "ERR: "
 #define KERN_WARNING "WRN: "

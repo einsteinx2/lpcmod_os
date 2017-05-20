@@ -1,3 +1,7 @@
+v0.55
+Reverted Front panel LED to always turn red on boot.
+Added reset XBlast OS settings on boot with controller button combination(RT, LT, X, Y)
+
 v0.54
 -Fixed quickboot.
 -Front panel led will only turn red at boot if quickboot is enabled and console was powered ON by the power button
