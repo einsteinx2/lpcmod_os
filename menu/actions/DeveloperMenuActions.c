@@ -247,6 +247,7 @@ void SMBusRead(void * ignored)
     unsigned int data[16];
     unsigned char line = 0;
     unsigned int error = ERR_SUCCESS;
+    unsigned char i;
     bool refresh = true;
 
     memset(data, 0xff, 16);
@@ -304,7 +305,7 @@ void SMBusRead(void * ignored)
                 VIDEO_ATTR=0xffffffff;
                 char temp[100];
                 unsigned char wroteCount = 0;
-                for(unsigned char i = 0; i < byteCount; i++)
+                for(i = 0; i < byteCount; i++)
                 {
                     wroteCount += sprintf(temp + wroteCount, "%02X ", data[i]);
                     data[i] = '\0';
@@ -328,7 +329,7 @@ void SMBusRead(void * ignored)
         }
         if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1)
         {
-            for(unsigned char i = 0; i < byteCount; i++)
+            for(i = 0; i < byteCount; i++)
             {
                 error = ReadfromSMBus(address, registerAddr + i, 1, data + i);
                 if(error != ERR_SUCCESS)
@@ -540,6 +541,7 @@ void settingsPrintData(void * ignored){
 
 void printBiosIdentifier(void * ignored)
 {
+    unsigned char i;
     UiHeader("Print BIOS Identifier");
 
     struct BiosIdentifier biosID = getBiosIdentifierFromFlash();
@@ -555,7 +557,7 @@ void printBiosIdentifier(void * ignored)
     printk("\n           Bios Size : %u", biosID.BiosSize);
     printk("\n           Bios Size : %s", biosID.Name);
     printk("\n           MD5 :");
-    for(unsigned char i = 0; i < 16; i++)
+    for(i = 0; i < 16; i++)
     {
         printk(" %02X", biosID.MD5Hash[i]);
     }

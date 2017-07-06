@@ -6,6 +6,7 @@
  */
 
 #include "FlashDriver.h"
+#include "FlashLowLevel.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "md5.h"
 #include "lib/misc/crc32.h"
@@ -724,9 +725,10 @@ struct BiosIdentifier getBiosIdentifierFromFlash(void)
     struct BiosIdentifier out;
     unsigned char* ptr = (unsigned char *)&out;
     memset(ptr, 0xFF, sizeof(struct BiosIdentifier));
+    unsigned int i;
 
     debugSPIPrint(DEBUG_FLASH_DRIVER,"Reading BIOS Identifier from flash.\n");
-    for(unsigned int i = 0; i < sizeof(struct BiosIdentifier); i++)
+    for(i = 0; i < sizeof(struct BiosIdentifier); i++)
     {
         ptr[i] = FlashLowLevel_ReadByte(ImageSize256KB - sizeof(struct BiosIdentifier) + i);
     }

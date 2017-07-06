@@ -8,7 +8,7 @@
 #ifndef FLASHDRIVER_H_
 #define FLASHDRIVER_H_
 
-#include "FlashLowLevel.h"
+#include "FlashHelpers.h"
 #include "BiosIdentifier.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "lpcmod_v1.h"

@@ -2676,8 +2676,9 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
     unsigned char keyLength = 0;
     char boundaryKey[71];
     bool beginKey = false;
+    u16_t i;
 
-    for(u16_t i = 0; i < http_request_len; i++)
+    for(i = 0; i < http_request_len; i++)
     {
         if(beginKey == false)
         {
@@ -2764,6 +2765,7 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
     unsigned int biosNameSize = 0, biosDataStart = 0, biosDataEnd = 0;
     char biosName[21];
     bool boundaryDetected;
+    unsigned int i;
 
     const char *biosNameMarker = "name=\"biosname\"";
     const char *biosDataMarker = "name=\"biosbin\"";
@@ -2784,7 +2786,7 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
 
     if (hs->post_data_start != NULL)
     {
-        for(unsigned int i = 0; i < (hs->post_data_len - strlen(hs->boundaryKey)); i++)
+        for(i = 0; i < (hs->post_data_len - strlen(hs->boundaryKey)); i++)
         {
             boundaryDetected = false;
             if(strncmp(hs->post_data_start + i, hs->boundaryKey, strlen(hs->boundaryKey)) == false)

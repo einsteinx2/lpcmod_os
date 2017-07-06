@@ -28,6 +28,7 @@ SECTIONS {
 		*(.rodata);
 		*(.rodata.str1.1);
 		*(.rodata.str1.4);
+		*(.rodata.str1.32);
 		*(.rodata.cst4);
 		*(.rodata.cst8);
 		_start_backdrop = .;

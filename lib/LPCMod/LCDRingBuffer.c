@@ -115,6 +115,7 @@ void updateLCDRingBuffer(void)
 static void putInBuf(DataOperation_t* input)
 {
     unsigned char* data = (unsigned char*)input;
+    unsigned char i;
 
     const unsigned short projectedEnd = inPos + sizeof(DataOperation_t);
 
@@ -126,7 +127,7 @@ static void putInBuf(DataOperation_t* input)
         return;
     }
 
-    for(unsigned char i = 0; i < sizeof(DataOperation_t); i++)
+    for(i = 0; i < sizeof(DataOperation_t); i++)
     {
         ringBuf[inPos] = data[i];
         inPos++;
@@ -141,8 +142,9 @@ static void putInBuf(DataOperation_t* input)
 static void getFromBuf(DataOperation_t* output)
 {
     unsigned char* ptr = (unsigned char*)output;
+    unsigned char i;
 
-    for(unsigned char i = 0; i < sizeof(DataOperation_t); i++)
+    for(i = 0; i < sizeof(DataOperation_t); i++)
     {
         ptr[i] = ringBuf[outPos];
         outPos++;

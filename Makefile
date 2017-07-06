@@ -1,6 +1,5 @@
-#CC	= gcc-3.30 #Left for legacy purpose
 PREFIX = #i686-linux-gnu-
-CC	= ${PREFIX}gcc  #Builds find using gcc 5.4.0 on a x86 Ubuntu system 
+CC	= ${PREFIX}gcc
 
 # prepare check for gcc 3.3, $(GCC_3.3) will either be 0 or 1
 GCC_3.3 := $(shell expr `$(CC) -dumpversion` \>= 3.3)

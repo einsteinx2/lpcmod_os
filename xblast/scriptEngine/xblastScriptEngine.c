@@ -527,7 +527,8 @@ void runScript(unsigned char * file, unsigned int fileSize, int paramCount, int 
 
                             if(argumentList[3].exist == false)
                             {
-                                for(unsigned char cycleButtons = TRIGGER_XPAD_KEY_A + 1; cycleButtons <= TRIGGER_XPAD_KEY_WHITE + 1; cycleButtons++)
+                                unsigned char cycleButtons;
+                                for(cycleButtons = TRIGGER_XPAD_KEY_A + 1; cycleButtons <= TRIGGER_XPAD_KEY_WHITE + 1; cycleButtons++)
                                 {
                                     arithAccumulator = XPADRead(cycleButtons);
                                     if(arithAccumulator != 0)

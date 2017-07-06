@@ -270,11 +270,6 @@ static inline void _29xxxWriteBytes(unsigned char byte, unsigned int addr)
     flashDevice.m_pbMemoryMappedStartAddress[addr]=byte;
 }
 
-inline unsigned char FlashLowLevel_ReadByte(unsigned int addr)
-{
-    return flashDevice.m_pbMemoryMappedStartAddress[addr];
-}
-
 void FlashLowLevel_InititiateSectorErase(unsigned int addr) // 4KB
 {
     if(is28xxxProtocol)
