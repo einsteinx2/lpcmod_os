@@ -7,13 +7,11 @@ This code is based on the excellent Gentoox Loader software which is based on Cr
 
 ### Required setup to build ###
 
-For now, I was only able to build a working binary under Linux.
-Here's my working setup:
-
-* Lubuntu x86 14.04
-* Make 3.81
-* gcc-3.3 "3.3.6 (Ubuntu 1:3.3.6-15ubuntu6)" TARGET=i486-linux-gnu
-* ld 2.24
+x86 or x86_64 Linux system with gcc installed
+ia32 compatiblity layer packages must also be installed on x86_64 systems
+Currently building successfully with gcc-4, gcc-5 and gcc-6.
+A Virtual Machine image is available for download. It is ready to go for building Cromwell-Based software.
+Link for dowwnload: [Google Drive](https://drive.google.com/open?id=0ByW8G3SxcyoNfnphaElDb3VoNFE1NWx1WnYzNHYyN2ZIVHM0QU55N0RnNzBlU2dNYXp6N00)
 
 
 ### Important information ###
