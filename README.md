@@ -8,9 +8,13 @@ This code is based on the excellent Gentoox Loader software which is based on Cr
 ### Required setup to build ###
 
 x86 or x86_64 Linux system with gcc installed
+
 ia32 compatiblity layer packages must also be installed on x86_64 systems
+
 Currently building successfully with gcc-4, gcc-5 and gcc-6.
+
 A Virtual Machine image is available for download. It is ready to go for building Cromwell-Based software.
+
 Link for dowwnload: [Google Drive](https://drive.google.com/open?id=0ByW8G3SxcyoNfnphaElDb3VoNFE1NWx1WnYzNHYyN2ZIVHM0QU55N0RnNzBlU2dNYXp6N00)
 
 
