@@ -17,13 +17,6 @@ A Virtual Machine image is available for download. It is ready to go for buildin
 
 Link for dowwnload: [Google Drive](https://drive.google.com/open?id=0ByW8G3SxcyoNfnphaElDb3VoNFE1NWx1WnYzNHYyN2ZIVHM0QU55N0RnNzBlU2dNYXp6N00)
 
-
-### Important information ###
-
-This program is in it's infancy stage. Expect lots of updates.
-
-There is no code size protection inside the 256KB range. When building the image, it is important that the imagebld tool report at least 4KB of unused space. Settings for the OS are dynamically written in the last 4 KB of flash of this image. I will think of something to protect this space.
-
 ### Who do I talk to? ###
 
 * bennydiamond on AssemblerGames forums
