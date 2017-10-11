@@ -1,6 +1,9 @@
 # README #
 
 This is the code repository for the XBlast's Xbox Legal "OS".
+
+It is a replacement firmware or "BIOS" to run on the Original Xbox video game console. It also serves as software control interface for the "Xblast" line of modding devices for Xbox.
+
 This code is based on the excellent Gentoox Loader software which is based on Cromwell.
 #### This software contains no copyrighted code ####
 #### This software cannot circumvent security mechanism of an Xbox console ####
