@@ -12,7 +12,7 @@ DEBUG ?= 0 #run make with "DEBUG=1" argument to enable extra debug
 TSOPCTRL ?= 0 #Override TSOP control availability based on Xbox Revision
 VGA ?= 0 #Generates VGA enabled by default image. Does not override existing setting in flash.
 ETHERBOOT := yes
-LWIPFOLDER := lwip-2.0.1
+LWIPFOLDER := lwip-2.0.3
 
 INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/cdrom \
 	-I$(TOPDIR)/fs/fatx -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/eeprom -I$(TOPDIR)/lib/crypt \
