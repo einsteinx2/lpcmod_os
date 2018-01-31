@@ -1,0 +1,83 @@
+###################
+LwIP sources:
+[Global]
+Added Makefile in sub folders
+
+[ip_frag.c/ip4_frag.c]
+custom initializer for "static struct ip_reassdata *reassdatagrams"
+custom initializer for "static u16_t ip_reass_pbufcount"
+
+[dhcp.c]
+Added '\n' char in "LWIP_ERROR("netif != NULL", (netif != NULL), return;);"
+
+[netif.c]
+custom initializer for "static u8_t netif_num"
+Added '\n' char in "LWIP_ASSERT("No init function given", init != NULL);"
+
+[raw.c]
+replaced "#include <string.h>" with "#include "string.h""
+custom initializer for "static struct raw_pcb *raw_pcbs"
+
+[tcp.c]
+replaced "#include <string.h>" with "#include "string.h""
+
+[timers.c/timeouts.c]
+custom initializer for "static struct sys_timeo *next_timeout"
+custom initializer for "static int tcpip_tcp_timer_active"
+custom initializer for "static u32_t timeouts_last_time"
+
+[debug.h]
+added "#include "lib/LPCMod/BootLPCMod.h"" under "#include "lwip/opt.h"" line
+added "#define LWIP_DEBUG 1" under "#include "lib/LPCMod/BootLPCMod.h"" line
+
+[opt.h]
+NO_SYS 0 -> 1
+MEM_ALIGNMENT 1 -> 2
+MEM_SIZE 1600 -> 10000
+MEMP_NUM_PBUF 16 -> 128
+MEMP_NUM_TCP_SEG 16 -> 64
+MEMP_NUM_NETBUF 2 -> 0
+MEMP_NUM_NETCONN 4 -> 0
+PBUF_POOL_SIZE 16 -> 128
+ARP_TABLE_SIZE 10 -> 64
+ETHARP_TRUST_IP_MAC 0 -> 1 (***deprecated in 2.0.0)
+ETHARP_SUPPORT_VLAN 0 -> 1
+LWIP_ETHERNET (LWIP_ARP || PPPOE_SUPPORT) -> (LWIP_ARP) (***properly set in 2.0.0)
+LWIP_DHCP 0 -> 1
+LWIP_NETCONN 1 -> 0
+LWIP_SOCKET 1 -> 0
+LWIP_POSIX_SOCKETS_IO_NAMES 1 -> 0
+SO_REUSE 0 -> 1
+LWIP_STATS 1 -> 0
+
+(*** new in 2.0.0)
+LWIP_RAW 0 -> 1
+
+
+[pbuf.h]
+Changed "void pbuf_free_ooseq();" to "void pbuf_free_ooseq(void);"
+
+[etharp.c]
+Added '\n' char in "LWIP_ERROR("netif != NULL", (netif != NULL), return;);"
+
+
+###################
+Webserver sources:
+Html files changed for LPCMod OS ones in "fs" folder
+
+[mnakefsdata.c]
+commented "#include <dir.h>" line
+commented "#include <dos.h>" line
+
+[fsdata.c]
+This file is generated using html files from "fs" folder so it's bound to be different
+
+[httpd.h]
+LWIP_HTTPD_SUPPORT_POST 0 -> 1
+
+[httpd.c]
+Added "#include "WebServerOps.h"" line under "#include <stdio.h>"
+added "extern bool netFlashOver;" under "#include "WebServerOps.h"".
+
+[httpd.c]
+Too many to list. Diff with original copy to list all changes.
