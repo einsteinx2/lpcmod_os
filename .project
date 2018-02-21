@@ -23,41 +23,4 @@
 		<nature>org.eclipse.cdt.managedbuilder.core.managedBuildNature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>pc_tools/fatfs_test/src/diskio.c</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/diskio.c</location>
-		</link>
-		<link>
-			<name>pc_tools/fatfs_test/src/diskio.h</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/diskio.h</location>
-		</link>
-		<link>
-			<name>pc_tools/fatfs_test/src/fatx.h</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/fatx.h</location>
-		</link>
-		<link>
-			<name>pc_tools/fatfs_test/src/ff.c</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.c</location>
-		</link>
-		<link>
-			<name>pc_tools/fatfs_test/src/ff.h</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.h</location>
-		</link>
-		<link>
-			<name>pc_tools/fatfs_test/src/ffconf.h</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ffconf.h</location>
-		</link>
-		<link>
-			<name>pc_tools/fatfs_test/src/integer.h</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/integer.h</location>
-		</link>
-	</linkedResources>
 </projectDescription>

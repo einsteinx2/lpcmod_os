@@ -7,8 +7,7 @@
 //============================================================================
 
 #include <iostream>
-#include "../../fs/ff12b/src/diskio.h"
-#include "../../fs/ff12b/src/ff.h"
+
 using namespace std;
 
 int main() {

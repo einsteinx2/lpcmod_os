@@ -30,5 +30,40 @@
 			<type>2</type>
 			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src</location>
 		</link>
+		<link>
+			<name>src/diskio.c</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/diskio.c</location>
+		</link>
+		<link>
+			<name>src/diskio.h</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/diskio.h</location>
+		</link>
+		<link>
+			<name>src/fatx.h</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/fatx.h</location>
+		</link>
+		<link>
+			<name>src/ff.c</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.c</location>
+		</link>
+		<link>
+			<name>src/ff.h</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.h</location>
+		</link>
+		<link>
+			<name>src/ffconf.h</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ffconf.h</location>
+		</link>
+		<link>
+			<name>src/integer.h</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/integer.h</location>
+		</link>
 	</linkedResources>
 </projectDescription>
