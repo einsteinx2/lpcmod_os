@@ -38,6 +38,8 @@ PARTITION VolToPart[] =
  {0, 2}
 };
 
+const char* DefaultImageFilename = "XboxImage.bin";
+
 using namespace std;
 
 unsigned int get_fattime (void)
@@ -298,6 +300,12 @@ void put_uni (
     fputs(buf, stdout);
 }
 
+int assign_drives(const char* diskImageName)
+{
+
+    return 0;
+}
+
 
 int main(int argc, TCHAR *argv[]) {
     TCHAR *ptr, *ptr2, pool[50];
@@ -308,13 +316,26 @@ int main(int argc, TCHAR *argv[]) {
     WORD w;
     DWORD dw, ofs = 0, sect = 0, drv = 0;
     const TCHAR *ft[] = {_T("N/A"), _T("FAT12"), _T("FAT16"), _T("FAT32"), _T("exFAT")};
-    HANDLE h;
+    FILE* h;
     FRESULT fr;
     DRESULT dr;
     FATFS *fs;              /* Pointer to file system object */
     DIR dir;                /* Directory object */
     FIL file[2];            /* File objects */
+    const char* filename = DefaultImageFilename;
 
+    if(argc > 2)
+    {
+        printf("Too many arguments\n");
+    }
+    else if(argc ==  2)
+    {
+        if(argv[1])
+        {
+            filename = argv[1];
+        }
+    }
+    printf("Opening \"%s\" disk image\n", filename);
 
     printf(_T("FatFs module test monitor (%s, CP:%u/%s)\n\n"),
                 _USE_LFN ? _T("LFN") : _T("SFN"),
@@ -326,7 +347,11 @@ int main(int argc, TCHAR *argv[]) {
                 _CODE_PAGE,
                 _LFN_UNICODE ? _T("Unicode") : _T("ANSI"));
 
-    assign_drives();    /* Find physical drives on the PC */
+    if(assign_drives(filename))    /* Find physical drives on the PC */
+    {
+        printf("Disk image not found, exiting.\n");
+        return EXIT_FAILURE;
+    }
 
 #if _MULTI_PARTITION
     printf(_T("\nMultiple partition is enabled. Each logical drive is tied to the patition as follows:\n"));
@@ -370,7 +395,7 @@ int main(int argc, TCHAR *argv[]) {
                     }
                     dr = disk_read((BYTE)p1, Buff, p2, 1);
                     if (dr) { printf(_T("rc=%d\n"), (WORD)dr); break; }
-                    printf(_T("Drive:%u Sector:%lu\n"), p1, p2);
+                    printf(_T("Drive:%lu Sector:%lu\n"), p1, p2);
                     if (disk_ioctl((BYTE)p1, GET_SECTOR_SIZE, &w) != RES_OK) break;
                     sect = p2 + 1; drv = p1;
                     for (buf = Buff, ofs = 0; ofs < w; buf += 16, ofs += 16)
@@ -384,7 +409,7 @@ int main(int argc, TCHAR *argv[]) {
                     if (disk_ioctl((BYTE)p1, GET_SECTOR_SIZE, &w) == RES_OK)
                         printf(_T("Sector size = %u\n"), w);
                     if (disk_ioctl((BYTE)p1, GET_SECTOR_COUNT, &dw) == RES_OK)
-                        printf(_T("Number of sectors = %u\n"), dw);
+                        printf(_T("Number of sectors = %lu\n"), dw);
                     break;
 
                 case 'l' :  /* dl <image file> - Load image of a FAT volume into RAM disk */
@@ -442,12 +467,13 @@ int main(int argc, TCHAR *argv[]) {
 
                 case 's' :  /* bs - Save Buff[] */
                     while (*ptr == ' ') ptr++;
-                    h = CreateFile(_T("Buff.bin"), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, 0, 0);
-                    if (h != INVALID_HANDLE_VALUE) {
-                        WriteFile(h, Buff, sizeof Buff, &dw, 0);
-                        CloseHandle(h);
+                    h = fopen ("Buff.bin","w");
+                    if (h) {
+                        fputs((const char *)Buff, h);
+                        fclose(h);
                         printf(_T("Ok.\n"));
                     }
+
                     break;
 
                 }
@@ -459,7 +485,7 @@ int main(int argc, TCHAR *argv[]) {
                 case 'i' :  /* fi <ld#> [<mount>] - Force initialized the logical drive */
                     if (!xatoi(&ptr, &p1) || (UINT)p1 > 9) break;
                     if (!xatoi(&ptr, &p2)) p2 = 0;
-                    sprintf(ptr, _T("%d:"), p1);
+                    sprintf(ptr, _T("%lu:"), p1);
                     put_rc(f_mount(&FatFs[p1], ptr, (BYTE)p2));
                     break;
 
@@ -510,7 +536,7 @@ int main(int argc, TCHAR *argv[]) {
     #endif
                     p2 /= 2;
                     p3 /= 2;
-                    printf(_T("\r%u files, %I64u bytes.\n%u folders.\n%lu KiB total disk space.\n"),
+                    printf(_T("\r%u files, %llu bytes.\n%u folders.\n%lu KiB total disk space.\n"),
                             AccFiles, AccSize, AccDirs, p2);
     #if !_FS_READONLY
                     printf(_T("%lu KiB available.\n"), p3);
@@ -530,7 +556,7 @@ int main(int argc, TCHAR *argv[]) {
                         } else {
                             s1++; AccSize += Finfo.fsize;
                         }
-                        printf(_T("%c%c%c%c%c %u/%02u/%02u %02u:%02u %10I64u  "),
+                        printf(_T("%c%c%c%c%c %u/%02u/%02u %02u:%02u %10llu  "),
                                 (Finfo.fattrib & AM_DIR) ? 'D' : '-',
                                 (Finfo.fattrib & AM_RDO) ? 'R' : '-',
                                 (Finfo.fattrib & AM_HID) ? 'H' : '-',
@@ -545,10 +571,10 @@ int main(int argc, TCHAR *argv[]) {
                         printf(_T("\n"));
                     }
                     f_closedir(&dir);
-                    printf(_T("%4u File(s),%11I64u bytes total\n%4u Dir(s)"), s1, AccSize, s2);
+                    printf(_T("%4u File(s),%11llu bytes total\n%4u Dir(s)"), s1, AccSize, s2);
     #if !_FS_READONLY
                     if (f_getfree(ptr, (DWORD*)&p1, &fs) == FR_OK)
-                        printf(_T(",%12I64u bytes free"), (QWORD)p1 * fs->csize * 512);
+                        printf(_T(",%12llu bytes free"), (QWORD)p1 * fs->csize * 512);
     #endif
                     printf(_T("\n"));
                     break;
@@ -619,7 +645,7 @@ int main(int argc, TCHAR *argv[]) {
                     fr = f_lseek(file, (FSIZE_t)px);
                     put_rc(fr);
                     if (fr == FR_OK)
-                        printf(_T("fptr = %I64u(0x%I64X)\n"), (QWORD)file[0].fptr, (QWORD)file[0].fptr);
+                        printf(_T("fptr = %llu(0x%llX)\n"), (QWORD)file[0].fptr, (QWORD)file[0].fptr);
                     break;
     #if _USE_FASTSEEK
                 case 'E' :  /* fE - Enable fast seek and initialize cluster link map table */
@@ -628,12 +654,12 @@ int main(int argc, TCHAR *argv[]) {
                     fr = f_lseek(file, CREATE_LINKMAP); /* Create link map table */
                     put_rc(fr);
                     if (fr == FR_OK) {
-                        printf((SeekTbl[0] > 4) ? _T("fragmented in %d.\n") : _T("contiguous.\n"), SeekTbl[0] / 2 - 1);
-                        printf(_T("%u items used.\n"), SeekTbl[0]);
+                        printf((SeekTbl[0] > 4) ? _T("fragmented in %lu.\n") : _T("contiguous.\n"), SeekTbl[0] / 2 - 1);
+                        printf(_T("%lu items used.\n"), SeekTbl[0]);
 
                     }
                     if (fr == FR_NOT_ENOUGH_CORE) {
-                        printf(_T("%u items required to create the link map table.\n"), SeekTbl[0]);
+                        printf(_T("%lu items required to create the link map table.\n"), SeekTbl[0]);
                     }
                     break;
     #endif  /* _USE_FASTSEEK */
@@ -654,7 +680,7 @@ int main(int argc, TCHAR *argv[]) {
                     if (fr) {
                         put_rc(fr);
                     } else {
-                        WriteConsole(hCon, Line, _tcslen(Line), &p1, NULL);
+                        printf("%s", Line);
                         printf(_T("\n"));
                     }
                     break;
@@ -792,7 +818,7 @@ int main(int argc, TCHAR *argv[]) {
                         xatoi(&ptr, &pts[1]);
                         xatoi(&ptr, &pts[2]);
                         xatoi(&ptr, &pts[3]);
-                        printf(_T("The physical drive %u will be re-partitioned. Are you sure? (Y/n)="), p1);
+                        printf(_T("The physical drive %lu will be re-partitioned. Are you sure? (Y/n)="), p1);
                         fgets(ptr, 256, stdin);
                         if (*ptr != 'Y') break;
                         put_rc(f_fdisk(p1, pts, Buff));

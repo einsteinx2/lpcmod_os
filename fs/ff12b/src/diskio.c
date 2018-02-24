@@ -32,7 +32,7 @@ DSTATUS disk_status (
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
-DSTATUS disk_initialize (
+DRESULT disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
