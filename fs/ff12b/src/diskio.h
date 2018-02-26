@@ -24,6 +24,7 @@ typedef enum {
 	RES_PARERR		/* 4: Invalid Parameter */
 } DRESULT;
 
+int assign_drives(const char* diskImageName);
 
 /*---------------------------------------*/
 /* Prototypes for disk control functions */
@@ -72,6 +73,10 @@ DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
 #define ATA_GET_REV			20	/* Get F/W revision */
 #define ATA_GET_MODEL		21	/* Get model name */
 #define ATA_GET_SN			22	/* Get serial number */
+
+
+#define SECTOR_SIZE 512
+#define SZ_BLOCK 256
 
 #ifdef __cplusplus
 }

@@ -103,7 +103,7 @@ typedef struct {
     BYTE    fsi_flag;       /* FSINFO flags (b7:disabled, b0:dirty) */
     WORD    id;             /* File system mount ID */
     WORD    n_rootdir;      /* Number of root directory entries (FAT12/16) */
-    WORD    csize;          /* Cluster size [sectors] */
+    WORD    csize;          /* Cluster size [sectors] */ //XXX: Sectors per cluster
 #if _MAX_SS != _MIN_SS
     WORD    ssize;          /* Sector size (512, 1024, 2048 or 4096) */
 #endif
@@ -139,7 +139,7 @@ typedef struct {
 #ifdef _USE_FATX
     BYTE    isFATX;         /* Drive is Xbox formatted */
     BYTE    fatxPartTableRead;  /* Partition table is populated */
-    XboxPartitionTable fatxPartTable;
+    XboxPartitionTableEntry fatxPartitionEntry;
 #endif
 } FATFS;
 
@@ -238,25 +238,26 @@ typedef struct {
 
 typedef enum {
     FR_OK = 0,              /* (0) Succeeded */
-    FR_DISK_ERR,            /* (1) A hard error occurred in the low level disk I/O layer */
-    FR_INT_ERR,             /* (2) Assertion failed */
-    FR_NOT_READY,           /* (3) The physical drive cannot work */
-    FR_NO_FILE,             /* (4) Could not find the file */
-    FR_NO_PATH,             /* (5) Could not find the path */
-    FR_INVALID_NAME,        /* (6) The path name format is invalid */
-    FR_DENIED,              /* (7) Access denied due to prohibited access or directory full */
-    FR_EXIST,               /* (8) Access denied due to prohibited access */
-    FR_INVALID_OBJECT,      /* (9) The file/directory object is invalid */
-    FR_WRITE_PROTECTED,     /* (10) The physical drive is write protected */
-    FR_INVALID_DRIVE,       /* (11) The logical drive number is invalid */
-    FR_NOT_ENABLED,         /* (12) The volume has no work area */
-    FR_NO_FILESYSTEM,       /* (13) There is no valid FAT volume */
-    FR_MKFS_ABORTED,        /* (14) The f_mkfs() aborted due to any problem */
-    FR_TIMEOUT,             /* (15) Could not get a grant to access the volume within defined period */
-    FR_LOCKED,              /* (16) The operation is rejected according to the file sharing policy */
-    FR_NOT_ENOUGH_CORE,     /* (17) LFN working buffer could not be allocated */
-    FR_TOO_MANY_OPEN_FILES, /* (18) Number of open files > _FS_LOCK */
-    FR_INVALID_PARAMETER    /* (19) Given parameter is invalid */
+    FR_FATX_OK,             /* (1) FATX Suceeded */
+    FR_DISK_ERR,            /* (2) A hard error occurred in the low level disk I/O layer */
+    FR_INT_ERR,             /* (3) Assertion failed */
+    FR_NOT_READY,           /* (4) The physical drive cannot work */
+    FR_NO_FILE,             /* (5) Could not find the file */
+    FR_NO_PATH,             /* (6) Could not find the path */
+    FR_INVALID_NAME,        /* (7) The path name format is invalid */
+    FR_DENIED,              /* (8) Access denied due to prohibited access or directory full */
+    FR_EXIST,               /* (9) Access denied due to prohibited access */
+    FR_INVALID_OBJECT,      /* (10) The file/directory object is invalid */
+    FR_WRITE_PROTECTED,     /* (11) The physical drive is write protected */
+    FR_INVALID_DRIVE,       /* (12) The logical drive number is invalid */
+    FR_NOT_ENABLED,         /* (13) The volume has no work area */
+    FR_NO_FILESYSTEM,       /* (14) There is no valid FAT volume */
+    FR_MKFS_ABORTED,        /* (15) The f_mkfs() aborted due to any problem */
+    FR_TIMEOUT,             /* (16) Could not get a grant to access the volume within defined period */
+    FR_LOCKED,              /* (17) The operation is rejected according to the file sharing policy */
+    FR_NOT_ENOUGH_CORE,     /* (18) LFN working buffer could not be allocated */
+    FR_TOO_MANY_OPEN_FILES, /* (19) Number of open files > _FS_LOCK */
+    FR_INVALID_PARAMETER    /* (20) Given parameter is invalid */
 } FRESULT;
 
 

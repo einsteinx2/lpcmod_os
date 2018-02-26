@@ -6,14 +6,39 @@
 /* This is an example of glue functions to attach various exsisting      */
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
+#define _FILE_OFFSET_BITS 64
+#define __USE_LARGEFILE
 
 #include "diskio.h"		/* FatFs lower layer API */
+#include <stdio.h>
+#include <errno.h>
 
-/* Definitions of physical drive number for each drive */
-#define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
-#define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
-#define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
+typedef struct {
+    DSTATUS status;
+    WORD sz_sector;
+    QWORD n_sectors;
+    HANDLE h_drive;
+} STAT;
+
+static volatile STAT diskImage;
+
+int assign_drives(const char* diskImageName)
+{
+    errno = 0;
+    diskImage.h_drive = fopen(diskImageName, "rwb");
+    if(diskImage.h_drive)
+    {
+        disk_status(0);
+        return 0;
+    }
+    else
+    {
+        printf("Err = %d\n", errno);
+    }
+
+    return 1;
+}
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -23,6 +48,11 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
+    diskImage.status = 0;
+    diskImage.sz_sector = SECTOR_SIZE;
+    fseeko(diskImage.h_drive, 0L, SEEK_END);
+    QWORD size = ftello(diskImage.h_drive);
+    diskImage.n_sectors = size / (unsigned int)SECTOR_SIZE;
 	return RES_OK;
 }
 
@@ -36,10 +66,8 @@ DRESULT disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
-
-	return STA_NOINIT;
+    disk_status(pdrv);
+	return RES_OK;
 }
 
 
@@ -55,9 +83,15 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	DRESULT res;
-	int result;
 
+    if(0 == fseeko(diskImage.h_drive, sector * SECTOR_SIZE, SEEK_SET))
+    {
+        if(count == fread(buff, SECTOR_SIZE, count, diskImage.h_drive))
+        {
+            return RES_OK;
+        }
+        return RES_ERROR;
+    }
 
 
 	return RES_PARERR;
@@ -76,8 +110,7 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
-	int result;
+
 
 
 
@@ -96,11 +129,30 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res;
-	int result;
+    DRESULT res = RES_PARERR;
+    switch (cmd) {
+    case CTRL_SYNC:         /* Nothing to do */
+        res = RES_OK;
+        break;
 
+    case GET_SECTOR_COUNT:  /* Get number of sectors on the drive */
+        *(DWORD*)buff = diskImage.n_sectors;
+        res = RES_OK;
+        break;
 
+    case GET_SECTOR_SIZE:   /* Get size of sector for generic read/write */
+        *(WORD*)buff = diskImage.sz_sector;
+        res = RES_OK;
+        break;
 
-	return RES_PARERR;
+    case GET_BLOCK_SIZE:    /* Get internal block size in unit of sector */
+        *(DWORD*)buff = SZ_BLOCK;
+        res = RES_OK;
+        break;
+
+    }
+
+    return res;
+
 }
 

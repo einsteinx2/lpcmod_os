@@ -300,12 +300,6 @@ void put_uni (
     fputs(buf, stdout);
 }
 
-int assign_drives(const char* diskImageName)
-{
-
-    return 0;
-}
-
 
 int main(int argc, TCHAR *argv[]) {
     TCHAR *ptr, *ptr2, pool[50];
@@ -315,7 +309,7 @@ int main(int argc, TCHAR *argv[]) {
     UINT s1, s2, cnt;
     WORD w;
     DWORD dw, ofs = 0, sect = 0, drv = 0;
-    const TCHAR *ft[] = {_T("N/A"), _T("FAT12"), _T("FAT16"), _T("FAT32"), _T("exFAT")};
+    const TCHAR *ft[] = {_T("N/A"), _T("FAT12"), _T("FAT16"), _T("FAT32"), _T("exFAT"), _T("FATX16"), _T("FATX32")};
     FILE* h;
     FRESULT fr;
     DRESULT dr;

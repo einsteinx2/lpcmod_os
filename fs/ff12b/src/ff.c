@@ -626,7 +626,7 @@ static const XboxPartitionTable BackupPartTbl =
     { '*', '*', '*', '*', 'P', 'A', 'R', 'T', 'I', 'N', 'F', 'O', '*', '*', '*', '*' },
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
     {
-        { { 'X', 'B', 'O', 'X', ' ', 'S', 'H', 'E', 'L', 'L', ' ', ' ', ' ', ' ', ' ', ' '}, FATX_PE_PARTFLAGS_IN_USE, XBOX_STORE_STARTLBA, SYSTEM_LBASIZE, 0 },
+        { { 'X', 'B', 'O', 'X', ' ', 'S', 'H', 'E', 'L', 'L', ' ', ' ', ' ', ' ', ' ', ' '}, FATX_PE_PARTFLAGS_IN_USE, XBOX_STORE_STARTLBA, STORE_LBASIZE, 0 },
         { { 'X', 'B', 'O', 'X', ' ', 'D', 'A', 'T', 'A', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, FATX_PE_PARTFLAGS_IN_USE, XBOX_SYSTEM_STARTLBA, SYSTEM_LBASIZE, 0 },
         { { 'X', 'B', 'O', 'X', ' ', 'G', 'A', 'M', 'E', ' ', 'S', 'W', 'A', 'P', ' ', '1'}, FATX_PE_PARTFLAGS_IN_USE, XBOX_CACHE1_STARTLBA, CACHE1_LBASIZE, 0 },
         { { 'X', 'B', 'O', 'X', ' ', 'G', 'A', 'M', 'E', ' ', 'S', 'W', 'A', 'P', ' ', '2'}, FATX_PE_PARTFLAGS_IN_USE, XBOX_CACHE1_STARTLBA, CACHE2_LBASIZE, 0 },
@@ -642,6 +642,14 @@ static const XboxPartitionTable BackupPartTbl =
         { { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}, 0, 0, 0, 0 },
     }
 };
+
+//XXX: Leave slave HDD support for now.
+static XboxPartitionTable masterHDDFatxPartTable;
+static BYTE masterHDDFatxPartTableRead = 0;
+#if 0
+static XboxPartitionTable slaveHDDFatxPartTable;
+static BYTE slaveHDDFatxPartTableRead = 0;
+#endif
 #endif
 
 
@@ -3058,7 +3066,7 @@ BYTE check_fs ( /* 0:FAT, 1:exFAT, 2:Valid BS but not FAT, 3:Not a BS, 4:Disk er
 #ifdef _USE_FATX
     if(fs->isFATX == 0)
     {
-        if (move_window(fs, 3) != FR_OK) return 4;   /* Load FATX BRFR sector*/
+        if (move_window(fs, 3) != FR_OK) return FR_NO_FILE;   /* Load FATX BRFR sector*/
         if((fs->win[0]=='B') && (fs->win[1]=='R') && (fs->win[2]=='F') && (fs->win[3]=='R')){
             fs->isFATX = 1;
         }
@@ -3067,40 +3075,40 @@ BYTE check_fs ( /* 0:FAT, 1:exFAT, 2:Valid BS but not FAT, 3:Not a BS, 4:Disk er
 
     if(fs->isFATX)
     {
-        if(fs->fatxPartTableRead == 0)
+        if(masterHDDFatxPartTableRead == 0)
         {
-            if (move_window(fs, 0) != FR_OK) return 4;   /* Load boot record */
+            if (move_window(fs, 0) != FR_OK) return FR_NO_FILE;   /* Load boot record */
             XboxPartitionTable part;
             mem_cpy(&part, fs->win, sizeof(XboxPartitionTable));
             if(mem_cmp(&part,  &BackupPartTbl, 16) == 0) /* Check partition table header string */
             {
-                mem_cpy(&fs->fatxPartTable, &part, sizeof(XboxPartitionTable));
+                mem_cpy(&masterHDDFatxPartTable, &part, sizeof(XboxPartitionTable));
             }
             else
             {
-                mem_cpy(&fs->fatxPartTable, &BackupPartTbl, sizeof(XboxPartitionTable));
+                mem_cpy(&masterHDDFatxPartTable, &BackupPartTbl, sizeof(XboxPartitionTable));
             }
-
+            masterHDDFatxPartTableRead = 1;
         }
-        if(sect == 0) return 0xFF; /* If check was made on MBR sector */
+        if(sect == 0) return FR_FATX_OK; /* If check was made on MBR sector */
 
-        if (move_window(fs, sect) != FR_OK) return 4;   /* Load boot record */
-        if(ld_dword(fs->win) == FATX_PARTITION_MAGIC) return 0xFF;  /* Check "FATX" string */
+        if (move_window(fs, sect) != FR_OK) return FR_NO_FILE;   /* Load boot record */
+        if(ld_dword(fs->win) == FATX_PARTITION_MAGIC) return FR_FATX_OK;  /* Check "FATX" string */
 
-        return 3;
+        return FR_NOT_READY;
     }
 
-    if (move_window(fs, sect) != FR_OK) return 4;   /* Load boot record */
-    if (ld_word(fs->win + BS_55AA) != 0xAA55) return 3; /* Check boot record signature (always placed at offset 510 even if the sector size is >512) */
+    if (move_window(fs, sect) != FR_OK) return FR_NO_FILE;   /* Load boot record */
+    if (ld_word(fs->win + BS_55AA) != 0xAA55) return FR_NOT_READY; /* Check boot record signature (always placed at offset 510 even if the sector size is >512) */
 
     if (fs->win[BS_JmpBoot] == 0xE9 || (fs->win[BS_JmpBoot] == 0xEB && fs->win[BS_JmpBoot + 2] == 0x90)) {
-        if ((ld_dword(fs->win + BS_FilSysType) & 0xFFFFFF) == 0x544146) return 0;   /* Check "FAT" string */
-        if (ld_dword(fs->win + BS_FilSysType32) == 0x33544146) return 0;            /* Check "FAT3" string */
+        if ((ld_dword(fs->win + BS_FilSysType) & 0xFFFFFF) == 0x544146) return FR_OK;   /* Check "FAT" string */
+        if (ld_dword(fs->win + BS_FilSysType32) == 0x33544146) return FR_OK;            /* Check "FAT3" string */
     }
 #if _FS_EXFAT
-    if (!mem_cmp(fs->win + BS_JmpBoot, "\xEB\x76\x90" "EXFAT   ", 11)) return 1;
+    if (!mem_cmp(fs->win + BS_JmpBoot, "\xEB\x76\x90" "EXFAT   ", 11)) return FR_DISK_ERR;
 #endif
-    return 2;
+    return FR_INT_ERR;
 }
 
 
@@ -3168,7 +3176,25 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
     /* Find an FAT partition on the drive. Supports only generic partitioning, FDISK and SFD. */
     bsect = 0;
     fmt = check_fs(fs, bsect);          /* Load sector 0 and check if it is an FAT-VBR as SFD */
-    if (fmt == 2 || (fmt < 2 && LD2PT(vol) != 0)) { /* Not an FAT-VBR or forced partition number */
+    if (fmt == FR_FATX_OK && masterHDDFatxPartTableRead) /* FATX stuff */
+    {
+        fs->fatxPartitionEntry = masterHDDFatxPartTable.TableEntries[vol];
+        fs->fatxPartTableRead = 1;
+        /* FATX Partition table has been loaded */
+        if(0 == (fs->fatxPartitionEntry.Flags & FATX_PE_PARTFLAGS_IN_USE))
+        {
+            return FR_NOT_ENABLED;
+        }
+        bsect = fs->fatxPartitionEntry.LBAStart;
+
+
+        fmt = check_fs(fs, bsect);
+        if(fmt != FR_FATX_OK) /* Partition boot sector is valid */
+        {
+            return FR_NO_FILESYSTEM;
+        }
+    }
+    else if (fmt == FR_INT_ERR || (fmt < FR_INT_ERR && LD2PT(vol) != 0)) { /* Not an FAT-VBR or forced partition number */
         for (i = 0; i < 4; i++) {           /* Get partition offset */
             pt = fs->win + (MBR_Table + i * SZ_PTE);
             br[i] = pt[PTE_System] ? ld_dword(pt + PTE_StLba) : 0;
@@ -3178,25 +3204,11 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
         do {                                /* Find an FAT volume */
             bsect = br[i];
             fmt = bsect ? check_fs(fs, bsect) : 3;  /* Check the partition */
-        } while (!LD2PT(vol) && fmt >= 2 && ++i < 4);
+        } while (!LD2PT(vol) && fmt >= FR_INT_ERR && ++i < 4);
     }
 
-    if (fmt == 0xFF) /* FATX stuff */
-    {
-        /* FATX Partition table has been loaded */
-        if(fs->fatxPartTable.TableEntries[vol].Flags & FATX_PE_PARTFLAGS_IN_USE)
-        {
-            return FR_NOT_ENABLED;
-        }
-        bsect = fs->fatxPartTable.TableEntries[vol].LBAStart;
-        fmt = check_fs(fs, bsect);
-        if(fmt != 0xFF) /* Partition boot sector is valid */
-        {
-            return FR_NO_FILESYSTEM;
-        }
-    }
-    if (fmt == 4) return FR_DISK_ERR;       /* An error occured in the disk I/O layer */
-    if (fmt >= 2) return FR_NO_FILESYSTEM;  /* No FAT volume is found */
+    if (fmt == FR_NO_FILE) return FR_DISK_ERR;       /* An error occured in the disk I/O layer */
+    if (fmt >= FR_INT_ERR) return FR_NO_FILESYSTEM;  /* No FAT volume is found */
 
     /* An FAT volume is found. Following code initializes the file system object */
 
@@ -3249,69 +3261,40 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
     {
         if(ld_dword(fs->win) == FATX_PARTITION_MAGIC)
         {
-            fasize = ld_dword(fs->win + BPBx_SecPerClus);             /* Number of sectors per FAT */
-            fs->fsize = fasize;
             fs->n_fats = 1;                  /* Number of FATs */
-            fs->csize = fs->win[BPB_SecPerClus];                /* Cluster size */
-            fs->n_rootdir ;
+            fs->csize = fs->win[BPBx_SecPerClus];                /* Cluster size */
+            fs->n_rootdir = fs->csize * 512 / sizeof(FATXDIRINFO); /* One cluster, 64bytes per entry */
+            int lbaSize = fs->fatxPartitionEntry.LBASize;
 
+            //Calculate size of FAT, in number of 512-byte sectors.
+            fasize = (lbaSize / fs->csize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
+            fasize = fasize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
+                                                                                    //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
+            fasize = (fasize >> 9);                                     //Divide by 512bytes,
 
-            tsect = ld_word(fs->win + BPB_TotSec16);            /* Number of sectors on the volume */
-            if (tsect == 0) tsect = ld_dword(fs->win + BPB_TotSec32);
+            while((fasize % 8) != 0)                    //Round it to 4096 byte boundary.
+            {
+                fasize += 1;
+            }
+            fs->fsize = fasize; /* Size of FAT table */
 
-            nrsv = ld_word(fs->win + BPB_RsvdSecCnt);           /* Number of reserved sectors */
-            if (nrsv == 0) return FR_NO_FILESYSTEM;             /* (Must not be 0) */
-
-            /* Determine the FAT sub type */
-            sysect = nrsv + fasize + fs->n_rootdir / (SS(fs) / SZDIRE); /* RSV + FAT + DIR */
-            if (tsect < sysect) return FR_NO_FILESYSTEM;        /* (Invalid volume size) */
-            nclst = (tsect - sysect) / fs->csize;               /* Number of clusters */
-            if (nclst == 0) return FR_NO_FILESYSTEM;            /* (Invalid volume size) */
-            fmt = FS_FAT32;
-            if (nclst <= MAX_FAT16) fmt = FS_FAT16;
-            if (nclst <= MAX_FAT12) fmt = FS_FAT12;
+            fmt = FS_FATX32;
+            if (lbaSize / fs->csize <= MAX_FAT16) fmt = FS_FATX16;
 
             /* Boundaries and Limits */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
             fs->volbase = bsect;                                /* Volume start sector */
             fs->fatbase = bsect + nrsv;                         /* FAT start sector */
             fs->database = bsect + sysect;                      /* Data start sector */
-            if (fmt == FS_FAT32) {
-                if (ld_word(fs->win + BPB_FSVer32) != 0) return FR_NO_FILESYSTEM;   /* (Must be FAT32 revision 0.0) */
-                if (fs->n_rootdir) return FR_NO_FILESYSTEM;     /* (BPB_RootEntCnt must be 0) */
-                fs->dirbase = ld_dword(fs->win + BPB_RootClus32);   /* Root directory start cluster */
-                szbfat = fs->n_fatent * 4;                      /* (Needed FAT size) */
-            } else {
-                if (fs->n_rootdir == 0) return FR_NO_FILESYSTEM;/* (BPB_RootEntCnt must not be 0) */
-                fs->dirbase = fs->fatbase + fasize;             /* Root directory start sector */
-                szbfat = (fmt == FS_FAT16) ?                    /* (Needed FAT size) */
-                    fs->n_fatent * 2 : fs->n_fatent * 3 / 2 + (fs->n_fatent & 1);
-            }
-            if (fs->fsize < (szbfat + (SS(fs) - 1)) / SS(fs)) return FR_NO_FILESYSTEM;  /* (BPB_FATSz must not be less than the size needed) */
+
+
+            fs->dirbase = fs->fatbase + fasize;             /* Root directory start sector */
 
 #if !_FS_READONLY
             /* Get FSINFO if available */
             fs->last_clst = fs->free_clst = 0xFFFFFFFF;     /* Initialize cluster allocation information */
             fs->fsi_flag = 0x80;
-#if (_FS_NOFSINFO & 3) != 3
-            if (fmt == FS_FAT32             /* Enable FSINFO only if FAT32 and BPB_FSInfo32 == 1 */
-                && ld_word(fs->win + BPB_FSInfo32) == 1
-                && move_window(fs, bsect + 1) == FR_OK)
-            {
-                fs->fsi_flag = 0;
-                if (ld_word(fs->win + BS_55AA) == 0xAA55    /* Load FSINFO data if available */
-                    && ld_dword(fs->win + FSI_LeadSig) == 0x41615252
-                    && ld_dword(fs->win + FSI_StrucSig) == 0x61417272)
-                {
-#if (_FS_NOFSINFO & 1) == 0
-                    fs->free_clst = ld_dword(fs->win + FSI_Free_Count);
-#endif
-#if (_FS_NOFSINFO & 2) == 0
-                    fs->last_clst = ld_dword(fs->win + FSI_Nxt_Free);
-#endif
-                }
-            }
-#endif  /* (_FS_NOFSINFO & 3) != 3 */
+
 #endif  /* !_FS_READONLY */
         }
         else /* Not FATX */
@@ -6093,7 +6076,7 @@ FRESULT fatx_fdisk (
     DWORD sz_disk, sz_part, s_part;
     FRESULT mbrWriteResult;
 
-    const BYTE* brfrMagic = FATX_DRIVE_MAGIC;
+    const BYTE* brfrMagic = (const unsigned char*)FATX_DRIVE_MAGIC;
 
 
     stat = disk_initialize(pdrv);

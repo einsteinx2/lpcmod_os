@@ -83,6 +83,21 @@ typedef struct
         XboxPartitionTableEntry TableEntries[14];
 } XboxPartitionTable;
 
+//Taken from ReactOS' vfat.h source and Xbox-Linux archives.
+typedef struct {
+    unsigned char FilenameLength;
+    unsigned char Attrib;
+    char Filename[42];
+    unsigned int FirstCluster;
+    unsigned int FileSize;
+    unsigned short UpdateTime;
+    unsigned short UpdateDate;
+    unsigned short CreationTime;
+    unsigned short CreationDate;
+    unsigned short AccessTime;
+    unsigned short AccessDate;
+}__attribute__((packed)) FATXDIRINFO;                   //For a total of 64 bytes.
+
 const unsigned char NbFATXPartPerHDD = 7;
 
 #define ISFATX_FS(fs) (fs == FS_FATX16 || fs == FS_FATX32)
