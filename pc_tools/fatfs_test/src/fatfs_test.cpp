@@ -34,8 +34,20 @@ DWORD SeekTbl[16];          /* Link map table for fast seek feature */
 
 PARTITION VolToPart[] =
 {
- {0, 1},
- {0, 2}
+ {0, 0}, /* XBOX SHELL, E:\ */
+ {0, 1}, /* XBOX DATA, C:\ */
+ {0, 2}, /* XBOX GAME SWAP 1, X:\ */
+ {0, 3}, /* XBOX GAME SWAP 2, Y:\ */
+ {0, 4}, /* XBOX GAME SWAP 3, Z:\ */
+ {0, 5}, /* XBOX F, F:\ */
+ {0, 6}, /* XBOX G, G:\ */
+ {1, 0}, /* XBOX SHELL, E:\ */
+ {1, 1}, /* XBOX DATA, C:\ */
+ {1, 2}, /* XBOX GAME SWAP 1, X:\ */
+ {1, 3}, /* XBOX GAME SWAP 2, Y:\ */
+ {1, 4}, /* XBOX GAME SWAP 3, Z:\ */
+ {1, 5}, /* XBOX F, F:\ */
+ {1, 6}  /* XBOX G, G:\ */
 };
 
 const char* DefaultImageFilename = "XboxImage.bin";
