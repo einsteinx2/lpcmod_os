@@ -2825,10 +2825,16 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
 
         for (;;) {
             c = (BYTE)p[si++];
+            if (c <= ' ') break;            /* Break if end of the path name */
+            if (c == '/' || c == '\\') {    /* Break if a separator is found */
+                while (p[si] == '/' || p[si] == '\\') si++; /* Skip duplicated separator if exist */
+                break;
+            }
+            if(i >= ni) return FR_INVALID_NAME;
             if (chk_chr("\"*+,:;<=>\?[]|\x7F", c)) return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
             sfn[i++] = c;
         }
-        //TODO: make sure every case is covered
+        //TODO: make sure every case is covered. "." and ".." dir do not exist in FATX
     }
     else
 #endif
@@ -2922,10 +2928,11 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
 #if (_FS_EXFAT && _FS_RPATH != 0) || defined(_USE_FATX)
     if ((fs->fs_typex == FS_EXFAT || ISFATX_FS(fs->fs_typex)) && obj->sclust) { /* Retrieve the sub-directory status if needed */
         DIR dj;
-
+#if _FS_RPATH != 0
         obj->c_scl = fs->cdc_scl;
         obj->c_size = fs->cdc_size;
         obj->c_ofs = fs->cdc_ofs;
+#endif
 #ifndef _USE_FATX
         res = load_obj_dir(&dj, obj);
         if (res != FR_OK) return res;
@@ -3016,7 +3023,7 @@ int get_ldnumber (      /* Returns logical drive number (-1:invalid drive) */
         if (*tt == ':') {   /* If a ':' is exist in the path name */
             tp = *path;
             i = *tp++ - '0';
-            if (i < 10 && tp == tt) {   /* Is there a numeric drive id? */
+            if (i < _VOLUMES && tp == tt) {   /* Is there a numeric drive id? */
                 if (i < _VOLUMES) { /* If a drive id is found, get the value and strip it */
                     vol = (int)i;
                     *path = ++tt;

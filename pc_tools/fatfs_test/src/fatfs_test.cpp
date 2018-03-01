@@ -362,9 +362,9 @@ int main(int argc, TCHAR *argv[]) {
 #if _MULTI_PARTITION
     printf(_T("\nMultiple partition is enabled. Each logical drive is tied to the patition as follows:\n"));
     for (cnt = 0; cnt < sizeof VolToPart / sizeof (PARTITION); cnt++) {
-        const TCHAR *pn[] = {_T("auto detect"), _T("1st partition"), _T("2nd partition"), _T("3rd partition"), _T("4th partition")};
+        const TCHAR *pn[] = {_VOLUME_STRS};
 
-        printf(_T("\"%u:\" <== Disk# %u, %s\n"), cnt, VolToPart[cnt].pd, pn[VolToPart[cnt].pt]);
+        printf(_T("\"%u:\" <== Disk# %u, %s\n"), cnt, VolToPart[cnt].pd, pn[(NbFATXPartPerHDD * VolToPart[cnt].pd) + VolToPart[cnt].pt]);
     }
     printf(_T("\n"));
 #else
