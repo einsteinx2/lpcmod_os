@@ -2201,7 +2201,14 @@ FRESULT dir_read (
         } else
 #endif
         {   /* On the FAT12/16/32 volume */
-            dp->obj.attr = a = dp->dir[DIR_Attr] & AM_MASK; /* Get attribute */
+            if(ISFATX_FS(fs->fs_typex))
+            {
+                dp->obj.attr = a = dp->dir[DIRx_Attr] & AM_MASK; /* Get attribute */
+            }
+            else
+            {
+                dp->obj.attr = a = dp->dir[DIR_Attr] & AM_MASK; /* Get attribute */
+            }
 #if _USE_LFN != 0   /* LFN configuration */
             if (c == DDEM || c == '.' || (int)((a & ~AM_ARC) == AM_VOL) != vol) {   /* An entry without valid data */
                 ord = 0xFF;
@@ -2596,11 +2603,20 @@ void get_fileinfo (     /* No return code */
         fno->fnamex[j] = 0;
     }
 #endif
-
-    fno->fattrib = dp->dir[DIR_Attr];               /* Attribute */
-    fno->fsize = ld_dword(dp->dir + DIR_FileSize);  /* Size */
-    tm = ld_dword(dp->dir + DIR_ModTime);           /* Timestamp */
-    fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
+    if(ISFATX_FS(fs->fs_typex))
+    {
+        fno->fattrib = dp->dir[DIRx_Attr];               /* Attribute */
+        fno->fsize = ld_dword(dp->dir + DIRx_FileSize);  /* Size */
+        tm = ld_dword(dp->dir + DIRx_ModTime);           /* Timestamp */
+        fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
+    }
+    else
+    {
+        fno->fattrib = dp->dir[DIR_Attr];               /* Attribute */
+        fno->fsize = ld_dword(dp->dir + DIR_FileSize);  /* Size */
+        tm = ld_dword(dp->dir + DIR_ModTime);           /* Timestamp */
+        fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
+    }
 }
 
 #endif /* _FS_MINIMIZE <= 1 || _FS_RPATH >= 2 */
@@ -3294,7 +3310,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             fs->fatbase = bsect + nrsv;                         /* FAT start sector */
             fs->database = bsect + sysect;                      /* Data start sector */
 
-
+            //XXX: not right
             fs->dirbase = fs->fatbase + fasize;             /* Root directory start sector */
 
 #if !_FS_READONLY
