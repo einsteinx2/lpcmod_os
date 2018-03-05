@@ -1510,13 +1510,13 @@ FRESULT dir_sdi (   /* FR_OK(0):succeeded, !=0:error */
     }
     dp->dptr = ofs;             /* Set current offset */
     clst = dp->obj.sclust;      /* Table start cluster (0:root) */
-    if (clst == 0 && (fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_EXFAT || fs->fs_typex == FS_FATX32)) { /* Replace cluster# 0 with root cluster# */
+    if (clst == 0 && (fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_EXFAT)) { /* Replace cluster# 0 with root cluster# */
         clst = fs->dirbase;
         if (_FS_EXFAT) dp->obj.stat = 0;    /* exFAT: Root dir has an FAT chain */
     }
 
     if (clst == 0) {    /* Static table (root-directory in FAT12/16) */
-        if (ofs / SZDIRE >= fs->n_rootdir)  return FR_INT_ERR;  /* Is index out of range? */
+        if (ofs / (ISFATX_FS(fs->fs_typex) ? SZFATXDIRE : SZDIRE) >= fs->n_rootdir)  return FR_INT_ERR;  /* Is index out of range? */
         dp->sect = fs->dirbase;
 
     } else {            /* Dynamic table (sub-directory or root-directory in FAT32+) */
@@ -1556,7 +1556,14 @@ FRESULT dir_next (  /* FR_OK(0):succeeded, FR_NO_FILE:End of table, FR_DENIED:Co
     UINT n;
 #endif
 
-    ofs = dp->dptr + SZDIRE;    /* Next entry */
+    if(ISFATX_FS(fs->fs_typex))
+    {
+        ofs = dp->dptr + SZFATXDIRE;    /* Next entry */
+    }
+    else
+    {
+        ofs = dp->dptr + SZDIRE;    /* Next entry */
+    }
     if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
 
     if (ofs % SS(fs) == 0) {    /* Sector changed? */
@@ -2201,14 +2208,7 @@ FRESULT dir_read (
         } else
 #endif
         {   /* On the FAT12/16/32 volume */
-            if(ISFATX_FS(fs->fs_typex))
-            {
-                dp->obj.attr = a = dp->dir[DIRx_Attr] & AM_MASK; /* Get attribute */
-            }
-            else
-            {
-                dp->obj.attr = a = dp->dir[DIR_Attr] & AM_MASK; /* Get attribute */
-            }
+            dp->obj.attr = a = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK; /* Get attribute */
 #if _USE_LFN != 0   /* LFN configuration */
             if (c == DDEM || c == '.' || (int)((a & ~AM_ARC) == AM_VOL) != vol) {   /* An entry without valid data */
                 ord = 0xFF;
@@ -2317,11 +2317,11 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
             }
         }
 #else       /* Non LFN configuration */
-        dp->obj.attr = dp->dir[DIR_Attr] & AM_MASK;
+        dp->obj.attr = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK;
 #ifdef _USE_FATX
-        if (!(dp->dir[DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fnx, 42)) break;  /* Is it a valid entry? */
+        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir + (ISFATX_FS(fs->fs_typex) ? DIRx_Name : DIR_Name), dp->fnx, ISFATX_FS(fs->fs_typex) ? dp->dir[DIRx_NameLgth] : 11)) break;  /* Is it a valid entry? */
 #else
-        if (!(dp->dir[DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;  /* Is it a valid entry? */
+        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;  /* Is it a valid entry? */
 #endif
 #endif
         res = dir_next(dp, 0);  /* Next entry */
@@ -2841,13 +2841,14 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
 
         for (;;) {
             c = (BYTE)p[si++];
-            if (c <= ' ') break;            /* Break if end of the path name */
+            if (c <= ' ' || c == 0xFF) break;            /* Break if end of the path name */
             if (c == '/' || c == '\\') {    /* Break if a separator is found */
                 while (p[si] == '/' || p[si] == '\\') si++; /* Skip duplicated separator if exist */
                 break;
             }
             if(i >= ni) return FR_INVALID_NAME;
             if (chk_chr("\"*+,:;<=>\?[]|\x7F", c)) return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
+            if (IsLower(c)) c -= 0x20;  /* To upper */
             sfn[i++] = c;
         }
         //TODO: make sure every case is covered. "." and ".." dir do not exist in FATX
@@ -2902,12 +2903,13 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
             sfn[i++] = c;
         }
     }
+    }
     *path = p + si;                     /* Return pointer to the next segment */
     if (i == 0) return FR_INVALID_NAME; /* Reject nul string */
 
     if (sfn[0] == DDEM) sfn[0] = RDDEM; /* If the first character collides with DDEM, replace it with RDDEM */
     sfn[NSFLAG] = (c <= ' ') ? NS_LAST : 0;     /* Set last segment flag if end of the path */
-    }
+
 
     return FR_OK;
 #endif /* _USE_LFN != 0 */
@@ -2971,13 +2973,15 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             if(NOTFATX_FS(fs->fs_typex))
                 ns = dp->fnx[NSFLAG];
             else
-                ns = 0;
+                ns = dp->fnx[NSxFLAG];
             if (res != FR_OK) {             /* Failed to find the object */
                 if (res == FR_NO_FILE) {    /* Object is not found */
                     if (_FS_RPATH && (ns & NS_DOT)) {   /* If dot entry is not exist, stay there */
                         if (!(ns & NS_LAST)) continue;  /* Continue to follow if not last segment */
                         if(NOTFATX_FS(fs->fs_typex))
                             dp->fnx[NSFLAG] = NS_NONAME;
+                        else
+                            dp->fnx[NSxFLAG] = NS_NONAME;
                         res = FR_OK;
                     } else {                            /* Could not find the object */
                         if (!(ns & NS_LAST)) res = FR_NO_PATH;  /* Adjust error code if not last segment */
@@ -3282,35 +3286,59 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
     } else
 #endif  /* _FS_EXFAT */
     {
+        /* FATX */
         if(ld_dword(fs->win) == FATX_PARTITION_MAGIC)
         {
-            fs->n_fats = 1;                  /* Number of FATs */
-            fs->csize = fs->win[BPBx_SecPerClus];                /* Cluster size */
-            fs->n_rootdir = fs->csize * (unsigned short)_MIN_SS / sizeof(FATXDIRINFO); /* One cluster, 64bytes per entry */
-            int lbaSize = fs->fatxPartitionEntry.LBASize;
+            bsect = fs->fatxPartitionEntry.LBAStart;
 
-            //Calculate size of FAT, in number of 512-byte sectors.
-            fasize = (lbaSize / fs->csize);       //Divide total of sectors(512 bytes) by number of sector contained in a cluster
-            fasize = fasize * ((lbaSize < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
-                                                                                    //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
+            fs->csize = fs->win[BPBx_SecPerClus];                       /* Cluster size */
+            if (fs->csize == 0 || (fs->csize & (fs->csize - 1))) return FR_NO_FILESYSTEM;   /* (Must be power of 2) */
+
+            tsect = fs->fatxPartitionEntry.LBASize;
+
+                                                                        //Calculate size of FAT, in number of 512-byte sectors.
+            fasize = (tsect / fs->csize);                             //Divide total of sectors(512 bytes) by number of sector contained in a cluster
+            fasize = fasize * ((tsect < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
+                                                                        //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
             fasize = (fasize >> 9);                                     //Divide by 512bytes,
 
-            while((fasize % 8) != 0)                    //Round it to 4096 byte boundary.
+            while((fasize % 8) != 0)                                    //Round it to 4096 byte boundary.
             {
                 fasize += 1;
             }
-            fs->fsize = fasize; /* Size of FAT table */
+            fs->fsize = fasize;                                         /* Number of sectors per FAT */
+
+            fs->n_fats = 1;                                             /* Number of FATs */
+
+            fs->n_rootdir = fs->csize * SS(fs) / sizeof(FATXDIRINFO);   /* One cluster, 64bytes per entry */
+            if (fs->n_rootdir % (SS(fs) / SZDIRE) || fs->n_rootdir == 0) return FR_NO_FILESYSTEM; /* (Must be sector aligned) */
+
+            nrsv = sizeof(PARTITIONHEADER) / SS(fs);                    /* First 4096bytes of partition is superblock */
+            sysect = nrsv + fasize + fs->n_rootdir / (SS(fs) / sizeof(FATXDIRINFO)); /* RSV + FAT + DIR */
+            if (tsect < sysect) return FR_NO_FILESYSTEM;        /* (Invalid volume size) */
+
+            nclst = (tsect - sysect) / fs->csize;
+            if (nclst == 0) return FR_NO_FILESYSTEM;            /* (Invalid volume size) */
 
             fmt = FS_FATX32;
-            if (lbaSize / fs->csize <= MAX_FAT16) fmt = FS_FATX16;
+            if (nclst <= MAX_FAT16) fmt = FS_FATX16;
 
             /* Boundaries and Limits */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
             fs->volbase = bsect;                                /* Volume start sector */
-            fs->fatbase = bsect + (sizeof(PARTITIONHEADER) / (unsigned short)_MIN_SS);/* FAT start sector */
+            fs->fatbase = bsect + nrsv;/* FAT start sector */
             fs->database = fs->fatbase + fasize;                      /* Data start sector */ //XXX: Really?
 
-            //XXX: not right
+
+            if (fmt == FS_FAT32)
+            {
+                szbfat = fs->n_fatent * 4;                      /* (Needed FAT size) */
+            }
+            else
+            {
+                szbfat = fs->n_fatent * 2;
+            }
+
             fs->dirbase = fs->fatbase + fasize;             /* Root directory start sector */
 
 #if !_FS_READONLY
