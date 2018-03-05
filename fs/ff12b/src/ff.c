@@ -3286,7 +3286,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
         {
             fs->n_fats = 1;                  /* Number of FATs */
             fs->csize = fs->win[BPBx_SecPerClus];                /* Cluster size */
-            fs->n_rootdir = fs->csize * 512 / sizeof(FATXDIRINFO); /* One cluster, 64bytes per entry */
+            fs->n_rootdir = fs->csize * (unsigned short)_MIN_SS / sizeof(FATXDIRINFO); /* One cluster, 64bytes per entry */
             int lbaSize = fs->fatxPartitionEntry.LBASize;
 
             //Calculate size of FAT, in number of 512-byte sectors.
@@ -3307,8 +3307,8 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             /* Boundaries and Limits */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
             fs->volbase = bsect;                                /* Volume start sector */
-            fs->fatbase = bsect + nrsv;                         /* FAT start sector */
-            fs->database = bsect + sysect;                      /* Data start sector */
+            fs->fatbase = bsect + (sizeof(PARTITIONHEADER) / (unsigned short)_MIN_SS);/* FAT start sector */
+            fs->database = fs->fatbase + fasize;                      /* Data start sector */ //XXX: Really?
 
             //XXX: not right
             fs->dirbase = fs->fatbase + fasize;             /* Root directory start sector */

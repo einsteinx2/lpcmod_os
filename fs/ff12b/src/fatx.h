@@ -98,6 +98,15 @@ typedef struct {
     unsigned short AccessDate;
 }__attribute__((packed)) FATXDIRINFO;                   //For a total of 64 bytes.
 
+typedef struct {                                        //Also known as FATX SuperBlock.
+    unsigned int magic;
+    unsigned int volumeID;
+    unsigned int clusterSize;
+    unsigned short nbFAT;
+    unsigned int unknown;
+    unsigned char  unused[0xfee];
+}__attribute__((packed)) PARTITIONHEADER;               //For a total of 4096(0x1000) bytes.
+
 const unsigned char NbFATXPartPerHDD = 7;
 
 #define ISFATX_FS(fs) (fs == FS_FATX16 || fs == FS_FATX32)
