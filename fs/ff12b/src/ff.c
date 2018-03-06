@@ -1674,14 +1674,18 @@ DWORD ld_clust (    /* Returns the top cluster value of the SFN entry */
     const BYTE* dir /* Pointer to the key entry */
 )
 {
+#ifdef _USE_FATX
+    return ld_dword(dir + DIRx_FstClus);
+#else
     DWORD cl;
 
     cl = ld_word(dir + DIR_FstClusLO);
-    if (fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_FATX32) {
+    if (fs->fs_typex == FS_FAT32) {
         cl |= (DWORD)ld_word(dir + DIR_FstClusHI) << 16;
     }
 
     return cl;
+#endif
 }
 
 
@@ -1693,10 +1697,14 @@ void st_clust (
     DWORD cl    /* Value to be set */
 )
 {
+#ifdef _USE_FATX
+    return st_dword(dir + DIRx_FstClus, cl);
+#else
     st_word(dir + DIR_FstClusLO, (WORD)cl);
-    if (fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_FATX32) {
+    if (fs->fs_typex == FS_FAT32) {
         st_word(dir + DIR_FstClusHI, (WORD)(cl >> 16));
     }
+#endif
 }
 #endif
 
@@ -2420,7 +2428,16 @@ FRESULT dir_register (  /* FR_OK:succeeded, FR_DENIED:no free entry or too many 
     if (res == FR_OK) {
         res = move_window(fs, dp->sect);
         if (res == FR_OK) {
-            mem_set(dp->dir, 0, SZDIRE);    /* Clean the entry */
+#ifdef _USE_FATX
+            if(ISFATX_FS(fs->fs_typex))
+            {
+                mem_set(dp->dir, 0, SZFATXDIRE);    /* Clean the entry */
+            }
+            else
+#endif
+            {
+                mem_set(dp->dir, 0, SZDIRE);    /* Clean the entry */
+            }
 #ifdef _USE_FATX
             if(ISFATX_FS(fs->fs_typex))
                 mem_cpy(dp->dir + DIRx_Name, dp->fnx, *(dp->dir + DIRx_NameLgth));    /* Put SFN */
@@ -2848,7 +2865,7 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
             }
             if(i >= ni) return FR_INVALID_NAME;
             if (chk_chr("\"*+,:;<=>\?[]|\x7F", c)) return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
-            if (IsLower(c)) c -= 0x20;  /* To upper */
+            //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
             sfn[i++] = c;
         }
         //TODO: make sure every case is covered. "." and ".." dir do not exist in FATX
@@ -2908,7 +2925,16 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
     if (i == 0) return FR_INVALID_NAME; /* Reject nul string */
 
     if (sfn[0] == DDEM) sfn[0] = RDDEM; /* If the first character collides with DDEM, replace it with RDDEM */
-    sfn[NSFLAG] = (c <= ' ') ? NS_LAST : 0;     /* Set last segment flag if end of the path */
+#ifdef _USE_FATX
+    if(ISFATX_FS(fs->fs_typex))
+    {
+        sfn[NSxFLAG] = (c <= ' ' || c == 0xFF) ? NS_LAST : 0;     /* Set last segment flag if end of the path */
+    }
+    else
+#endif
+    {
+        sfn[NSFLAG] = (c <= ' ') ? NS_LAST : 0;     /* Set last segment flag if end of the path */
+    }
 
 
     return FR_OK;
@@ -3331,7 +3357,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
             fs->volbase = bsect;                                /* Volume start sector */
             fs->fatbase = bsect + nrsv;/* FAT start sector */
-            fs->database = fs->fatbase + fasize;                      /* Data start sector */ //XXX: Really?
+            fs->database = fs->fatbase + sysect;                      /* Data start sector */ //XXX: Really?
 
 
             if (fmt == FS_FAT32)
@@ -4427,7 +4453,7 @@ FRESULT f_opendir (
 #endif
                 if (obj->attr & AM_DIR) {       /* This object is a sub-directory */
 #if _FS_EXFAT || defined(_USE_FATX)
-                    if (fs->fs_typex == FS_EXFAT || ISFATX_FS(fs->fs_typex)) {
+                    if (fs->fs_typex == FS_EXFAT) {
                         obj->c_scl = obj->sclust;   /* Save containing directory inforamation */
                         obj->c_size = ((DWORD)obj->objsize & 0xFFFFFF00) | obj->stat;
 #if _FS_EXFAT
