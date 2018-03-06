@@ -2961,7 +2961,11 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
 #endif
 
     if ((UINT)*path < ' ') {                /* Null path name is the origin directory itself */
-        if(NOTFATX_FS(fs->fs_typex))
+#ifdef _USE_FATX
+        if(ISFATX_FS(fs->fs_typex))
+            dp->fnx[NSxFLAG] = NS_NONAME;
+        else
+#endif
             dp->fnx[NSFLAG] = NS_NONAME;
         res = dir_sdi(dp, 0);
 
