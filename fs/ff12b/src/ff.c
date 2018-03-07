@@ -2198,7 +2198,13 @@ FRESULT dir_read (
         else
 #endif
             c = dp->dir[DIR_Name];  /* Test for the entry type */
-        if (c == 0) { res = FR_NO_FILE; break; }    /* Reached to end of the directory */
+
+#ifdef _USE_FATX
+        if ((NOTFATX_FS(fs->fs_typex) && c == 0) || (ISFATX_FS(fs->fs_typex) && c == 0xFF))
+#else
+        if (c == 0)
+#endif
+        { res = FR_NO_FILE; break; }    /* Reached to end of the directory */
 #if _FS_EXFAT
         if (fs->fs_type == FS_EXFAT) {  /* On the exFAT volume */
             if (_USE_LABEL && vol) {
@@ -3357,8 +3363,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
             fs->volbase = bsect;                                /* Volume start sector */
             fs->fatbase = bsect + nrsv;/* FAT start sector */
-            fs->database = fs->fatbase + sysect;                      /* Data start sector */ //XXX: Really?
-
+            fs->database = fs->fatbase + sysect - nrsv;         /* Data start sector */
 
             if (fmt == FS_FAT32)
             {
