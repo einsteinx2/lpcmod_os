@@ -3719,7 +3719,16 @@ FRESULT f_open (
 #endif
             {
                 fp->obj.sclust = ld_clust(fs, dj.dir);              /* Get allocation info */
-                fp->obj.objsize = ld_dword(dj.dir + DIR_FileSize);
+#ifdef _USE_FATX
+                if(ISFATX_FS(fs->fs_typex))
+                {
+                    fp->obj.objsize = ld_dword(dj.dir + DIRx_FileSize);
+                }
+                else
+#endif
+                {
+                    fp->obj.objsize = ld_dword(dj.dir + DIR_FileSize);
+                }
             }
 #if _USE_FASTSEEK
             fp->cltbl = 0;          /* Disable fast seek mode */
