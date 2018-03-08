@@ -2975,8 +2975,8 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
         while (*path == '/' || *path == '\\') path++;   /* Strip heading separator */
         obj->sclust = 0;                    /* Start from the root directory */
     }
-#if (_FS_EXFAT && _FS_RPATH != 0) || defined(_USE_FATX)
-    if ((fs->fs_typex == FS_EXFAT || ISFATX_FS(fs->fs_typex)) && obj->sclust) { /* Retrieve the sub-directory status if needed */
+#if (_FS_EXFAT && _FS_RPATH != 0)
+    if ((fs->fs_typex == FS_EXFAT) && obj->sclust) { /* Retrieve the sub-directory status if needed */
         DIR dj;
 #if _FS_RPATH != 0
         obj->c_scl = fs->cdc_scl;
@@ -3030,8 +3030,8 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             if (!(obj->attr & AM_DIR)) {        /* It is not a sub-directory and cannot follow */
                 res = FR_NO_PATH; break;
             }
-#if _FS_EXFAT || defined(_USE_FATX)
-            if (fs->fs_typex == FS_EXFAT || ISFATX_FS(fs->fs_typex)) {
+#if _FS_EXFAT
+            if (fs->fs_typex == FS_EXFAT) {
                 obj->c_scl = obj->sclust;       /* Save containing directory information for next dir */
                 obj->c_size = ((DWORD)obj->objsize & 0xFFFFFF00) | obj->stat;
 #if _FS_EXFAT
