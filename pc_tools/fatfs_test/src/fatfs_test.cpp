@@ -833,6 +833,9 @@ int main(int argc, TCHAR *argv[]) {
     #endif  /* _MULTI_PARTITION */
     #endif  /* _USE_MKFS */
     #endif  /* !_FS_READONLY */
+                default:
+                    printf(_T("Not implemented\n"));
+                    break;
                 }
                 break;
 
