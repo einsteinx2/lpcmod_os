@@ -3654,12 +3654,26 @@ FRESULT f_open (
 #endif
                 {
                     /* Clean directory info */
-                    st_dword(dj.dir + DIR_CrtTime, dw); /* Set created time */
-                    st_dword(dj.dir + DIR_ModTime, dw); /* Set modified time */
-                    dj.dir[DIR_Attr] = AM_ARC;          /* Reset attribute */
-                    cl = ld_clust(fs, dj.dir);          /* Get cluster chain */
-                    st_clust(fs, dj.dir, 0);            /* Reset file allocation info */
-                    st_dword(dj.dir + DIR_FileSize, 0);
+#ifdef _USE_FATX
+                    if(ISFATX_FS(fs->fs_typex))
+                    {
+                        st_dword(dj.dir + DIRx_CrtTime, dw); /* Set created time */
+                        st_dword(dj.dir + DIRx_ModTime, dw); /* Set modified time */
+                        dj.dir[DIRx_Attr] = AM_ARC;          /* Reset attribute */
+                        cl = ld_clust(fs, dj.dir);          /* Get cluster chain */
+                        st_clust(fs, dj.dir, 0);            /* Reset file allocation info */
+                        st_dword(dj.dir + DIRx_FileSize, 0);
+                    }
+                    else
+#endif
+                    {
+                        st_dword(dj.dir + DIR_CrtTime, dw); /* Set created time */
+                        st_dword(dj.dir + DIR_ModTime, dw); /* Set modified time */
+                        dj.dir[DIR_Attr] = AM_ARC;          /* Reset attribute */
+                        cl = ld_clust(fs, dj.dir);          /* Get cluster chain */
+                        st_clust(fs, dj.dir, 0);            /* Reset file allocation info */
+                        st_dword(dj.dir + DIR_FileSize, 0);
+                    }
                     fs->wflag = 1;
 
                     if (cl) {                           /* Remove the cluster chain if exist */
@@ -4935,7 +4949,7 @@ FRESULT f_mkdir (
         res = follow_path(&dj, path);           /* Follow the file path */
         if (res == FR_OK) res = FR_EXIST;       /* Any object with same name is already existing */
 #ifdef _USE_FATX
-        if (_FS_RPATH && res == FR_NO_FILE && ((ISFATX_FS(fs->fs_typex) && (dj.fnx[NSxFLAG] & NS_DOT)) || (NOTFATX_FS(fs->fs_typex) && (dj.fnx[NSFLAG] & NS_DOT)))) {
+        if (_FS_RPATH && res == FR_NO_FILE && NOTFATX_FS(fs->fs_typex) && (dj.fnx[NSFLAG] & NS_DOT)) {
 #else
         if (_FS_RPATH && res == FR_NO_FILE && (dj.fn[NSFLAG] & NS_DOT)) {
 #endif
@@ -4954,16 +4968,21 @@ FRESULT f_mkdir (
                 dsc = clust2sect(fs, dcl);
                 dir = fs->win;
                 mem_set(dir, 0, SS(fs));
-                if ((!_FS_EXFAT || fs->fs_typex != FS_EXFAT) && NOTFATX_FS(fs->fs_typex)) {
-                    mem_set(dir + DIR_Name, ' ', 11);   /* Create "." entry */
-                    dir[DIR_Name] = '.';
-                    dir[DIR_Attr] = AM_DIR;
-                    st_dword(dir + DIR_ModTime, tm);
-                    st_clust(fs, dir, dcl);
-                    mem_cpy(dir + SZDIRE, dir, SZDIRE);     /* Create ".." entry */
-                    dir[SZDIRE + 1] = '.'; pcl = dj.obj.sclust;
-                    if (fs->fs_typex == FS_FAT32 && pcl == fs->dirbase) pcl = 0;
-                    st_clust(fs, dir + SZDIRE, pcl);
+#ifdef _USE_FATX
+                if(NOTFATX_FS(fs->fs_typex))
+#endif
+                {
+                    if (!_FS_EXFAT || fs->fs_typex != FS_EXFAT) {
+                        mem_set(dir + DIR_Name, ' ', 11);   /* Create "." entry */
+                        dir[DIR_Name] = '.';
+                        dir[DIR_Attr] = AM_DIR;
+                        st_dword(dir + DIR_ModTime, tm);
+                        st_clust(fs, dir, dcl);
+                        mem_cpy(dir + SZDIRE, dir, SZDIRE);     /* Create ".." entry */
+                        dir[SZDIRE + 1] = '.'; pcl = dj.obj.sclust;
+                        if (fs->fs_typex == FS_FAT32 && pcl == fs->dirbase) pcl = 0;
+                        st_clust(fs, dir + SZDIRE, pcl);
+                    }
                 }
                 for (n = fs->csize; n; n--) {   /* Write dot entries and clear following sectors */
                     fs->winsect = dsc++;
@@ -4988,9 +5007,20 @@ FRESULT f_mkdir (
 #endif
                 {
                     dir = dj.dir;
-                    st_dword(dir + DIR_ModTime, tm);    /* Created time */
-                    st_clust(fs, dir, dcl);             /* Table start cluster */
-                    dir[DIR_Attr] = AM_DIR;             /* Attribute */
+#ifdef _USE_FATX
+                    if(ISFATX_FS(fs->fs_typex))
+                    {
+                        st_dword(dir + DIRx_ModTime, tm);    /* Created time */
+                        st_clust(fs, dir, dcl);             /* Table start cluster */
+                        dir[DIRx_Attr] = AM_DIR;             /* Attribute */
+                    }
+                    else
+#endif
+                    {
+                        st_dword(dir + DIR_ModTime, tm);    /* Created time */
+                        st_clust(fs, dir, dcl);             /* Table start cluster */
+                        dir[DIR_Attr] = AM_DIR;             /* Attribute */
+                    }
                     fs->wflag = 1;
                 }
                 if (res == FR_OK) res = sync_fs(fs);
@@ -5074,6 +5104,7 @@ FRESULT f_rename (
             } else
 #endif
             {
+#ifdef _USE_FATX
                 if(ISFATX_FS(fs->fs_typex))
                 {
                     /* At FATX16/FATX32 */
@@ -5090,24 +5121,13 @@ FRESULT f_rename (
                             *(dir + DIRx_Attr) = *(djn.dir + DIRx_Attr);
                             mem_cpy(dir + DIRx_FstClus, buf + DIRx_FstClus, SZFATXDIRE - DIRx_FstClus);
                             fs->wflag = 1;
-                            if ((dir[DIRx_Attr] & AM_DIR) && djo.obj.sclust != djn.obj.sclust) { /* Update .. entry in the sub-directory if needed */
-                                dw = clust2sect(fs, ld_clust(fs, dir));
-                                if (!dw) {
-                                    res = FR_INT_ERR;
-                                } else {
-/* Start of critical section where any interruption can cause a cross-link */
-                                    res = move_window(fs, dw);
-                                    dir = fs->win + SZFATXDIRE * 1; /* Ptr to .. entry */
-                                    if (res == FR_OK && dir[1] == '.') {
-                                        st_clust(fs, dir, djn.obj.sclust);
-                                        fs->wflag = 1;
-                                    }
-                                }
-                            }
+
+                            /* There is no . or .. directory entry on FATX. */
                         }
                     }
                 }
                 else
+#endif
                 {
                     /* At FAT12/FAT16/FAT32 */
                     mem_cpy(buf, djo.dir + DIR_Attr, 21);   /* Save information about the object except name */
