@@ -249,7 +249,7 @@ const TCHAR HelpStr[] = {
         _T(" br <pd#> <sect> <count> - Read disk into working buffer\n")
         _T(" bw <pd#> <sect> <count> - Write working buffer into disk\n")
         _T(" bf <val> - Fill working buffer\n")
-        _T("[File system contorls]\n")
+        _T("[File system controls]\n")
         _T(" fi <ld#> [<opt>] - Force initialized the volume\n")
         _T(" fs [<path>] - Show volume status\n")
         _T(" fl [<path>] - Show a directory\n")
