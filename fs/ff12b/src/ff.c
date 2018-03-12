@@ -1674,18 +1674,21 @@ DWORD ld_clust (    /* Returns the top cluster value of the SFN entry */
     const BYTE* dir /* Pointer to the key entry */
 )
 {
-#ifdef _USE_FATX
-    return ld_dword(dir + DIRx_FstClus);
-#else
     DWORD cl;
-
-    cl = ld_word(dir + DIR_FstClusLO);
-    if (fs->fs_typex == FS_FAT32) {
-        cl |= (DWORD)ld_word(dir + DIR_FstClusHI) << 16;
+#ifdef _USE_FATX
+    if(ISFATX_FS(fs->fs_typex))
+    {
+        cl = ld_dword(dir + DIRx_FstClus);
     }
-
-    return cl;
+    else
 #endif
+    {
+        cl = ld_word(dir + DIR_FstClusLO);
+        if (fs->fs_typex == FS_FAT32) {
+            cl |= (DWORD)ld_word(dir + DIR_FstClusHI) << 16;
+        }
+    }
+    return cl;
 }
 
 
@@ -1698,13 +1701,18 @@ void st_clust (
 )
 {
 #ifdef _USE_FATX
-    return st_dword(dir + DIRx_FstClus, cl);
-#else
-    st_word(dir + DIR_FstClusLO, (WORD)cl);
-    if (fs->fs_typex == FS_FAT32) {
-        st_word(dir + DIR_FstClusHI, (WORD)(cl >> 16));
+    if(ISFATX_FS(fs->fs_typex))
+    {
+        st_dword(dir + DIRx_FstClus, cl);
     }
+    else
 #endif
+    {
+        st_word(dir + DIR_FstClusLO, (WORD)cl);
+        if (fs->fs_typex == FS_FAT32) {
+            st_word(dir + DIR_FstClusHI, (WORD)(cl >> 16));
+        }
+    }
 }
 #endif
 
@@ -2359,8 +2367,11 @@ FRESULT dir_register (  /* FR_OK:succeeded, FR_DENIED:no free entry or too many 
 {
     FRESULT res;
     FATFS *fs = dp->obj.fs;
+
+#if defined(_USE_FATX) || _USE_LFN != 0
+    UINT nlen;
 #if _USE_LFN != 0   /* LFN configuration */
-    UINT n, nlen, nent;
+    UINT n, nent;
     BYTE sn[12], sum;
 
 
@@ -2429,6 +2440,7 @@ FRESULT dir_register (  /* FR_OK:succeeded, FR_DENIED:no free entry or too many 
     res = dir_alloc(dp, 1);     /* Allocate an entry for SFN */
 
 #endif
+#endif /* defined(_USE_FATX) || _USE_LFN != 0 */
 
     /* Set SFN entry */
     if (res == FR_OK) {
@@ -2446,10 +2458,23 @@ FRESULT dir_register (  /* FR_OK:succeeded, FR_DENIED:no free entry or too many 
             }
 #ifdef _USE_FATX
             if(ISFATX_FS(fs->fs_typex))
-                mem_cpy(dp->dir + DIRx_Name, dp->fnx, *(dp->dir + DIRx_NameLgth));    /* Put SFN */
+            {
+                mem_cpy(dp->dir + DIRx_Name, dp->fnx, 42);    /* Put SFN */ //XXX: use constant
+                for (nlen = 0; dp->fnx[nlen] >= ' ' && dp->fnx[nlen] != 0xFF; nlen++) ; /* Get FATX name length */
+                if(nlen > 42)
+                {
+                    res = FR_INVALID_NAME;
+                }
+                else
+                {
+                    dp->dir[DIRx_NameLgth] = nlen;
+                }
+            }
             else
 #endif
+            {
                 mem_cpy(dp->dir + DIR_Name, dp->fnx, 11);   /* Put SFN */
+            }
 #if _USE_LFN != 0
             dp->dir[DIR_NTres] = dp->fn[NSFLAG] & (NS_BODY | NS_EXT);   /* Put NT flag */
 #endif
@@ -4070,11 +4095,24 @@ FRESULT f_sync (
                 res = move_window(fs, fp->dir_sect);
                 if (res == FR_OK) {
                     dir = fp->dir_ptr;
-                    dir[DIR_Attr] |= AM_ARC;                        /* Set archive bit */
-                    st_clust(fp->obj.fs, dir, fp->obj.sclust);      /* Update file allocation info  */
-                    st_dword(dir + DIR_FileSize, (DWORD)fp->obj.objsize);   /* Update file size */
-                    st_dword(dir + DIR_ModTime, tm);                /* Update modified time */
-                    st_word(dir + DIR_LstAccDate, 0);
+#ifdef _USE_FATX
+                    if(ISFATX_FS(fs->fs_typex))
+                    {
+                        dir[DIRx_Attr] |= AM_ARC;                        /* Set archive bit */ //XXX: necessary?
+                        st_clust(fp->obj.fs, dir, fp->obj.sclust);      /* Update file allocation info  */
+                        st_dword(dir + DIRx_FileSize, (DWORD)fp->obj.objsize);   /* Update file size */
+                        st_dword(dir + DIRx_ModTime, tm);                /* Update modified time */
+                        st_word(dir + DIRx_LstAccDate, 0);
+                    }
+                    else
+#endif
+                    {
+                        dir[DIR_Attr] |= AM_ARC;                        /* Set archive bit */
+                        st_clust(fp->obj.fs, dir, fp->obj.sclust);      /* Update file allocation info  */
+                        st_dword(dir + DIR_FileSize, (DWORD)fp->obj.objsize);   /* Update file size */
+                        st_dword(dir + DIR_ModTime, tm);                /* Update modified time */
+                        st_word(dir + DIR_LstAccDate, 0);
+                    }
                     fs->wflag = 1;
                     res = sync_fs(fs);                  /* Restore it to the directory */
                     fp->flag &= (BYTE)~FA_MODIFIED;
@@ -5118,7 +5156,7 @@ FRESULT f_rename (
                         res = dir_register(&djn);           /* Register the new entry */
                         if (res == FR_OK) {
                             dir = djn.dir;                  /* Copy information about object except name */
-                            *(dir + DIRx_Attr) = *(djn.dir + DIRx_Attr);
+                            *(dir + DIRx_Attr) = *(djo.dir + DIRx_Attr);
                             mem_cpy(dir + DIRx_FstClus, buf + DIRx_FstClus, SZFATXDIRE - DIRx_FstClus);
                             fs->wflag = 1;
 

@@ -26,7 +26,7 @@ static volatile STAT diskImage;
 int assign_drives(const char* diskImageName)
 {
     errno = 0;
-    diskImage.h_drive = fopen(diskImageName, "rwb");
+    diskImage.h_drive = fopen(diskImageName, "r+b");
     if(diskImage.h_drive)
     {
         disk_status(0);
@@ -34,7 +34,7 @@ int assign_drives(const char* diskImageName)
     }
     else
     {
-        printf("Err = %d\n", errno);
+        printf("Image Open Err = %d\n", errno);
     }
 
     return 1;
@@ -111,7 +111,19 @@ DRESULT disk_write (
 )
 {
 
-
+    if(0 == fseeko(diskImage.h_drive, sector * SECTOR_SIZE, SEEK_SET))
+    {
+        errno = 0;
+        if(count == fwrite(buff, SECTOR_SIZE, count, diskImage.h_drive))
+        {
+            return RES_OK;
+        }
+        else
+        {
+            printf("Image Write Err = %d\n", errno);
+        }
+        return RES_ERROR;
+    }
 
 
 	return RES_PARERR;
