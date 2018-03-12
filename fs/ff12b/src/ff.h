@@ -110,7 +110,7 @@ typedef struct {
 #if _USE_LFN != 0
     WCHAR*  lfnbuf;         /* LFN working buffer */
 #endif
-#if _FS_EXFAT
+#if (_FS_EXFAT || defined(_USE_FATX))
     BYTE*   dirbuf;         /* Directory entry block scratchpad buffer */
 #endif
 #if _FS_REENTRANT

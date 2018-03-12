@@ -3000,15 +3000,17 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
         while (*path == '/' || *path == '\\') path++;   /* Strip heading separator */
         obj->sclust = 0;                    /* Start from the root directory */
     }
-#if (_FS_EXFAT && _FS_RPATH != 0)
-    if ((fs->fs_typex == FS_EXFAT) && obj->sclust) { /* Retrieve the sub-directory status if needed */
+#if ((_FS_EXFAT || defined(_USE_FATX)) && _FS_RPATH != 0)
+    if ((fs->fs_typex == FS_EXFAT || ISFATX_FS(fs->fs_typex)) && obj->sclust) { /* Retrieve the sub-directory status if needed */
+#if _FS_EXFAT
         DIR dj;
+#endif
 #if _FS_RPATH != 0
         obj->c_scl = fs->cdc_scl;
         obj->c_size = fs->cdc_size;
         obj->c_ofs = fs->cdc_ofs;
 #endif
-#ifndef _USE_FATX
+#if _FS_EXFAT
         res = load_obj_dir(&dj, obj);
         if (res != FR_OK) return res;
         obj->objsize = ld_dword(fs->dirbuf + XDIR_FileSize);
@@ -3055,10 +3057,10 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             if (!(obj->attr & AM_DIR)) {        /* It is not a sub-directory and cannot follow */
                 res = FR_NO_PATH; break;
             }
-#if _FS_EXFAT
+#if (_FS_EXFAT || defined(_USE_FATX))
             if (fs->fs_typex == FS_EXFAT) {
                 obj->c_scl = obj->sclust;       /* Save containing directory information for next dir */
-                obj->c_size = ((DWORD)obj->objsize & 0xFFFFFF00) | obj->stat;
+                obj->c_size = ISFATX_FS(fs->fs_typex) ? SZFATXDIRE : ((DWORD)obj->objsize & 0xFFFFFF00) | obj->stat;
 #if _FS_EXFAT
                 obj->c_ofs = dp->blk_ofs;
                 obj->sclust = ld_dword(fs->dirbuf + XDIR_FstClus);  /* Open next directory */
@@ -3761,6 +3763,9 @@ FRESULT f_open (
 #ifdef _USE_FATX
                 if(ISFATX_FS(fs->fs_typex))
                 {
+                    fp->obj.c_scl = dj.obj.sclust;
+                    fp->obj.c_size = SZFATXDIRE;
+                    fp->obj.c_ofs = dj.blk_ofs;
                     fp->obj.objsize = ld_dword(dj.dir + DIRx_FileSize);
                 }
                 else
@@ -4229,6 +4234,12 @@ FRESULT f_chdir (
                     } else
 #endif
                     {
+                        if(ISFATX_FS(fs->fs_typex))
+                        {
+                            fs->cdc_scl = dj.obj.c_scl;
+                            fs->cdc_size = dj.obj.c_size;
+                            fs->cdc_ofs = dj.obj.c_ofs;
+                        }
                         fs->cdir = ld_clust(fs, dj.dir);                    /* Sub-directory cluster */
                     }
                 } else {
@@ -4521,7 +4532,7 @@ FRESULT f_opendir (
 #if _FS_EXFAT || defined(_USE_FATX)
                     if (fs->fs_typex == FS_EXFAT) {
                         obj->c_scl = obj->sclust;   /* Save containing directory inforamation */
-                        obj->c_size = ((DWORD)obj->objsize & 0xFFFFFF00) | obj->stat;
+                        obj->c_size = ISFATX_FS(fs->fs_typex) ? SZFATXDIRE : ((DWORD)obj->objsize & 0xFFFFFF00) | obj->stat;
 #if _FS_EXFAT
                         obj->c_ofs = dp->blk_ofs;
                         obj->sclust = ld_dword(fs->dirbuf + XDIR_FstClus);  /* Get object location and status */
