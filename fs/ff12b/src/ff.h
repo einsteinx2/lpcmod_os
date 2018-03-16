@@ -124,8 +124,10 @@ typedef struct {
     DWORD   cdir;           /* Current directory start cluster (0:root) */
 #if _FS_EXFAT || defined(_USE_FATX)
     DWORD   cdc_scl;        /* Containing directory start cluster (invalid when cdir is 0) */
+#if _FS_EXFAT
     DWORD   cdc_size;       /* b31-b8:Size of containing directory, b7-b0: Chain status */
     DWORD   cdc_ofs;        /* Offset in the containing directory (invalid when cdir is 0) */
+#endif
 #endif
 #endif
     DWORD   n_fatent;       /* Number of FAT entries (number of clusters + 2) */
@@ -155,10 +157,12 @@ typedef struct {
     DWORD   sclust;     /* Object start cluster (0:no cluster or root directory) */
     FSIZE_t objsize;    /* Object size (valid when sclust != 0) */
 #if _FS_EXFAT || defined(_USE_FATX)
-    DWORD   n_cont;     /* Size of coutiguous part, clusters - 1 (valid when stat == 3) */
     DWORD   c_scl;      /* Containing directory start cluster (valid when sclust != 0) */
+#if _FS_EXFAT
     DWORD   c_size;     /* b31-b8:Size of containing directory, b7-b0: Chain status (valid when c_scl != 0) */
+    DWORD   n_cont;     /* Size of coutiguous part, clusters - 1 (valid when stat == 3) */
     DWORD   c_ofs;      /* Offset in the containing directory (valid when sclust != 0) */
+#endif
 #endif
 #if _FS_LOCK != 0
     UINT    lockid;     /* File lock ID origin from 1 (index of file semaphore table Files[]) */

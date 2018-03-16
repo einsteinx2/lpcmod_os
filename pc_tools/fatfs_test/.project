@@ -31,16 +31,6 @@
 			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src</location>
 		</link>
 		<link>
-			<name>src/diskio.c</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/diskio.c</location>
-		</link>
-		<link>
-			<name>src/diskio.h</name>
-			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/diskio.h</location>
-		</link>
-		<link>
 			<name>src/fatx.h</name>
 			<type>1</type>
 			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/fatx.h</location>
