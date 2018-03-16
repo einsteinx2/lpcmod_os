@@ -4278,8 +4278,6 @@ FRESULT f_getcwd (
         dj.obj.fs = fs;
         INIT_NAMBUF(fs);
         i = len;            /* Bottom of buffer (directory stack base) */
-        //TODO: verify same rule applies to FATX?
-        //TODO: check this thing in particular when debugging.
         if (!_FS_EXFAT || fs->fs_typex != FS_EXFAT) {   /* (Cannot do getcwd on exFAT and returns root path) */
             dj.obj.sclust = fs->cdir;               /* Start to follow upper directory from current directory */
             while ((ccl = dj.obj.sclust) != 0) {    /* Repeat while current directory is a sub-directory */
