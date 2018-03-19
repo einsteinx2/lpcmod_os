@@ -5,6 +5,9 @@
 // Copyright   : Your copyright notice
 // Description : Hello World in C++, Ansi-style
 //============================================================================
+#define _FILE_OFFSET_BITS 64
+#define __USE_LARGEFILE 1
+#define _LARGEFILE64_SOURCE 1
 
 #include "ff.h"
 #include "diskio.h"

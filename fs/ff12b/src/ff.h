@@ -298,6 +298,12 @@ FRESULT f_expand (FIL* fp, FSIZE_t szf, BYTE opt);                  /* Allocate 
 FRESULT f_mount (FATFS* fs, const TCHAR* path, BYTE opt);           /* Mount/Unmount a logical drive */
 FRESULT f_mkfs (const TCHAR* path, BYTE opt, DWORD au, void* work, UINT len);   /* Create a FAT volume */
 FRESULT f_fdisk (BYTE pdrv, const DWORD* szt, void* work);          /* Divide a physical drive into some partitions */
+#ifdef _USE_FATX
+FRESULT fatx_fdisk (BYTE pdrv, const XboxPartitionTable* szt);      /* Divide drive into FATX partitions */
+FRESULT fatx_getmbr(BYTE pdrv, XboxPartitionTable* out);            /* Get FATX drive MBR */
+FRESULT fatx_setmbr(BYTE pdrv, XboxPartitionTable* in);             /* Set FATX drive MBR */
+FRESULT fatx_getbrfr(BYTE pdrv);                                    /* Check for BRFR at sector 3 */
+#endif
 int f_putc (TCHAR c, FIL* fp);                                      /* Put a character to the file */
 int f_puts (const TCHAR* str, FIL* cp);                             /* Put a string to the file */
 int f_printf (FIL* fp, const TCHAR* str, ...);                      /* Put a formatted string to the file */

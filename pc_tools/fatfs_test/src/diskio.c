@@ -6,8 +6,6 @@
 /* This is an example of glue functions to attach various exsisting      */
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
-#define _FILE_OFFSET_BITS 64
-#define __USE_LARGEFILE
 
 #include "diskio.h"		/* FatFs lower layer API */
 #include <stdio.h>
@@ -26,7 +24,7 @@ static volatile STAT diskImage;
 int assign_drives(const char* diskImageName)
 {
     errno = 0;
-    diskImage.h_drive = fopen(diskImageName, "r+b");
+    diskImage.h_drive = fopen64(diskImageName, "r+b");
     if(diskImage.h_drive)
     {
         disk_status(0);
@@ -50,8 +48,8 @@ DSTATUS disk_status (
 {
     diskImage.status = 0;
     diskImage.sz_sector = SECTOR_SIZE;
-    fseeko(diskImage.h_drive, 0L, SEEK_END);
-    QWORD size = ftello(diskImage.h_drive);
+    fseeko64(diskImage.h_drive, 0L, SEEK_END);
+    QWORD size = ftello64(diskImage.h_drive);
     diskImage.n_sectors = size / (unsigned int)SECTOR_SIZE;
 	return RES_OK;
 }
@@ -84,7 +82,8 @@ DRESULT disk_read (
 )
 {
 
-    if(0 == fseeko(diskImage.h_drive, sector * SECTOR_SIZE, SEEK_SET))
+    QWORD tmp = (QWORD)sector * SECTOR_SIZE;
+    if(0 == fseeko64(diskImage.h_drive, tmp, SEEK_SET))
     {
         if(count == fread(buff, SECTOR_SIZE, count, diskImage.h_drive))
         {
@@ -110,8 +109,8 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-
-    if(0 == fseeko(diskImage.h_drive, sector * SECTOR_SIZE, SEEK_SET))
+    QWORD tmp = (QWORD)sector * SECTOR_SIZE;
+    if(0 == fseeko64(diskImage.h_drive, tmp, SEEK_SET))
     {
         errno = 0;
         if(count == fwrite(buff, SECTOR_SIZE, count, diskImage.h_drive))
