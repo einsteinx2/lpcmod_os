@@ -6192,7 +6192,12 @@ fatx32Force:
             if (fmt == FS_FAT32 || FS_FATX32 == fmt) {
                 st_dword(buf + 0, 0xFFFFFFF8);  /* Entry 0 */
                 st_dword(buf + 4, 0xFFFFFFFF);  /* Entry 1 */
-                st_dword(buf + 8, 0x0FFFFFFF);  /* Entry 2 (root directory) */
+#ifdef _USE_FATX
+                if(NOTFATX_FS(fmt))     /* FATX do no reserve cluster for root dir as FAT32 does. */
+#endif
+                {
+                    st_dword(buf + 8, 0x0FFFFFFF);  /* Entry 2 (root directory) */
+                }
             } else {
                 st_dword(buf + 0, (fmt == FS_FAT12) ? 0xFFFFF8 : 0xFFFFFFF8);   /* Entry 0 and 1 */
             }
@@ -6226,6 +6231,7 @@ fatx32Force:
                 return FR_DISK_ERR;
             }
             fatxMBRPtr->TableEntries[part].Flags = FATX_PE_PARTFLAGS_IN_USE;
+            fatxMBRPtr->TableEntries[part].LBAStart = b_vol;
             fatxMBRPtr->TableEntries[part].LBASize = sz_vol;
             mem_cpy(fatxMBRPtr->TableEntries[part].Name, BackupPartTbl.TableEntries[part].Name, 16);
             if(FR_OK != fatx_setmbr(pdrv, fatxMBRPtr)) return FR_DISK_ERR;
