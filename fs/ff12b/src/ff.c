@@ -1004,7 +1004,7 @@ FRESULT sync_fs (   /* FR_OK:succeeded, !=0:error */
     res = sync_window(fs);
     if (res == FR_OK) {
         /* Update FSInfo sector if needed */
-        if ((fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_FATX32) && fs->fsi_flag == 1) {
+        if (fs->fs_typex == FS_FAT32 && fs->fsi_flag == 1) {
             /* Create FSInfo structure */
             mem_set(fs->win, 0, SS(fs));
             st_word(fs->win + BS_55AA, 0xAA55);
@@ -1556,22 +1556,40 @@ FRESULT dir_next (  /* FR_OK(0):succeeded, FR_NO_FILE:End of table, FR_DENIED:Co
     UINT n;
 #endif
 
+#ifdef _USE_FATX
     if(ISFATX_FS(fs->fs_typex))
     {
         ofs = dp->dptr + SZFATXDIRE;    /* Next entry */
     }
     else
+#endif
     {
         ofs = dp->dptr + SZDIRE;    /* Next entry */
     }
+#ifdef _USE_FATX
+    if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : ISFATX_FS(fs->fs_typex) ? (4096 * SZFATXDIRE) : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
+
+#else
     if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
+#endif
 
     if (ofs % SS(fs) == 0) {    /* Sector changed? */
         dp->sect++;             /* Next sector */
 
         if (!dp->clust) {       /* Static table */
-            if (ofs / SZDIRE >= fs->n_rootdir) {    /* Report EOT if it reached end of static table */
-                dp->sect = 0; return FR_NO_FILE;
+#ifdef _USE_FATX
+            if(ISFATX_FS(fs->fs_typex))
+            {
+                if (ofs / SZFATXDIRE >= fs->n_rootdir) {    /* Report EOT if it reached end of static table */
+                    dp->sect = 0; return FR_NO_FILE;
+                }
+            }
+            else
+#endif
+            {
+                if (ofs / SZDIRE >= fs->n_rootdir) {    /* Report EOT if it reached end of static table */
+                    dp->sect = 0; return FR_NO_FILE;
+                }
             }
         }
         else {                  /* Dynamic table */
@@ -2202,10 +2220,14 @@ FRESULT dir_read (
         if (res != FR_OK) break;
 #ifdef _USE_FATX
         if(ISFATX_FS(fs->fs_typex))
+        {
             c = dp->dir[DIRx_NameLgth];  /* Test for the entry type */
+        }
         else
 #endif
+        {
             c = dp->dir[DIR_Name];  /* Test for the entry type */
+        }
 
 #ifdef _USE_FATX
         if ((NOTFATX_FS(fs->fs_typex) && c == 0) || (ISFATX_FS(fs->fs_typex) && c == 0xFF))
@@ -2230,7 +2252,11 @@ FRESULT dir_read (
         } else
 #endif
         {   /* On the FAT12/16/32 volume */
+#ifdef _USE_FATX
             dp->obj.attr = a = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK; /* Get attribute */
+#else
+            dp->obj.attr = a = dp->dir[DIR_Attr] & AM_MASK; /* Get attribute */
+#endif
 #if _USE_LFN != 0   /* LFN configuration */
             if (c == DDEM || c == '.' || (int)((a & ~AM_ARC) == AM_VOL) != vol) {   /* An entry without valid data */
                 ord = 0xFF;
@@ -2312,10 +2338,14 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
         if (res != FR_OK) break;
 #ifdef _USE_FATX
         if(ISFATX_FS(fs->fs_typex))
+        {
             c = dp->dir[DIRx_NameLgth];  /* Test for the entry type */
+        }
         else
 #endif
+        {
             c = dp->dir[DIR_Name];
+        }
         if (c == 0) { res = FR_NO_FILE; break; }    /* Reached to end of table */
 #if _USE_LFN != 0   /* LFN configuration */
         dp->obj.attr = a = dp->dir[DIR_Attr] & AM_MASK;
@@ -2527,10 +2557,14 @@ FRESULT dir_remove (    /* FR_OK:Succeeded, FR_DISK_ERR:A disk error */
     if (res == FR_OK) {
 #ifdef _USE_FATX
         if(ISFATX_FS(fs->fs_typex))
+        {
             dp->dir[DIRx_NameLgth] = DDEM;
+        }
         else
 #endif
+        {
             dp->dir[DIR_Name] = DDEM;
+        }
         fs->wflag = 1;
     }
 #endif
@@ -3024,10 +3058,14 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
     if ((UINT)*path < ' ') {                /* Null path name is the origin directory itself */
 #ifdef _USE_FATX
         if(ISFATX_FS(fs->fs_typex))
+        {
             dp->fnx[NSxFLAG] = NS_NONAME;
+        }
         else
 #endif
+        {
             dp->fnx[NSFLAG] = NS_NONAME;
+        }
         res = dir_sdi(dp, 0);
 
     } else {                                /* Follow path */
@@ -3035,18 +3073,30 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             res = create_name(dp, &path);   /* Get a segment name of the path */
             if (res != FR_OK) break;
             res = dir_find(dp);             /* Find an object with the segment name */
+#ifdef _USE_FATX
             if(NOTFATX_FS(fs->fs_typex))
+            {
                 ns = dp->fnx[NSFLAG];
+            }
             else
+#endif
+            {
                 ns = dp->fnx[NSxFLAG];
+            }
             if (res != FR_OK) {             /* Failed to find the object */
                 if (res == FR_NO_FILE) {    /* Object is not found */
                     if (_FS_RPATH && (ns & NS_DOT)) {   /* If dot entry is not exist, stay there */
                         if (!(ns & NS_LAST)) continue;  /* Continue to follow if not last segment */
+#ifdef _USE_FATX
                         if(NOTFATX_FS(fs->fs_typex))
+                        {
                             dp->fnx[NSFLAG] = NS_NONAME;
+                        }
                         else
+#endif
+                        {
                             dp->fnx[NSxFLAG] = NS_NONAME;
+                        }
                         res = FR_OK;
                     } else {                            /* Could not find the object */
                         if (!(ns & NS_LAST)) res = FR_NO_PATH;  /* Adjust error code if not last segment */
@@ -3268,6 +3318,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
     /* Find an FAT partition on the drive. Supports only generic partitioning, FDISK and SFD. */
     bsect = 0;
     fmt = check_fs(fs, bsect);          /* Load sector 0 and check if it is an FAT-VBR as SFD */
+#ifdef _USE_FATX
     if (fmt == FR_FATX_OK && masterHDDFatxPartTableRead) /* FATX stuff */
     {
         fs->fatxPartitionEntry = masterHDDFatxPartTable.TableEntries[vol];
@@ -3286,17 +3337,21 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             return FR_NO_FILESYSTEM;
         }
     }
-    else if (fmt == FR_INT_ERR || (fmt < FR_INT_ERR && LD2PT(vol) != 0)) { /* Not an FAT-VBR or forced partition number */
-        for (i = 0; i < 4; i++) {           /* Get partition offset */
-            pt = fs->win + (MBR_Table + i * SZ_PTE);
-            br[i] = pt[PTE_System] ? ld_dword(pt + PTE_StLba) : 0;
+    else
+#endif
+    {
+        if (fmt == FR_INT_ERR || (fmt < FR_INT_ERR && LD2PT(vol) != 0)) { /* Not an FAT-VBR or forced partition number */
+            for (i = 0; i < 4; i++) {           /* Get partition offset */
+                pt = fs->win + (MBR_Table + i * SZ_PTE);
+                br[i] = pt[PTE_System] ? ld_dword(pt + PTE_StLba) : 0;
+            }
+            i = LD2PT(vol);                     /* Partition number: 0:auto, 1-4:forced */
+            if (i) i--;
+            do {                                /* Find an FAT volume */
+                bsect = br[i];
+                fmt = bsect ? check_fs(fs, bsect) : 3;  /* Check the partition */
+            } while (!LD2PT(vol) && fmt >= FR_INT_ERR && ++i < 4);
         }
-        i = LD2PT(vol);                     /* Partition number: 0:auto, 1-4:forced */
-        if (i) i--;
-        do {                                /* Find an FAT volume */
-            bsect = br[i];
-            fmt = bsect ? check_fs(fs, bsect) : 3;  /* Check the partition */
-        } while (!LD2PT(vol) && fmt >= FR_INT_ERR && ++i < 4);
     }
 
     if (fmt == FR_NO_FILE) return FR_DISK_ERR;       /* An error occured in the disk I/O layer */
