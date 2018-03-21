@@ -5783,7 +5783,6 @@ FRESULT f_mkfs (
     int vol;
     DSTATUS stat;
 #ifdef _USE_FATX
-#define CLUSTERSIZECHARTSIZE 4
     static const BYTE fatxLabel[] = {'E', 'C', 'X', 'Y', 'Z', 'F', 'G'};
     XboxPartitionTable* fatxMBRPtr;
     BYTE fatxHasMBR = 1;
@@ -5853,7 +5852,7 @@ FRESULT f_mkfs (
             return FR_MKFS_ABORTED;
         }
         /* Adjust volume size to compensate for start sector change, if any. And round it to 4096 boundary */
-        sz_vol = (sz_vol - (b_vol - fatxMBRPtr->TableEntries[part].LBAStart)) & ~(DWORD)(FATX_CHAINTABLE_BLOCKSIZE / _MAX_SS);
+        sz_vol = (sz_vol - (b_vol - fatxMBRPtr->TableEntries[part].LBAStart)) & ~(DWORD)((FATX_CHAINTABLE_BLOCKSIZE / _MAX_SS) - 1);
     }
     else
 #endif
