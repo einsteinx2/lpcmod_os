@@ -384,6 +384,9 @@ typedef struct {
 #define MAX_EXFAT   0x7FFFFFFD      /* Maximum number of exFAT clusters (limited by implementation) */
 #define MAX_DIR     0x200000        /* Maximum size of FAT directory */
 #define MAX_DIR_EX  0x10000000      /* Maximum size of exFAT directory */
+#ifdef _USE_FATX
+#define MAX_FATX16   0xFFF0          /* Maximum number of FATX16 clusters */
+#endif
 
 
 /* FatFs refers the members in the FAT structures as byte array instead of
@@ -3419,10 +3422,10 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
 
                                                                         //Calculate size of FAT, in number of 512-byte sectors.
             fasize = (tsect / fs->csize);                             //Divide total of sectors(512 bytes) by number of sector contained in a cluster
-            fasize = fasize * ((tsect < FATX16_MAXLBA) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
+            fasize = fasize * ((tsect < (MAX_FATX16 * fs->csize)) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
                                                                         //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
 
-            fasize = (fasize + 4096 - 1) & ~(DWORD)(4096 - 1);          //Round it to 4096 byte boundary.
+            fasize = (fasize + FATX_CHAINTABLE_BLOCKSIZE - 1) & ~(DWORD)(FATX_CHAINTABLE_BLOCKSIZE - 1);          //Round it to 4096 byte boundary.
             fasize = (fasize >> 9);                                     //Divide by 512bytes,
             fs->fsize = fasize;                                         /* Number of sectors per FAT */
 
@@ -3439,7 +3442,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             if (nclst == 0) return FR_NO_FILESYSTEM;            /* (Invalid volume size) */
 
             fmt = FS_FATX32;
-            if (nclst <= MAX_FAT16) fmt = FS_FATX16;
+            if (nclst < MAX_FATX16) fmt = FS_FATX16;
 
             /* Boundaries and Limits */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
@@ -5771,7 +5774,6 @@ FRESULT f_mkfs (
     const UINT n_rootdir = 512; /* Number of root directory entries for FAT12/16 volume */
     static const WORD cst[] = {1, 4, 16, 64, 256, 512, 0};  /* Cluster size boundary for FAT12/16 volume (4Ks unit) */
     static const WORD cst32[] = {1, 2, 4, 8, 16, 32, 0};    /* Cluster size boundary for FAT32 volume (128Ks unit) */
-    static const BYTE fatxLabel[] = {'E', 'C', 'X', 'Y', 'Z', 'F', 'G'};
     BYTE fmt, sys, *buf, *pte, pdrv, part;
     WORD ss;
     DWORD szb_buf, sz_buf, sz_blk, n_clst, pau, sect, nsect, n;
@@ -5782,6 +5784,7 @@ FRESULT f_mkfs (
     DSTATUS stat;
 #ifdef _USE_FATX
 #define CLUSTERSIZECHARTSIZE 4
+    static const BYTE fatxLabel[] = {'E', 'C', 'X', 'Y', 'Z', 'F', 'G'};
     XboxPartitionTable* fatxMBRPtr;
     BYTE fatxHasMBR = 1;
     PARTITIONHEADER* const fatxHeader = work;
@@ -5810,7 +5813,11 @@ FRESULT f_mkfs (
 #else
     ss = _MAX_SS;
 #endif
+#ifdef _USE_FATX
     if (((opt & FM_FATXANY) == 0) && ((au != 0 && au < ss) || au > 0x1000000 || (au & (au - 1)))) return FR_INVALID_PARAMETER; /* Check if au is valid */
+#else
+    if ((au != 0 && au < ss) || au > 0x1000000 || (au & (au - 1))) return FR_INVALID_PARAMETER; /* Check if au is valid */
+#endif
     au /= ss;   /* Cluster size in unit of sector */
 
     /* Get working buffer */
@@ -5837,7 +5844,16 @@ FRESULT f_mkfs (
         }
 
         b_vol = fatxMBRPtr->TableEntries[part].LBAStart;    /* Get volume start sector */
+
         sz_vol = fatxMBRPtr->TableEntries[part].LBASize;    /* Get volume size */
+        /* Round start sector to 4096 boundary */
+        b_vol = (b_vol + ((FATX_CHAINTABLE_BLOCKSIZE / _MAX_SS) - 1)) & ~(DWORD)((FATX_CHAINTABLE_BLOCKSIZE / _MAX_SS) - 1);
+        if(b_vol < fatxMBRPtr->TableEntries[part].LBAStart)
+        {
+            return FR_MKFS_ABORTED;
+        }
+        /* Adjust volume size to compensate for start sector change, if any. And round it to 4096 boundary */
+        sz_vol = (sz_vol - (b_vol - fatxMBRPtr->TableEntries[part].LBAStart)) & ~(DWORD)(FATX_CHAINTABLE_BLOCKSIZE / _MAX_SS);
     }
     else
 #endif
@@ -5869,9 +5885,9 @@ FRESULT f_mkfs (
         }
         if (au > 128) return FR_INVALID_PARAMETER;  /* Too large au for FAT/FAT32 */
 #ifdef _USE_FATX
-        if((opt & FM_FATX32) || (opt & FM_FATX16))
+        if(opt & FM_FATXANY)
         {
-            if((opt & FM_FATX32) && (sz_vol > FATX16_MAXLBA))
+            if((opt & FM_FATX32) && (sz_vol > (MAX_FATX16 * 32)))
             {
                 fmt = FS_FATX32;
                 break;
@@ -6060,23 +6076,32 @@ FRESULT f_mkfs (
 #ifdef _USE_FATX
             if(ISFATX_FS(fmt))
             {
+                pau = 32; /* Whatever the outcome, we don't want a volume with smaller than 16KB clusters */
+                /* 4KB clusters are possible on FATX, for OG Xbox at least, but not desirable.
+                 * Smallest partition is 500MB and mostly contains rather large files which would not benefit
+                 * from 8KB clusters. It has been decided that cluster size calculations will start at 16KB.
+                 */
                 if(FS_FATX16 == fmt)
                 {
-                    pau = 32; /*FATX16 always have 16KB clusters */
-                    if(MAX_FAT16 <= (sz_vol / pau)) goto fatx32Force;
+                    if(MAX_FATX16 <= (sz_vol / pau)) goto fatx32Force;
                 }
                 else if(FS_FATX32 == fmt)
                 {
-fatx32Force:
-                    for(i = 0; i < CLUSTERSIZECHARTSIZE; i++)
+                    if(MAX_FATX16 > (sz_vol / pau))
                     {
-                        pau = 32 << i;
+
+                        fmt = FS_FATX16;
+                        break;
+                    }
+fatx32Force:
+                    for(pau = 32; pau < 128; pau <<= 1)
+                    {
                         if(MAX_FAT32 >= (sz_vol / pau))
                         {
                             break;
                         }
                     }
-                    if(CLUSTERSIZECHARTSIZE == i)
+                    if(pau > 128)
                     {
                         return FR_MKFS_ABORTED;
                     }
