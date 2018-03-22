@@ -6299,7 +6299,7 @@ fatx32Force:
     }
 
 #ifdef _USE_FATX
-    if(fmt == FS_FATX16 || fmt == FS_FATX32)
+    if(ISFATX_FS(fmt))
     {
 
         if(0 != fatxHasMBR)
