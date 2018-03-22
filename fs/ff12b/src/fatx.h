@@ -28,6 +28,9 @@
 #define LBASIZE_256GB   536870912UL                       //Switch to 32K clusters beyond that
 #define LBASIZE_137GB   (0x0FFFFFFFUL - XBOX_EXTEND_STARTLBA)     //LBA28 limited F: drive size.
 
+#define FATX_MIN_CLUSTERSIZE_INSECTORS   32
+#define FATX_MAX_CLUSTERSIZE_INSECTORS   128
+
 #define FATX_DRIVE_MAGIC "BRFR"
 
 /*Taken from XBPartitionner*/

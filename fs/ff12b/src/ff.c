@@ -5873,20 +5873,20 @@ FRESULT f_mkfs (
             sz_vol -= b_vol;                        /* Volume size */
         }
     }
-    if (sz_vol < 128) return FR_MKFS_ABORTED;   /* Check if volume size is >=128s */
+    if (sz_vol < FATX_MAX_CLUSTERSIZE_INSECTORS) return FR_MKFS_ABORTED;   /* Check if volume size is >=128s */
 
     /* Pre-determine the FAT type */
     do {
         if (_FS_EXFAT && (opt & FM_EXFAT)) {    /* exFAT possible? */
-            if ((opt & FM_ANY) == FM_EXFAT || sz_vol >= 0x4000000 || au > 128) {    /* exFAT only, vol >= 64Ms or au > 128s ? */
+            if ((opt & FM_ANY) == FM_EXFAT || sz_vol >= 0x4000000 || au > FATX_MAX_CLUSTERSIZE_INSECTORS) {    /* exFAT only, vol >= 64Ms or au > 128s ? */
                 fmt = FS_EXFAT; break;
             }
         }
-        if (au > 128) return FR_INVALID_PARAMETER;  /* Too large au for FAT/FAT32 */
+        if (au > FATX_MAX_CLUSTERSIZE_INSECTORS) return FR_INVALID_PARAMETER;  /* Too large au for FAT/FAT32 */
 #ifdef _USE_FATX
         if(opt & FM_FATXANY)
         {
-            if((opt & FM_FATX32) && (sz_vol > (MAX_FATX16 * 32)))
+            if((opt & FM_FATX32) && (sz_vol > (MAX_FATX16 * FATX_MIN_CLUSTERSIZE_INSECTORS)))
             {
                 fmt = FS_FATX32;
                 break;
@@ -6075,7 +6075,7 @@ FRESULT f_mkfs (
 #ifdef _USE_FATX
             if(ISFATX_FS(fmt))
             {
-                pau = 32; /* Whatever the outcome, we don't want a volume with smaller than 16KB clusters */
+                pau = FATX_MIN_CLUSTERSIZE_INSECTORS; /* Whatever the outcome, we don't want a volume with smaller than 16KB clusters */
                 /* 4KB clusters are possible on FATX, for OG Xbox at least, but not desirable.
                  * Smallest partition is 500MB and mostly contains rather large files which would not benefit
                  * from 8KB clusters. It has been decided that cluster size calculations will start at 16KB.
@@ -6093,14 +6093,14 @@ FRESULT f_mkfs (
                         break;
                     }
 fatx32Force:
-                    for(pau = 32; pau < 128; pau <<= 1)
+                    for(pau = FATX_MIN_CLUSTERSIZE_INSECTORS; pau < FATX_MAX_CLUSTERSIZE_INSECTORS; pau <<= 1)
                     {
                         if(MAX_FAT32 >= (sz_vol / pau))
                         {
                             break;
                         }
                     }
-                    if(pau > 128)
+                    if(pau > FATX_MAX_CLUSTERSIZE_INSECTORS)
                     {
                         return FR_MKFS_ABORTED;
                     }
