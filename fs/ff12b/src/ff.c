@@ -365,7 +365,7 @@ typedef struct {
 /* Name status flags */
 #define NSFLAG      11      /* Index of name status byte in fn[] */
 #ifdef _USE_FATX
-#define NSxFLAG     42      /* Index of name status byte in fn[] */
+#define NSxFLAG     FATX_FILENAME_MAX /* Index of name status byte in fn[] */
 #endif
 #define NS_LOSS     0x01    /* Out of 8.3 format */
 #define NS_LFN      0x02    /* Force to create LFN entry */
@@ -2492,9 +2492,9 @@ FRESULT dir_register (  /* FR_OK:succeeded, FR_DENIED:no free entry or too many 
 #ifdef _USE_FATX
             if(ISFATX_FS(fs->fs_typex))
             {
-                mem_cpy(dp->dir + DIRx_Name, dp->fnx, 42);    /* Put SFN */ //XXX: use constant
+                mem_cpy(dp->dir + DIRx_Name, dp->fnx, FATX_FILENAME_MAX);    /* Put SFN */
                 for (nlen = 0; dp->fnx[nlen] >= ' ' && dp->fnx[nlen] != 0xFF; nlen++) ; /* Get FATX name length */
-                if(nlen > 42)
+                if(nlen > FATX_FILENAME_MAX)
                 {
                     res = FR_INVALID_NAME;
                 }
@@ -2667,7 +2667,7 @@ void get_fileinfo (     /* No return code */
     if(ISFATX_FS(fs->fs_typex))
     {
         fno->namelength = dp->dir[DIRx_NameLgth];
-        BYTE realLength = fno->namelength == DDEM ? 42 : fno->namelength;
+        BYTE realLength = fno->namelength == DDEM ? FATX_FILENAME_MAX : fno->namelength;
         while (i < realLength) {        /* Copy name body and extension */
             c = (TCHAR)dp->dir[DIRx_Name + i++];
             if (c == 0xFF || c == '\0') break;               /* Skip padding spaces */
@@ -2921,8 +2921,8 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
     FATFS* fs = dp->obj.fs;
     if(ISFATX_FS(fs->fs_typex))
     {
-        mem_set(sfn, 0xFF, 42);
-        si = i = 0; ni = 42;
+        mem_set(sfn, 0xFF, FATX_FILENAME_MAX);
+        si = i = 0; ni = FATX_FILENAME_MAX;
 
         for (;;) {
             c = (BYTE)p[si++];
@@ -2936,7 +2936,16 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
             //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
             sfn[i++] = c;
         }
-        //TODO: make sure every case is covered. "." and ".." dir do not exist in FATX
+
+        /* Refuse to handle "." and ".." directory entries on FATX */
+        if('.' == sfn[0] && 1 == i)
+        {
+            return FR_INVALID_NAME;
+        }
+        if(mem_cmp(sfn, "..", 2) == 0 && 2 == i)
+        {
+            return FR_INVALID_NAME;
+        }
     }
     else
 #endif
@@ -3421,8 +3430,12 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             tsect = fs->fatxPartitionEntry.LBASize;
 
                                                                         //Calculate size of FAT, in number of 512-byte sectors.
-            fasize = (tsect / fs->csize);                             //Divide total of sectors(512 bytes) by number of sector contained in a cluster
-            fasize = fasize * ((tsect < (MAX_FATX16 * fs->csize)) ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
+            nclst = (tsect / fs->csize);                             //Divide total of sectors(512 bytes) by number of sector contained in a cluster
+            if (nclst == 0) return FR_NO_FILESYSTEM;            /* (Invalid volume size) */
+
+            fmt = FS_FATX32;
+            if (MAX_FATX16 > (nclst + FATX_RESERVED_CLUSTER)) fmt = FS_FATX16;  /* Cluster count is below FATX16 max cluster limit */
+            fasize = nclst * (fmt == FS_FATX16 ? 2 : 4);      //Multiply by length(in bytes) of a single entry in FAT.
                                                                         //FATX16 has 2 byte FAT entries and FATX32 has 4 bytes entries.
 
             fasize = (fasize + FATX_CHAINTABLE_BLOCKSIZE - 1) & ~(DWORD)(FATX_CHAINTABLE_BLOCKSIZE - 1);          //Round it to 4096 byte boundary.
@@ -3439,10 +3452,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             if (tsect < sysect) return FR_NO_FILESYSTEM;        /* (Invalid volume size) */
 
             nclst = (tsect - sysect) / fs->csize;
-            if (nclst == 0) return FR_NO_FILESYSTEM;            /* (Invalid volume size) */
 
-            fmt = FS_FATX32;
-            if (nclst < MAX_FATX16) fmt = FS_FATX16;
 
             /* Boundaries and Limits */
             fs->n_fatent = nclst + 2;                           /* Number of FAT entries */
@@ -5886,7 +5896,7 @@ FRESULT f_mkfs (
 #ifdef _USE_FATX
         if(opt & FM_FATXANY)
         {
-            if((opt & FM_FATX32) && (sz_vol > (MAX_FATX16 * FATX_MIN_CLUSTERSIZE_INSECTORS)))
+            if((opt & FM_FATX32) && (MAX_FATX16 <= ((sz_vol / FATX_MIN_CLUSTERSIZE_INSECTORS) + FATX_RESERVED_CLUSTER)))
             {
                 fmt = FS_FATX32;
                 break;
@@ -6082,11 +6092,11 @@ FRESULT f_mkfs (
                  */
                 if(FS_FATX16 == fmt)
                 {
-                    if(MAX_FATX16 <= (sz_vol / pau)) goto fatx32Force;
+                    if(MAX_FATX16 <= ((sz_vol / pau) + FATX_RESERVED_CLUSTER)) goto fatx32Force;
                 }
                 else if(FS_FATX32 == fmt)
                 {
-                    if(MAX_FATX16 > (sz_vol / pau))
+                    if(MAX_FATX16 > ((sz_vol / pau) + FATX_RESERVED_CLUSTER))
                     {
 
                         fmt = FS_FATX16;
@@ -6198,7 +6208,6 @@ fatx32Force:
         tbl[0] = b_vol; tbl[1] = b_vol + sz_vol - 1;    /* Inform the device the volume area can be erased */
         disk_ioctl(pdrv, CTRL_TRIM, tbl);
 #endif
-        //TODO: BFD - FATX create boot sector if requested
 #ifdef _USE_FATX
         if(ISFATX_FS(fmt))
         {
@@ -6271,12 +6280,7 @@ fatx32Force:
             if (fmt == FS_FAT32 || FS_FATX32 == fmt) {
                 st_dword(buf + 0, 0xFFFFFFF8);  /* Entry 0 */
                 st_dword(buf + 4, 0xFFFFFFFF);  /* Entry 1 */
-#ifdef _USE_FATX
-                if(NOTFATX_FS(fmt))     /* FATX do no reserve cluster for root dir as FAT32 does. */
-#endif
-                {
-                    st_dword(buf + 8, 0x0FFFFFFF);  /* Entry 2 (root directory) */
-                }
+                st_dword(buf + 8, 0x0FFFFFFF);  /* Entry 2 (root directory) */
             } else {
                 st_dword(buf + 0, (fmt == FS_FAT12) ? 0xFFFFF8 : 0xFFFFFFF8);   /* Entry 0 and 1 */
             }

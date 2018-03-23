@@ -51,6 +51,9 @@
 // ID of the root FAT cluster
 #define FATX_ROOT_FAT_CLUSTER 1
 
+// Number of reserved clusters
+#define FATX_RESERVED_CLUSTER 1
+
 // Size of FATX directory entries
 #define FATX_DIRECTORYENTRY_SIZE 0x40
 
