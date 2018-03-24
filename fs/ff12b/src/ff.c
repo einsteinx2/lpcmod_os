@@ -2312,6 +2312,17 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #if _USE_LFN != 0
     BYTE a, ord, sum;
 #endif
+#ifdef _USE_FATX
+    BYTE fatxNameLgth = 0;
+    while(fatxNameLgth < 42)
+    {
+        if(0xFF == dp->fnx[fatxNameLgth] || 0x00 == dp->fnx[fatxNameLgth])
+        {
+            break;
+        }
+        fatxNameLgth++;
+    }
+#endif
 
     res = dir_sdi(dp, 0);           /* Rewind directory object */
     if (res != FR_OK) return res;
@@ -2374,7 +2385,7 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #else       /* Non LFN configuration */
         dp->obj.attr = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK;
 #ifdef _USE_FATX
-        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir + (ISFATX_FS(fs->fs_typex) ? DIRx_Name : DIR_Name), dp->fnx, ISFATX_FS(fs->fs_typex) ? dp->dir[DIRx_NameLgth] : 11)) break;  /* Is it a valid entry? */
+        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < dp->dir[DIRx_NameLgth] && FATX_FILENAME_MAX >= dp->dir[DIRx_NameLgth])) && !mem_cmp(dp->dir + (ISFATX_FS(fs->fs_typex) ? DIRx_Name : DIR_Name), dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
 #else
         if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;  /* Is it a valid entry? */
 #endif
