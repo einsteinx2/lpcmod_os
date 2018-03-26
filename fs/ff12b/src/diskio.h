@@ -24,8 +24,6 @@ typedef enum {
 	RES_PARERR		/* 4: Invalid Parameter */
 } DRESULT;
 
-int assign_drives(const char* diskImageName);
-
 /*---------------------------------------*/
 /* Prototypes for disk control functions */
 

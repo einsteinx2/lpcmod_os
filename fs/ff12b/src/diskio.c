@@ -21,25 +21,6 @@ typedef struct {
     HANDLE h_drive;
 } STAT;
 
-static volatile STAT diskImage;
-
-int assign_drives(const char* diskImageName)
-{
-    errno = 0;
-    diskImage.h_drive = fopen(diskImageName, "r+b");
-    if(diskImage.h_drive)
-    {
-        disk_status(0);
-        return 0;
-    }
-    else
-    {
-        printf("Image Open Err = %d\n", errno);
-    }
-
-    return 1;
-}
-
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
 /*-----------------------------------------------------------------------*/
@@ -48,12 +29,9 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-    diskImage.status = 0;
-    diskImage.sz_sector = SECTOR_SIZE;
-    fseeko(diskImage.h_drive, 0L, SEEK_END);
-    QWORD size = ftello(diskImage.h_drive);
-    diskImage.n_sectors = size / (unsigned int)SECTOR_SIZE;
-	return RES_OK;
+    DSTATUS status = tsaHarddiskInfo[pdrv].m_fDriveExists ? RES_OK : STA_NOINIT;
+    status |= tsaHarddiskInfo[pdrv].m_fAtapi ? STA_PROTECT : RES_OK;
+	return status;
 }
 
 
@@ -83,18 +61,10 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
+#define DEFAULT_RETRY_COUNT 3
+    int returnValue;
 
-    if(0 == fseeko(diskImage.h_drive, sector * SECTOR_SIZE, SEEK_SET))
-    {
-        if(count == fread(buff, SECTOR_SIZE, count, diskImage.h_drive))
-        {
-            return RES_OK;
-        }
-        return RES_ERROR;
-    }
-
-
-	return RES_PARERR;
+	return returnValue;
 }
 
 
@@ -110,23 +80,10 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
+#define DEFAULT_RETRY_COUNT 3
+    int returnValue = BootIdeWriteMultiple(pdrv, buff, sector, count, DEFAULT_RETRY_COUNT);
 
-    if(0 == fseeko(diskImage.h_drive, sector * SECTOR_SIZE, SEEK_SET))
-    {
-        errno = 0;
-        if(count == fwrite(buff, SECTOR_SIZE, count, diskImage.h_drive))
-        {
-            return RES_OK;
-        }
-        else
-        {
-            printf("Image Write Err = %d\n", errno);
-        }
-        return RES_ERROR;
-    }
-
-
-	return RES_PARERR;
+    return returnValue;
 }
 
 
