@@ -74,7 +74,8 @@ DRESULT disk_ioctl (BYTE pdrv, BYTE cmd, void* buff);
 
 
 #define SECTOR_SIZE 512
-#define SZ_BLOCK 256
+/* Block size for HDD is a single sector */
+#define SZ_BLOCK 1
 
 #ifdef __cplusplus
 }

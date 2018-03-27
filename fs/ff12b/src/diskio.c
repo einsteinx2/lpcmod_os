@@ -101,20 +101,21 @@ DRESULT disk_ioctl (
     DRESULT res = RES_PARERR;
     switch (cmd) {
     case CTRL_SYNC:         /* Nothing to do */
-        res = RES_OK;
+        res = BootIdeFlushCache(pdrv);
         break;
 
     case GET_SECTOR_COUNT:  /* Get number of sectors on the drive */
-        *(DWORD*)buff = diskImage.n_sectors;
+        *(DWORD*)buff = BootIdeGetSectorCount(pdrv);
         res = RES_OK;
         break;
 
     case GET_SECTOR_SIZE:   /* Get size of sector for generic read/write */
-        *(WORD*)buff = diskImage.sz_sector;
+        *(WORD*)buff = BootIdeGetSectorSize(pdrv);
         res = RES_OK;
         break;
 
     case GET_BLOCK_SIZE:    /* Get internal block size in unit of sector */
+        // TODO: Fetch block size from device in case flash device are ever supported in XBlast OS.
         *(DWORD*)buff = SZ_BLOCK;
         res = RES_OK;
         break;

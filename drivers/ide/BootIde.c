@@ -157,7 +157,8 @@ int BootIdeIssueAtaCommand(
     int n;
 
     //IoInputByte(IDE_REG_STATUS(uIoBase));     //No need since we'll be checking ALT_STATUS register in BootIdeWaitNotBusy function.
-    if(!skipFirstWait){
+    if(!skipFirstWait)
+    {
         n=BootIdeWaitNotBusy(uIoBase);
         if(n == -1)    {// as our command may be being used to clear the error, not a good policy to check too closely!
             debugSPIPrint(DEBUG_IDE_DRIVER,"Error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
@@ -184,7 +185,8 @@ int BootIdeIssueAtaCommand(
 //    wait_us(1);
 
     n=BootIdeWaitNotBusy(uIoBase);
-    if(n){
+    if(n)
+    {
 //        printk("\n      error on BootIdeIssueAtaCommand wait 3: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
         debugSPIPrint(DEBUG_IDE_DRIVER,"Error on BootIdeIssueAtaCommand wait 2: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
         return n;
@@ -435,6 +437,9 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             *((unsigned int*)&(drive_info[100]));
     }
     /* End 48-bit LBA */   
+
+    tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported = drive_info[86] & 1ul<<12;
+    tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported = drive_info[86] & 1ul<<13;
     
     { 
         unsigned short * pw=(unsigned short *)&(drive_info[10]);
@@ -678,7 +683,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             if(FATXCheckFATXMagic(nIndexDrive)){
                 // report on the MBR-ness of the drive contents
                 debugSPIPrint(DEBUG_IDE_DRIVER,"Drive is FATX.\n");
-                tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive);
+                tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive) ? 1 : 0;
             }
         }
 
@@ -1491,6 +1496,43 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
         status = BootIdeWriteMultiple(nDriveIndex, pbBuffer, startLBA, len, retry);      //Retry one more time.
     }
     return status;
+}
+
+int BootIdeFlushCache(int nDriveIndex)
+{
+    int result = 1;
+    tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
+    unsigned short uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+    tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
+
+    if(tsaHarddiskInfo[nDriveIndex].m_fFlushCacheExtSupported)        //LBA48 drive
+    {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Flush cache Ext\n");
+        result = BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH_EXT, &tsicp, false);
+    }
+    else if(tsaHarddiskInfo[nDriveIndex].m_fFlushCacheSupported)
+    {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Flush cache Ext\n");
+        result = BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH, &tsicp, false);
+    }
+
+    if(result)
+    {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "error : %u\n", result);
+    }
+
+    return result;
+}
+
+int BootIdeGetSectorCount(int nDriveIndex)
+{
+    return tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal;
+}
+
+int BootIdeGetSectorSize(int nDriveIndex)
+{
+    // TODO: retrieve from IDENTIFY cmd
+    return IDE_SECTOR_SIZE;
 }
 
 /* -------------------------------------------------------------------------------- */

@@ -88,6 +88,10 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
 int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, unsigned char retry);
 int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, unsigned short len, unsigned char retry);
 
+int BootIdeFlushCache(int nDriveIndex);
+int BootIdeGetSectorCount(int nDriveIndex);
+int BootIdeGetSectorSize(int nDriveIndex);
+
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 int driveSMARTRETURNSTATUS(int nDriveIndex);
 

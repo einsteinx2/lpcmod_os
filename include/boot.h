@@ -116,9 +116,12 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
     unsigned short m_wAtaRevisionSupported;
     unsigned char s_length;
     unsigned char m_length;
-    char m_fHasMbr : 2;
-    unsigned char m_bIORDY : 2;
-    unsigned char m_fDMAInit : 4;
+    char m_fHasMbr : 1;
+    unsigned char m_bIORDY : 1;
+    unsigned char m_fDMAInit : 1;
+    unsigned char m_fFlushCacheSupported : 1;
+    unsigned char m_fFlushCacheExtSupported : 1;
+    unsigned char unused : 3;
     unsigned short m_securitySettings; //This contains the contents of the ATA security regs
     unsigned short m_masterPassSupport;
     unsigned char m_maxBlockTransfer;  //Max number of blocks allowed in a single transfer.
