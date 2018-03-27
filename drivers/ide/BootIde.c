@@ -23,25 +23,27 @@
 #define IDE_SECTOR_SIZE         0x200
 #define IDE_BASE1                     (0x1F0u) /* primary controller */
 
-#define IDE_REG_EXTENDED_OFFSET       (0x200u)
+#define IDE_REG_EXTENDED_OFFSET       (0x204u) /* 0x3F4 */
 
+/* Read/Write registers*/
 #define IDE_REG_DATA(base)              ((base) + 0u) /* word register */
-#define IDE_REG_ERROR(base)             ((base) + 1u)                          //Error register (read-only)
-#define IDE_REG_FEATURE(base)           ((base) + 1u)                          //Features register (write-only)
 #define IDE_REG_SECTOR_COUNT(base)      ((base) + 2u)                          //Sector Count register (read-write)
-#define IDE_REG_SECTOR_NUMBER(base)     ((base) + 3u)                          //LBA Low register (read-write)
-#define IDE_REG_LBA_LOW(base)           ((base) + 3u)                          //Same as above but easier to remember
-#define IDE_REG_CYLINDER_LSB(base)      ((base) + 4u)                          //LBA Mid register (read-write)
-#define IDE_REG_LBA_MID(base)           ((base) + 4u)                          //Same as above but easier to remember
-#define IDE_REG_CYLINDER_MSB(base)      ((base) + 5u)                          //LBA High register (read-write)
-#define IDE_REG_LBA_HIGH(base)          ((base) + 5u)                          //Same as above but easier to remember
+#define IDE_REG_LBA_LOW(base)           ((base) + 3u)                          //(read-write)
+#define IDE_REG_LBA_MID(base)           ((base) + 4u)                          //(read-write)
+#define IDE_REG_LBA_HIGH(base)          ((base) + 5u)                          //(read-write)
 #define IDE_REG_DRIVEHEAD(base)         ((base) + 6u)                          //Device control register (read-write)
 #define IDE_REG_DEVICE(base)            ((base) + 6u)                          //Same as above but easier to remember
+
+
+/* Read only registers*/
+#define IDE_REG_ERROR(base)             ((base) + 1u)                          //Error register (read-only)
 #define IDE_REG_STATUS(base)            ((base) + 7u)                          //Status register (read-only)
+#define IDE_REG_ALTSTATUS(base)         ((base) + IDE_REG_EXTENDED_OFFSET + 2u)
+
+/* Write Only registers*/
+#define IDE_REG_FEATURE(base)           ((base) + 1u)                          //Features register (write-only)
 #define IDE_REG_COMMAND(base)           ((base) + 7u)                          //Command Register(write-only)
-#define IDE_REG_ALTSTATUS(base)         ((base) + IDE_REG_EXTENDED_OFFSET + 6u)
-#define IDE_REG_CONTROL(base)           ((base) + IDE_REG_EXTENDED_OFFSET + 6u)
-#define IDE_REG_ADDRESS(base)           ((base) + IDE_REG_EXTENDED_OFFSET + 7u)
+#define IDE_REG_CONTROL(base)           ((base) + IDE_REG_EXTENDED_OFFSET + 2u)
 
 /*
 Normal command input(sending to ATA device) must send the following registers:
@@ -170,15 +172,16 @@ int BootIdeIssueAtaCommand(
         /* this won't hurt for non 48-bit LBA commands since we re-write these registers below */   
     //debugSPIPrint(DEBUG_IDE_DRIVER,"Issuing ATA command.\n");
     IoOutputByte(IDE_REG_SECTOR_COUNT(uIoBase), params->m_bCountSectorExt);   
-    IoOutputByte(IDE_REG_SECTOR_NUMBER(uIoBase), params->m_bSectorExt);   
-    IoOutputByte(IDE_REG_CYLINDER_LSB(uIoBase), params->m_wCylinderExt & 0xFF);   
-    IoOutputByte(IDE_REG_CYLINDER_MSB(uIoBase), (params->m_wCylinderExt >> 8) ); 
+    IoOutputByte(IDE_REG_LBA_LOW(uIoBase), params->m_bSectorExt);
+    IoOutputByte(IDE_REG_LBA_MID(uIoBase), params->m_wCylinderExt & 0xFF);
+    IoOutputByte(IDE_REG_LBA_HIGH(uIoBase), (params->m_wCylinderExt >> 8) );
     /* End 48-bit LBA */   
 
     IoOutputByte(IDE_REG_SECTOR_COUNT(uIoBase), params->m_bCountSector);	//Sector count reg
-    IoOutputByte(IDE_REG_SECTOR_NUMBER(uIoBase), params->m_bSector);		//LBA LOW
-    IoOutputByte(IDE_REG_CYLINDER_LSB(uIoBase), params->m_wCylinder & 0xFF);	//LBA MID
-    IoOutputByte(IDE_REG_CYLINDER_MSB(uIoBase), (params->m_wCylinder >> 8));	//LBA HIGH
+    IoOutputByte(IDE_REG_LBA_LOW(uIoBase), params->m_bSector);		//LBA LOW
+    IoOutputByte(IDE_REG_LBA_MID(uIoBase), params->m_wCylinder & 0xFF);	//LBA MID
+    IoOutputByte(IDE_REG_LBA_HIGH(uIoBase), (params->m_wCylinder >> 8));	//LBA HIGH
+    /* For 1ba28, m_bDrivehead lower nibble has already been populated with LBA28 addr 4 MSBs */
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), params->m_bDrivehead);		//DEVICE REG
 
     IoOutputByte(IDE_REG_COMMAND(uIoBase), command);				//COMMAND REG
@@ -265,8 +268,8 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
 
     wait_us_blocking(1);
 
-    w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
-    w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;
+    w=IoInputByte(IDE_REG_LBA_MID(uIoBase));
+    w|=(IoInputByte(IDE_REG_LBA_HIGH(uIoBase)))<<8;
 
     n=IoInputByte(IDE_REG_STATUS(uIoBase));
     if(n&1) { // error
@@ -554,7 +557,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             tsaHarddiskInfo[nIndexDrive].m_bIORDY = 1;
         }
 
-        tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = *((unsigned int*)&(drive_info[67]));       //Value in ns
+        tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = drive_info[67];       //Value in ns
         debugSPIPrint(DEBUG_IDE_DRIVER,"Minimum PIO cycle for HDD is %u.\n", tsaHarddiskInfo[nIndexDrive].m_minPIOcycle);
         //Set fastest PIO mode depending on cycle time supplied by HDD.
 
@@ -1012,8 +1015,8 @@ int BootIdeAtapiModeSense(int nDriveIndex, unsigned char bCodePage, unsigned cha
             return 1;
     }
 
-    nReturn=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
-    nReturn |=IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase))<<8;
+    nReturn=IoInputByte(IDE_REG_LBA_MID(uIoBase));
+    nReturn |=IoInputByte(IDE_REG_LBA_HIGH(uIoBase))<<8;
     if(nReturn>nLengthMaxReturn) nReturn=nLengthMaxReturn;
     BootIdeReadData(uIoBase, pba, nReturn);
 
@@ -1046,8 +1049,8 @@ int BootIdeAtapiAdditionalSenseCode(int nDriveIndex, unsigned char * pba, int nL
             return 1;
     }
 
-    nReturn=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
-    nReturn |=IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase))<<8;
+    nReturn=IoInputByte(IDE_REG_LBA_MID(uIoBase));
+    nReturn |=IoInputByte(IDE_REG_LBA_HIGH(uIoBase))<<8;
     if(nReturn>nLengthMaxReturn) nReturn=nLengthMaxReturn;
     BootIdeReadData(uIoBase, pba, nReturn);
 
@@ -1163,8 +1166,8 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
             return 1;
         }
 
-        nReturn=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
-        nReturn |=IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase))<<8;
+        nReturn=IoInputByte(IDE_REG_LBA_MID(uIoBase));
+        nReturn |=IoInputByte(IDE_REG_LBA_HIGH(uIoBase))<<8;
 
         if(nReturn>2048) nReturn=2048;
         status = BootIdeReadData(uIoBase, pbBuffer, nReturn);
@@ -1820,8 +1823,8 @@ int driveSMARTRETURNSTATUS(int nDriveIndex){
 
     wait_us_blocking(1);
 
-    w=IoInputByte(IDE_REG_CYLINDER_LSB(uIoBase));
-    w|=(IoInputByte(IDE_REG_CYLINDER_MSB(uIoBase)))<<8;
+    w=IoInputByte(IDE_REG_LBA_MID(uIoBase));
+    w|=(IoInputByte(IDE_REG_LBA_HIGH(uIoBase)))<<8;
 
     error=IoInputByte(IDE_REG_STATUS(uIoBase));
     if(error&1) { // error

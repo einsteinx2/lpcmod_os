@@ -16,6 +16,7 @@
 #define DEBUG_FLASH_UI          0
 #define DEBUG_EXCEPTIONS        0
 #define DEBUG_IDE_DRIVER        0
+#define DEBUG_IDE_LOCK          0
 #define DEBUG_VIDEO_DRIVER      0
 #define DEBUG_EEPROM_DRIVER     0
 #define DEBUG_LWIP              0
