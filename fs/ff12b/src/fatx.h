@@ -111,27 +111,8 @@ typedef struct {                                        //Also known as FATX Sup
     unsigned char  unused[0xfee];
 }__attribute__((packed)) PARTITIONHEADER;               //For a total of 4096(0x1000) bytes.
 
-extern const unsigned char NbFATXPartPerHDD;
 
 #define ISFATX_FS(fs) (fs == FS_FATX16 || fs == FS_FATX32)
 #define NOTFATX_FS(fs) (fs != FS_FATX16 && fs != FS_FATX32)
-
-#define Part_MasterC    1
-#define Part_MasterE    0
-#define Part_MasterF    5
-#define Part_MasterG    6
-#define Part_MasterX    2
-#define Part_MasterY    3
-#define Part_MasterZ    4
-
-#define Part_SlaveC     8
-#define Part_SlaveE     7
-#define Part_SlaveF     12
-#define Part_SlaveG     13
-#define Part_SlaveX     9
-#define Part_SlaveY     10
-#define Part_SlaveZ     11
-
-void FatFS_init(void);
 
 #endif /* FATX_H_ */

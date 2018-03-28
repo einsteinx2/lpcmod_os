@@ -5,14 +5,13 @@
  *      Author: cromwelldev
  */
 
-#include "PartTable.h"
 #include "ff.h"
 #include "string.h"
 #include "BootIde.h"
+#include "FatFSAccessor.h"
+#include "lib/LPCMod/xblastDebug.h"
 
-const unsigned char NbFATXPartPerHDD = 7;
-
-FATFS FatXFs[_VOLUMES];      /* File system object for logical drive */
+FATFS FatXFs[NbDrivesSupported][NbFATXPartPerHDD];      /* File system object for logical drive */
 
 #if _USE_FASTSEEK
 DWORD SeekTbl[16];          /* Link map table for fast seek feature */
@@ -36,21 +35,91 @@ PARTITION VolToPart[] =
  {1, 6}  /* XBOX G, G:\ */
 };
 
+static unsigned char MountedParts[NbDrivesSupported][NbFATXPartPerHDD];
+
 void FatFS_init(void)
 {
-    memset(FatXFs, 0x00, sizeof(FATFS) * _VOLUMES);
+    unsigned char i;
+    memset(FatXFs, 0x00, sizeof(FATFS) * NbFATXPartPerHDD * NbDrivesSupported);
+    memset(MountedParts, 0x00, sizeof(unsigned char) * NbFATXPartPerHDD * NbDrivesSupported);
     fatx_init();
 
-    if(tsaHarddiskInfo[0].m_fDriveExists && 0 == tsaHarddiskInfo[0].m_fAtapi)
+    for(i = 0; i < NbDrivesSupported; i++)
     {
-        if(FR_OK == fatx_getbrfr(0))
+        if(tsaHarddiskInfo[i].m_fDriveExists && 0 == tsaHarddiskInfo[i].m_fAtapi)
         {
-            mountBasic(0);
+            mountBasic(i);
         }
     }
 }
 
-void mountBasic(unsigned char driveNumber)
+/* Will mount C, E, X, Y, Z */
+int mountBasic(unsigned char driveNumber)
 {
+    unsigned char i;
+    XboxPartitionTable tempTable;
+    const char* const partNames[] = { _VOLUME_STRS };
+    FRESULT result;
 
+    if(driveNumber >= NbDrivesSupported)
+    {
+        return -1;
+    }
+    debugSPIPrint(DEBUG_FATX_FS, "Attempting to mount base partitions for drive %u\n", driveNumber);
+
+    if(FR_OK == fatx_getbrfr(driveNumber))
+    {
+        if(FR_OK == fatx_getmbr(driveNumber, &tempTable))
+        {
+            //TODO: constant for number of standard partitions.
+            for(i = 0; i < 5; i++)
+            {
+                debugSPIPrint(DEBUG_FATX_FS, "Drive: %u, PartIndex: %u, mountStatus: %u\n", driveNumber, i);
+                if(0 == MountedParts[driveNumber][i])
+                {
+                    debugSPIPrint(DEBUG_FATX_FS, "PartFlag: 0x%08X\n", tempTable.TableEntries[i].Flags);
+                    if(tempTable.TableEntries[i].Flags & FATX_PE_PARTFLAGS_IN_USE)
+                    {
+                        debugSPIPrint(DEBUG_FATX_FS, "Mounting \"%s\" partition\n", partNames[driveNumber][i]);
+                        //TODO: Constant for mount immediately flag.
+                        result = f_mount(&FatXFs[driveNumber][i], &partNames[driveNumber][i] , 1);
+                        if(FR_OK == result)
+                        {
+                            MountedParts[driveNumber][i] = 1;
+                            debugSPIPrint(DEBUG_FATX_FS, "Mount \"%s\" partition success!\n", partNames[driveNumber][i]);
+                        }
+                        else
+                        {
+                            debugSPIPrint(DEBUG_FATX_FS, "Error! Mount \"%s\" partition. Code: %u!\n", partNames[driveNumber][i], result);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            debugSPIPrint(DEBUG_FATX_FS, "Error! No MBR.\n");
+        }
+    }
+    else
+    {
+        debugSPIPrint(DEBUG_FATX_FS, "Error! No BRFR.\n");
+    }
+
+    return 0;
+}
+
+int isMounted(unsigned char driveId, unsigned char partitionNumber)
+{
+    if(NbDrivesSupported <= driveId)
+    {
+        return -1;
+    }
+
+    if(NbFATXPartPerHDD <= partitionNumber)
+    {
+        return -1;
+    }
+
+    return MountedParts[driveId][partitionNumber];
 }

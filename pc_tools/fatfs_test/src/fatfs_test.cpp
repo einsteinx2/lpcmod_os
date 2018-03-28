@@ -35,6 +35,8 @@ BYTE Buff[262144];          /* Working buffer */
 DWORD SeekTbl[16];          /* Link map table for fast seek feature */
 #endif
 
+#define NbFATXPartPerHDD 7
+
 PARTITION VolToPart[] =
 {
  {0, 0}, /* XBOX SHELL, E:\ */

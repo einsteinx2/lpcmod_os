@@ -646,14 +646,14 @@ static const XboxPartitionTable BackupPartTbl =
     }
 };
 
-//XXX: Leave slave HDD support for now.
+
 static XboxPartitionTable masterHDDFatxPartTable;
 static BYTE masterHDDFatxPartTableRead = 0;
-#if 0
+
 static XboxPartitionTable slaveHDDFatxPartTable;
 static BYTE slaveHDDFatxPartTableRead = 0;
 #endif
-#endif
+
 
 
 
@@ -6523,16 +6523,42 @@ FRESULT fatx_getmbr(
     XboxPartitionTable* out  /* Output buffer */
 ) {
     BYTE buf[_MAX_SS];
+    XboxPartitionTable* workingMbr;
+    BYTE* workingBit;
+    FRESULT result = FR_OK;
 
-    if (disk_read(pdrv, buf, 0, 1) != RES_OK) return FR_DISK_ERR;   /* Read the MBR */
-    mem_cpy(out, buf, sizeof(XboxPartitionTable));
-    if(mem_cmp(BackupPartTbl.Magic, out->Magic, 16))
+    switch(pdrv)
     {
-            mem_cpy(out, &BackupPartTbl, sizeof(XboxPartitionTable));
-            return FR_NO_FILE;
+    case 1:
+        workingMbr = &slaveHDDFatxPartTable;
+        workingBit = &slaveHDDFatxPartTableRead;
+        break;
+    case 0:
+    default:
+        workingMbr = &masterHDDFatxPartTable;
+        workingBit = &masterHDDFatxPartTableRead;
+        break;
     }
 
-    return FR_OK;
+    mem_set(buf, 0x00, _MAX_SS);
+    if (disk_read(pdrv, buf, 0, 1) != RES_OK) return FR_DISK_ERR;   /* Read the MBR */
+
+
+    if(mem_cmp(BackupPartTbl.Magic, ((XboxPartitionTable*)buf)->Magic, 16))
+    {
+            mem_cpy(workingMbr, &BackupPartTbl, sizeof(XboxPartitionTable));
+            result = FR_NO_FILE;
+    }
+    else
+    {
+        mem_cpy(workingMbr, buf, sizeof(XboxPartitionTable));
+    }
+    /* Whatever the outcome of disk read, we'll have a partition table. */
+
+    *workingBit = 1;
+    mem_cpy(out, workingMbr, sizeof(XboxPartitionTable));
+
+    return result;
 }
 
 FRESULT fatx_setmbr(
@@ -6540,10 +6566,40 @@ FRESULT fatx_setmbr(
     XboxPartitionTable* in  /* Output buffer */
 ) {
     BYTE buf[_MAX_SS];
+    XboxPartitionTable* workingMbr;
+    BYTE* workingBit;
 
+    switch(pdrv)
+    {
+    case 1:
+        workingMbr = &slaveHDDFatxPartTable;
+        workingBit = &slaveHDDFatxPartTableRead;
+        break;
+    case 0:
+    default:
+        workingMbr = &masterHDDFatxPartTable;
+        workingBit = &masterHDDFatxPartTableRead;
+        break;
+    }
+
+    mem_set(buf, 0x00, _MAX_SS);
+    /* Assume supplied partition table is valid */
     mem_cpy(buf, in, sizeof(XboxPartitionTable));
 
-    return (disk_write(pdrv, buf, 0, 1) != RES_OK || disk_ioctl(pdrv, CTRL_SYNC, 0) != RES_OK) ? FR_DISK_ERR : FR_OK;;
+    if(disk_write(pdrv, buf, 0, 1) != RES_OK || disk_ioctl(pdrv, CTRL_SYNC, 0) != RES_OK)
+    {
+        return FR_DISK_ERR;
+    }
+
+    mem_cpy(workingMbr, buf, sizeof(XboxPartitionTable));
+
+    *workingBit = 1;
+    if(mem_cmp(BackupPartTbl.Magic, workingMbr->Magic, 16))
+    {
+        *workingBit = 0;
+    }
+
+    return FR_OK;
 }
 
 FRESULT fatx_getbrfr(
