@@ -15,7 +15,7 @@
 #define DEBUG_FLASH_LOWLEVEL    0
 #define DEBUG_FLASH_UI          0
 #define DEBUG_EXCEPTIONS        0
-#define DEBUG_IDE_DRIVER        0
+#define DEBUG_IDE_DRIVER        1
 #define DEBUG_IDE_LOCK          0
 #define DEBUG_VIDEO_DRIVER      0
 #define DEBUG_EEPROM_DRIVER     0
@@ -24,10 +24,10 @@
 #define DEBUG_GENERAL_UI        0
 #define DEBUG_MISC              0
 
-#define DEBUG_USB               1
-#define DEBUG_USB_INFO          1
-#define DEBUG_USB_ERR           1
-#define DEBUG_USB_WARN          1
+#define DEBUG_USB               0
+#define DEBUG_USB_INFO          0
+#define DEBUG_USB_ERR           0
+#define DEBUG_USB_WARN          0
 
 #if DEBUG_USB >= 1
 #define DEBUG 1

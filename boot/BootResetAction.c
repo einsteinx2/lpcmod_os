@@ -477,7 +477,7 @@ extern void BootResetAction ( void )
             debugSPIPrint(DEBUG_BOOT_LOG, "Trying to load new JPEG from HDD.\n");
             if(LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg") == false)
             {
-                debugSPIPrint(DEBUG_BOOT_LOG, "\"Ã¬cons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
+                debugSPIPrint(DEBUG_BOOT_LOG, "\"icons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
             }
             if(LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg") == false)
             {
@@ -566,6 +566,10 @@ extern void BootResetAction ( void )
                     FATXFormatDriveC(i, 0);                     //'0' is for non verbose
                     FATXFormatDriveE(i, 0);
                     FATXFormatCacheDrives(i, 0);
+                    if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
+                    {
+                        FATXSetInitMBR(i); // Since I'm such a nice program, I will integrate the partition table to the MBR.
+                    }
                     FATXSetBRFR(i);
                     //If there's enough sectors to make F and/or G drive(s).
                     if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM))
@@ -574,10 +578,6 @@ extern void BootResetAction ( void )
                         DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
                     }
 
-                    if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
-                    {
-                        FATXSetInitMBR(i); // Since I'm such a nice program, I will integrate the partition table to the MBR.
-                    }
                     debugSPIPrint(DEBUG_BOOT_LOG, "HDD format done.\n");
                 }
                 memcpy((void*)FB_START,videosavepage,FB_SIZE);

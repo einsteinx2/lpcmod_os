@@ -1408,6 +1408,8 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 
     uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
 
+    debugSPIPrint(DEBUG_IDE_DRIVER, "start:%u len:%u retry:%u\n", startLBA, len, retry);
+
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
@@ -1467,7 +1469,7 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
         return 1;
     }
 
-    while(remainingLen >= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer){
+    while(remainingLen >= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer && !status){
         status = BootIdeWriteData(uIoBase, (unsigned char *)pbBuffer + bufferPtr, tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);   //Size in bytes here.
         bufferPtr += (tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer * IDE_SECTOR_SIZE);
         remainingLen -= tsaHarddiskInfo[nDriveIndex].m_maxBlockTransfer;
@@ -1493,6 +1495,7 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
     if(retry > 0)
         retry -= 1;
     if(status && retry){ //Status set to 1 or 2 means error. retry count must not be 0.
+        debugSPIPrint(DEBUG_IDE_DRIVER, "error! offset:%u retry:%u  remaining:%u\n", startLBA+bufferPtr, retry, remainingLen);
         printk("\n                 BootIdeWriteMultiple: write sector failed. %u retry left.", retry);
 
         //Retry (partial) block from the sector where it failed.

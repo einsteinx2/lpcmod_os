@@ -6451,6 +6451,20 @@ FRESULT f_fdisk (
 #endif /* _MULTI_PARTITION */
 
 #ifdef _USE_FATX
+
+void fatx_init(void)
+{
+    Fsid = 0;               /* File system mount ID */
+
+#if _FS_RPATH != 0 && _VOLUMES >= 2
+    CurrVol = 0;            /* Current drive */
+#endif
+
+#if _FS_LOCK != 0
+    mem_set(Files, 0x00, sizeof(FILESEM) * _FS_LOCK);
+#endif
+    mem_set(FatFs, 0x00, sizeof(FATFS*) * _VOLUMES);
+}
 /*-----------------------------------------------------------------------*/
 /* Create partition table on the physical drive                          */
 /*-----------------------------------------------------------------------*/

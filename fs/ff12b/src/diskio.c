@@ -10,6 +10,7 @@
 #define __USE_LARGEFILE
 
 #include "diskio.h"		/* FatFs lower layer API */
+#include "BootIde.h"
 #include <stdio.h>
 #include <errno.h>
 
@@ -62,7 +63,16 @@ DRESULT disk_read (
 )
 {
 #define DEFAULT_RETRY_COUNT 3
+    UINT i;
     int returnValue;
+    for(i = 0; i < count; i++)
+    {
+        returnValue = BootIdeReadSector(pdrv, buff +(i* 512), sector, 0, 512);
+        if(returnValue)
+        {
+            break;
+        }
+    }
 
 	return returnValue;
 }
@@ -81,7 +91,7 @@ DRESULT disk_write (
 )
 {
 #define DEFAULT_RETRY_COUNT 3
-    int returnValue = BootIdeWriteMultiple(pdrv, buff, sector, count, DEFAULT_RETRY_COUNT);
+    int returnValue = BootIdeWriteMultiple(pdrv, (void *)buff, sector, count, DEFAULT_RETRY_COUNT);
 
     return returnValue;
 }

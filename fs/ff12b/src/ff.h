@@ -299,6 +299,7 @@ FRESULT f_mount (FATFS* fs, const TCHAR* path, BYTE opt);           /* Mount/Unm
 FRESULT f_mkfs (const TCHAR* path, BYTE opt, DWORD au, void* work, UINT len);   /* Create a FAT volume */
 FRESULT f_fdisk (BYTE pdrv, const DWORD* szt, void* work);          /* Divide a physical drive into some partitions */
 #ifdef _USE_FATX
+void    fatx_init(void);
 FRESULT fatx_fdisk (BYTE pdrv, const XboxPartitionTable* szt);      /* Divide drive into FATX partitions */
 FRESULT fatx_getmbr(BYTE pdrv, XboxPartitionTable* out);            /* Get FATX drive MBR */
 FRESULT fatx_setmbr(BYTE pdrv, XboxPartitionTable* in);             /* Set FATX drive MBR */
