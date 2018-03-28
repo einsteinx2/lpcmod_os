@@ -8,6 +8,7 @@
 #include "PartTable.h"
 #include "ff.h"
 #include "string.h"
+#include "BootIde.h"
 
 const unsigned char NbFATXPartPerHDD = 7;
 
