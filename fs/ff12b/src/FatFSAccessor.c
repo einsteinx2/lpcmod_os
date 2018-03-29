@@ -35,26 +35,23 @@ PARTITION VolToPart[] =
  {1, 6}  /* XBOX G, G:\ */
 };
 
-static unsigned char MountedParts[NbDrivesSupported][NbFATXPartPerHDD];
-
 void FatFS_init(void)
 {
     unsigned char i;
     memset(FatXFs, 0x00, sizeof(FATFS) * NbFATXPartPerHDD * NbDrivesSupported);
-    memset(MountedParts, 0x00, sizeof(unsigned char) * NbFATXPartPerHDD * NbDrivesSupported);
     fatx_init();
 
     for(i = 0; i < NbDrivesSupported; i++)
     {
         if(tsaHarddiskInfo[i].m_fDriveExists && 0 == tsaHarddiskInfo[i].m_fAtapi)
         {
-            mountBasic(i);
+            mountAll(i);
         }
     }
 }
 
-/* Will mount C, E, X, Y, Z */
-int mountBasic(unsigned char driveNumber)
+/* Will mount C, E, F, G, X, Y, Z if available*/
+int mountAll(unsigned char driveNumber)
 {
     unsigned char i;
     XboxPartitionTable tempTable;
@@ -72,10 +69,10 @@ int mountBasic(unsigned char driveNumber)
         if(FR_OK == fatx_getmbr(driveNumber, &tempTable))
         {
             //TODO: constant for number of standard partitions.
-            for(i = 0; i < 5; i++)
+            for(i = 0; i < NbFATXPartPerHDD; i++)
             {
                 debugSPIPrint(DEBUG_FATX_FS, "Drive: %u, PartIndex: %u, mountStatus: %u\n", driveNumber, i);
-                if(0 == MountedParts[driveNumber][i])
+                if(0 == FatXFs[driveNumber][i].fs_typex)
                 {
                     debugSPIPrint(DEBUG_FATX_FS, "PartFlag: 0x%08X\n", tempTable.TableEntries[i].Flags);
                     if(tempTable.TableEntries[i].Flags & FATX_PE_PARTFLAGS_IN_USE)
@@ -85,7 +82,6 @@ int mountBasic(unsigned char driveNumber)
                         result = f_mount(&FatXFs[driveNumber][i], &partNames[driveNumber][i] , 1);
                         if(FR_OK == result)
                         {
-                            MountedParts[driveNumber][i] = 1;
                             debugSPIPrint(DEBUG_FATX_FS, "Mount \"%s\" partition success!\n", partNames[driveNumber][i]);
                         }
                         else
@@ -121,5 +117,5 @@ int isMounted(unsigned char driveId, unsigned char partitionNumber)
         return -1;
     }
 
-    return MountedParts[driveId][partitionNumber];
+    return FatXFs[driveId][partitionNumber].fs_typex;
 }

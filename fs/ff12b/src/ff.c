@@ -6487,7 +6487,7 @@ FRESULT fatx_fdisk (
     if (stat & STA_PROTECT) return FR_WRITE_PROTECTED;
     if (disk_ioctl(pdrv, GET_SECTOR_COUNT, &sz_disk)) return FR_DISK_ERR;
 
-    if(fatx_getbrfr(pdrv) != FR_OK)
+    if(FR_OK != fatx_getbrfr(pdrv))
     {
         /* Wipe Disc config Area, first 512KB */
         mem_set(buf, 0, _MAX_SS);
