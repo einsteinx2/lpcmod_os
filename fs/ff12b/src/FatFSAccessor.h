@@ -44,31 +44,48 @@ typedef enum
 
 typedef int DIRE;
 
+typedef struct
+{
+    char name[42];
+    unsigned char nameLength;
+    unsigned int size;
+    unsigned char attributes;
+    unsigned int modTime;
+}FileInfo;
+
 
 void FatFS_init(void);
 int mountAll(unsigned char driveNumber);
+int isMounted(unsigned char driveNumber, unsigned char partitionNumber);
 int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout);
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber);
+
 FILE fopen(const char* path, FileOpenMode mode);
 int fclose(FILE handle);
 int fread(FILE handle, unsigned char* out, unsigned int size);
 int fwrite(FILE handle, const unsigned char* in, unsigned int size);
 int fseek(FILE handle, unsigned int offset);
 int fsync(FILE handle);
+FileInfo fstat(const char* path);
+
 int mkdir(const char* path);
 DIRE fopendir(const char* path);
-//TODO: readdir with output struct
-//TODO: findfirst
-//TODO: findnext
+FileInfo freaddir(DIRE handle);
+DIRE findfirst(FileInfo* out, const char* path, const char* pattern);
+int findnext(DIRE handle, FileInfo* out);
 int frewinddir(DIRE handle);
 int fclosedir(DIRE handle);
+
 int fdelete(const char* path);
 int frename(const char* path, const char* newName);
+
 int fchdir(const char* path);
 int fchdrive(const char* path);
 const char* getcwd(void);
+
 int fgetfree(const char* path);
 int getclustersize(unsigned char driveNumber, unsigned char partNumber);
+
 int fputc(FILE handle, char c);
 int fputs(FILE handle, const char* sz);
 int fprintf(FILE handle, const char* sz, ...);

@@ -624,7 +624,7 @@ static const BYTE ExCvt[] = _EXCVT; /* Upper conversion table for SBCS extended 
 #endif
 
 #ifdef _USE_FATX
-static const XboxPartitionTable BackupPartTbl =
+const XboxPartitionTable BackupPartTable =
 {
     { '*', '*', '*', '*', 'P', 'A', 'R', 'T', 'I', 'N', 'F', 'O', '*', '*', '*', '*' },
     { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
@@ -3245,13 +3245,13 @@ BYTE check_fs ( /* 0:FAT, 1:exFAT, 2:Valid BS but not FAT, 3:Not a BS, 4:Disk er
             if (move_window(fs, 0) != FR_OK) return FR_NO_FILE;   /* Load boot record */
             XboxPartitionTable part;
             mem_cpy(&part, fs->win, sizeof(XboxPartitionTable));
-            if(mem_cmp(&part,  &BackupPartTbl, 16) == 0) /* Check partition table header string */
+            if(mem_cmp(&part,  &BackupPartTable, 16) == 0) /* Check partition table header string */
             {
                 mem_cpy(&masterHDDFatxPartTable, &part, sizeof(XboxPartitionTable));
             }
             else
             {
-                mem_cpy(&masterHDDFatxPartTable, &BackupPartTbl, sizeof(XboxPartitionTable));
+                mem_cpy(&masterHDDFatxPartTable, &BackupPartTable, sizeof(XboxPartitionTable));
             }
             masterHDDFatxPartTableRead = 1;
         }
@@ -5860,7 +5860,7 @@ FRESULT f_mkfs (
         {
             /* No FATX partition table. Will write it later */
             fatxHasMBR = 0;
-            fatxMBRPtr = (XboxPartitionTable*)&BackupPartTbl;
+            fatxMBRPtr = (XboxPartitionTable*)&BackupPartTable;
         }
 
         b_vol = fatxMBRPtr->TableEntries[part].LBAStart;    /* Get volume start sector */
@@ -6327,7 +6327,7 @@ fatx32Force:
             fatxMBRPtr->TableEntries[part].Flags = FATX_PE_PARTFLAGS_IN_USE;
             fatxMBRPtr->TableEntries[part].LBAStart = b_vol;
             fatxMBRPtr->TableEntries[part].LBASize = sz_vol;
-            mem_cpy(fatxMBRPtr->TableEntries[part].Name, BackupPartTbl.TableEntries[part].Name, 16);
+            mem_cpy(fatxMBRPtr->TableEntries[part].Name, BackupPartTable.TableEntries[part].Name, 16);
             if(FR_OK != fatx_setmbr(pdrv, fatxMBRPtr)) return FR_DISK_ERR;
         }
     }
@@ -6544,9 +6544,9 @@ FRESULT fatx_getmbr(
     if (disk_read(pdrv, buf, 0, 1) != RES_OK) return FR_DISK_ERR;   /* Read the MBR */
 
 
-    if(mem_cmp(BackupPartTbl.Magic, ((XboxPartitionTable*)buf)->Magic, 16))
+    if(mem_cmp(BackupPartTable.Magic, ((XboxPartitionTable*)buf)->Magic, 16))
     {
-            mem_cpy(workingMbr, &BackupPartTbl, sizeof(XboxPartitionTable));
+            mem_cpy(workingMbr, &BackupPartTable, sizeof(XboxPartitionTable));
             result = FR_NO_FILE;
     }
     else
@@ -6594,7 +6594,7 @@ FRESULT fatx_setmbr(
     mem_cpy(workingMbr, buf, sizeof(XboxPartitionTable));
 
     *workingBit = 1;
-    if(mem_cmp(BackupPartTbl.Magic, workingMbr->Magic, 16))
+    if(mem_cmp(BackupPartTable.Magic, workingMbr->Magic, 16))
     {
         *workingBit = 0;
     }

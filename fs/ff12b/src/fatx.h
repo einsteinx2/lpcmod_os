@@ -38,10 +38,6 @@
 // partition is being used (whether/not drive G is active, for example)
 #define FATX_PE_PARTFLAGS_IN_USE 0x80000000
 
-
-// Size of FATX partition header (boot sector/superblock)
-#define FATX_PARTITION_HEADERSIZE 0x1000
-
 // FATX partition magic
 #define FATX_PARTITION_MAGIC 0x58544146         //"FATX" in ASCII.
 
@@ -71,6 +67,9 @@
 // max filename size
 #define FATX_FILENAME_MAX 42
 
+// Minimal (arbitrary) partition size for FATX drive, in LBA
+#define FATX_MIN_PART_SIZE_LBA 1024000
+
 typedef struct
 {
         unsigned char Name[16];
@@ -86,6 +85,8 @@ typedef struct
         char    Res0[32];
         XboxPartitionTableEntry TableEntries[14];
 } XboxPartitionTable;
+
+extern const XboxPartitionTable BackupPartTable;
 
 //Taken from ReactOS' vfat.h source and Xbox-Linux archives.
 typedef struct {

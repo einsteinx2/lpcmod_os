@@ -1530,7 +1530,7 @@ int BootIdeFlushCache(int nDriveIndex)
     return result;
 }
 
-int BootIdeGetSectorCount(int nDriveIndex)
+unsigned long long BootIdeGetSectorCount(int nDriveIndex)
 {
     return tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal;
 }
