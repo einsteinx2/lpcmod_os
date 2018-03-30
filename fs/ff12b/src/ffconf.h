@@ -158,8 +158,8 @@
 
 
 #define _STR_VOLUME_ID  1
-#define _VOLUME_STRS    "MASTER_STORE","MASTER_SYSTEM","MASTER_CACHE1","MASTER_CACHE2","MASTER_CACHE3","MASTER_EXTENDED_F","MASTER_EXTENDED_G", \
-                        "SLAVE_STORE","SLAVE_SYSTEM","SLAVE_CACHE1","SLAVE_CACHE2","SLAVE_CACHE3","SLAVE_EXTENDED_F","SLAVE_EXTENDED_G"
+#define _VOLUME_STRS    "MASTER_E","MASTER_C","MASTER_X","MASTER_Y","MASTER_Z","MASTER_F","MASTER_G", \
+                        "SLAVE_E","SLAVE_C","SLAVE_X","SLAVE_Y","SLAVE_Z","SLAVE_F","SLAVE_G"
 /* _STR_VOLUME_ID switches string support of volume ID.
 /  When _STR_VOLUME_ID is set to 1, also pre-defined strings can be used as drive
 /  number in the path name. _VOLUME_STRS defines the drive ID strings for each

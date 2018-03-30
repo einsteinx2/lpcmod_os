@@ -21,6 +21,11 @@
 #define Part_Y    3
 #define Part_Z    4
 
+const char* PartitionNameStrings[NbDrivesSupported][_VOLUMES / 2] =
+{
+     _VOLUME_STRS
+};
+
 typedef enum
 {
     XboxDiskLayout_Base,

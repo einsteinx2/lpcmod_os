@@ -49,6 +49,10 @@ PARTITION VolToPart[] =
  {1, 6}  /* XBOX G, G:\ */
 };
 
+#define FILE_VALID(x) if((MaxOpenFileCount <= x) || (0 == FileHandleArray[x].obj.fs)) return -1;
+#define DIRE_VALID(x, y) memset(&y, 0x00, sizeof(FileInfo)); \
+                        if((MaxOpenDirCount <= x) || (0 == DirectoryHandleArray[x].obj.fs)) return y;
+
 void FatFS_init(void)
 {
     unsigned char i;
@@ -73,7 +77,6 @@ int mountAll(unsigned char driveNumber)
 {
     unsigned char i;
     XboxPartitionTable tempTable;
-    const char* const partNames[] = { _VOLUME_STRS };
     FRESULT result;
 
     if(driveNumber >= NbDrivesSupported)
@@ -97,7 +100,7 @@ int mountAll(unsigned char driveNumber)
                     {
                         debugSPIPrint(DEBUG_FATX_FS, "Mounting \"%s\" partition\n", partNames[driveNumber][i]);
                         //TODO: Constant for mount immediately flag.
-                        result = f_mount(&FatXFs[driveNumber][i], &partNames[driveNumber][i] , 1);
+                        result = f_mount(&FatXFs[driveNumber][i], PartitionNameStrings[driveNumber][i] , 1);
                         if(FR_OK == result)
                         {
                             debugSPIPrint(DEBUG_FATX_FS, "Mount \"%s\" partition success!\n", partNames[driveNumber][i]);
@@ -238,10 +241,9 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
 {
     XboxPartitionTable workingMbr;
-    const char* const partNames[NbDrivesSupported][_VOLUMES / 2] = { _VOLUME_STRS };
     unsigned char workBuf[512];
     char partName[22];
-    sprintf(partName, "%s:\\", partNames[driveNumber][partNumber]);
+    sprintf(partName, "%s:\\", PartitionNameStrings[driveNumber][partNumber]);
 
     if(FR_OK != fatx_getmbr(driveNumber, &workingMbr))
     {
@@ -261,9 +263,10 @@ FILE fopen(const char* path, FileOpenMode mode)
 {
     unsigned char i;
 
+    /* Find unused File descriptor in array */
     for (i = 0; i < MaxOpenFileCount; i++)
     {
-        if(0 !=FileHandleArray[i].obj.fs)
+        if(0 == FileHandleArray[i].obj.fs)
         {
             break;
         }
@@ -284,49 +287,131 @@ FILE fopen(const char* path, FileOpenMode mode)
 
 int fclose(FILE handle)
 {
-    return 0;
+    if(0 != FileHandleArray[handle].obj.fs)
+    {
+        return f_close(&FileHandleArray[handle]);
+    }
+    return -1;
 }
 
 int fread(FILE handle, unsigned char* out, unsigned int size)
 {
-    return 0;
+    UINT bytesRead;
+
+    FILE_VALID(handle)
+
+    if(FR_OK != f_read(&FileHandleArray[handle], out, size, &bytesRead))
+    {
+        return bytesRead;
+    }
+
+    return -1;
 }
 
 int fwrite(FILE handle, const unsigned char* in, unsigned int size)
 {
-    return 0;
+    UINT bytesWrote;
+
+    FILE_VALID(handle)
+
+    if(FR_OK != f_write(&FileHandleArray[handle], in, size, &bytesWrote))
+    {
+        return bytesWrote;
+    }
+
+    return -1;
 }
 
 int fseek(FILE handle, unsigned int offset)
 {
+    FILE_VALID(handle)
+
+    if(FR_OK != f_lseek(&FileHandleArray[handle], offset))
+    {
+        return -1;
+    }
+
     return 0;
 }
 
 int fsync(FILE handle)
 {
+    FILE_VALID(handle)
+
+    if(FR_OK != f_sync(&FileHandleArray[handle]))
+    {
+        return -1;
+    }
+
     return 0;
 }
 
 FileInfo fstat(const char* path)
 {
     FileInfo returnStruct;
+    FILINFO getter;
+    memset(&returnStruct, 0x00, sizeof(FileInfo));
+    if(FR_OK == f_stat(path, &getter))
+    {
+        returnStruct.nameLength = getter.namelength;
+        memcpy(returnStruct.name, getter.fnamex, 42 > returnStruct.nameLength ? 42 : returnStruct.nameLength);
+        returnStruct.attributes = getter.fattrib;
+        returnStruct.size = getter.fsize;
+        //TODO: format modified time/date
+    }
+
     return returnStruct;
 }
 
 
 int mkdir(const char* path)
 {
-    return 0;
+    return f_mkdir(path);
 }
 
 DIRE fopendir(const char* path)
 {
-    return 0;
+    unsigned char i;
+
+    /* Find unused Directory descriptor in array */
+    for (i = 0; i < MaxOpenDirCount; i++)
+    {
+        if(0 == DirectoryHandleArray[i].obj.fs)
+        {
+            break;
+        }
+    }
+
+    if(MaxOpenDirCount == i)
+    {
+        return 0;
+    }
+
+    if(FR_OK != f_opendir(&DirectoryHandleArray[i], path))
+    {
+        return 0;
+    }
+
+    return i;
 }
 
 FileInfo freaddir(DIRE handle)
 {
     FileInfo returnStruct;
+    FILINFO getter;
+
+    DIRE_VALID(handle, returnStruct)
+
+    if(FR_OK == f_readdir(&DirectoryHandleArray[handle], &getter))
+    {
+        returnStruct.nameLength = getter.namelength;
+        memcpy(returnStruct.name, getter.fnamex, 42 > returnStruct.nameLength ? 42 : returnStruct.nameLength);
+        returnStruct.attributes = getter.fattrib;
+        returnStruct.size = getter.fsize;
+        //TODO: format modified time/date
+        //TODO: put in function
+    }
+
     return returnStruct;
 }
 
@@ -391,35 +476,43 @@ int getclustersize(unsigned char driveNumber, unsigned char partNumber)
 
 int fputc(FILE handle, char c)
 {
+    FILE_VALID(handle)
     return 0;
 }
 
 int fputs(FILE handle, const char* sz)
 {
+    FILE_VALID(handle)
     return 0;
 }
 
 int fprintf(FILE handle, const char* sz, ...)
 {
+    FILE_VALID(handle)
     return 0;
 }
 
 int fgets(FILE handle, unsigned int len)
 {
+    FILE_VALID(handle)
     return 0;
 }
 
 int ftell(FILE handle)
 {
+    FILE_VALID(handle)
     return 0;
 }
 
 int feof(FILE handle)
 {
+    FILE_VALID(handle)
     return 0;
 }
 
 int fsize(FILE handle)
 {
+    FILE_VALID(handle)
     return 0;
 }
+
