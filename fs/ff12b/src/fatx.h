@@ -23,12 +23,15 @@
 #define CACHE2_LBASIZE    (XBOX_CACHE3_STARTLBA - XBOX_CACHE2_STARTLBA)
 #define CACHE3_LBASIZE    (XBOX_SYSTEM_STARTLBA - XBOX_CACHE3_STARTLBA)
 
+#define LBA28_BOUNDARY 0x0FFFFFFFUL
+
 #define LBASIZE_512GB   1073741824UL                      //Switch to 64K clusters beyond that
 #define LBASIZE_1024GB  2147483645UL                      //Max LBA size supported by Xbox
 #define LBASIZE_256GB   536870912UL                       //Switch to 32K clusters beyond that
-#define LBASIZE_137GB   (0x0FFFFFFFUL - XBOX_EXTEND_STARTLBA)     //LBA28 limited F: drive size.
+#define LBASIZE_137GB   (LBA28_BOUNDARY - XBOX_EXTEND_STARTLBA)     //LBA28 limited F: drive size.
 
 #define FATX_MIN_CLUSTERSIZE_INSECTORS   32
+#define FATX_MID_CLUSTERSIZE_INSECTORS   64
 #define FATX_MAX_CLUSTERSIZE_INSECTORS   128
 
 #define FATX_DRIVE_MAGIC "BRFR"

@@ -142,7 +142,8 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 {
     int result;
     XboxPartitionTable workingMbr;
-    unsigned long long diskSize;
+    unsigned long long diskSizeLba;
+    unsigned int fDriveLbaSize;
     //XXX: Assume 512Bytes sectors for now.
 
     if(NbDrivesSupported <= driveNumber)
@@ -150,9 +151,9 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         return -1;
     }
 
-    diskSize = BootIdeGetSectorCount(driveNumber);
+    diskSizeLba = BootIdeGetSectorCount(driveNumber);
 
-    if(((XBOX_EXTEND_STARTLBA - 1) > diskSize) || (XBOX_EXTEND_STARTLBA >= diskSize && XboxDiskLayout_Base != xboxDiskLayout))
+    if(((XBOX_EXTEND_STARTLBA - 1) > diskSizeLba) || (XBOX_EXTEND_STARTLBA >= diskSizeLba && XboxDiskLayout_Base != xboxDiskLayout))
     {
         return -1;
     }
@@ -168,18 +169,63 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         memcpy(&workingMbr, &BackupPartTable, sizeof(XboxPartitionTable));
         break;
     case XboxDiskLayout_FOnly:
-        if(diskSize - XBOX_EXTEND_STARTLBA < FATX_MIN_PART_SIZE_LBA)
+        if(diskSizeLba - XBOX_EXTEND_STARTLBA < FATX_MIN_PART_SIZE_LBA)
         {
             return -1;
         }
 
         workingMbr.TableEntries[5].LBAStart = XBOX_EXTEND_STARTLBA;
-        workingMbr.TableEntries[5].LBASize = diskSize - XBOX_EXTEND_STARTLBA;
+        workingMbr.TableEntries[5].LBASize = diskSizeLba - XBOX_EXTEND_STARTLBA;
+        workingMbr.TableEntries[5].Flags = 0;
         /* Do not set Part in use flag here, in case mkfs doesn't go through. mkfs is supposed to set it. */
+        workingMbr.TableEntries[6].LBAStart = 0;
+        workingMbr.TableEntries[6].LBASize = 0;
+        workingMbr.TableEntries[6].Flags = 0;
         break;
     case XboxDiskLayout_F120GRest:
+        workingMbr.TableEntries[5].LBAStart = XBOX_EXTEND_STARTLBA;
+        workingMbr.TableEntries[5].LBASize = LBASIZE_137GB;
+        workingMbr.TableEntries[5].Flags = 0;
+        workingMbr.TableEntries[6].LBAStart = LBA28_BOUNDARY;
+        workingMbr.TableEntries[6].LBASize = diskSizeLba - LBA28_BOUNDARY;
+        workingMbr.TableEntries[6].Flags = 0;
         break;
     case XboxDiskLayout_FGSplit:
+        diskSizeLba -= XBOX_EXTEND_STARTLBA;
+        diskSizeLba &=  ~((unsigned long long)(FATX_CHAINTABLE_BLOCKSIZE / 8 - 1));
+        fDriveLbaSize = diskSizeLba / 2;
+
+        if(LBASIZE_1024GB >= fDriveLbaSize)
+        {
+            fDriveLbaSize = LBASIZE_1024GB;
+        }
+        else
+        {
+            if(LBASIZE_1024GB >= fDriveLbaSize)
+            {
+                /* Check with 64KB clusters */
+                fDriveLbaSize &= ~((unsigned long long)(FATX_MAX_CLUSTERSIZE_INSECTORS - 1));
+            }
+
+            if(LBASIZE_512GB >= fDriveLbaSize)
+            {
+                /* Check with 32KB clusters */
+                fDriveLbaSize &= ~((unsigned long long)(FATX_MID_CLUSTERSIZE_INSECTORS - 1));
+            }
+
+            if(LBASIZE_256GB >= fDriveLbaSize)
+            {
+                /* Check with 16KB clusters */
+                fDriveLbaSize &= ~((unsigned long long)(FATX_MIN_CLUSTERSIZE_INSECTORS - 1));
+            }
+        }
+        //TODO: Calculate optimal partition size for F drive depending on cluster size
+        workingMbr.TableEntries[5].LBAStart = XBOX_EXTEND_STARTLBA;
+        workingMbr.TableEntries[5].LBASize = fDriveLbaSize;
+        workingMbr.TableEntries[5].Flags = 0;
+        workingMbr.TableEntries[6].LBAStart = XBOX_EXTEND_STARTLBA + fDriveLbaSize;
+        workingMbr.TableEntries[6].LBASize = diskSizeLba - (XBOX_EXTEND_STARTLBA + fDriveLbaSize);
+        workingMbr.TableEntries[6].Flags = 0;
         break;
     default:
         result = -1;
@@ -191,13 +237,49 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
 {
+    XboxPartitionTable workingMbr;
+    const char* const partNames[NbDrivesSupported][_VOLUMES / 2] = { _VOLUME_STRS };
+    unsigned char workBuf[512];
+    char partName[22];
+    sprintf(partName, "%s:\\", partNames[driveNumber][partNumber]);
+
+    if(FR_OK != fatx_getmbr(driveNumber, &workingMbr))
+    {
+        return -1;
+    }
+
+    if(FR_OK != f_mkfs(partName, FM_FATXANY, FATX_MIN_CLUSTERSIZE_INSECTORS, workBuf, workingMbr.TableEntries[partNumber].LBASize))
+    {
+        return -1;
+    }
+
     return 0;
 }
 
 
 FILE fopen(const char* path, FileOpenMode mode)
 {
-    return 0;
+    unsigned char i;
+
+    for (i = 0; i < MaxOpenFileCount; i++)
+    {
+        if(0 !=FileHandleArray[i].obj.fs)
+        {
+            break;
+        }
+    }
+
+    if(MaxOpenFileCount == i)
+    {
+        return 0;
+    }
+
+    if(FR_OK != f_open(&FileHandleArray[i], path, mode))
+    {
+        return 0;
+    }
+
+    return i;
 }
 
 int fclose(FILE handle)
