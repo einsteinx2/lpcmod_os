@@ -115,6 +115,22 @@ typedef struct {                                        //Also known as FATX Sup
     unsigned char  unused[0xfee];
 }__attribute__((packed)) PARTITIONHEADER;               //For a total of 4096(0x1000) bytes.
 
+typedef union {
+    struct {
+        unsigned short DualSeconds    : 5;
+        unsigned short Minutes        : 6;
+        unsigned short Hours          : 5;
+        unsigned short Days           : 5;
+        unsigned short Months         : 4;
+        unsigned short Years          : 7; // Offset at 2000
+    };
+    unsigned int FatxTimestamp;
+}__attribute__((packed)) FATXTIMESTAMP;
+
+#define FATX_YEAR_ADJUST 20
+#define FATX_TOFATX_TIMESTAMP(x) x += FATX_YEAR_ADJUST << 25;
+#define FATX_FROMFATX_TIMESTAMP(x) x -= FATX_YEAR_ADJUST << 25;
+
 
 #define ISFATX_FS(fs) (fs == FS_FATX16 || fs == FS_FATX32)
 #define NOTFATX_FS(fs) (fs != FS_FATX16 && fs != FS_FATX32)

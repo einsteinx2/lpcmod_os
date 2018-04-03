@@ -2704,6 +2704,7 @@ void get_fileinfo (     /* No return code */
         fno->fattrib = dp->dir[DIRx_Attr];               /* Attribute */
         fno->fsize = ld_dword(dp->dir + DIRx_FileSize);  /* Size */
         tm = ld_dword(dp->dir + DIRx_ModTime);           /* Timestamp */
+        FATX_FROMFATX_TIMESTAMP(tm)
         fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
     }
     else
@@ -3160,7 +3161,7 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
 /* Get logical drive number from path name                               */
 /*-----------------------------------------------------------------------*/
 
-static
+/*static*/
 int get_ldnumber (      /* Returns logical drive number (-1:invalid drive) */
     const TCHAR** path  /* Pointer to pointer to the path name */
 )
@@ -3764,6 +3765,7 @@ FRESULT f_open (
 #ifdef _USE_FATX
                     if(ISFATX_FS(fs->fs_typex))
                     {
+                        FATX_TOFATX_TIMESTAMP(dw)
                         st_dword(dj.dir + DIRx_CrtTime, dw); /* Set created time */
                         st_dword(dj.dir + DIRx_ModTime, dw); /* Set modified time */
                         dj.dir[DIRx_Attr] = AM_ARC;          /* Reset attribute */
@@ -4184,6 +4186,7 @@ FRESULT f_sync (
                         dir[DIRx_Attr] |= AM_ARC;                        /* Set archive bit */ //XXX: necessary?
                         st_clust(fp->obj.fs, dir, fp->obj.sclust);      /* Update file allocation info  */
                         st_dword(dir + DIRx_FileSize, (DWORD)fp->obj.objsize);   /* Update file size */
+                        FATX_TOFATX_TIMESTAMP(tm)
                         st_dword(dir + DIRx_ModTime, tm);                /* Update modified time */
                         st_word(dir + DIRx_LstAccDate, 0);
                     }
@@ -5139,6 +5142,7 @@ FRESULT f_mkdir (
 #ifdef _USE_FATX
                     if(ISFATX_FS(fs->fs_typex))
                     {
+                        FATX_TOFATX_TIMESTAMP(tm)
                         st_dword(dir + DIRx_ModTime, tm);    /* Created time */
                         st_clust(fs, dir, dcl);             /* Table start cluster */
                         dir[DIRx_Attr] = AM_DIR;             /* Attribute */

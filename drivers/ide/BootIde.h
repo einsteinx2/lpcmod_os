@@ -91,6 +91,8 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 int BootIdeFlushCache(int nDriveIndex);
 unsigned long long BootIdeGetSectorCount(int nDriveIndex);
 int BootIdeGetSectorSize(int nDriveIndex);
+int BootIdeDeviceConnected(int nDriveIndex);
+int BootIdeDeviceIsATAPI(int nDriveIndex);
 
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 int driveSMARTRETURNSTATUS(int nDriveIndex);

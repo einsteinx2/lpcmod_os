@@ -5,11 +5,20 @@
  *      Author: cromwelldev
  */
 
-#include "ff.h"
+//#include "ff.h"
+#include "FatFSAccessor.h"
+#ifdef _PCSIM
+#include <string.h>
+#include <stdio.h>
+#define DEBUG_FATX_FS 0
+#define debugSPIPrint(activate,...)
+#include "../../../pc_tools/fatfs_test/src/FatFSTestHelper.h"
+#else
 #include "string.h"
 #include "BootIde.h"
-#include "FatFSAccessor.h"
 #include "lib/LPCMod/xblastDebug.h"
+#endif
+#include <stdarg.h>
 
 /*---------------------------------------------------------------*/
 /* Private static variables */
@@ -20,18 +29,27 @@ static FATFS FatXFs[NbDrivesSupported][NbFATXPartPerHDD];      /* File system ob
 static DWORD SeekTbl[16];          /* Link map table for fast seek feature */
 #endif
 
-#define MaxOpenFileCount 2
+#define MaxOpenFileCount (_FS_LOCK / 2)
 static FIL FileHandleArray[MaxOpenFileCount];
 
-#define MaxOpenDirCount 2
+#define MaxOpenDirCount (_FS_LOCK / 2)
 static DIR DirectoryHandleArray[MaxOpenDirCount];
 
 #define MaxPathLength 255
-static char cwd[MaxPathLength];
+static char cwd[MaxPathLength + sizeof('\0')];
+
+static const char* const PartitionNameList[_VOLUMES] = { _VOLUME_STRS };
+
 
 /*---------------------------------------------------------------*/
 
-PARTITION VolToPart[] =
+const char* const * const PartitionNameStrings[NbDrivesSupported] =
+{
+ (const char* const)&PartitionNameList[0],
+ (const char* const)&PartitionNameList[_VOLUMES / 2]
+};
+
+PARTITION VolToPart[_VOLUMES] =
 {
  {0, 0}, /* XBOX SHELL, E:\ */
  {0, 1}, /* XBOX DATA, C:\ */
@@ -53,6 +71,25 @@ PARTITION VolToPart[] =
 #define DIRE_VALID(x, y) memset(&y, 0x00, sizeof(FileInfo)); \
                         if((MaxOpenDirCount <= x) || (0 == DirectoryHandleArray[x].obj.fs)) return y;
 
+#define FILE_HANDLE_VALID(x) if(0 == handle || (MaxOpenFileCount < handle)) return -1; x -= 1;
+#define DIRE_HANDLE_VALID(x) if(0 == handle || (MaxOpenDirCount < handle)) return -1; x -= 1;
+
+extern
+int get_ldnumber (      /* Returns logical drive number (-1:invalid drive) */
+    const TCHAR** path  /* Pointer to pointer to the path name */
+
+);
+
+static void convertToFileInfo(FileInfo* out, const FILINFO* in)
+{
+    out->nameLength = in->namelength;
+    memcpy(out->name, in->fnamex, 42 > out->nameLength ? 42 : out->nameLength);
+    out->attributes = in->fattrib;
+    out->size = in->fsize;
+    out->modDate= in->fdate;
+    out->modTime = in->ftime;
+}
+
 void FatFS_init(void)
 {
     unsigned char i;
@@ -60,12 +97,12 @@ void FatFS_init(void)
     memset(SeekTbl, 0x00, sizeof(DWORD) * 16);
     memset(FileHandleArray, 0x00, sizeof(FIL) * MaxOpenFileCount);
     memset(DirectoryHandleArray, 0x00, sizeof(DIR) * MaxOpenDirCount);
-    memset(cwd, '\0', sizeof(char) * MaxPathLength);
+    memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
     fatx_init();
 
     for(i = 0; i < NbDrivesSupported; i++)
     {
-        if(tsaHarddiskInfo[i].m_fDriveExists && 0 == tsaHarddiskInfo[i].m_fAtapi)
+        if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i))
         {
             mountAll(i);
         }
@@ -77,7 +114,6 @@ int mountAll(unsigned char driveNumber)
 {
     unsigned char i;
     XboxPartitionTable tempTable;
-    FRESULT result;
 
     if(driveNumber >= NbDrivesSupported)
     {
@@ -98,17 +134,7 @@ int mountAll(unsigned char driveNumber)
                     debugSPIPrint(DEBUG_FATX_FS, "PartFlag: 0x%08X\n", tempTable.TableEntries[i].Flags);
                     if(tempTable.TableEntries[i].Flags & FATX_PE_PARTFLAGS_IN_USE)
                     {
-                        debugSPIPrint(DEBUG_FATX_FS, "Mounting \"%s\" partition\n", partNames[driveNumber][i]);
-                        //TODO: Constant for mount immediately flag.
-                        result = f_mount(&FatXFs[driveNumber][i], PartitionNameStrings[driveNumber][i] , 1);
-                        if(FR_OK == result)
-                        {
-                            debugSPIPrint(DEBUG_FATX_FS, "Mount \"%s\" partition success!\n", partNames[driveNumber][i]);
-                        }
-                        else
-                        {
-                            debugSPIPrint(DEBUG_FATX_FS, "Error! Mount \"%s\" partition. Code: %u!\n", partNames[driveNumber][i], result);
-                        }
+                        fatxmount(driveNumber, i);
                     }
                 }
             }
@@ -124,6 +150,28 @@ int mountAll(unsigned char driveNumber)
     }
 
     return 0;
+}
+
+int fatxmount(unsigned char driveNumber, unsigned char partitionNumber)
+{
+    int result;
+    char mountStr[20];
+
+    sprintf(mountStr, "%s%s", PartitionNameStrings[driveNumber][partitionNumber], ":\\");
+
+    debugSPIPrint(DEBUG_FATX_FS, "Mounting \"%s\" partition\n", PartitionNameStrings[driveNumber][partitionNumber]);
+    //TODO: Constant for mount immediately flag.
+    result = f_mount(&FatXFs[driveNumber][partitionNumber], mountStr, 1);
+    if(FR_OK == result)
+    {
+        debugSPIPrint(DEBUG_FATX_FS, "Mount \"%s\" partition success!\n", PartitionNameStrings[driveNumber][partitionNumber]);
+    }
+    else
+    {
+        debugSPIPrint(DEBUG_FATX_FS, "Error! Mount \"%s\" partition. Code: %u!\n", PartitionNameStrings[driveNumber][partitionNumber], result);
+    }
+
+    return result;
 }
 
 int isMounted(unsigned char driveNumber, unsigned char partitionNumber)
@@ -143,7 +191,6 @@ int isMounted(unsigned char driveNumber, unsigned char partitionNumber)
 
 int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 {
-    int result;
     XboxPartitionTable workingMbr;
     unsigned long long diskSizeLba;
     unsigned int fDriveLbaSize;
@@ -231,7 +278,7 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         workingMbr.TableEntries[6].Flags = 0;
         break;
     default:
-        result = -1;
+        return -1;
         break;
     }
 
@@ -243,7 +290,7 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
     XboxPartitionTable workingMbr;
     unsigned char workBuf[512];
     char partName[22];
-    sprintf(partName, "%s:\\", PartitionNameStrings[driveNumber][partNumber]);
+    sprintf(partName, "%s:\\", (char *)*PartitionNameStrings[driveNumber][partNumber]);
 
     if(FR_OK != fatx_getmbr(driveNumber, &workingMbr))
     {
@@ -259,7 +306,7 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
 }
 
 
-FILE fopen(const char* path, FileOpenMode mode)
+FILEX fatxopen(const char* path, FileOpenMode mode)
 {
     unsigned char i;
 
@@ -282,11 +329,13 @@ FILE fopen(const char* path, FileOpenMode mode)
         return 0;
     }
 
-    return i;
+    return i + 1;
 }
 
-int fclose(FILE handle)
+int fatxclose(FILEX handle)
 {
+    FILE_HANDLE_VALID(handle)
+
     if(0 != FileHandleArray[handle].obj.fs)
     {
         return f_close(&FileHandleArray[handle]);
@@ -294,13 +343,14 @@ int fclose(FILE handle)
     return -1;
 }
 
-int fread(FILE handle, unsigned char* out, unsigned int size)
+int fatxread(FILEX handle, unsigned char* out, unsigned int size)
 {
     UINT bytesRead;
 
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
-    if(FR_OK != f_read(&FileHandleArray[handle], out, size, &bytesRead))
+    if(FR_OK == f_read(&FileHandleArray[handle], out, size, &bytesRead))
     {
         return bytesRead;
     }
@@ -308,13 +358,14 @@ int fread(FILE handle, unsigned char* out, unsigned int size)
     return -1;
 }
 
-int fwrite(FILE handle, const unsigned char* in, unsigned int size)
+int fatxwrite(FILEX handle, const unsigned char* in, unsigned int size)
 {
     UINT bytesWrote;
 
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
-    if(FR_OK != f_write(&FileHandleArray[handle], in, size, &bytesWrote))
+    if(FR_OK == f_write(&FileHandleArray[handle], in, size, &bytesWrote))
     {
         return bytesWrote;
     }
@@ -322,8 +373,9 @@ int fwrite(FILE handle, const unsigned char* in, unsigned int size)
     return -1;
 }
 
-int fseek(FILE handle, unsigned int offset)
+int fatxseek(FILEX handle, unsigned int offset)
 {
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
     if(FR_OK != f_lseek(&FileHandleArray[handle], offset))
@@ -334,8 +386,9 @@ int fseek(FILE handle, unsigned int offset)
     return 0;
 }
 
-int fsync(FILE handle)
+int fatxsync(FILEX handle)
 {
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
     if(FR_OK != f_sync(&FileHandleArray[handle]))
@@ -346,30 +399,31 @@ int fsync(FILE handle)
     return 0;
 }
 
-FileInfo fstat(const char* path)
+FileInfo fatxstat(const char* path)
 {
     FileInfo returnStruct;
     FILINFO getter;
     memset(&returnStruct, 0x00, sizeof(FileInfo));
     if(FR_OK == f_stat(path, &getter))
     {
-        returnStruct.nameLength = getter.namelength;
-        memcpy(returnStruct.name, getter.fnamex, 42 > returnStruct.nameLength ? 42 : returnStruct.nameLength);
-        returnStruct.attributes = getter.fattrib;
-        returnStruct.size = getter.fsize;
-        //TODO: format modified time/date
+        convertToFileInfo(&returnStruct, &getter);
     }
 
     return returnStruct;
 }
 
 
-int mkdir(const char* path)
+int fatxmkdir(const char* path)
 {
-    return f_mkdir(path);
+    if(FR_OK != f_mkdir(path))
+    {
+        return -1;
+    }
+
+    return 0;
 }
 
-DIRE fopendir(const char* path)
+DIRE fatxopendir(const char* path)
 {
     unsigned char i;
 
@@ -392,127 +446,270 @@ DIRE fopendir(const char* path)
         return 0;
     }
 
-    return i;
+    return i + 1;
 }
 
-FileInfo freaddir(DIRE handle)
+FileInfo fatxreaddir(DIRE handle)
 {
     FileInfo returnStruct;
     FILINFO getter;
+
+    if(0 == handle || (MaxOpenDirCount < handle))
+    {
+        /* Invalidate handle */
+        handle = 255;
+    }
+    else
+    {
+        handle -= 1;
+    }
 
     DIRE_VALID(handle, returnStruct)
 
     if(FR_OK == f_readdir(&DirectoryHandleArray[handle], &getter))
     {
-        returnStruct.nameLength = getter.namelength;
-        memcpy(returnStruct.name, getter.fnamex, 42 > returnStruct.nameLength ? 42 : returnStruct.nameLength);
-        returnStruct.attributes = getter.fattrib;
-        returnStruct.size = getter.fsize;
-        //TODO: format modified time/date
-        //TODO: put in function
+        convertToFileInfo(&returnStruct, &getter);
     }
 
     return returnStruct;
 }
 
-DIRE findfirst(FileInfo* out, const char* path, const char* pattern)
+DIRE fatxfindfirst(FileInfo* out, const char* path, const char* pattern)
 {
+    unsigned char i;
+    FILINFO getter;
+    memset(out, 0x00, sizeof(FileInfo));
+
+    /* Find unused Directory descriptor in array */
+    for (i = 0; i < MaxOpenDirCount; i++)
+    {
+        if(0 == DirectoryHandleArray[i].obj.fs)
+        {
+            break;
+        }
+    }
+
+    if(MaxOpenDirCount == i)
+    {
+        return 0;
+    }
+
+    if(FR_OK == f_findfirst(&DirectoryHandleArray[i], &getter, path, pattern))
+    {
+        convertToFileInfo(out, &getter);
+    }
+
+    return i + 1;
+}
+
+int fatxfindnext(DIRE handle, FileInfo* out)
+{
+    FILINFO getter;
+
+    DIRE_HANDLE_VALID(handle)
+    memset(out, 0x00, sizeof(FileInfo));
+
+    if(0 == DirectoryHandleArray[handle].obj.fs)
+    {
+        return -1;
+    }
+
+    if(FR_OK == f_findnext(&DirectoryHandleArray[handle], &getter))
+    {
+        convertToFileInfo(out, &getter);
+
+        return 0;
+    }
+
+    return -1;
+}
+
+int fatxrewinddir(DIRE handle)
+{
+    DIRE_HANDLE_VALID(handle)
+    if(0 == DirectoryHandleArray[handle].obj.fs)
+    {
+        return -1;
+    }
+
+    if(FR_OK != f_rewinddir(&DirectoryHandleArray[handle]))
+    {
+        return -1;
+    }
+
     return 0;
 }
 
-int findnext(DIRE handle, FileInfo* out)
+int fatxclosedir(DIRE handle)
 {
-    return 0;
-}
+    DIRE_HANDLE_VALID(handle)
+    if(0 == DirectoryHandleArray[handle].obj.fs)
+    {
+        return -1;
+    }
 
-int frewinddir(DIRE handle)
-{
-    return 0;
-}
+    if(FR_OK != f_closedir(&DirectoryHandleArray[handle]))
+    {
+        return -1;
+    }
 
-int fclosedir(DIRE handle)
-{
-    return 0;
-}
-
-
-int fdelete(const char* path)
-{
-    return 0;
-}
-
-int frename(const char* path, const char* newName)
-{
     return 0;
 }
 
 
-int fchdir(const char* path)
+int fatxdelete(const char* path)
 {
+    if(FR_OK != f_unlink(path))
+    {
+        return -1;
+    }
+
     return 0;
 }
 
-int fchdrive(const char* path)
+int fatxrename(const char* path, const char* newName)
 {
-    return 0;
-}
+    if(strlen(newName) > 42)
+    {
+        return -1;
+    }
 
-const char* getcwd(void)
-{
-    return NULL;
-}
+    if(FR_OK != f_rename(path, newName))
+    {
+        return -1;
+    }
 
-
-int fgetfree(const char* path)
-{
-    return 0;
-}
-
-int getclustersize(unsigned char driveNumber, unsigned char partNumber)
-{
     return 0;
 }
 
 
-int fputc(FILE handle, char c)
+int fatxchdir(const char* path)
 {
+    if(MaxPathLength < strlen(path))
+    {
+        return -1;
+    }
+
+    if(FR_OK == f_chdir(path))
+    {
+        sprintf(cwd, "%s", path);
+        return 0;
+    }
+
+    return -1;
+}
+
+int fatxchdrive(const char* path)
+{
+    /* Not useful for the moment. */
+    return -1;
+}
+
+const char* fatxgetcwd(void)
+{
+    return cwd;
+}
+
+
+int fatxgetfree(const char* path)
+{
+    DWORD clusters;
+
+    int vol = get_ldnumber(&path);
+    FATFS* fatfs = &FatXFs[0][vol];
+    if(0 > vol)
+    {
+        return -1;
+    }
+
+    if(FR_OK == f_getfree(path, &clusters, &fatfs))
+    {
+        return clusters;
+    }
+
+    return -1;
+}
+
+int fatxgetclustersize(unsigned char driveNumber, unsigned char partNumber)
+{
+    if(NbDrivesSupported <= driveNumber || NbFATXPartPerHDD <= partNumber)
+    {
+        return -1;
+    }
+
+    return FatXFs[driveNumber][partNumber].csize;
+}
+
+
+int fatxputc(FILEX handle, char c)
+{
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
+
+    return f_putc(c, &FileHandleArray[handle]);
+}
+
+int fatxputs(FILEX handle, const char* sz)
+{
+    FILE_HANDLE_VALID(handle)
+    FILE_VALID(handle)
+
+    return f_puts(sz, &FileHandleArray[handle]);
+}
+
+int fatxprintf(FILEX handle, const char* sz, ...)
+{
+    int wrote;
+    va_list args;
+
+    FILE_HANDLE_VALID(handle)
+    FILE_VALID(handle)
+
+    va_start( args, sz );
+    wrote = f_printf(&FileHandleArray[handle], sz, args);
+    va_end( args );
+
+
+    return wrote;
+}
+
+int fatxgets(FILEX handle, char* out, unsigned int len)
+{
+    FILE_HANDLE_VALID(handle)
+    FILE_VALID(handle)
+
+    f_gets(out, len, &FileHandleArray[handle]);
+
     return 0;
 }
 
-int fputs(FILE handle, const char* sz)
+long long int fatxtell(FILEX handle)
 {
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
-    return 0;
+
+    return f_tell(&FileHandleArray[handle]);
 }
 
-int fprintf(FILE handle, const char* sz, ...)
+int fatxeof(FILEX handle)
 {
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
-    return 0;
+
+    if(f_eof(&FileHandleArray[handle]))
+    {
+        /* At end of file */
+        return 0;
+    }
+
+    return 1;
 }
 
-int fgets(FILE handle, unsigned int len)
+long long int fatxsize(FILEX handle)
 {
+    FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
-    return 0;
-}
 
-int ftell(FILE handle)
-{
-    FILE_VALID(handle)
-    return 0;
-}
-
-int feof(FILE handle)
-{
-    FILE_VALID(handle)
-    return 0;
-}
-
-int fsize(FILE handle)
-{
-    FILE_VALID(handle)
-    return 0;
+    return f_size(&FileHandleArray[handle]);
 }
 

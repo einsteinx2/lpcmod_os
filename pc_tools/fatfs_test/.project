@@ -31,6 +31,16 @@
 			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src</location>
 		</link>
 		<link>
+			<name>src/FatFSAccessor.c</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/FatFSAccessor.c</location>
+		</link>
+		<link>
+			<name>src/FatFSAccessor.h</name>
+			<type>1</type>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/FatFSAccessor.h</location>
+		</link>
+		<link>
 			<name>src/fatx.h</name>
 			<type>1</type>
 			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/fatx.h</location>

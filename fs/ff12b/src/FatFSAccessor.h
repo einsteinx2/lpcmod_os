@@ -21,10 +21,7 @@
 #define Part_Y    3
 #define Part_Z    4
 
-const char* PartitionNameStrings[NbDrivesSupported][_VOLUMES / 2] =
-{
-     _VOLUME_STRS
-};
+extern const char* const * const  PartitionNameStrings[NbDrivesSupported];
 
 typedef enum
 {
@@ -34,7 +31,9 @@ typedef enum
     XboxDiskLayout_FGSplit
 }XboxDiskLayout;
 
-typedef int FILE;
+typedef int FILEX;
+
+#include "ff.h"
 
 typedef enum
 {
@@ -47,6 +46,15 @@ typedef enum
     FileOpenMode_OpenAppend = FA_OPEN_APPEND
 }FileOpenMode;
 
+typedef enum
+{
+    FileAttr_ReadOnly = AM_RDO,
+    FileAttr_Hidden = AM_HID,
+    FileAttr_SysFile = AM_SYS,
+    FileAttr_Directory = AM_DIR,
+    FileAttr_Archive =  AM_ARC
+}FileAttr;
+
 typedef int DIRE;
 
 typedef struct
@@ -55,48 +63,50 @@ typedef struct
     unsigned char nameLength;
     unsigned int size;
     unsigned char attributes;
-    unsigned int modTime;
+    unsigned short modDate;
+    unsigned short modTime;
 }FileInfo;
 
 
 void FatFS_init(void);
 int mountAll(unsigned char driveNumber);
+int fatxmount(unsigned char driveNumber, unsigned char partitionNumber);
 int isMounted(unsigned char driveNumber, unsigned char partitionNumber);
 int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout);
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber);
 
-FILE fopen(const char* path, FileOpenMode mode);
-int fclose(FILE handle);
-int fread(FILE handle, unsigned char* out, unsigned int size);
-int fwrite(FILE handle, const unsigned char* in, unsigned int size);
-int fseek(FILE handle, unsigned int offset);
-int fsync(FILE handle);
-FileInfo fstat(const char* path);
+FILEX fatxopen(const char* path, FileOpenMode mode);
+int fatxclose(FILEX handle);
+int fatxread(FILEX handle, unsigned char* out, unsigned int size);
+int fatxwrite(FILEX handle, const unsigned char* in, unsigned int size);
+int fatxseek(FILEX handle, unsigned int offset);
+int fatxsync(FILEX handle);
+FileInfo fatxstat(const char* path);
 
-int mkdir(const char* path);
-DIRE fopendir(const char* path);
-FileInfo freaddir(DIRE handle);
-DIRE findfirst(FileInfo* out, const char* path, const char* pattern);
-int findnext(DIRE handle, FileInfo* out);
-int frewinddir(DIRE handle);
-int fclosedir(DIRE handle);
+int fatxmkdir(const char* path);
+DIRE fatxopendir(const char* path);
+FileInfo fatxreaddir(DIRE handle);
+DIRE fatxfindfirst(FileInfo* out, const char* path, const char* pattern);
+int fatxfindnext(DIRE handle, FileInfo* out);
+int fatxrewinddir(DIRE handle);
+int fatxclosedir(DIRE handle);
 
-int fdelete(const char* path);
-int frename(const char* path, const char* newName);
+int fatxdelete(const char* path);
+int fatxrename(const char* path, const char* newName);
 
-int fchdir(const char* path);
-int fchdrive(const char* path);
-const char* getcwd(void);
+int fatxchdir(const char* path);
+int fatxchdrive(const char* path);
+const char* fatxgetcwd(void);
 
-int fgetfree(const char* path);
-int getclustersize(unsigned char driveNumber, unsigned char partNumber);
+int fatxgetfree(const char* path);
+int fatxgetclustersize(unsigned char driveNumber, unsigned char partNumber);
 
-int fputc(FILE handle, char c);
-int fputs(FILE handle, const char* sz);
-int fprintf(FILE handle, const char* sz, ...);
-int fgets(FILE handle, unsigned int len);
-int ftell(FILE handle);
-int feof(FILE handle);
-int fsize(FILE handle);
+int fatxputc(FILEX handle, char c);
+int fatxputs(FILEX handle, const char* sz);
+int fatxprintf(FILEX handle, const char* sz, ...);
+int fatxgets(FILEX handle, char* out, unsigned int len);
+long long int fatxtell(FILEX handle);
+int fatxeof(FILEX handle);
+long long int fatxsize(FILEX handle);
 
 #endif /* FS_FF12B_SRC_FATFSACCESSOR_H_ */

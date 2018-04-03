@@ -28,6 +28,7 @@
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.2061182567" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_LARGE_FILE_SOURCE=1"/>
+									<listOptionValue builtIn="false" value="_PCSIM=1"/>
 									<listOptionValue builtIn="false" value="_LARGEFILE64_SOURCE=1"/>
 									<listOptionValue builtIn="false" value="_FILE_OFFSET_BITS=64"/>
 								</option>
@@ -41,6 +42,7 @@
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1951459033" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_LARGEFILE64_SOURCE=1"/>
+									<listOptionValue builtIn="false" value="_PCSIM=1"/>
 									<listOptionValue builtIn="false" value="_LARGE_FILE_SOURCE=1"/>
 									<listOptionValue builtIn="false" value="_FILE_OFFSET_BITS=64"/>
 								</option>
@@ -89,6 +91,9 @@
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.622244983" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1050190018" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_LARGE_FILE_SOURCE=1"/>
+									<listOptionValue builtIn="false" value="_PCSIM=1"/>
+									<listOptionValue builtIn="false" value="_LARGEFILE64_SOURCE=1"/>
+									<listOptionValue builtIn="false" value="_FILE_OFFSET_BITS=64"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.658744602" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -96,7 +101,10 @@
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.743157555" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.release.option.debugging.level.497169166" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.514723539" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
+									<listOptionValue builtIn="false" value="_LARGEFILE64_SOURCE=1"/>
+									<listOptionValue builtIn="false" value="_PCSIM=1"/>
 									<listOptionValue builtIn="false" value="_LARGE_FILE_SOURCE=1"/>
+									<listOptionValue builtIn="false" value="_FILE_OFFSET_BITS=64"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.689066272" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

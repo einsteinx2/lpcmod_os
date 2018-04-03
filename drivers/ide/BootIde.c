@@ -1541,6 +1541,16 @@ int BootIdeGetSectorSize(int nDriveIndex)
     return IDE_SECTOR_SIZE;
 }
 
+int BootIdeDeviceConnected(int nDriveIndex)
+{
+    return tsaHarddiskInfo[nDriveIndex].m_fDriveExists;
+}
+
+int BootIdeDeviceIsATAPI(int nDriveIndex)
+{
+    return tsaHarddiskInfo[nDriveIndex].m_fAtapi;
+}
+
 /* -------------------------------------------------------------------------------- */
 
 ///////////////////////////////////////////////

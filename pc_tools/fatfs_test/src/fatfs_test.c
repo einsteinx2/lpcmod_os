@@ -9,13 +9,15 @@
 #define __USE_LARGEFILE 1
 #define _LARGEFILE64_SOURCE 1
 
-#include "ff.h"
+#include "FatFSAccessor.h"
 #include "diskio.h"
-#include <iostream>
-#include <ctime>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define _T(x) x
+
 
 /*---------------------------------------------------------*/
 /* Work Area                                               */
@@ -23,41 +25,15 @@
 
 LONGLONG AccSize;           /* Work register for scan_files() */
 WORD AccFiles, AccDirs;
-FILINFO Finfo;
 
-TCHAR Line[300];            /* Console input/output buffer */
+char Line[300];            /* Console input/output buffer */
 HANDLE hCon, hKey;
 
-FATFS FatFs[_VOLUMES];      /* File system object for logical drive */
 BYTE Buff[262144];          /* Working buffer */
 
-#if _USE_FASTSEEK
-DWORD SeekTbl[16];          /* Link map table for fast seek feature */
-#endif
-
-#define NbFATXPartPerHDD 7
-
-PARTITION VolToPart[] =
-{
- {0, 0}, /* XBOX SHELL, E:\ */
- {0, 1}, /* XBOX DATA, C:\ */
- {0, 2}, /* XBOX GAME SWAP 1, X:\ */
- {0, 3}, /* XBOX GAME SWAP 2, Y:\ */
- {0, 4}, /* XBOX GAME SWAP 3, Z:\ */
- {0, 5}, /* XBOX F, F:\ */
- {0, 6}, /* XBOX G, G:\ */
- {1, 0}, /* XBOX SHELL, E:\ */
- {1, 1}, /* XBOX DATA, C:\ */
- {1, 2}, /* XBOX GAME SWAP 1, X:\ */
- {1, 3}, /* XBOX GAME SWAP 2, Y:\ */
- {1, 4}, /* XBOX GAME SWAP 3, Z:\ */
- {1, 5}, /* XBOX F, F:\ */
- {1, 6}  /* XBOX G, G:\ */
-};
 
 const char* DefaultImageFilename = "XboxImage.bin";
 
-using namespace std;
 
 unsigned int get_fattime (void)
 {
@@ -82,13 +58,13 @@ unsigned int get_fattime (void)
 */
 
 int xatoll (        /* 0:Failed, 1:Successful */
-    TCHAR **str,    /* Pointer to pointer to the string */
+    char **str,    /* Pointer to pointer to the string */
     QWORD *res      /* Pointer to a valiable to store the value */
 )
 {
     QWORD val;
     unsigned char r;
-    TCHAR c;
+    char c;
 
 
     *res = 0;
@@ -132,7 +108,7 @@ int xatoll (        /* 0:Failed, 1:Successful */
 
 
 int xatoi (
-    TCHAR **str,    /* Pointer to pointer to the string */
+    char **str,    /* Pointer to pointer to the string */
     DWORD *res      /* Pointer to a valiable to store the value */
 )
 {
@@ -160,14 +136,14 @@ void put_dump (
     int i;
 
 
-    printf(_T("%08lX:"), addr);
+    printf("%08lX:", addr);
 
     for (i = 0; i < cnt; i++)
-        printf(_T(" %02X"), buff[i]);
+        printf(" %02X", buff[i]);
 
     putchar(' ');
     for (i = 0; i < cnt; i++)
-        putchar((TCHAR)((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.'));
+        putchar((char)((buff[i] >= ' ' && buff[i] <= '~') ? buff[i] : '.'));
 
     putchar('\n');
 }
@@ -192,57 +168,41 @@ UINT forward (
 
 
 
-FRESULT scan_files (
-    TCHAR* path     /* Pointer to the path name working buffer */
+int scan_files (
+    char* path     /* Pointer to the path name working buffer */
 )
 {
-    DIR dir;
-    FRESULT res;
+    DIRE dir;
+    int res;
     int i;
+    FileInfo Finfo;
 
-
-    if ((res = f_opendir(&dir, path)) == FR_OK) {
+    dir = fatxopendir(path);
+    if (dir) {
         i = strlen(path);
-        while (((res = f_readdir(&dir, &Finfo)) == FR_OK) && Finfo.fnamex[0]) {
-            if (_FS_RPATH && Finfo.fnamex[0] == '.') continue;
-            if (Finfo.fattrib & AM_DIR) {
+        Finfo = fatxreaddir(dir);
+        while (Finfo.name[0]) {
+            if (Finfo.name[0] == '.') continue;
+            if (Finfo.attributes & AM_DIR) {
                 AccDirs++;
-                *(path+i) = '/'; strcpy(path+i+1, Finfo.fnamex);
+                *(path+i) = '/'; strcpy(path+i+1, Finfo.name);
                 res = scan_files(path);
                 *(path+i) = '\0';
                 if (res != FR_OK) break;
             } else {
 //              printf(_T("%s/%s\n"), path, fn);
                 AccFiles++;
-                AccSize += Finfo.fsize;
+                AccSize += Finfo.size;
             }
         }
-        f_closedir(&dir);
+        fatxclosedir(dir);
     }
 
     return res;
 }
 
 
-
-void put_rc (FRESULT rc)
-{
-    const TCHAR *p =
-        _T("OK\0DISK_ERR\0INT_ERR\0NOT_READY\0NO_FILE\0NO_PATH\0INVALID_NAME\0")
-        _T("DENIED\0EXIST\0INVALID_OBJECT\0WRITE_PROTECTED\0INVALID_DRIVE\0")
-        _T("NOT_ENABLED\0NO_FILE_SYSTEM\0MKFS_ABORTED\0TIMEOUT\0LOCKED\0")
-        _T("NOT_ENOUGH_CORE\0TOO_MANY_OPEN_FILES\0INVALID_PARAMETER\0");
-    int i;
-
-    for (i = 0; i != rc && *p; i++) {
-        while(*p++) ;
-    }
-    printf(_T("rc=%u FR_%s\n"), (UINT)rc, p);
-}
-
-
-
-const TCHAR HelpStr[] = {
+const char HelpStr[] = {
         _T("[Disk contorls]\n")
         _T(" di <pd#> - Initialize disk\n")
         _T(" dd [<pd#> <sect>] - Dump a secrtor\n")
@@ -285,7 +245,7 @@ const TCHAR HelpStr[] = {
     };
 
 void get_uni (
-    TCHAR* buf,
+    char* buf,
     UINT len
 )
 {
@@ -311,28 +271,26 @@ void get_uni (
 
 
 void put_uni (
-    TCHAR* buf
+    char* buf
 )
 {
     fputs(buf, stdout);
 }
 
 
-int main(int argc, TCHAR *argv[]) {
-    TCHAR *ptr, *ptr2, pool[50];
+int main(int argc, char *argv[]) {
+    char *ptr, *ptr2, pool[50];
     DWORD p1, p2, p3;
     QWORD px;
     BYTE *buf;
     UINT s1, s2, cnt;
     WORD w;
     DWORD dw, ofs = 0, sect = 0, drv = 0;
-    const TCHAR *ft[] = {_T("N/A"), _T("FAT12"), _T("FAT16"), _T("FAT32"), _T("exFAT"), _T("FATX16"), _T("FATX32")};
-    FILE* h;
-    FRESULT fr;
+    int fr;
     DRESULT dr;
-    FATFS *fs;              /* Pointer to file system object */
-    DIR dir;                /* Directory object */
-    FIL file[2];            /* File objects */
+    DIRE dir;                /* Directory object */
+    FILEX file[2];            /* File objects */
+    FileInfo Finfo;
     const char* filename = DefaultImageFilename;
 
     if(argc > 2)
@@ -348,15 +306,13 @@ int main(int argc, TCHAR *argv[]) {
     }
     printf("Opening \"%s\" disk image\n", filename);
 
-    printf(_T("FatFs module test monitor (%s, CP:%u/%s)\n\n"),
-                _USE_LFN ? _T("LFN") : _T("SFN"),
-                _CODE_PAGE,
-                _LFN_UNICODE ? _T("Unicode") : _T("ANSI"));
+    printf(_T("FatFs module test monitor (%s, %s)\n\n"),
+                _T("SFN"),
+                _T("ANSI"));
 
-    printf(pool, _T("FatFs debug console (%s, CP:%u/%s)"),
-                _USE_LFN ? _T("LFN") : _T("SFN"),
-                _CODE_PAGE,
-                _LFN_UNICODE ? _T("Unicode") : _T("ANSI"));
+    printf(pool, _T("FatFs debug console (%s, %s)"),
+                _T("SFN"),
+                _T("ANSI"));
 
     if(assign_drives(filename))    /* Find physical drives on the PC */
     {
@@ -366,8 +322,8 @@ int main(int argc, TCHAR *argv[]) {
 
 #if _MULTI_PARTITION
     printf(_T("\nMultiple partition is enabled. Each logical drive is tied to the patition as follows:\n"));
-    for (cnt = 0; cnt < sizeof VolToPart / sizeof (PARTITION); cnt++) {
-        const TCHAR *pn[] = {_VOLUME_STRS};
+    for (cnt = 0; cnt < _VOLUMES; cnt++) {
+        const char *pn[] = {_VOLUME_STRS};
 
         printf(_T("\"%u:\" <== Disk# %u, %s\n"), cnt, VolToPart[cnt].pd, pn[(NbFATXPartPerHDD * VolToPart[cnt].pd) + VolToPart[cnt].pt]);
     }
@@ -477,14 +433,15 @@ int main(int argc, TCHAR *argv[]) {
                     break;
 
                 case 's' :  /* bs - Save Buff[] */
+#if 0
                     while (*ptr == ' ') ptr++;
                     h = fopen ("Buff.bin","w");
                     if (h) {
                         fputs((const char *)Buff, h);
-                        fclose(h);
+                        fatxclose(h);
                         printf(_T("Ok.\n"));
                     }
-
+#endif
                     break;
 
                 }
@@ -496,96 +453,41 @@ int main(int argc, TCHAR *argv[]) {
                 case 'i' :  /* fi <ld#> [<mount>] - Force initialized the logical drive */
                     if (!xatoi(&ptr, &p1) || (UINT)p1 > 9) break;
                     if (!xatoi(&ptr, &p2)) p2 = 0;
-                    sprintf(ptr, _T("%lu:"), p1);
-                    put_rc(f_mount(&FatFs[p1], ptr, (BYTE)p2));
-                    break;
-
-                case 's' :  /* fs [<path>] - Show logical drive status */
-                    while (*ptr == ' ') ptr++;
-                    ptr2 = ptr;
-    #if _FS_READONLY
-                    fr = f_opendir(&dir, ptr);
-                    if (fr == FR_OK) {
-                        fs = dir.obj.fs;
-                        f_closedir(&dir);
-                    }
-    #else
-                    fr = f_getfree(ptr, (DWORD*)&p1, &fs);
-    #endif
-                    if (fr) { put_rc(fr); break; }
-                    printf(_T("FAT type = %s\n"), ft[fs->fs_typex]);
-                    printf(_T("Cluster size = %lu bytes\n"),
-    #if _MAX_SS != _MIN_SS
-                        (DWORD)fs->csize * fs->ssize);
-    #else
-                        (DWORD)fs->csize * _MAX_SS);
-    #endif
-                    if (fs->fs_typex < FS_FAT32) printf(_T("Root DIR entries = %u\n"), fs->n_rootdir);
-                    printf(_T("Sectors/FAT = %lu\nNumber of FATs = %u\nNumber of clusters = %lu\nVolume start sector = %lu\nFAT start sector = %lu\nRoot DIR start %s = %lu\nData start sector = %lu\n\n"),
-                        fs->fsize, fs->n_fats, fs->n_fatent - 2, fs->volbase, fs->fatbase, fs->fs_typex != FS_EXFAT ? _T("cluster") : _T("sector"), fs->dirbase, fs->database);
-    #if _USE_LABEL
-                    fr = f_getlabel(ptr2, pool, &dw);
-                    if (fr) { put_rc(fr); break; }
-                    if (pool[0]) {
-                        printf(_T("Volume name is "));
-                        put_uni(pool);
-                        printf(_T("\n"));
-                    } else {
-                        printf(_T("No volume label\n"));
-                    }
-                    printf(_T("Volume S/N is %04X-%04X\n"), dw >> 16, dw & 0xFFFF);
-    #endif
-                    printf(_T("..."));
-                    AccSize = AccFiles = AccDirs = 0;
-                    fr = scan_files(ptr);
-                    if (fr) { put_rc(fr); break; }
-                    p2 = (fs->n_fatent - 2) * fs->csize;
-                    p3 = p1 * fs->csize;
-    #if _MAX_SS != _MIN_SS
-                    p2 *= fs->ssize / 512;
-                    p3 *= fs->ssize / 512;
-    #endif
-                    p2 /= 2;
-                    p3 /= 2;
-                    printf(_T("\r%u files, %llu bytes.\n%u folders.\n%lu KiB total disk space.\n"),
-                            AccFiles, AccSize, AccDirs, p2);
-    #if !_FS_READONLY
-                    printf(_T("%lu KiB available.\n"), p3);
-    #endif
+                    fatxmount((BYTE)p1, (BYTE)p2);
                     break;
 
                 case 'l' :  /* fl [<path>] - Directory listing */
                     while (*ptr == ' ') ptr++;
-                    fr = f_opendir(&dir, ptr);
-                    if (fr) { put_rc(fr); break; }
+                    dir = fatxopendir(ptr);
+                    if (!dir) { printf("Error, no path.\n"); }
                     AccSize = s1 = s2 = 0;
                     for(;;) {
-                        fr = f_readdir(&dir, &Finfo);
-                        if ((fr != FR_OK) || !Finfo.fnamex[0]) break;
-                        if (Finfo.fattrib & AM_DIR) {
+                        Finfo = fatxreaddir(dir);
+                        if (!Finfo.name[0]) break;
+                        if (Finfo.attributes & AM_DIR) {
                             s2++;
                         } else {
-                            s1++; AccSize += Finfo.fsize;
+                            s1++; AccSize += Finfo.size;
                         }
                         printf(_T("%c%c%c%c%c %u/%02u/%02u %02u:%02u %10llu  "),
-                                (Finfo.fattrib & AM_DIR) ? 'D' : '-',
-                                (Finfo.fattrib & AM_RDO) ? 'R' : '-',
-                                (Finfo.fattrib & AM_HID) ? 'H' : '-',
-                                (Finfo.fattrib & AM_SYS) ? 'S' : '-',
-                                (Finfo.fattrib & AM_ARC) ? 'A' : '-',
-                                (Finfo.fdate >> 9) + 1980, (Finfo.fdate >> 5) & 15, Finfo.fdate & 31,
-                                (Finfo.ftime >> 11), (Finfo.ftime >> 5) & 63, (QWORD)Finfo.fsize);
+                                (Finfo.attributes & FileAttr_Directory) ? 'D' : '-',
+                                (Finfo.attributes & FileAttr_ReadOnly) ? 'R' : '-',
+                                (Finfo.attributes & FileAttr_Hidden) ? 'H' : '-',
+                                (Finfo.attributes & FileAttr_SysFile) ? 'S' : '-',
+                                (Finfo.attributes & FileAttr_Archive) ? 'A' : '-',
+                                (Finfo.modDate >> 9) + 1980, (Finfo.modDate >> 5) & 15, Finfo.modDate & 31,
+                                (Finfo.modTime >> 11), (Finfo.modTime >> 5) & 63, (QWORD)Finfo.size);
     #if _USE_LFN && _USE_FIND == 2
                         printf(_T("%-12s  "),Finfo.altname);
     #endif
-                        put_uni(Finfo.fnamex);
+                        put_uni(Finfo.name);
                         printf(_T("\n"));
                     }
-                    f_closedir(&dir);
+                    fatxclosedir(dir);
                     printf(_T("%4u File(s),%11llu bytes total\n%4u Dir(s)"), s1, AccSize, s2);
     #if !_FS_READONLY
-                    if (f_getfree(ptr, (DWORD*)&p1, &fs) == FR_OK)
-                        printf(_T(",%12llu bytes free"), (QWORD)p1 * fs->csize * 512);
+                    p1 = fatxgetfree(ptr);
+                    printf(_T(",%12llu clusters free"), (QWORD)p1);
     #endif
                     printf(_T("\n"));
                     break;
@@ -595,29 +497,30 @@ int main(int argc, TCHAR *argv[]) {
                     ptr2 = ptr;
                     while (*ptr != ' ') ptr++;
                     *ptr++ = 0;
-                    fr = f_findfirst(&dir, &Finfo, ptr2, ptr);
-                    while (fr == FR_OK && Finfo.fnamex[0]) {
+                    dir = fatxfindfirst(&Finfo, ptr2, ptr);
+                    while (dir && Finfo.name[0]) {
     #if _USE_LFN && _USE_FIND == 2
                         printf(_T("%-12s  "), Finfo.altname);
     #endif
-                        put_uni(Finfo.fnamex);
+                        put_uni(Finfo.name);
                         printf(_T("\n"));
-                        fr = f_findnext(&dir, &Finfo);
+                        fr = fatxfindnext(dir, &Finfo);
                     }
-                    if (fr) put_rc(fr);
+                    if (fr) printf("Error\n");
 
-                    f_closedir(&dir);
+                    fatxclosedir(dir);
                     break;
     #endif
                 case 'o' :  /* fo <mode> <file> - Open a file */
                     if (!xatoi(&ptr, &p1)) break;
                     while (*ptr == ' ') ptr++;
-                    fr = f_open(file, ptr, (BYTE)p1);
-                    put_rc(fr);
+                    file[0] = fatxopen(ptr, (FileOpenMode)p1);
+                    printf("OK\n");
                     break;
 
                 case 'c' :  /* fc - Close a file */
-                    put_rc(f_close(file));
+                    fatxclose(file[0]);
+                    printf("OK\n");
                     break;
 
                 case 'r' :  /* fr <len> - read file */
@@ -629,37 +532,38 @@ int main(int argc, TCHAR *argv[]) {
                         } else {
                             cnt = p1; p1 = 0;
                         }
-                        fr = f_read(file, Buff, cnt, &s2);
-                        if (fr != FR_OK) { put_rc(fr); break; }
-                        p2 += s2;
-                        if (cnt != s2) break;
+                        fr = fatxread(file[0], Buff, cnt);
+                        if (fr == -1) { printf("Error\n"); break; }
+                        p2 += fr;
+                        if (cnt != (UINT)fr) break;
                     }
                     printf(_T("%lu bytes read.\n"), p2);
                     break;
 
                 case 'd' :  /* fd <len> - read and dump file from current fp */
                     if (!xatoi(&ptr, &p1)) p1 = 128;
-                    ofs = (DWORD)file[0].fptr;
+                    ofs = 0;
                     while (p1) {
                         if (p1 >= 16) { cnt = 16; p1 -= 16; }
                         else          { cnt = p1; p1 = 0; }
-                        fr = f_read(file, Buff, cnt, &cnt);
-                        if (fr != FR_OK) { put_rc(fr); break; }
+                        fr -= fatxread(file[0], Buff, cnt);
+                        if (fr == -1) { printf("Error\n"); break; }
+                        put_dump(Buff, ofs, fr);
+                        cnt = (UINT)fr > cnt ? 0 : cnt - fr;
                         if (!cnt) break;
-                        put_dump(Buff, ofs, cnt);
                         ofs += 16;
                     }
                     break;
 
                 case 'e' :  /* fe <ofs> - Seek file pointer */
                     if (!xatoll(&ptr, &px)) break;
-                    fr = f_lseek(file, (FSIZE_t)px);
-                    put_rc(fr);
+                    fr = fatxseek(file[0], (FSIZE_t)px);
                     if (fr == FR_OK)
-                        printf(_T("fptr = %llu(0x%llX)\n"), (QWORD)file[0].fptr, (QWORD)file[0].fptr);
+                        printf(_T("OK\n"));
                     break;
     #if _USE_FASTSEEK
                 case 'E' :  /* fE - Enable fast seek and initialize cluster link map table */
+#if 0
                     file[0].cltbl = SeekTbl;            /* Enable fast seek (set address of buffer) */
                     SeekTbl[0] = sizeof SeekTbl / sizeof *SeekTbl;  /* Buffer size */
                     fr = f_lseek(file, CREATE_LINKMAP); /* Create link map table */
@@ -672,37 +576,33 @@ int main(int argc, TCHAR *argv[]) {
                     if (fr == FR_NOT_ENOUGH_CORE) {
                         printf(_T("%lu items required to create the link map table.\n"), SeekTbl[0]);
                     }
+#endif
                     break;
     #endif  /* _USE_FASTSEEK */
     #if _FS_RPATH >= 1
                 case 'g' :  /* fg <path> - Change current directory */
                     while (*ptr == ' ') ptr++;
-                    put_rc(f_chdir(ptr));
+                    printf("%s\n", fatxchdir(ptr) ? "Error" : "OK");
                     break;
     #if _VOLUMES >= 2
                 case 'j' :  /* fj <path> - Change current drive */
                     while (*ptr == ' ') ptr++;
-                    put_rc(f_chdrive(ptr));
+                    printf("%s\n", fatxchdrive(ptr) ? "Error" : "OK");
                     break;
     #endif
-    #if _FS_RPATH >= 2
                 case 'q' :  /* fq - Show current dir path */
-                    fr = f_getcwd(Line, 256);
-                    if (fr) {
-                        put_rc(fr);
-                    } else {
-                        printf("%s", Line);
-                        printf(_T("\n"));
-                    }
+                    printf("%s", fatxgetcwd());
+                    printf(_T("\n"));
                     break;
-    #endif
     #endif
     #if _USE_FORWARD
                 case 'f' :  /* ff <len> - Forward data */
+#if 0
                     if (!xatoi(&ptr, &p1)) break;
                     fr = f_forward(file, forward, p1, &s1);
                     put_rc(fr);
                     if (fr == FR_OK) printf(_T("\n%u bytes tranferred.\n"), s1);
+#endif
                     break;
     #endif
     #if !_FS_READONLY
@@ -713,16 +613,18 @@ int main(int argc, TCHAR *argv[]) {
                     while (p1) {
                         if (p1 >= sizeof Buff) { cnt = sizeof Buff; p1 -= sizeof Buff; }
                         else                  { cnt = p1; p1 = 0; }
-                        fr = f_write(file, Buff, cnt, &s2);
-                        if (fr != FR_OK) { put_rc(fr); break; }
-                        p2 += s2;
-                        if (cnt != s2) break;
+                        fr = fatxwrite(file[0], Buff, cnt);
+                        if (fr == -1) { printf("Error\n"); break; }
+                        p2 += fr;
+                        if (cnt != (UINT)fr) break;
                     }
                     printf(_T("%lu bytes written.\n"), p2);
                     break;
 
                 case 'v' :  /* fv - Truncate file */
+#if 0
                     put_rc(f_truncate(file));
+#endif
                     break;
 
                 case 'n' :  /* fn <name> <new_name> - Change file/dir name */
@@ -731,17 +633,17 @@ int main(int argc, TCHAR *argv[]) {
                     if (!ptr2) break;
                     *ptr2++ = 0;
                     while (*ptr2 == ' ') ptr2++;
-                    put_rc(f_rename(ptr, ptr2));
+                    printf("%s\n", fatxrename(ptr, ptr2) ? "Error" : "OK");
                     break;
 
                 case 'u' :  /* fu <name> - Unlink a file/dir */
                     while (*ptr == ' ') ptr++;
-                    put_rc(f_unlink(ptr));
+                    printf("%s\n", fatxdelete(ptr) ? "Error" : "OK");
                     break;
 
                 case 'k' :  /* fk <name> - Create a directory */
                     while (*ptr == ' ') ptr++;
-                    put_rc(f_mkdir(ptr));
+                    printf("%s\n", fatxmkdir(ptr) ? "Error" : "OK");
                     break;
 
                 case 'x' : /* fx <src_name> <dst_name> - Copy a file */
@@ -751,41 +653,45 @@ int main(int argc, TCHAR *argv[]) {
                     *ptr2++ = 0;
                     while (*ptr2 == ' ') ptr2++;
                     printf(_T("Opening \"%s\""), ptr);
-                    fr = f_open(file + 0, ptr, FA_OPEN_EXISTING | FA_READ);
+                    file[0] = fatxopen(ptr, (FileOpenMode)(FileOpenMode_OpenExistingOnly | FileOpenMode_Read));
                     printf(_T("\n"));
-                    if (fr) {
-                        put_rc(fr);
+                    if (!file[0]) {
+                        printf("Error file 0\n");
                         break;
                     }
                     while (*ptr2 == ' ') ptr2++;
                     printf(_T("Creating \"%s\""), ptr2);
-                    fr = f_open(file + 1, ptr2, FA_CREATE_ALWAYS | FA_WRITE);
+                    file[1] = fatxopen(ptr2, (FileOpenMode)(FileOpenMode_CreateNewOnly | FileOpenMode_Write));
                     printf(_T("\n"));
-                    if (fr) {
-                        put_rc(fr);
-                        f_close(file + 0);
+                    if (!file[1]) {
+                        printf("Error file 1\n");
+                        fatxclose(file[0]);
                         break;
                     }
                     printf(_T("Copying..."));
                     p1 = 0;
                     for (;;) {
-                        fr = f_read(file + 0, Buff, sizeof Buff, &s1);
-                        if (fr || s1 == 0) break;   /* error or eof */
-                        fr = f_write(file + 1, Buff, s1, &s2);
+                        fr = fatxread(file[0], Buff, sizeof Buff);
+                        if (-1 == fr || fr == 0) break;   /* error or eof */
+                        s1 = fr;
+                        fr = fatxwrite(file[1], Buff, s1);
+                        s2 = fr;
                         p1 += s2;
-                        if (fr || s2 < s1) break;   /* error or disk full */
+                        if (-1 == fr || s2 < s1) break;   /* error or disk full */
                     }
                     printf(_T("\n"));
-                    if (fr) put_rc(fr);
-                    f_close(file + 0);
-                    f_close(file + 1);
+                    if (-1 == fr) printf(_T("Copy Error\n"));
+                    fatxclose(file[0]);
+                    fatxclose(file[1]);
                     printf(_T("%lu bytes copied.\n"), p1);
                     break;
     #if _USE_EXPAND
                 case 'h':   /* fh <fsz> <opt> - Allocate contiguous block */
+#if 0
                     if (!xatoll(&ptr, &px) || !xatoi(&ptr, &p2)) break;
                     fr = f_expand(file, (FSIZE_t)px, (BYTE)p2);
                     put_rc(fr);
+#endif
                     break;
     #endif
     #if _USE_CHMOD
@@ -817,22 +723,36 @@ int main(int argc, TCHAR *argv[]) {
                     get_uni(ptr, 256);
                     if (*ptr != 'Y') break;
                     sprintf(ptr, _T("%u:"), (UINT)p1);
-                    put_rc(f_mkfs(ptr, (BYTE)p2, p3, Buff, sizeof Buff));
+                    fr = fatxmkfs((BYTE)p1, (BYTE)p2);
+
+                    if(-1 == fr)
+                    {
+                        printf("MKFS error\n");
+                    }
+                    else
+                    {
+                        printf("MKFS success\n");
+                    }
                     break;
     #if _MULTI_PARTITION
                 case 'p' :  /* fp <pd#> <size1> <size2> <size3> <size4> - Create partition table */
                     {
-                        DWORD pts[4];
 
                         if (!xatoi(&ptr, &p1)) break;
-                        xatoi(&ptr, &pts[0]);
-                        xatoi(&ptr, &pts[1]);
-                        xatoi(&ptr, &pts[2]);
-                        xatoi(&ptr, &pts[3]);
+                        if (!xatoi(&ptr, &p2)) break;
+
                         printf(_T("The physical drive %lu will be re-partitioned. Are you sure? (Y/n)="), p1);
                         fgets(ptr, 256, stdin);
                         if (*ptr != 'Y') break;
-                        put_rc(f_fdisk(p1, pts, Buff));
+                        fr = fdisk(p1, (XboxDiskLayout)p2);
+                        if(-1 == fr)
+                        {
+                            printf("fdisk error\n");
+                        }
+                        else
+                        {
+                            printf("fdisk success\n");
+                        }
                     }
                     break;
     #endif  /* _MULTI_PARTITION */
