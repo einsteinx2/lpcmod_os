@@ -1080,13 +1080,17 @@ DWORD get_fat ( /* 0xFFFFFFFF:Disk error, 1:Internal error, 2..0x7FFFFFFF:Cluste
             val = (clst & 1) ? (wc >> 4) : (wc & 0xFFF);
             break;
 
+#ifdef _USE_FATX
         case FS_FATX16:
+#endif
         case FS_FAT16 :
             if (move_window(fs, fs->fatbase + (clst / (SS(fs) / 2))) != FR_OK) break;
             val = ld_word(fs->win + clst * 2 % SS(fs));
             break;
 
+#ifdef _USE_FATX
         case FS_FATX32:
+#endif
         case FS_FAT32 :
             if (move_window(fs, fs->fatbase + (clst / (SS(fs) / 4))) != FR_OK) break;
             val = ld_dword(fs->win + clst * 4 % SS(fs)) & 0x0FFFFFFF;
@@ -1159,7 +1163,9 @@ FRESULT put_fat (   /* FR_OK(0):succeeded, !=0:error */
             fs->wflag = 1;
             break;
 
+#ifdef _USE_FATX
         case FS_FATX16:
+#endif
         case FS_FAT16 : /* WORD aligned items */
             res = move_window(fs, fs->fatbase + (clst / (SS(fs) / 2)));
             if (res != FR_OK) break;
@@ -1167,7 +1173,9 @@ FRESULT put_fat (   /* FR_OK(0):succeeded, !=0:error */
             fs->wflag = 1;
             break;
 
+#ifdef _USE_FATX
         case FS_FATX32:
+#endif
         case FS_FAT32 : /* DWORD aligned items */
 #if _FS_EXFAT
         case FS_EXFAT :
@@ -1519,7 +1527,11 @@ FRESULT dir_sdi (   /* FR_OK(0):succeeded, !=0:error */
     }
 
     if (clst == 0) {    /* Static table (root-directory in FAT12/16) */
+#ifdef _USE_FATX
         if (ofs / (ISFATX_FS(fs->fs_typex) ? SZFATXDIRE : SZDIRE) >= fs->n_rootdir)  return FR_INT_ERR;  /* Is index out of range? */
+#else
+        if (ofs / SZDIRE >= fs->n_rootdir)  return FR_INT_ERR;  /* Is index out of range? */
+#endif
         dp->sect = fs->dirbase;
 
     } else {            /* Dynamic table (sub-directory or root-directory in FAT32+) */
@@ -2699,6 +2711,7 @@ void get_fileinfo (     /* No return code */
         fno->fnamex[j] = 0;
     }
 #endif
+#ifdef _USE_FATX
     if(ISFATX_FS(fs->fs_typex))
     {
         fno->fattrib = dp->dir[DIRx_Attr];               /* Attribute */
@@ -2708,6 +2721,7 @@ void get_fileinfo (     /* No return code */
         fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
     }
     else
+#endif
     {
         fno->fattrib = dp->dir[DIR_Attr];               /* Attribute */
         fno->fsize = ld_dword(dp->dir + DIR_FileSize);  /* Size */
@@ -3098,28 +3112,28 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             if (res != FR_OK) break;
             res = dir_find(dp);             /* Find an object with the segment name */
 #ifdef _USE_FATX
-            if(NOTFATX_FS(fs->fs_typex))
+            if(ISFATX_FS(fs->fs_typex))
             {
-                ns = dp->fnx[NSFLAG];
+                ns = dp->fnx[NSxFLAG];
             }
             else
 #endif
             {
-                ns = dp->fnx[NSxFLAG];
+                ns = dp->fnx[NSFLAG];
             }
             if (res != FR_OK) {             /* Failed to find the object */
                 if (res == FR_NO_FILE) {    /* Object is not found */
                     if (_FS_RPATH && (ns & NS_DOT)) {   /* If dot entry is not exist, stay there */
                         if (!(ns & NS_LAST)) continue;  /* Continue to follow if not last segment */
 #ifdef _USE_FATX
-                        if(NOTFATX_FS(fs->fs_typex))
+                        if(ISFATX_FS(fs->fs_typex))
                         {
-                            dp->fnx[NSFLAG] = NS_NONAME;
+                            dp->fnx[NSxFLAG] = NS_NONAME;
                         }
                         else
 #endif
                         {
-                            dp->fnx[NSxFLAG] = NS_NONAME;
+                            dp->fnx[NSFLAG] = NS_NONAME;
                         }
                         res = FR_OK;
                     } else {                            /* Could not find the object */
@@ -3237,7 +3251,6 @@ BYTE check_fs ( /* 0:FAT, 1:exFAT, 2:Valid BS but not FAT, 3:Not a BS, 4:Disk er
             fs->isFATX = 1;
         }
     }
-#endif
 
     if(fs->isFATX)
     {
@@ -3263,6 +3276,7 @@ BYTE check_fs ( /* 0:FAT, 1:exFAT, 2:Valid BS but not FAT, 3:Not a BS, 4:Disk er
 
         return FR_NOT_READY;
     }
+#endif
 
     if (move_window(fs, sect) != FR_OK) return FR_NO_FILE;   /* Load boot record */
     if (ld_word(fs->win + BS_55AA) != 0xAA55) return FR_NOT_READY; /* Check boot record signature (always placed at offset 510 even if the sector size is >512) */
@@ -4317,10 +4331,12 @@ FRESULT f_chdir (
                     } else
 #endif
                     {
+#ifdef _USE_FATX
                         if(ISFATX_FS(fs->fs_typex))
                         {
                             fs->cdc_scl = dj.obj.c_scl;
                         }
+#endif
                         fs->cdir = ld_clust(fs, dj.dir);                    /* Sub-directory cluster */
                     }
                 } else {
@@ -4362,12 +4378,7 @@ FRESULT f_getcwd (
         if (!_FS_EXFAT || fs->fs_typex != FS_EXFAT) {   /* (Cannot do getcwd on exFAT and returns root path) */
             dj.obj.sclust = fs->cdir;               /* Start to follow upper directory from current directory */
             while ((ccl = dj.obj.sclust) != 0) {    /* Repeat while current directory is a sub-directory */
-#ifdef _USE_FATX
-                if(ISFATX_FS(fs->fs_typex))
-                    res = dir_sdi(&dj, 1 * SZFATXDIRE); /* Get parent directory */
-                else
-#endif
-                    res = dir_sdi(&dj, 1 * SZDIRE); /* Get parent directory */
+                res = dir_sdi(&dj, 1 * SZDIRE);     /* Get parent directory */
                 if (res != FR_OK) break;
                 res = move_window(fs, dj.sect);
                 if (res != FR_OK) break;
@@ -4383,12 +4394,8 @@ FRESULT f_getcwd (
                 if (res == FR_NO_FILE) res = FR_INT_ERR;/* It cannot be 'not found'. */
                 if (res != FR_OK) break;
                 get_fileinfo(&dj, &fno);        /* Get the directory name and push it to the buffer */
-#ifdef _USE_FATX
-                if(ISFATX_FS(fs->fs_typex))
-                    n = fno.namelength;
-                else
-#endif
-                    for (n = 0; fno.fnamex[n]; n++) ;
+
+                for (n = 0; fno.fnamex[n]; n++) ;
                 if (i < n + 3) {
                     res = FR_NOT_ENOUGH_CORE; break;
                 }
@@ -4881,7 +4888,11 @@ FRESULT f_getfree (
                             p = fs->win;
                             i = SS(fs);
                         }
+#ifdef _USE_FATX
                         if (fs->fs_typex == FS_FAT16 || fs->fs_typex == FS_FATX16) {
+#else
+                            if (fs->fs_typex == FS_FAT16) {
+#endif
                             if (ld_word(p) == 0) nfree++;
                             p += 2; i -= 2;
                         } else {
