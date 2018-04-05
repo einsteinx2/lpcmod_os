@@ -45,8 +45,8 @@ static const char* const PartitionNameList[_VOLUMES] = { _VOLUME_STRS };
 
 const char* const * const PartitionNameStrings[NbDrivesSupported] =
 {
- (const char* const)&PartitionNameList[0],
- (const char* const)&PartitionNameList[_VOLUMES / 2]
+ (const char* const*)&PartitionNameList[0],
+ (const char* const*)&PartitionNameList[_VOLUMES / 2]
 };
 
 PARTITION VolToPart[_VOLUMES] =
@@ -94,7 +94,9 @@ void FatFS_init(void)
 {
     unsigned char i;
     memset(FatXFs, 0x00, sizeof(FATFS) * NbFATXPartPerHDD * NbDrivesSupported);
+#if _USE_FASTSEEK
     memset(SeekTbl, 0x00, sizeof(DWORD) * 16);
+#endif
     memset(FileHandleArray, 0x00, sizeof(FIL) * MaxOpenFileCount);
     memset(DirectoryHandleArray, 0x00, sizeof(DIR) * MaxOpenDirCount);
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
@@ -290,7 +292,7 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
     XboxPartitionTable workingMbr;
     unsigned char workBuf[512];
     char partName[22];
-    sprintf(partName, "%s:\\", (char *)*PartitionNameStrings[driveNumber][partNumber]);
+    sprintf(partName, "%s:\\", PartitionNameStrings[driveNumber][partNumber]);
 
     if(FR_OK != fatx_getmbr(driveNumber, &workingMbr))
     {
