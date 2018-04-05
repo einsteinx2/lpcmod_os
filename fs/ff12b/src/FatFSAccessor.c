@@ -290,7 +290,7 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
 {
     XboxPartitionTable workingMbr;
-    unsigned char workBuf[512];
+    unsigned char workBuf[FATX_CHAINTABLE_BLOCKSIZE];
     char partName[22];
     sprintf(partName, "%s:\\", PartitionNameStrings[driveNumber][partNumber]);
 
@@ -299,7 +299,7 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
         return -1;
     }
 
-    if(FR_OK != f_mkfs(partName, FM_FATXANY, FATX_MIN_CLUSTERSIZE_INSECTORS, workBuf, workingMbr.TableEntries[partNumber].LBASize))
+    if(FR_OK != f_mkfs(partName, FM_FATXANY, FATX_MIN_CLUSTERSIZE_INSECTORS, workBuf, FATX_CHAINTABLE_BLOCKSIZE))
     {
         return -1;
     }

@@ -718,7 +718,7 @@ int main(int argc, char *argv[]) {
     #endif
     #if _USE_MKFS
                 case 'm' :  /* fm <ld#> <partition rule> <cluster size> - Create file system */
-                    if (!xatoi(&ptr, &p1) || (UINT)p1 > 9 || !xatoi(&ptr, &p2) || !xatoi(&ptr, &p3)) break;
+                    if (!xatoi(&ptr, &p1) || (UINT)p1 > 9 || !xatoi(&ptr, &p2)) break;
                     printf(_T("The volume will be formatted. Are you sure? (Y/n)="));
                     get_uni(ptr, 256);
                     if (*ptr != 'Y') break;

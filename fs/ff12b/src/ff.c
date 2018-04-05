@@ -6144,7 +6144,7 @@ fatx32Force:
                 n_clst = sz_vol / pau;  /* Number of clusters */
                 sz_fat = (n_clst + ss - 1) / ss;     /* FAT size [sector] */
                 sz_rsv = sizeof(PARTITIONHEADER) / ss;  /* Number of reserved sectors, FATX part header */
-                sz_dir = (DWORD)pau * ss;    /* Rootdir size [sector]. Always 1 cluster on FATX*/
+                sz_dir = (DWORD)pau;    /* Rootdir size [sector]. Always 1 cluster on FATX*/
             }
             else
 #endif
