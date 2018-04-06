@@ -83,7 +83,7 @@ int get_ldnumber (      /* Returns logical drive number (-1:invalid drive) */
 static void convertToFileInfo(FileInfo* out, const FILINFO* in)
 {
     out->nameLength = in->namelength;
-    memcpy(out->name, in->fnamex, 42 > out->nameLength ? 42 : out->nameLength);
+    memcpy(out->name, in->fnamex, FATX_FILENAME_MAX > out->nameLength ? FATX_FILENAME_MAX : out->nameLength);
     out->attributes = in->fattrib;
     out->size = in->fsize;
     out->modDate= in->fdate;
@@ -571,7 +571,7 @@ int fatxdelete(const char* path)
 
 int fatxrename(const char* path, const char* newName)
 {
-    if(strlen(newName) > 42)
+    if(FATX_FILENAME_MAX < strlen(newName))
     {
         return -1;
     }

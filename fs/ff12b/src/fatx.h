@@ -95,7 +95,7 @@ extern const XboxPartitionTable BackupPartTable;
 typedef struct {
     unsigned char FilenameLength;
     unsigned char Attrib;
-    char Filename[42];
+    char Filename[FATX_FILENAME_MAX];
     unsigned int FirstCluster;
     unsigned int FileSize;
     unsigned short UpdateTime;

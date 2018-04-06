@@ -1675,7 +1675,7 @@ FRESULT dir_alloc ( /* FR_OK(0):succeeded, !=0:error */
             if ((fs->fs_type == FS_EXFAT) ? (int)((dp->dir[XDIR_Type] & 0x80) == 0) : (int)(dp->dir[DIR_Name] == DDEM || dp->dir[DIR_Name] == 0)) {
 #else
 #ifdef _USE_FATX
-            if ((ISFATX_FS(fs->fs_typex) && (dp->dir[DIRx_NameLgth] == DDEM || dp->dir[DIRx_Name] == 0)) || (NOTFATX_FS(fs->fs_typex) && (dp->dir[DIR_Name] == DDEM || dp->dir[DIR_Name] == 0))) {
+            if ((ISFATX_FS(fs->fs_typex) && (FATX_FILENAME_MAX < dp->dir[DIRx_NameLgth] || 0 == dp->dir[DIRx_Name])) || (NOTFATX_FS(fs->fs_typex) && (DDEM == dp->dir[DIR_Name]|| 0 == dp->dir[DIR_Name]))) {
 #else
             if (dp->dir[DIR_Name] == DDEM || dp->dir[DIR_Name] == 0) {
 #endif
@@ -2326,7 +2326,7 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #endif
 #ifdef _USE_FATX
     BYTE fatxNameLgth = 0;
-    while(fatxNameLgth < 42)
+    while(fatxNameLgth < FATX_FILENAME_MAX)
     {
         if(0xFF == dp->fnx[fatxNameLgth] || 0x00 == dp->fnx[fatxNameLgth])
         {
