@@ -55,7 +55,7 @@ typedef enum
     FileAttr_Archive =  AM_ARC
 }FileAttr;
 
-typedef int DIRE;
+typedef int DIREX;
 
 typedef struct
 {
@@ -84,12 +84,12 @@ int fatxsync(FILEX handle);
 FileInfo fatxstat(const char* path);
 
 int fatxmkdir(const char* path);
-DIRE fatxopendir(const char* path);
-FileInfo fatxreaddir(DIRE handle);
-DIRE fatxfindfirst(FileInfo* out, const char* path, const char* pattern);
-int fatxfindnext(DIRE handle, FileInfo* out);
-int fatxrewinddir(DIRE handle);
-int fatxclosedir(DIRE handle);
+DIREX fatxopendir(const char* path);
+FileInfo fatxreaddir(DIREX handle);
+DIREX fatxfindfirst(FileInfo* out, const char* path, const char* pattern);
+int fatxfindnext(DIREX handle, FileInfo* out);
+int fatxrewinddir(DIREX handle);
+int fatxclosedir(DIREX handle);
 
 int fatxdelete(const char* path);
 int fatxrename(const char* path, const char* newName);

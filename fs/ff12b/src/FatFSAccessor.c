@@ -432,7 +432,7 @@ int fatxmkdir(const char* path)
     return 0;
 }
 
-DIRE fatxopendir(const char* path)
+DIREX fatxopendir(const char* path)
 {
     unsigned char i;
 
@@ -458,7 +458,7 @@ DIRE fatxopendir(const char* path)
     return i + 1;
 }
 
-FileInfo fatxreaddir(DIRE handle)
+FileInfo fatxreaddir(DIREX handle)
 {
     FileInfo returnStruct;
     FILINFO getter;
@@ -483,7 +483,7 @@ FileInfo fatxreaddir(DIRE handle)
     return returnStruct;
 }
 
-DIRE fatxfindfirst(FileInfo* out, const char* path, const char* pattern)
+DIREX fatxfindfirst(FileInfo* out, const char* path, const char* pattern)
 {
     unsigned char i;
     FILINFO getter;
@@ -511,7 +511,7 @@ DIRE fatxfindfirst(FileInfo* out, const char* path, const char* pattern)
     return i + 1;
 }
 
-int fatxfindnext(DIRE handle, FileInfo* out)
+int fatxfindnext(DIREX handle, FileInfo* out)
 {
     FILINFO getter;
 
@@ -533,7 +533,7 @@ int fatxfindnext(DIRE handle, FileInfo* out)
     return -1;
 }
 
-int fatxrewinddir(DIRE handle)
+int fatxrewinddir(DIREX handle)
 {
     DIRE_HANDLE_VALID(handle)
     if(0 == DirectoryHandleArray[handle].obj.fs)
@@ -549,7 +549,7 @@ int fatxrewinddir(DIRE handle)
     return 0;
 }
 
-int fatxclosedir(DIRE handle)
+int fatxclosedir(DIREX handle)
 {
     DIRE_HANDLE_VALID(handle)
     if(0 == DirectoryHandleArray[handle].obj.fs)

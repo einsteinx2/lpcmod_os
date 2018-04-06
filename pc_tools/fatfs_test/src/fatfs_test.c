@@ -172,7 +172,7 @@ int scan_files (
     char* path     /* Pointer to the path name working buffer */
 )
 {
-    DIRE dir;
+    DIREX dir;
     int res;
     int i;
     FileInfo Finfo;
@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) {
     DWORD dw, ofs = 0, sect = 0, drv = 0;
     int fr;
     DRESULT dr;
-    DIRE dir;                /* Directory object */
+    DIREX dir;                /* Directory object */
     FILEX file[2];            /* File objects */
     FileInfo Finfo;
     const char* filename = DefaultImageFilename;
