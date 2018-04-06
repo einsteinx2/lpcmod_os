@@ -203,13 +203,16 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         return -1;
     }
 
+    /* Get drive size */
     diskSizeLba = BootIdeGetSectorCount(driveNumber);
 
+    /* If drive is too small even for stock partition scheme or stock partition scheme is not selected and drive size if smaller or equal than ~8GB*/
     if(((XBOX_EXTEND_STARTLBA - 1) > diskSizeLba) || (XBOX_EXTEND_STARTLBA >= diskSizeLba && XboxDiskLayout_Base != xboxDiskLayout))
     {
         return -1;
     }
 
+    /* If cannot get partition table (backup part table generated when none is found on drive) */
     if(fatx_getmbr(driveNumber, &workingMbr))
     {
         return -1;
@@ -243,16 +246,21 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         workingMbr.TableEntries[6].Flags = 0;
         break;
     case XboxDiskLayout_FGSplit:
+        /* Calculate optimal FATX partition size for F drive depending on cluster size and volume size. */
+        /* Get size of drive minus used space by stock partition scheme */
         diskSizeLba -= XBOX_EXTEND_STARTLBA;
+        /* Round to 4096 bytes boundary */
         diskSizeLba &=  ~((unsigned long long)(FATX_CHAINTABLE_BLOCKSIZE / 8 - 1));
         fDriveLbaSize = diskSizeLba / 2;
 
-        if(LBASIZE_1024GB >= fDriveLbaSize)
+        if(LBASIZE_1024GB <= fDriveLbaSize)
         {
+            /* Max size for a FATX partition is 1TB */
             fDriveLbaSize = LBASIZE_1024GB;
         }
         else
         {
+            /* Round to selected cluster size boundary */
             if(LBASIZE_1024GB >= fDriveLbaSize)
             {
                 /* Check with 64KB clusters */
@@ -271,7 +279,6 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
                 fDriveLbaSize &= ~((unsigned long long)(FATX_MIN_CLUSTERSIZE_INSECTORS - 1));
             }
         }
-        //TODO: Calculate optimal partition size for F drive depending on cluster size
         workingMbr.TableEntries[5].LBAStart = XBOX_EXTEND_STARTLBA;
         workingMbr.TableEntries[5].LBASize = fDriveLbaSize;
         workingMbr.TableEntries[5].Flags = 0;
