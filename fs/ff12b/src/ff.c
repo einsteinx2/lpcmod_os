@@ -1596,7 +1596,6 @@ FRESULT dir_next (  /* FR_OK(0):succeeded, FR_NO_FILE:End of table, FR_DENIED:Co
         ofs = dp->dptr + SZDIRE;    /* Next entry */
     }
 #ifdef _USE_FATX
-    //if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : ISFATX_FS(fs->fs_typex) ? (4096 * SZFATXDIRE) : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
     if (NOTFATX_FS(fs->fs_typex))
 #endif
     {
