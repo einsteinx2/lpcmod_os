@@ -6318,7 +6318,12 @@ fatx32Force:
             if (fmt == FS_FAT32 || FS_FATX32 == fmt) {
                 st_dword(buf + 0, 0xFFFFFFF8);  /* Entry 0 */
                 st_dword(buf + 4, 0xFFFFFFFF);  /* Entry 1 */
-                st_dword(buf + 8, 0x0FFFFFFF);  /* Entry 2 (root directory) */
+#ifdef _USE_FATX
+                if(NOTFATX_FS(fmt))
+#endif
+                {
+                    st_dword(buf + 8, 0x0FFFFFFF);  /* Entry 2 (root directory) */
+                }
             } else {
                 st_dword(buf + 0, (fmt == FS_FAT12) ? 0xFFFFF8 : 0xFFFFFFF8);   /* Entry 0 and 1 */
             }
