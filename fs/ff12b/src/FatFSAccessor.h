@@ -67,6 +67,16 @@ typedef struct
     unsigned short modTime;
 }FileInfo;
 
+typedef struct
+{
+    unsigned char seconds;
+    unsigned char minutes;
+    unsigned char hours;
+    unsigned char mday;
+    unsigned char month;
+    unsigned short year;
+}FileDate;
+
 
 void FatFS_init(void);
 int mountAll(unsigned char driveNumber);
@@ -108,5 +118,7 @@ int fatxgets(FILEX handle, char* out, unsigned int len);
 long long int fatxtell(FILEX handle);
 int fatxeof(FILEX handle);
 long long int fatxsize(FILEX handle);
+
+FileDate convertToTime(unsigned short date, unsigned short time);
 
 #endif /* FS_FF12B_SRC_FATFSACCESSOR_H_ */

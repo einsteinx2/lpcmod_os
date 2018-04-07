@@ -83,7 +83,7 @@ int get_ldnumber (      /* Returns logical drive number (-1:invalid drive) */
 static void convertToFileInfo(FileInfo* out, const FILINFO* in)
 {
     out->nameLength = in->namelength;
-    memcpy(out->name, in->fnamex, FATX_FILENAME_MAX > out->nameLength ? FATX_FILENAME_MAX : out->nameLength);
+    memcpy(out->name, in->fnamex, FATX_FILENAME_MAX < out->nameLength ? FATX_FILENAME_MAX : out->nameLength);
     out->attributes = in->fattrib;
     out->size = in->fsize;
     out->modDate= in->fdate;
@@ -720,5 +720,19 @@ long long int fatxsize(FILEX handle)
     FILE_VALID(handle)
 
     return f_size(&FileHandleArray[handle]);
+}
+
+FileDate convertToTime(unsigned short date, unsigned short time)
+{
+    FileDate out;
+
+    out.year = (date >> 9) + 1980;
+    out.month = (date >> 5) & 15;
+    out.mday = date & 31;
+    out.hours = (time >> 11);
+    out.minutes = (time >> 5) & 63;
+    out.seconds = (time & 31) * 2;
+
+    return out;
 }
 

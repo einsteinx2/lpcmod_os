@@ -469,14 +469,15 @@ int main(int argc, char *argv[]) {
                         } else {
                             s1++; AccSize += Finfo.size;
                         }
-                        printf(_T("%c%c%c%c%c %u/%02u/%02u %02u:%02u %10llu  "),
+                        FileDate date = convertToTime(Finfo.modDate, Finfo.modTime);
+                        printf(_T("%c%c%c%c%c %u/%02u/%02u %02u:%02u:%02u %10llu  "),
                                 (Finfo.attributes & FileAttr_Directory) ? 'D' : '-',
                                 (Finfo.attributes & FileAttr_ReadOnly) ? 'R' : '-',
                                 (Finfo.attributes & FileAttr_Hidden) ? 'H' : '-',
                                 (Finfo.attributes & FileAttr_SysFile) ? 'S' : '-',
                                 (Finfo.attributes & FileAttr_Archive) ? 'A' : '-',
-                                (Finfo.modDate >> 9) + 1980, (Finfo.modDate >> 5) & 15, Finfo.modDate & 31,
-                                (Finfo.modTime >> 11), (Finfo.modTime >> 5) & 63, (QWORD)Finfo.size);
+                                date.year, date.month, date.mday,
+                                date.hours, date.minutes, date.seconds, (QWORD)Finfo.size);
     #if _USE_LFN && _USE_FIND == 2
                         printf(_T("%-12s  "),Finfo.altname);
     #endif
