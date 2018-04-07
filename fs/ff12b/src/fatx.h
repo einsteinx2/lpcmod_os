@@ -128,8 +128,8 @@ typedef union {
 }__attribute__((packed)) FATXTIMESTAMP;
 
 #define FATX_YEAR_ADJUST 20
-#define FATX_TOFATX_TIMESTAMP(x) x += FATX_YEAR_ADJUST << 25;
-#define FATX_FROMFATX_TIMESTAMP(x) x -= FATX_YEAR_ADJUST << 25;
+#define FATX_TOFATX_TIMESTAMP(x) x -= FATX_YEAR_ADJUST << 25;
+#define FATX_FROMFATX_TIMESTAMP(x) x += FATX_YEAR_ADJUST << 25;
 
 
 #define ISFATX_FS(fs) (fs == FS_FATX16 || fs == FS_FATX32)
