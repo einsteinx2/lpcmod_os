@@ -223,9 +223,9 @@
 
 
 #define _FS_NORTC   1
-#define _NORTC_MON  1
-#define _NORTC_MDAY 1
-#define _NORTC_YEAR 2017
+#define _NORTC_MON  4
+#define _NORTC_MDAY 6
+#define _NORTC_YEAR 2018
 /* The option _FS_NORTC switches timestamp functiton. If the system does not have
 /  any RTC function or valid timestamp is not needed, set _FS_NORTC = 1 to disable
 /  the timestamp function. All objects modified by FatFs will have a fixed timestamp
