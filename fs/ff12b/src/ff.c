@@ -1041,8 +1041,16 @@ DWORD clust2sect (  /* !=0:Sector number, 0:Failed (invalid cluster#) */
     DWORD clst      /* Cluster# to be converted */
 )
 {
-    clst -= 2;
-    if (clst >= fs->n_fatent - 2) return 0;     /* Invalid cluster# */
+    UINT offset = 2;
+
+#ifdef _USE_FATX
+    if(ISFATX_FS(fs->fs_typex))
+    {
+        offset = FATX_RESERVED_CLUSTER;
+    }
+#endif
+    clst -= offset;
+    if (clst >= fs->n_fatent - offset) return 0;     /* Invalid cluster# */
     return clst * fs->csize + fs->database;
 }
 
@@ -1059,12 +1067,18 @@ DWORD get_fat ( /* 0xFFFFFFFF:Disk error, 1:Internal error, 2..0x7FFFFFFF:Cluste
     DWORD clst  /* Cluster number to get the value */
 )
 {
-    UINT wc, bc;
+    UINT wc, bc, offset = 2;
     DWORD val;
     FATFS *fs = obj->fs;
 
+#ifdef _USE_FATX
+if(ISFATX_FS(fs->fs_typex))
+{
+    offset = FATX_RESERVED_CLUSTER;
+}
+#endif
 
-    if (clst < 2 || clst >= fs->n_fatent) { /* Check if in valid range */
+    if (clst < offset || clst >= fs->n_fatent) { /* Check if in valid range */
         val = 1;    /* Internal error */
 
     } else {
@@ -1521,7 +1535,7 @@ FRESULT dir_sdi (   /* FR_OK(0):succeeded, !=0:error */
     }
     dp->dptr = ofs;             /* Set current offset */
     clst = dp->obj.sclust;      /* Table start cluster (0:root) */
-    if (clst == 0 && (fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_EXFAT)) { /* Replace cluster# 0 with root cluster# */
+    if (clst == 0 && (ISFATX_FS(fs->fs_typex) || fs->fs_typex == FS_FAT32 || fs->fs_typex == FS_EXFAT)) { /* Replace cluster# 0 with root cluster# */
         clst = fs->dirbase;
         if (_FS_EXFAT) dp->obj.stat = 0;    /* exFAT: Root dir has an FAT chain */
     }
@@ -1582,32 +1596,29 @@ FRESULT dir_next (  /* FR_OK(0):succeeded, FR_NO_FILE:End of table, FR_DENIED:Co
         ofs = dp->dptr + SZDIRE;    /* Next entry */
     }
 #ifdef _USE_FATX
-    if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : ISFATX_FS(fs->fs_typex) ? (4096 * SZFATXDIRE) : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
-
-#else
-    if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
+    //if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : ISFATX_FS(fs->fs_typex) ? (4096 * SZFATXDIRE) : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
+    if (NOTFATX_FS(fs->fs_typex))
 #endif
+    {
+        if (!dp->sect || ofs >= (DWORD)((_FS_EXFAT && fs->fs_typex == FS_EXFAT) ? MAX_DIR_EX : MAX_DIR)) return FR_NO_FILE; /* Report EOT when offset has reached max value */
+    }
 
     if (ofs % SS(fs) == 0) {    /* Sector changed? */
         dp->sect++;             /* Next sector */
 
         if (!dp->clust) {       /* Static table */
-#ifdef _USE_FATX
-            if(ISFATX_FS(fs->fs_typex))
-            {
-                if (ofs / SZFATXDIRE >= fs->n_rootdir) {    /* Report EOT if it reached end of static table */
-                    dp->sect = 0; return FR_NO_FILE;
-                }
-            }
-            else
-#endif
-            {
-                if (ofs / SZDIRE >= fs->n_rootdir) {    /* Report EOT if it reached end of static table */
-                    dp->sect = 0; return FR_NO_FILE;
-                }
+            if (ofs / SZDIRE >= fs->n_rootdir) {    /* Report EOT if it reached end of static table */
+                dp->sect = 0; return FR_NO_FILE;
             }
         }
         else {                  /* Dynamic table */
+#ifdef _USE_FATX
+            if (ISFATX_FS(fs->fs_typex) && ofs >= (4096 * FATX_DIRECTORYENTRY_SIZE)) /* FATX no more than 4096 entries */
+            {
+                dp->sect = 0;
+                return FR_NO_FILE;
+            }
+#endif
             if ((ofs / SS(fs) & (fs->csize - 1)) == 0) {        /* Cluster changed? */
                 clst = get_fat(&dp->obj, dp->clust);            /* Get next cluster */
                 if (clst <= 1) return FR_INT_ERR;               /* Internal error */
@@ -2718,7 +2729,6 @@ void get_fileinfo (     /* No return code */
         fno->fsize = ld_dword(dp->dir + DIRx_FileSize);  /* Size */
         tm = ld_dword(dp->dir + DIRx_ModTime);           /* Timestamp */
         FATX_FROMFATX_TIMESTAMP(tm)
-        fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
     }
     else
 #endif
@@ -2726,8 +2736,8 @@ void get_fileinfo (     /* No return code */
         fno->fattrib = dp->dir[DIR_Attr];               /* Attribute */
         fno->fsize = ld_dword(dp->dir + DIR_FileSize);  /* Size */
         tm = ld_dword(dp->dir + DIR_ModTime);           /* Timestamp */
-        fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
     }
+    fno->ftime = (WORD)tm; fno->fdate = (WORD)(tm >> 16);
 }
 
 #endif /* _FS_MINIMIZE <= 1 || _FS_RPATH >= 2 */
@@ -3469,9 +3479,12 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
             fs->fsize = fasize;                                         /* Number of sectors per FAT */
 
             fs->n_fats = 1;                                             /* Number of FATs */
-
+#if 0
             fs->n_rootdir = fs->csize * SS(fs) / sizeof(FATXDIRINFO);   /* One cluster, 64bytes per entry */
             if (fs->n_rootdir % (SS(fs) / SZDIRE) || fs->n_rootdir == 0) return FR_NO_FILESYSTEM; /* (Must be sector aligned) */
+#else
+            fs->n_rootdir = 0;
+#endif
 
             nrsv = sizeof(PARTITIONHEADER) / SS(fs);                    /* First 4096bytes of partition is superblock */
             sysect = nrsv + fasize + fs->n_rootdir / (SS(fs) / sizeof(FATXDIRINFO)); /* RSV + FAT + DIR */
@@ -3495,7 +3508,7 @@ FRESULT find_volume (   /* FR_OK(0): successful, !=0: any error occurred */
                 szbfat = fs->n_fatent * 2;
             }
 
-            fs->dirbase = fs->fatbase + fasize;             /* Root directory start sector */
+            fs->dirbase = FATX_RESERVED_CLUSTER;// fs->fatbase + fasize;             /* Root directory start sector */
 
 #if !_FS_READONLY
             /* Get FSINFO if available */
