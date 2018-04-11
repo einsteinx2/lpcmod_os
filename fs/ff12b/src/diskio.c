@@ -67,7 +67,7 @@ DRESULT disk_read (
     int returnValue;
     for(i = 0; i < count; i++)
     {
-        returnValue = BootIdeReadSector(pdrv, buff +(i* 512), sector, 0, 512);
+        returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
         if(returnValue)
         {
             break;
@@ -91,7 +91,16 @@ DRESULT disk_write (
 )
 {
 #define DEFAULT_RETRY_COUNT 3
-    int returnValue = BootIdeWriteMultiple(pdrv, (void *)buff, sector, count, DEFAULT_RETRY_COUNT);
+    UINT i;
+    int returnValue;
+    for(i = 0; i < count; i++)
+    {
+        returnValue = BootIdeWriteSector(pdrv, buff + (i* 512), sector + i, 0);
+        if(returnValue)
+        {
+            break;
+        }
+    }
 
     return returnValue;
 }
