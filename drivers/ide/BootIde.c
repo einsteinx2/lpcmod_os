@@ -1187,10 +1187,12 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
         return 0;
     }
 
-    if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8) 
+    if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8)
     {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x0a to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
     } else {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x02 to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02);
     }
 
@@ -1306,10 +1308,12 @@ int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, uns
         return 1;
     }
 
-    if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8) 
+    if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8)
     {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x0a to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
     } else {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x02 to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02);
     }
 
@@ -1421,8 +1425,10 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 
     if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8)
     {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x0a to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
     } else {
+        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x02 to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02);
     }
 
