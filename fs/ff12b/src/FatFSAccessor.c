@@ -100,6 +100,7 @@ void FatFS_init(void)
     memset(FileHandleArray, 0x00, sizeof(FIL) * MaxOpenFileCount);
     memset(DirectoryHandleArray, 0x00, sizeof(DIR) * MaxOpenDirCount);
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
+    debugSPIPrint(DEBUG_FATX_FS, "init internal FatFS.\n");
     fatx_init();
 
     for(i = 0; i < NbDrivesSupported; i++)

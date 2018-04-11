@@ -12,7 +12,7 @@
 #include "lpcmod_v1.h"
 #include "FlashMenuActions.h"
 #include "string.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "WebServerOps.h"
 
 TEXTMENU* EEPROMFileRestoreMenuInit(void);

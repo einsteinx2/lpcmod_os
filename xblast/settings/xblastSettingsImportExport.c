@@ -10,7 +10,7 @@
 
 #include "xblastSettingsImportExport.h"
 #include "lpcmod_v1.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include <stddef.h>
 #include "LEDMenuActions.h"
 #include "string.h"

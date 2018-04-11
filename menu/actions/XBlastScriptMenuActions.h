@@ -10,10 +10,10 @@
  ***************************************************************************/
 
 #include <stdbool.h>
-#include "BootFATX.h"
 
-bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-void loadRunScript(void *fname);
+int testScriptFromHDD(char * filename);
+void loadRunScriptNoParams(void* fname);
+void loadRunScriptWithParams(const char *fname, int paramCount, int * param);
 
 void saveScriptToFlash(void *fname);
 void loadScriptFromFlash(void * ignored);

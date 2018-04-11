@@ -22,6 +22,7 @@
 #define DEBUG_LWIP              0
 #define DEBUG_HW_ID             0
 #define DEBUG_GENERAL_UI        0
+#define DEBUG_SCRIPT            0
 #define DEBUG_MISC              0
 
 #define DEBUG_USB               0

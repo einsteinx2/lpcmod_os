@@ -8,7 +8,7 @@
  ***************************************************************************/
 #include "EepromEditMenuActions.h"
 #include "ToolsMenuActions.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "lpcmod_v1.h"
 #include "lib/cromwell/cromString.h"
 #include "lib/LPCMod/xblastDebug.h"

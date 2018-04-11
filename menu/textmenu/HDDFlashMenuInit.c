@@ -12,7 +12,7 @@
 #include "boot.h"
 #include "BootIde.h"
 #include "memory_layout.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "string.h"
 
 

@@ -14,7 +14,7 @@
 
 #include "boot.h"
 #include "BootEEPROM.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "i2c.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/LPCMod/BootLCD.h"
@@ -159,8 +159,7 @@ extern void BootResetAction ( void )
     unsigned char tempFanSpeed = 20;
     int res, dcluster;
     _LPCmodSettings *tempLPCmodSettings;
-    FATXPartition *partition;
-    FATXFILEINFO fileinfo;
+    unsigned char* fileBuffPtr;;
 
     unsigned char EjectButtonPressed=0;
 
@@ -465,6 +464,9 @@ extern void BootResetAction ( void )
     debugSPIPrint(DEBUG_BOOT_LOG, "Starting IDE init.\n");
     BootIdeInit();
     debugSPIPrint(DEBUG_BOOT_LOG, "IDE init done.\n");
+    debugSPIPrint(DEBUG_BOOT_LOG, "Starting FatFS init.\n");
+    FatFS_init();
+    debugSPIPrint(DEBUG_BOOT_LOG, "FatFS init done.\n");
 
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
@@ -475,11 +477,11 @@ extern void BootResetAction ( void )
         {
             //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
             debugSPIPrint(DEBUG_BOOT_LOG, "Trying to load new JPEG from HDD.\n");
-            if(LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD("MASTER_C:\\XBlast\\icons.jpg") == false)
             {
                 debugSPIPrint(DEBUG_BOOT_LOG, "\"icons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
             }
-            if(LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD("MASTER_C:\\XBlast\\backdrop.jpg") == false)
             {
                 debugSPIPrint(DEBUG_BOOT_LOG, "\"backdrop.jpg\" loaded. Repainting.\n");
                 printMainMenuHeader();
@@ -521,11 +523,9 @@ extern void BootResetAction ( void )
                     if(LPCmodSettings.OSsettings.runBootScript && LPCmodSettings.flashScript.scriptSize == 0)
                     {
                         debugSPIPrint(DEBUG_BOOT_LOG, "Running boot script.\n");
-                        if(loadScriptFromHDD("\\XBlast\\scripts\\boot.script", &fileinfo))
-                        {
-                            i = BNKOS;
-                            runScript(fileinfo.buffer, fileinfo.fileSize, 1, &i);
-                        }
+                        i = BNKOS;
+                        loadRunScriptWithParams("MASTER_C:\\XBlast\\scripts\\boot.script", 1, &i);
+
                         debugSPIPrint(DEBUG_BOOT_LOG, "Boot script execution done.\n");
                     }
                 }

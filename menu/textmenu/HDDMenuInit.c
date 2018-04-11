@@ -10,7 +10,7 @@
 #include "MenuInits.h"
 #include "boot.h"
 #include "BootIde.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "HDDMenuActions.h"
 #include "string.h"
 

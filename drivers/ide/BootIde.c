@@ -7,7 +7,6 @@
 #include "boot.h"
 //#include "shared.h"
 #include "BootEEPROM.h"
-#include "BootFATX.h"
 #include "BootIde.h"
 #include "cromwell.h"
 #include "string.h"
@@ -367,7 +366,6 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     tsaHarddiskInfo[nIndexDrive].m_enumDriveType=EDT_UNKNOWN;
     tsaHarddiskInfo[nIndexDrive].m_fAtapi=false;
     tsaHarddiskInfo[nIndexDrive].m_wAtaRevisionSupported=0;
-    tsaHarddiskInfo[nIndexDrive].m_fHasMbr=0;
     tsaHarddiskInfo[nIndexDrive].m_securitySettings = 0;
     tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = 0;
     tsaHarddiskInfo[nIndexDrive].m_bIORDY = 0;
@@ -681,16 +679,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
     //If drive is a hard disk, see what type of partitioning it has.
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
-	if(!(tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)){
-	    debugSPIPrint(DEBUG_IDE_DRIVER,"HDD is not locked. Attempting to read FATX magic string\n");
-            if(FATXCheckFATXMagic(nIndexDrive)){
-                // report on the MBR-ness of the drive contents
-                debugSPIPrint(DEBUG_IDE_DRIVER,"Drive is FATX.\n");
-                tsaHarddiskInfo[nIndexDrive].m_fHasMbr = FATXCheckMBR(nIndexDrive) ? 1 : 0;
-            }
-        }
-
-            //Check if drive support S.M.A.R.T.
+        //Check if drive support S.M.A.R.T.
         tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = drive_info[82] & 0x0001;
         if(tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities){
             debugSPIPrint(DEBUG_IDE_DRIVER,"Drive support S.M.A.R.T..\n");

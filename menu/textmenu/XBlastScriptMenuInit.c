@@ -12,12 +12,12 @@
 #include "boot.h"
 #include "BootIde.h"
 #include "memory_layout.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "lpcmod_v1.h"
 #include "string.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "xblast/HardwareIdentifier.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 
 TEXTMENU* RunScriptMenuInit(void);
 TEXTMENU* SaveScriptMenuInit(void);
@@ -158,7 +158,7 @@ TEXTMENU* RunScriptMenuInit(void)
                     itemPtr = malloc(sizeof(TEXTMENUITEM));
                     memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
                     sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
-                    itemPtr->functionPtr = loadRunScript;
+                    itemPtr->functionPtr = loadRunScriptNoParams;
                     itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
                     TextMenuAddItem(menuPtr, itemPtr);
                     bioses++;

@@ -11,7 +11,7 @@
 #include "lpcmod_v1.h"
 #include "boot.h"
 #include "lib/LPCMod/BootLPCMod.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "xblast/scriptEngine/xblastScriptEngine.h"
 #include "xblast/HardwareIdentifier.h"
 
@@ -23,7 +23,7 @@ void assertBankScriptExecBankBoot(void * data)
     if(LPCmodSettings.OSsettings.runBankScript)
     {
         extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo))
+        if(loadScriptFromHDD("MASTER_C:\\XBlast\\scripts\\bank.script", &fileinfo))
         {
             runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
             free(fileinfo.buffer);
@@ -41,7 +41,7 @@ void assertBankScriptExecTSOPBoot(void * data)
     if(LPCmodSettings.OSsettings.runBankScript)
     {
         extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo))
+        if(loadScriptFromHDD("MASTER_C:\\XBlast\\scripts\\bank.script", &fileinfo))
         {
             runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
             free(fileinfo.buffer);

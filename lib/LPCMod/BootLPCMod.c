@@ -7,7 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "video.h"
 #include "BootLPCMod.h"
 #include "lpcmod_v1.h"
@@ -122,33 +122,39 @@ void quickboot(unsigned char bank)
 
 int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 {
-    FATXFILEINFO fileinfo;
-    FATXPartition *partition;
-    int res = false;
-    int dcluster;
+    unsigned char* fileBuff;
     
+    FILEX handle = fatxopen(jpgFilename, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
 
-    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    if(partition != NULL){
-        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-        if((dcluster != -1) && (dcluster != 1)) {
-            res = FATXFindFile(partition, (char *)jpgFilename, FATX_ROOT_FAT_CLUSTER, &fileinfo);
-        }
-        if(LoadFATXFile(partition, (char *)jpgFilename, &fileinfo)){
-		if(res && fileinfo.fileSize){        //File exist and is loaded.
-		    BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop, fileinfo.fileSize);
-		    free(fileinfo.buffer);
-		}
-		else{
-		    return -1;
-		}
-	}
-	else
-	    return -1;
-        CloseFATXPartition(partition);
-    }
-    else
+    if(0 == handle)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "No jpg file.\n");
         return -1;
+    }
+
+    unsigned int size = fatxsize(handle);
+    fileBuff = malloc(size * sizeof(unsigned char));
+
+    if(NULL == fileBuff)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        return -1;
+    }
+
+    if(fatxread(handle, fileBuff, size) != size)
+    {
+        free(fileBuff);
+        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        return -1;
+    }
+
+    BootVideoJpegUnpackAsRgb(fileBuff, &jpegBackdrop, size);
+    free(fileBuff);
+
+    if(fatxclose(handle))
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "Error close jpg file.\n");
+    }
 
     return 0;
 }

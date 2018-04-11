@@ -18,48 +18,112 @@
 #include "Gentoox.h"
 #include "MenuActions.h"
 #include "string.h"
+#include "FatFSAccessor.h"
+#include "lib/LPCMod/xblastDebug.h"
 
-bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo)
+static FILEX openScript(const char* filename, unsigned int* outSize)
 {
-    int res;
-    FATXPartition *partition;
+    FILEX handle;
+    handle = fatxopen(filename, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
 
-    partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
-
-    res = LoadFATXFile(partition, filename, fileinfo);
-    CloseFATXPartition (partition);
-    if (!res)
+    if(0 == handle)
     {
-        printk ("\n\n\n\n\n           Loading script failed");
-        dots ();
-        cromwellError ();
-        fileinfo->fileSize = 0;
-        fileinfo->buffer = NULL;
-        return false;
+        debugSPIPrint(DEBUG_SCRIPT, "No script file.\n");
+        return 0;
     }
-    fileinfo->fileSize = trimScript(&(fileinfo->buffer), fileinfo->fileSize);
-    return true;
+
+    *outSize = fatxsize(handle);
+    return handle;
 }
 
-void loadRunScript(void *fname)
+int testScriptFromHDD(char * filename)
 {
-    FATXFILEINFO fileinfo;
-    if(loadScriptFromHDD(fname, &fileinfo))
+    FILEX handle;
+    unsigned int size, newSize;
+    unsigned char* fileBuf;
+
+    handle = openScript(filename, &size);
+
+    if(0 == handle || 0 == size)
     {
-        if(fileinfo.fileSize > 0)
-        {
-            UiHeader("Running script...");
-            printk("\n           Press both triggers, Start and White buttons at the same time to force quit.");
-            runScript(fileinfo.buffer, fileinfo.fileSize, 0, NULL);   //No param for now
-        }
-        else
-        {
-            UiHeader("Cannot run script.");
-            printk("\n           Error reading script from HDD.");
-        }
-        free(fileinfo.buffer);
+        debugSPIPrint(DEBUG_SCRIPT, "Error.\n");
+        return -1;
     }
 
+    fileBuf = malloc(size * sizeof(unsigned char));
+
+    if(NULL == fileBuf)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        return -1;
+    }
+
+    if(fatxread(handle, fileBuf, size) != size)
+    {
+        free(fileBuf);
+        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        return -1;
+    }
+    newSize = trimScript(&fileBuf, size);
+
+    fatxclose(handle);
+    free(fileBuf);
+
+    return 0 < newSize && newSize <= size;
+}
+
+void loadRunScriptNoParams(void* fname)
+{
+    loadRunScriptWithParams(fname, 0, NULL);
+}
+
+void loadRunScriptWithParams(const char *fname, int paramCount, int * param)
+{
+    FILEX handle;
+    unsigned int size, newSize;
+    unsigned char* fileBuf;
+
+    handle = openScript(fname, &size);
+
+    if(0 == handle || 0 == size)
+    {
+        debugSPIPrint(DEBUG_SCRIPT, "Error.\n");
+        return;
+    }
+
+    fileBuf = malloc(size * sizeof(unsigned char));
+
+    if(NULL == fileBuf)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        return;
+    }
+
+    if(fatxread(handle, fileBuf, size) != size)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        newSize = 0;
+    }
+    else
+    {
+        newSize = trimScript(&fileBuf, size);
+    }
+
+    fatxclose(handle);
+
+    if(0 < newSize && newSize <= size)
+    {
+        UiHeader("Running script...");
+        printk("\n           Press both triggers, Start and White buttons at the same time to force quit.");
+        runScript(fileBuf, newSize, paramCount, param);
+    }
+    else
+    {
+        UiHeader("Cannot run script.");
+        printk("\n           Error reading script from HDD.");
+    }
+
+    free(fileBuf);
     UIFooter();
 
     return;
@@ -68,23 +132,52 @@ void loadRunScript(void *fname)
 
 void saveScriptToFlash(void *fname)
 {
-    FATXFILEINFO fileinfo;
     unsigned int compareSize = LPCmodSettings.flashScript.scriptSize;
+    unsigned int size;
+    unsigned int size, newSize;
+    unsigned char* fileBuf;
+    FILEX handle = openScript(fname, &size);
 
-    if(loadScriptFromHDD(fname, &fileinfo))
+    if(0 == handle || 0 == size)
     {
-        if(fileinfo.fileSize <= ScriptSavedInFlashMaxSizeInBytes)
+        debugSPIPrint(DEBUG_SCRIPT, "Error.\n");
+        return;
+    }
+
+    fileBuf = malloc(size * sizeof(unsigned char));
+
+    if(NULL == fileBuf)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        return;
+    }
+
+    if(fatxread(handle, fileBuf, size) != size)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        return;
+    }
+    else
+    {
+        newSize = trimScript(&fileBuf, size);
+    }
+
+    fatxclose(handle);
+
+    if(0 < newSize && newSize <= size)
+    {
+        if(newSize <= ScriptSavedInFlashMaxSizeInBytes)
         {
-            if(LPCmodSettings.flashScript.scriptSize > fileinfo.fileSize)
+            if(LPCmodSettings.flashScript.scriptSize > newSize)
             {
-                compareSize = fileinfo.fileSize;
+                compareSize = newSize;
             }
 
-            if(LPCmodSettings.flashScript.scriptSize != fileinfo.fileSize ||
-               memcmp(LPCmodSettings.flashScript.scriptData, fileinfo.buffer, compareSize) == true)
+            if(LPCmodSettings.flashScript.scriptSize != newSize ||
+               memcmp(LPCmodSettings.flashScript.scriptData, fileBuf, compareSize) == true)
             {
-                LPCmodSettings.flashScript.scriptSize = fileinfo.fileSize;
-                memcpy(LPCmodSettings.flashScript.scriptData, fileinfo.buffer, fileinfo.fileSize);
+                LPCmodSettings.flashScript.scriptSize = newSize;
+                memcpy(LPCmodSettings.flashScript.scriptData, fileBuf, newSize);
                 UiHeader("Saved boot script to flash.");
 
                 printk("\n           Script occupies %u bytes of %u bytes available.", LPCmodSettings.flashScript.scriptSize , ScriptSavedInFlashMaxSizeInBytes);
@@ -100,10 +193,12 @@ void saveScriptToFlash(void *fname)
         {
             UiHeader("Cannot save boot script.");
             printk("\n           Script size is too big for flash space left available.");
-            printk("\n           Script requires %u bytes and only %u bytes are available.", fileinfo.fileSize , ScriptSavedInFlashMaxSizeInBytes);
+            printk("\n           Script requires %u bytes and only %u bytes are available.", newSize , ScriptSavedInFlashMaxSizeInBytes);
         }
-        free(fileinfo.buffer);
     }
+
+    free(fileBuf);
+
     UIFooter();
 
     return;
@@ -163,7 +258,7 @@ void toggleRunBankScript(void * itemStr)
     else
     {
     	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo))
+        if(testScriptFromHDD("MASTER_C:\\XBlast\\scripts\\bank.script"))
         {
             free(fileinfo.buffer);
             LPCmodSettings.OSsettings.runBankScript = 1;

@@ -15,7 +15,7 @@
 #include "boot.h"
 #include "video.h"
 #include "memory_layout.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "FlashDriver.h"
 #include "Gentoox.h"
 #include "string.h"

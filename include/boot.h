@@ -116,7 +116,6 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
     unsigned short m_wAtaRevisionSupported;
     unsigned char s_length;
     unsigned char m_length;
-    char m_fHasMbr : 1;
     unsigned char m_bIORDY : 1;
     unsigned char m_fDMAInit : 1;
     unsigned char m_fFlushCacheSupported : 1;
