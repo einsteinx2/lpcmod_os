@@ -226,7 +226,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 
 // issues a block of data ATA-style
 
-int BootIdeWriteData(unsigned uIoBase, void * buf, unsigned int size)
+int BootIdeWriteData(unsigned uIoBase, const void * buf, unsigned int size)
 {
     register unsigned short * ptr = (unsigned short *) buf;
     int n;
@@ -1288,7 +1288,7 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 //
 // !!!!! EXPERIMENTAL
 
-int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, unsigned char retry)
+int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int block, unsigned char retry)
 {
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned uIoBase;
