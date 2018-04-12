@@ -28,32 +28,54 @@
 extern int etherboot(void);
 extern int BootLoadFlashCD(int cdromId);
 
+static const char* const biosDirectoryLocation = "MASTER_C:\\BIOS\\";
+
+const char* const getBIOSDirectoryLocation(void)
+{
+    return biosDirectoryLocation;
+}
+
 void FlashBiosFromHDD (void *fname) {
 #ifdef FLASH
-    int res;
-    unsigned char * fileBuf;
-    FATXFILEINFO fileinfo;
-    FATXPartition *partition;
+    int res = 0;
+    unsigned char fileBuf[1024 * 1024];
+    unsigned int size;
+    const char* filename = (const char *)fname;
+    char fullPathName[255 + sizeof('\0')];
+    FILEX fileHandle;
 
-    partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    fileBuf = (unsigned char *) malloc (1024 * 1024);  //1MB buffer(max BIOS size)
+    if(255 < (strlen(getBIOSDirectoryLocation()) + strlen(filename)))
+    {
+        return;
+    }
+
+    sprintf(fullPathName, "%s%s", getBIOSDirectoryLocation(), filename);
+
     memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
+    fileHandle = fatxopen(fullPathName, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+    if(fileHandle)
+    {
+        size = fatxsize(fileHandle);
+        if((1024 * 1024) >= size)
+        {
+            if(size == fatxread(fileHandle, fileBuf, size))
+            {
+                res = 1;
+            }
+        }
+        fatxclose(fileHandle);
+    }
     
-    //res = LoadFATXFilefixed(partition, fname, &fileinfo, (char*)0x100000);
-    res = LoadFATXFile(partition, fname, &fileinfo);
-    if (!res) {
+    if (0 == res)
+    {
         printk ("\n\n\n\n\n           Loading BIOS failed");
         dots ();
         cromwellError ();
-        goto jumpToEnd;
     }
-    memcpy(fileBuf, fileinfo.buffer, fileinfo.fileSize);
-    free(fileinfo.buffer);
-    fileinfo.buffer = fileBuf;
-    FlashFileFromBuffer(fileinfo.buffer, fileinfo.fileSize, 1); //1 to display confirmDialog
-    free(fileinfo.buffer);
-jumpToEnd:
-    CloseFATXPartition (partition);
+    else
+    {
+        FlashFileFromBuffer(fileBuf, size, 1); //1 to display confirmDialog
+    }
     
     return;
 #endif

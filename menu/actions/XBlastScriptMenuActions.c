@@ -133,7 +133,6 @@ void loadRunScriptWithParams(const char *fname, int paramCount, int * param)
 void saveScriptToFlash(void *fname)
 {
     unsigned int compareSize = LPCmodSettings.flashScript.scriptSize;
-    unsigned int size;
     unsigned int size, newSize;
     unsigned char* fileBuf;
     FILEX handle = openScript(fname, &size);
@@ -249,7 +248,6 @@ void toggleRunBootScript(void * itemStr)
 
 void toggleRunBankScript(void * itemStr)
 {
-    FATXFILEINFO fileinfo;
 
     if(LPCmodSettings.OSsettings.runBankScript)
     {
@@ -260,7 +258,6 @@ void toggleRunBankScript(void * itemStr)
     	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
         if(testScriptFromHDD("MASTER_C:\\XBlast\\scripts\\bank.script"))
         {
-            free(fileinfo.buffer);
             LPCmodSettings.OSsettings.runBankScript = 1;
         }
         else

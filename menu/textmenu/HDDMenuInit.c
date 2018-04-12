@@ -112,13 +112,13 @@ void LargeHDDMenuDynamic(void* drive)
     unsigned char nDriveIndex = *(unsigned char *)drive;
     
     //Amount of free sectors after standard partitions
-    unsigned long nExtendSectors = tsaHarddiskInfo[nDriveIndex].m_dwCountSectorsTotal - SECTOR_EXTEND;
+    unsigned long nExtendSectors = BootIdeGetSectorCount(nDriveIndex) - XBOX_EXTEND_STARTLBA;
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
     sprintf(menuPtr->szCaption, "Large HDD format options : %s", nDriveIndex ? "Slave":"Master");
 
     //If lbacount >= minimum amount per partition.
-    if(nExtendSectors > (SECTORS_SYSTEM + SECTORS_SYSTEM))
+    if(nExtendSectors > (SYSTEM_LBASIZE + SYSTEM_LBASIZE))
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"F:, G: Split evenly");
@@ -130,7 +130,7 @@ void LargeHDDMenuDynamic(void* drive)
     }
 
     //If lbacount is high enough to max out a F: partition and still have enough left to create a G partition
-    if(nExtendSectors > (LBASIZE_1024GB + SECTORS_SYSTEM))
+    if(nExtendSectors > (LBASIZE_1024GB + SYSTEM_LBASIZE))
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"Max F:, G: takes the rest");
@@ -142,7 +142,7 @@ void LargeHDDMenuDynamic(void* drive)
     }
 
     //if lbacount is high enough to create G: partition but not too high to waste space because G: would be maxed out.
-    if((nExtendSectors > (LBASIZE_137GB + SECTORS_SYSTEM)) && ((nExtendSectors - LBASIZE_137GB) < LBASIZE_1024GB))
+    if((nExtendSectors > (LBASIZE_137GB + SYSTEM_LBASIZE)) && ((nExtendSectors - LBASIZE_137GB) < LBASIZE_1024GB))
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         sprintf(itemPtr->szCaption,"F: = 120GB, G: takes the rest");
@@ -217,7 +217,7 @@ void HDDFormatMenuDynamic(void* drive)
     menuPtr = calloc(1, sizeof(TEXTMENU));
     sprintf(menuPtr->szCaption, "Partition format menu : %s", *nDriveIndex ? "Slave":"Master");
 
-    if(tsaHarddiskInfo[*nDriveIndex].m_fHasMbr != -1)     //MBR contains standard basic partition entries.
+    if(isFATXFormattedDrive(*nDriveIndex))     //MBR contains standard basic partition entries.
     {
         //FORMAT C: drive
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -244,7 +244,7 @@ void HDDFormatMenuDynamic(void* drive)
         TextMenuAddItem(menuPtr, itemPtr);
 
         //If there's enough sectors to make F and/or G drive(s).
-        if(tsaHarddiskInfo[*nDriveIndex].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM))
+        if(BootIdeGetSectorCount(*nDriveIndex) >= (XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE))
         {
             //Format Larger drives option menu.
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
