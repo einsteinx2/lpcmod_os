@@ -247,8 +247,17 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         workingMbr.TableEntries[5].LBAStart = XBOX_EXTEND_STARTLBA;
         workingMbr.TableEntries[5].LBASize = LBASIZE_137GB;
         workingMbr.TableEntries[5].Flags = 0;
-        workingMbr.TableEntries[6].LBAStart = LBA28_BOUNDARY;
-        workingMbr.TableEntries[6].LBASize = diskSizeLba - LBA28_BOUNDARY;
+        if((LBA28_BOUNDARY + SYSTEM_LBASIZE) <= diskSizeLba)
+        {
+            /* Part must be at least 500MB */
+            workingMbr.TableEntries[6].LBAStart = LBA28_BOUNDARY;
+            workingMbr.TableEntries[6].LBASize = diskSizeLba - LBA28_BOUNDARY;
+        }
+        else
+        {
+            workingMbr.TableEntries[6].LBAStart = 0;
+            workingMbr.TableEntries[6].LBASize = 0;
+        }
         workingMbr.TableEntries[6].Flags = 0;
         break;
     case XboxDiskLayout_FGSplit:
@@ -290,6 +299,23 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         workingMbr.TableEntries[5].Flags = 0;
         workingMbr.TableEntries[6].LBAStart = XBOX_EXTEND_STARTLBA + fDriveLbaSize;
         workingMbr.TableEntries[6].LBASize = diskSizeLba - (XBOX_EXTEND_STARTLBA + fDriveLbaSize);
+        workingMbr.TableEntries[6].Flags = 0;
+        break;
+    case XboxDiskLayout_FMaxGRest:
+        workingMbr.TableEntries[5].LBAStart = XBOX_EXTEND_STARTLBA;
+        workingMbr.TableEntries[5].LBASize = LBASIZE_1024GB;
+        workingMbr.TableEntries[5].Flags = 0;
+        if((XBOX_EXTEND_STARTLBA + LBASIZE_1024GB + SYSTEM_LBASIZE) <= diskSizeLba)
+        {
+            /* Part must be at least 500MB */
+            workingMbr.TableEntries[6].LBAStart = XBOX_EXTEND_STARTLBA + LBASIZE_1024GB;
+            workingMbr.TableEntries[6].LBASize = diskSizeLba - (XBOX_EXTEND_STARTLBA + LBASIZE_1024GB);
+        }
+        else
+        {
+            workingMbr.TableEntries[6].LBAStart = 0;
+            workingMbr.TableEntries[6].LBASize = 0;
+        }
         workingMbr.TableEntries[6].Flags = 0;
         break;
     default:

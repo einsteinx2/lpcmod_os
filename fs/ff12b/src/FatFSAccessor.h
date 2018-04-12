@@ -28,7 +28,8 @@ typedef enum
     XboxDiskLayout_Base,
     XboxDiskLayout_FOnly,
     XboxDiskLayout_F120GRest,
-    XboxDiskLayout_FGSplit
+    XboxDiskLayout_FGSplit,
+    XboxDiskLayout_FMaxGRest
 }XboxDiskLayout;
 
 typedef int FILEX;
