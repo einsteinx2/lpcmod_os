@@ -53,6 +53,8 @@ void quickboot(unsigned char bank);
 void switchOSBank(FlashBank bank);
 void switchBootBank(FlashBank bank);
 
+void formatNewDrives(void);
+
 void WriteToIO(unsigned short address, unsigned char data);
 unsigned char ReadFromIO(unsigned short address);
 

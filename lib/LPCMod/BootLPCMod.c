@@ -19,6 +19,9 @@
 #include "i2c.h"
 #include "boot.h"
 #include "stdio.h"
+#include "BootIde.h"
+#include "MenuActions.h"
+#include "misc/ConfirmDialog.h"
 
 //Probes CPLD for chip revision and return a single byte ID.
 //SmartXX compliant but need to mask out upper nibble
@@ -236,5 +239,36 @@ void printTextSPI(const char * functionName, char * buffer, ...)
     //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
     wait_us_blocking(50);
 }
+
+void formatNewDrives(void)
+{
+    unsigned char i;
+    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+
+    for (i = 0; i < NbDrivesSupported; ++i)
+    {
+        if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i) && XBOX_EXTEND_STARTLBA <= BootIdeGetSectorCount(i) &&  0 == BootIdeDeviceIsLocked(i) && 0 == isFATXFormattedDrive(i))
+        {
+            debugSPIPrint(DEBUG_BOOT_LOG, "No FATX detected on %s HDD.\n", i ? "Slave" : "Master");
+            char ConfirmDialogString[50];
+            sprintf(ConfirmDialogString, "Format new drive (%s)?", i ? "slave":"master");
+            if(ConfirmDialog(ConfirmDialogString, 1) == false)
+            {
+                debugSPIPrint(DEBUG_BOOT_LOG, "Formatting base partitions.\n");
+                XboxPartitionTable partTable;
+                fatx_getmbr(i, &partTable);
+                fatx_fdisk(i, &partTable);
+                if((XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE) <= BootIdeGetSectorCount(i))
+                {
+                    debugSPIPrint(DEBUG_BOOT_LOG, "Show user extended partitions format options.\n");
+                    DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
+                }
+                debugSPIPrint(DEBUG_BOOT_LOG, "HDD format done.\n");
+            }
+        }
+    }
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
+}
+
 #endif
 

@@ -495,30 +495,36 @@ extern void BootResetAction ( void )
                 if(returnValue == 0)
                 {
                     importNewSettingsFromCFGLoad(&tempLPCmodSettings);
-
-                    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-                    if(partition != NULL)
+                    res = 0;
+                    FILEX fileHandle = fatxopen("MASTER_C:\\XBlast\\scripts\\bank.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                    if(fileHandle)
                     {
-                        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-                        if((dcluster != -1) && (dcluster != 1))
+                        if(fatxsize(fileHandle) > 0)
                         {
-                            dcluster = FATXFindDir(partition, dcluster, "scripts");
+                            res = 1;
                         }
-                        if((dcluster != -1) && (dcluster != 1))
-                        {
-                            res = FATXFindFile(partition, "bank.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
-                            if(res == 0 || fileinfo.fileSize == 0)
-                            {
-                                LPCmodSettings.OSsettings.runBankScript = 0;
-                            }
-                            res = FATXFindFile(partition, "boot.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
-                            if(res == 0 || fileinfo.fileSize == 0)
-                            {
-                                LPCmodSettings.OSsettings.runBootScript = 0;
-                            }
-                        }
-                            CloseFATXPartition(partition);
+                        fatxclose(fileHandle);
                     }
+                    if(0 == res)
+                    {
+                        LPCmodSettings.OSsettings.runBankScript = 0;
+                    }
+
+                    res = 0;
+                     fileHandle = fatxopen("MASTER_C:\\XBlast\\scripts\\boot.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                     if(fileHandle)
+                     {
+                         if(fatxsize(fileHandle) > 0)
+                         {
+                             res = 1;
+                         }
+                         fatxclose(fileHandle);
+                     }
+                     if(0 == res)
+                     {
+                         LPCmodSettings.OSsettings.runBootScript = 0;
+                     }
+
                     //bootScriptSize should not have changed if we're here.
                     if(LPCmodSettings.OSsettings.runBootScript && LPCmodSettings.flashScript.scriptSize == 0)
                     {
@@ -546,47 +552,9 @@ extern void BootResetAction ( void )
     videosavepage = malloc(FB_SIZE);
 
     //Check for unformatted drives.
-    for (i=0; i<2; ++i)
-    {
-        if (tsaHarddiskInfo[i].m_fDriveExists && tsaHarddiskInfo[i].m_fAtapi == false
-            && tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND - 1)
-            && (tsaHarddiskInfo[i].m_securitySettings&0x0002) == 0)
-        {    //Drive not locked.
-            if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS)
-            {
-                debugSPIPrint(DEBUG_BOOT_LOG, "No FATX detected on %s HDD.\n", i ? "Slave" : "Master");
-                // We save the complete framebuffer to memory (we restore at exit)
-                //videosavepage = malloc(FB_SIZE);
-                memcpy(videosavepage,(void*)FB_START,FB_SIZE);
-                char ConfirmDialogString[50];
-                sprintf(ConfirmDialogString, "Format new drive (%s)?", i ? "slave":"master");
-                if(ConfirmDialog(ConfirmDialogString, 1) == false)
-                {
-                    debugSPIPrint(DEBUG_BOOT_LOG, "Formatting base partitions.\n");
-                    FATXFormatDriveC(i, 0);                     //'0' is for non verbose
-                    FATXFormatDriveE(i, 0);
-                    FATXFormatCacheDrives(i, 0);
-                    if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
-                    {
-                        FATXSetInitMBR(i); // Since I'm such a nice program, I will integrate the partition table to the MBR.
-                    }
-                    FATXSetBRFR(i);
-                    //If there's enough sectors to make F and/or G drive(s).
-                    if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM))
-                    {
-                        debugSPIPrint(DEBUG_BOOT_LOG, "Show user extended partitions format options.\n");
-                        DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
-                    }
+    formatNewDrives();
+    
 
-                    debugSPIPrint(DEBUG_BOOT_LOG, "HDD format done.\n");
-                }
-                memcpy((void*)FB_START,videosavepage,FB_SIZE);
-                //free(videosavepage);
-            }
-        }
-    }
-    
-    
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     debugSPIPrint(DEBUG_BOOT_LOG, "Starting IconMenu.\n");

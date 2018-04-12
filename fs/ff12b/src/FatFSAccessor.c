@@ -112,6 +112,11 @@ void FatFS_init(void)
     }
 }
 
+int isFATXFormattedDrive(unsigned char driveNumber)
+{
+    return FR_OK == fatx_getbrfr(driveNumber) ? 1 : 0;
+}
+
 /* Will mount C, E, F, G, X, Y, Z if available*/
 int mountAll(unsigned char driveNumber)
 {

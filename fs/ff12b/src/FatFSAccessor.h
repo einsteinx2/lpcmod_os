@@ -79,6 +79,7 @@ typedef struct
 
 
 void FatFS_init(void);
+int isFATXFormattedDrive(unsigned char driveNumber);
 int mountAll(unsigned char driveNumber);
 int fatxmount(unsigned char driveNumber, unsigned char partitionNumber);
 int isMounted(unsigned char driveNumber, unsigned char partitionNumber);

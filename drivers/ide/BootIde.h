@@ -93,6 +93,7 @@ unsigned long long BootIdeGetSectorCount(int nDriveIndex);
 int BootIdeGetSectorSize(int nDriveIndex);
 int BootIdeDeviceConnected(int nDriveIndex);
 int BootIdeDeviceIsATAPI(int nDriveIndex);
+int BootIdeDeviceIsLocked(int nDriveIndex);
 
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 int driveSMARTRETURNSTATUS(int nDriveIndex);

@@ -1546,6 +1546,11 @@ int BootIdeDeviceIsATAPI(int nDriveIndex)
     return tsaHarddiskInfo[nDriveIndex].m_fAtapi;
 }
 
+int BootIdeDeviceIsLocked(int nDriveIndex)
+{
+    return tsaHarddiskInfo[nDriveIndex].m_securitySettings & 0x0002;
+}
+
 /* -------------------------------------------------------------------------------- */
 
 ///////////////////////////////////////////////
