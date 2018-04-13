@@ -690,7 +690,7 @@ int fatxputc(FILEX handle, char c)
     return f_putc(c, &FileHandleArray[handle]);
 }
 
-int fatxputs(FILEX handle, const char* sz)
+int fatxputs(const char* sz, FILEX handle)
 {
     FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)

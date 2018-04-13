@@ -114,7 +114,7 @@ int fatxgetfree(const char* path);
 int fatxgetclustersize(unsigned char driveNumber, unsigned char partNumber);
 
 int fatxputc(FILEX handle, char c);
-int fatxputs(FILEX handle, const char* sz);
+int fatxputs(const char* sz, FILEX handle);
 int fatxprintf(FILEX handle, const char* sz, ...);
 int fatxgets(FILEX handle, char* out, unsigned int len);
 long long int fatxtell(FILEX handle);
