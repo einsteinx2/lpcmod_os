@@ -21,6 +21,14 @@
 #include "FatFSAccessor.h"
 #include "lib/LPCMod/xblastDebug.h"
 
+static const char* const biosDirectoryLocation = "MASTER_C:\\XBlast\\scripts\\";
+
+const char* const getScriptDirectoryLocation(void)
+{
+    return biosDirectoryLocation;
+}
+
+
 static FILEX openScript(const char* filename, unsigned int* outSize)
 {
     FILEX handle;

@@ -11,6 +11,8 @@
 
 #include <stdbool.h>
 
+const char* const getScriptDirectoryLocation(void);
+
 int testScriptFromHDD(char * filename);
 void loadRunScriptNoParams(void* fname);
 void loadRunScriptWithParams(const char *fname, int paramCount, int * param);
