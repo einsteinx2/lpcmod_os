@@ -22,20 +22,19 @@ _LPCmodSettings LPCmodSettingsOrigFromFlash;
 
 
 //Items below should always follow the current settings version
-#define NBTXTPARAMS 36
 #define MINPARAMLENGTH 7
-#define IPTEXTPARAMGROUP 19 //Starting offset
-#define TEXTPARAMGROUP (IPTEXTPARAMGROUP + 5)
-#define SPECIALPARAMGROUP (TEXTPARAMGROUP + 8)
-
-#define NBBOOLEANPARAMS 12
-#define NBNUMERICVALUEPARAMS (IPTEXTPARAMGROUP - NBBOOLEANPARAMS)
+#define BoolParamGroup 12
+#define NumParamGroup 7
+#define IPParamGroup 5
+#define TextParamGroup 8
+#define SpecialParamGroup 4
 
 typedef struct {
-    unsigned char *settingsPtrArray[IPTEXTPARAMGROUP];
-    unsigned char *IPsettingsPtrArray[TEXTPARAMGROUP-IPTEXTPARAMGROUP];
-    char *textSettingsPtrArray[SPECIALPARAMGROUP - TEXTPARAMGROUP];
-    unsigned char *specialCasePtrArray[NBTXTPARAMS - SPECIALPARAMGROUP];
+    unsigned char *boolSettingsPtrArray[BoolParamGroup];
+    unsigned char *numSettingsPtrArray[NumParamGroup];
+    unsigned char *IPsettingsPtrArray[IPParamGroup];
+    char *textSettingsPtrArray[TextParamGroup];
+    unsigned char *specialCasePtrArray[SpecialParamGroup];
 }_settingsPtrStruct;
 
 enum SpecialSettingsPtrArrayIndexName
@@ -48,6 +47,13 @@ enum SpecialSettingsPtrArrayIndexName
 
 _settingsPtrStruct settingsPtrStruct;
 
-const char *xblastcfgstrings[NBTXTPARAMS];
+typedef struct {
+    const char *boolSettingsStringArray[BoolParamGroup];
+    const char *numSettingsStringArray[BoolParamGroup];
+    const char *IPsettingsStringArray[IPParamGroup];
+    const char *textSettingsStringArray[TextParamGroup];
+    const char *specialSettingsStringArray[SpecialParamGroup];
+}_xblastCfgStringsStruct;
+const _xblastCfgStringsStruct xblastCfgStringsStruct;
 
 #endif /* XBLASTSETTINGSDEFS_H_ */

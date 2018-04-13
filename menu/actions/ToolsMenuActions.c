@@ -194,7 +194,7 @@ void TSOPRecoveryReboot(void *ignored){
 */
 void saveXBlastcfg(void* ignored)
 {
-    LPCMod_SaveCFGToHDD();
+    LPCMod_SaveCFGToHDD(&settingsPtrStruct);
 }
 
 void loadXBlastcfg(void* ignored)

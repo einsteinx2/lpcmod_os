@@ -27,199 +27,163 @@
 
 static const char* const settingsFileLocation = "MASTER_C:\\XBlast\\xblast.cfg";
 
-const char* xblastcfgstrings[NBTXTPARAMS] = {
-	//Contains boolean values.
-	"quickboot=",
-	"tsopcontrol=",
-	"tsophide=",
-	"runbankscript=",
-	"runbootscript=",
-	"enablenetwork=",
-	"usedhcp=",
-	"enablevga=",
-	"enable5v=",
-	"displaybootmsg=",
-	"customtextboot=",
-	"displaybiosnameboot=",
+const _xblastCfgStringsStruct xblastCfgStringsStruct =
+{
+ //Contains boolean values.
+ {
+  "quickboot",
+  "tsopcontrol",
+  "tsophide",
+  "runbankscript",
+  "runbootscript",
+  "enablenetwork",
+  "usedhcp",
+  "enablevga",
+  "enable5v",
+  "displaybootmsg",
+  "customtextboot",
+  "displaybiosnameboot"
 
-	//Contains numerical values
-	"bgcolor=",
-	"fanspeed=",
-	"boottimeout=",
-	"nblines=",
-	"linelength=",
-	"backlight=",
-	"contrast=",
+ },
 
-	//Contains IP text strings.
-	"staticip=",
-	"staticgateway=",
-	"staticmask=",
-	"staticdns1=",
-	"staticdns2=",
+ //Contains numerical values
+ {
+  "bgcolor",
+  "fanspeed",
+  "boottimeout",
+  "nblines",
+  "linelength",
+  "backlight",
+  "contrast"
+ },
 
-	//Contains text strings.
-	"512kbname=",
-	"256kbname=",
-	"tsop0name=",
-	"tsop1name=",
-	"customstring0=",
-	"customstring1=",
-	"customstring2=",
-	"customstring3=",
+ //Contains IP text strings.
+ {
+  "staticip",
+  "staticgateway",
+  "staticmask",
+  "staticdns1",
+  "staticdns2"
+ },
 
-	//Special case.
-	"activebank=",
-	"altbank=",
-	"ledcolor=",
-	"lcdtype="
+ //Contains text strings.
+ {
+  "512kbname",
+  "256kbname",
+  "tsop0name",
+  "tsop1name",
+  "customstring0",
+  "customstring1",
+  "customstring2",
+  "customstring3"
+ },
+
+ //Special case.
+ {
+     "activebank",
+     "altbank",
+     "ledcolor",
+     "lcdtype"
+ }
 };
+
+int iniCallback(const char *section, const char *key, const char *value, void *userdata)
+{
+    unsigned char i;
+    _settingsPtrStruct *settingsStruct = (_settingsPtrStruct *)userdata;
+
+    for(i = 0; i < NBTXTPARAMS; i++)
+    {
+      if(0 == strcmp(key, xblastCfgStringsStruct[i]))   //Match
+      {
+          if(i < IPTEXTPARAMGROUP)       //Numerical value parse
+          {
+              if(*value >='0' && *value <='9')
+              {
+                  *settingsStruct->settingsPtrArray[i] = (unsigned char)strtol(&value, NULL, 0);
+              }
+              else if(!strncmp(value, "Y", 1) ||
+                      !strncmp(value, "y", 1) ||
+                      !strncmp(value, "T", 1) ||
+                      !strncmp(value, "t", 1))
+              {
+                  *settingsStruct->settingsPtrArray[i] = 1;
+              }
+              else if(!strncmp(value, "N", 1) ||
+                      !strncmp(value, "n", 1) ||
+                      !strncmp(value, "F", 1) ||
+                      !strncmp(value, "f", 1))
+              {
+                  *settingsStruct->settingsPtrArray[i] = 0;
+              }
+          }
+          else if(i < TEXTPARAMGROUP)       //IP string value parse
+          {
+              assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i - IPTEXTPARAMGROUP], value);
+          }
+          else if(i < SPECIALPARAMGROUP)    //Text value parse
+          {
+              strncpy(settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP], value, 20);
+              settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
+          }
+          else
+          {
+              switch(i)
+              {
+                  case (SPECIALPARAMGROUP):
+                  case (SPECIALPARAMGROUP + 1):
+                      if(!strcmp(value, "BNK512"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
+                      else if(!strcmp(value, "BNK256"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK256;
+                      else if(!strcmp(value, "BNKTSOPSPLIT0"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT0;
+                      else if(!strcmp(value, "BNKTSOPSPLIT1"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
+                      else if(!strcmp(value, "BNKFULLTSOP"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
+                      else if(!strcmp(value, "BNKOS"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKOS;
+                      break;
+                  case (SPECIALPARAMGROUP + 2):
+                      if(!strncmp(value, "Of", 2) || !strncmp(value, "of", 2))    //LED_OFF
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
+                      else if(!strncmp(value, "G", 1) || !strncmp(value, "g", 1))    //LED_GREEN
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_GREEN;
+                      if(!strncmp(value, "R", 1) || !strncmp(value, "r", 1))    //LED_RED
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_RED;
+                      if(!strncmp(value, "Or", 2) || !strncmp(value, "or", 2))    //LED_ORANGE
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_ORANGE;
+                      if(!strncmp(value, "C", 1) || !strncmp(value, "c", 1))    //LED_CYCLE
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
+                      break;
+                  case (SPECIALPARAMGROUP + 3):
+                      if(!strcmp(value, "HD44780"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_HD44780 ;
+                      else if(!strcmp(value, "KS0073"))
+                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_KS0073 ;
+                      break;
+              } //switch(i)
+          } //!if(i < IPTEXTPARAMGROUP){
+      } //if(!strncmp(compareBuf, xblastcfgstrings[i], valueStartPtr) && !settingLoaded[i])
+    } //for(i = 0; i < NBTXTPARAMS; i++)
+
+    return 1; /* OK */
+}
 
 int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct *settingsStruct)
 {
-    FILEX fileHandle;
-    char compareBuf[100];                     //100 character long seems acceptable
-    unsigned char i;
-    bool settingLoaded[NBTXTPARAMS];
-    int stringStartPtr = 0, stringStopPtr = 0, valueStartPtr = 0;
-    unsigned char textStringCopyLength;
-
     //Take what's already properly set and start from there.
     if(LPCmodSettingsPtr != &LPCmodSettings)   //Avoid useless and potentially hazardous memcpy!
+    {
         memcpy((unsigned char *)LPCmodSettingsPtr, (unsigned char *)&LPCmodSettings, sizeof(_LPCmodSettings));
+    }
 
     if(isMounted(HDD_Master, Part_C))
     {
-        fileHandle = fatxopen(settingsFileLocation, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
-        if(fileHandle)
+        if(1 != ini_browse(iniCallback, settingsStruct, settingsFileLocation))
         {
-            //Initially, no setting has been loaded from txt.
-            for(i = 0; i < NBTXTPARAMS; i++)
-            {
-                settingLoaded[i] = false;
-            }
-
-            while(fatxgets(fileHandle, compareBuf, 100) && cromwellLoop()){      //We stay in file
-                stringStartPtr = 0;
-                while(100 > stringStartPtr && '#' != compareBuf[stringStartPtr] && '\0' != compareBuf[stringStartPtr])        //While we don't hit a new line and still in file
-                {
-                    if(' ' == compareBuf[stringStartPtr] || '\t' == compareBuf[stringStartPtr])
-                    {
-                        stringStartPtr++;        //Move on to next character in file.
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                if('#' == compareBuf[stringStartPtr] || '\0' == compareBuf[stringStartPtr]){       //This is a comment or empty line
-
-                    continue;
-                }
-
-                //stringStartPtr is now a beginning of the line and stringStopPtr is at the end of it.
-                valueStartPtr = 0;
-                //printk("\n       %s", compareBuf); //debug, print the whole file line by line.
-                while(compareBuf[valueStartPtr] != '=' && valueStartPtr < 100 && compareBuf[valueStartPtr] != '\n' && compareBuf[valueStartPtr] != '\0'){     //Search for '=' character.
-                    valueStartPtr++;
-                }
-
-                if(valueStartPtr < MINPARAMLENGTH || valueStartPtr >= 30){    //If line is not properly constructed
-                    continue;
-                }
-                else{
-                    for(i = 0; i < NBTXTPARAMS; i++)
-                    {
-                        if(!strncmp(compareBuf, xblastcfgstrings[i], valueStartPtr) && !settingLoaded[i])   //Match
-                        {
-                            settingLoaded[i] = true;        //Recurring entries not allowed.
-                            valueStartPtr++;
-                            if(i < IPTEXTPARAMGROUP)       //Numerical value parse
-                            {
-                                if(compareBuf[valueStartPtr] >='0' && compareBuf[valueStartPtr] <='9')
-                                {
-                                    *settingsStruct->settingsPtrArray[i] = (unsigned char)strtol(&compareBuf[valueStartPtr], NULL, 0);
-                                }
-                                else if(!strncmp(&compareBuf[valueStartPtr], "Y", 1) ||
-                                        !strncmp(&compareBuf[valueStartPtr], "y", 1) ||
-                                        !strncmp(&compareBuf[valueStartPtr], "T", 1) ||
-                                        !strncmp(&compareBuf[valueStartPtr], "t", 1))
-                                {
-                                    *settingsStruct->settingsPtrArray[i] = 1;
-                                }
-                                else if(!strncmp(&compareBuf[valueStartPtr], "N", 1) ||
-                                        !strncmp(&compareBuf[valueStartPtr], "n", 1) ||
-                                        !strncmp(&compareBuf[valueStartPtr], "F", 1) ||
-                                        !strncmp(&compareBuf[valueStartPtr], "f", 1))
-                                {
-                                    *settingsStruct->settingsPtrArray[i] = 0;
-                                }
-                            }
-                            else if(i < TEXTPARAMGROUP)       //IP string value parse
-                            {
-                                assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i - IPTEXTPARAMGROUP], &compareBuf[valueStartPtr]);
-                            }
-                            else if(i < SPECIALPARAMGROUP)    //Text value parse
-                            {
-                                if((stringStopPtr - valueStartPtr) >= 20)
-                                {
-                                    textStringCopyLength = 20;
-                                }
-                                else
-                                {
-                                    textStringCopyLength = stringStopPtr - valueStartPtr;
-                                }
-                                strncpy(settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP], &compareBuf[valueStartPtr], textStringCopyLength);
-                                settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
-                            }
-                            else
-                            {
-                                switch(i)
-                                {
-                                    case (SPECIALPARAMGROUP):
-                                    case (SPECIALPARAMGROUP + 1):
-                                        if(!strcmp(&compareBuf[valueStartPtr], "BNK512"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
-                                        else if(!strcmp(&compareBuf[valueStartPtr], "BNK256"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK256;
-                                        else if(!strcmp(&compareBuf[valueStartPtr], "BNKTSOPSPLIT0"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT0;
-                                        else if(!strcmp(&compareBuf[valueStartPtr], "BNKTSOPSPLIT1"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
-                                        else if(!strcmp(&compareBuf[valueStartPtr], "BNKFULLTSOP"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
-                                        else if(!strcmp(&compareBuf[valueStartPtr], "BNKOS"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKOS;
-                                        break;
-                                    case (SPECIALPARAMGROUP + 2):
-                                        if(!strncmp(&compareBuf[valueStartPtr], "Of", 2) || !strncmp(&compareBuf[valueStartPtr], "of", 2))    //LED_OFF
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
-                                        else if(!strncmp(&compareBuf[valueStartPtr], "G", 1) || !strncmp(&compareBuf[valueStartPtr], "g", 1))    //LED_GREEN
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_GREEN;
-                                        if(!strncmp(&compareBuf[valueStartPtr], "R", 1) || !strncmp(&compareBuf[valueStartPtr], "r", 1))    //LED_RED
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_RED;
-                                        if(!strncmp(&compareBuf[valueStartPtr], "Or", 2) || !strncmp(&compareBuf[valueStartPtr], "or", 2))    //LED_ORANGE
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_ORANGE;
-                                        if(!strncmp(&compareBuf[valueStartPtr], "C", 1) || !strncmp(&compareBuf[valueStartPtr], "c", 1))    //LED_CYCLE
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
-                                        break;
-                                    case (SPECIALPARAMGROUP + 3):
-                                        if(!strcmp(&compareBuf[valueStartPtr], "HD44780"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_HD44780 ;
-                                        else if(!strcmp(&compareBuf[valueStartPtr], "KS0073"))
-                                            *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_KS0073 ;
-                                        break;
-                                } //switch(i)
-                            } //!if(i < IPTEXTPARAMGROUP){
-                        } //if(!strncmp(compareBuf, xblastcfgstrings[i], valueStartPtr) && !settingLoaded[i])
-                    } //for(i = 0; i < NBTXTPARAMS; i++)
-                } //!if(valueStartPtr >= 30)
-            } //while(stringStopPtr < fileinfo.fileSize)
-            fatxclose(fileHandle);
-        } //if(res)
-        else
-        {
-            return 4; //Cannot open file.
+            return 4;
         }
     }
     else
@@ -230,56 +194,28 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
     return 0; //Everything went fine.
 }
 
-int LPCMod_SaveCFGToHDD(void){
-	FATXFILEINFO fileinfo;
-    FATXPartition *partition;
-    int res = false;
-    char * filebuf;
-    char tempString[22];
-    unsigned int cursorpos, totalbytes = 0;
-    int dcluster, i;
-    const char *cfgFileName = "\\XBlast\\xblast.cfg";
+int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct)
+{
+    unsigned char i;
+    char tempStringBuf[50];
 
-    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-
-    if(partition != NULL){
-        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-        if((dcluster != -1) && (dcluster != 1)) {
-            res = FATXFindFile(partition, (char *)cfgFileName, dcluster, &fileinfo);
+    if(isMounted(HDD_Master, Part_C))
+    {
+        for(i = 0; i < BoolParamGroup; i++)
+        {
+            ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], settingsStruct->boolSettingsPtrArray[i], settingsFileLocation);
         }
-        if(res){                //File already exist
-            if(ConfirmDialog("Overwrite C:\\XBlast\\xblast.cfg?", 1)){
-                CloseFATXPartition(partition);
-                UiHeader("Saving to C:\\XBlast\\xblast.cfg aborted.");
-                cromwellWarning();
-                UIFooter();
-                initialSetLED(LPCmodSettings.OSsettings.LEDColor);
-                return 1;
-            }
-            filebuf = (char *)malloc(FATX16CLUSTERSIZE);
-            memset(filebuf, 0x00, FATX16CLUSTERSIZE);
-            for(i = 0; i < NBTXTPARAMS; i++){
-                cursorpos = 0;
-                strcpy(&filebuf[cursorpos], xblastcfgstrings[i]);
-                cursorpos += strlen(xblastcfgstrings[i]);
-                //New line inserted in.
-                cursorpos += strlen(tempString);
-                strncpy(&filebuf[cursorpos],tempString, strlen(tempString));    //Skip terminating character.
-                //filebuf[cursorpos] = 0x0A;
-                //cursorpos += 1;
-                totalbytes += cursorpos;
-            }
-            filebuf[cursorpos] = 0;     //Terminating character at the end of file.
 
-
-            free(filebuf);
+        for(i = 0; i < NumParamGroup; i++)
+        {
+            ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], settingsStruct->numSettingsPtrArray[i], settingsFileLocation);
         }
-        UiHeader("Saved settings to C:\\XBlast\\xblast.cfg");
 
-        CloseFATXPartition(partition);
+        //TODO: IP, Text and Special params
     }
-    else{
-        UiHeader("Error opening partition. Drive formatted?");
+    else
+    {
+        UiHeader("Error opening partition.");
     }
 
     UIFooter();
@@ -290,27 +226,28 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStr
 {
         int i = 0;
         //Boolean values
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.Quickboot);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.TSOPcontrol);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.TSOPhide);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.runBankScript);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.runBootScript);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.enableNetwork);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.useDHCP);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.enableVGA);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.enable5V);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.customTextBoot);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.Quickboot);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.TSOPcontrol);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.TSOPhide);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.runBankScript);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.runBootScript);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.enableNetwork);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.useDHCP);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.enableVGA);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.enable5V);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayMsgBoot);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.customTextBoot);
+        settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
 
+        int i = 0;
         //Numerical values
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.backgroundColorPreset);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.fanSpeed);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.bootTimeout);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.nbLines);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.lineLength);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.backlight);
-        settingsStruct->settingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.contrast);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.backgroundColorPreset);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.fanSpeed);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.bootTimeout);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.nbLines);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.lineLength);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.backlight);
+        settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.contrast);
 
         i = 0;
         settingsStruct->IPsettingsPtrArray[i++] = tempLPCmodSettings->OSsettings.staticIP;
