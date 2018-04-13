@@ -14,17 +14,8 @@
 #include "boot.h"
 #include "string.h"
 #include "stdlib.h"
-#include "sortHelpers.h"
 
 inline void BootPciInterruptEnable()  {    __asm__ __volatile__  (  "sti" ); }
-
-
-int tolower(int ch) 
-{
-      if ( (unsigned int)(ch - 'A') < 26u )
-            ch += 'a' - 'A';
-      return ch;
-}
 
 /* -------------------------------------------------------------------- */
 

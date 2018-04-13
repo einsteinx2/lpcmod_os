@@ -9,16 +9,17 @@
  * Wirzenius wrote this portably, Torvalds fucked it up :-)
  */
 
-#include <stddef.h>
 #include "stdlib.h"
 #include "stdio.h"
+#include <stddef.h>
+#include <ctype.h>
 
 
 static int skip_atoi(const char **s)
 {
     int i=0;
 
-    while (is_digit(**s))
+    while (isdigit(**s))
         i = i*10 + *((*s)++) - '0';
     return i;
 }
@@ -142,7 +143,7 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 
         /* get field width */
         field_width = -1;
-        if (is_digit(*fmt))
+        if (isdigit(*fmt))
             field_width = skip_atoi(&fmt);
         else if (*fmt == '*') {
             ++fmt;
@@ -158,7 +159,7 @@ int vsprintf(char *buf, const char *fmt, va_list args)
         precision = -1;
         if (*fmt == '.') {
             ++fmt;
-            if (is_digit(*fmt))
+            if (isdigit(*fmt))
                 precision = skip_atoi(&fmt);
             else if (*fmt == '*') {
                 ++fmt;

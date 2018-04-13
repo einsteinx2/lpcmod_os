@@ -14,7 +14,8 @@
 #include "BootIde.h"
 #include "iso_fs.h"
 #include "string.h"
-#include "stdlib.h"
+//#include "stdlib.h"
+#include <ctype.h>
 
 int iso9660_name_translate(char *translated, char *old, unsigned len) {
   int i;

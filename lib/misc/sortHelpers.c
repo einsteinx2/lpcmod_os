@@ -60,16 +60,3 @@ int strcmpbynum(const char *s1, const char *s2)
     }
     return 0;
 }
-
-int _strncasecmp(const char *sz1, const char *sz2, int nMax)
-{
-    while((*sz1) && (*sz2) && nMax--) {
-    if(tolower(*sz1) != tolower(*sz2)) return (*sz1 - *sz2);
-        sz1++; sz2++;
-    }
-
-    if(nMax==0) return 0;
-
-    if((tolower(*sz1)) || (tolower(*sz2))) return 0;
-    return 0; // used up nMax
-}
