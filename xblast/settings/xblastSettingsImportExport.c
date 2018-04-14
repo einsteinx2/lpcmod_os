@@ -11,19 +11,18 @@
 #include "xblastSettingsImportExport.h"
 #include "lpcmod_v1.h"
 #include "FatFSAccessor.h"
-#include <stddef.h>
 #include "LEDMenuActions.h"
 #include "string.h"
 #include "stdlib.h"
 #include "MenuActions.h"
-#include "ToolsMenuActions.h"
 #include "NetworkMenuActions.h"
-#include "Gentoox.h"
-#include "menu/misc/ConfirmDialog.h"
+#include "BootVideo.h"
 #include "lib/LPCMod/BootLCD.h"
-#include "lib/cromwell/cromSystem.h"
 #include "i2c.h"
 #include "xblast/HardwareIdentifier.h"
+#include "lib/minIni/dev/minIni.h"
+#include "xblastSettings.h"
+#include <stddef.h>
 
 static const char* const settingsFileLocation = "MASTER_C:\\XBlast\\xblast.cfg";
 
@@ -89,84 +88,134 @@ const _xblastCfgStringsStruct xblastCfgStringsStruct =
 
 int iniCallback(const char *section, const char *key, const char *value, void *userdata)
 {
-    unsigned char i;
+    unsigned char i, j;
     _settingsPtrStruct *settingsStruct = (_settingsPtrStruct *)userdata;
 
-    for(i = 0; i < NBTXTPARAMS; i++)
+#define BankSettingArraySize 6
+    const unsigned char bankSettingArray[BankSettingArraySize] =
     {
-      if(0 == strcmp(key, xblastCfgStringsStruct[i]))   //Match
+     BNK512,
+     BNK256,
+     BNKTSOPSPLIT0,
+     BNKTSOPSPLIT1,
+     BNKFULLTSOP,
+     BNKOS
+    };
+
+#define LedSettingArraySize 5
+    const unsigned char ledArraySetting[LedSettingArraySize] =
+    {
+     LED_OFF,
+     LED_GREEN,
+     LED_RED,
+     LED_ORANGE,
+     LED_CYCLE
+    };
+
+#define LcdSettingArraySize 2
+    const unsigned char lcdArraySetting[LcdSettingArraySize] =
+    {
+     LCDTYPE_HD44780,
+     LCDTYPE_KS0073
+    };
+
+    for(i = 0; i < BoolParamGroup; i++)
+    {
+        if(0 == strcasecmp(xblastCfgStringsStruct.boolSettingsStringArray[i], key))
+        {
+            if(*value >='0' && *value <='9')
+            {
+                *settingsStruct->boolSettingsPtrArray[i] = (unsigned char)strtol(value, NULL, 0);
+            }
+            else if(!strncasecmp(value, "y", 1) ||
+                    !strncasecmp(value, "t", 1))
+            {
+                *settingsStruct->boolSettingsPtrArray[i] = 1;
+            }
+            else if(!strncasecmp(value, "n", 1) ||
+                    !strncasecmp(value, "f", 1))
+            {
+                *settingsStruct->boolSettingsPtrArray[i] = 0;
+            }
+            return 1;
+        }
+    }
+
+    for(i = 0; i < NumParamGroup; i++)
+    {
+        if(0 == strcasecmp(xblastCfgStringsStruct.numSettingsStringArray[i], key))
+        {
+            if(*value >='0' && *value <='9')
+            {
+                *settingsStruct->numSettingsPtrArray[i] = (unsigned char)strtol(value, NULL, 0);
+            }
+            else
+            {
+                *settingsStruct->numSettingsPtrArray[i] = 0;
+            }
+            return 1;
+        }
+    }
+
+    for(i = 0; i < IPParamGroup; i++)
+    {
+        if(0 == strcasecmp(xblastCfgStringsStruct.IPsettingsStringArray[i], key))
+        {
+            assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i], value);
+            return 1;
+        }
+    }
+
+    for(i = 0; i < TextParamGroup; i++)
+    {
+        if(0 == strcasecmp(xblastCfgStringsStruct.textSettingsStringArray[i], key))
+        {
+            sprintf(settingsStruct->textSettingsPtrArray[i], "%s", value);
+            return 1;
+        }
+    }
+
+    for(i = 0; i < SpecialParamGroup; i++)
+    {
+      if(0 == strcasecmp(xblastCfgStringsStruct.specialSettingsStringArray[i], key))
       {
-          if(i < IPTEXTPARAMGROUP)       //Numerical value parse
+          switch(i)
           {
-              if(*value >='0' && *value <='9')
-              {
-                  *settingsStruct->settingsPtrArray[i] = (unsigned char)strtol(&value, NULL, 0);
-              }
-              else if(!strncmp(value, "Y", 1) ||
-                      !strncmp(value, "y", 1) ||
-                      !strncmp(value, "T", 1) ||
-                      !strncmp(value, "t", 1))
-              {
-                  *settingsStruct->settingsPtrArray[i] = 1;
-              }
-              else if(!strncmp(value, "N", 1) ||
-                      !strncmp(value, "n", 1) ||
-                      !strncmp(value, "F", 1) ||
-                      !strncmp(value, "f", 1))
-              {
-                  *settingsStruct->settingsPtrArray[i] = 0;
-              }
-          }
-          else if(i < TEXTPARAMGROUP)       //IP string value parse
-          {
-              assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i - IPTEXTPARAMGROUP], value);
-          }
-          else if(i < SPECIALPARAMGROUP)    //Text value parse
-          {
-              strncpy(settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP], value, 20);
-              settingsStruct->textSettingsPtrArray[i - TEXTPARAMGROUP][20] = '\0';
-          }
-          else
-          {
-              switch(i)
-              {
-                  case (SPECIALPARAMGROUP):
-                  case (SPECIALPARAMGROUP + 1):
-                      if(!strcmp(value, "BNK512"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK512;
-                      else if(!strcmp(value, "BNK256"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNK256;
-                      else if(!strcmp(value, "BNKTSOPSPLIT0"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT0;
-                      else if(!strcmp(value, "BNKTSOPSPLIT1"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKTSOPSPLIT1;
-                      else if(!strcmp(value, "BNKFULLTSOP"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKFULLTSOP;
-                      else if(!strcmp(value, "BNKOS"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = BNKOS;
-                      break;
-                  case (SPECIALPARAMGROUP + 2):
-                      if(!strncmp(value, "Of", 2) || !strncmp(value, "of", 2))    //LED_OFF
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_OFF;
-                      else if(!strncmp(value, "G", 1) || !strncmp(value, "g", 1))    //LED_GREEN
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_GREEN;
-                      if(!strncmp(value, "R", 1) || !strncmp(value, "r", 1))    //LED_RED
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_RED;
-                      if(!strncmp(value, "Or", 2) || !strncmp(value, "or", 2))    //LED_ORANGE
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_ORANGE;
-                      if(!strncmp(value, "C", 1) || !strncmp(value, "c", 1))    //LED_CYCLE
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LED_CYCLE;
-                      break;
-                  case (SPECIALPARAMGROUP + 3):
-                      if(!strcmp(value, "HD44780"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_HD44780 ;
-                      else if(!strcmp(value, "KS0073"))
-                          *settingsStruct->specialCasePtrArray[i - SPECIALPARAMGROUP] = LCDTYPE_KS0073 ;
-                      break;
+              case (0):
+              case (1):
+                  for(j = 0; j < BankSettingArraySize; j++)
+                  {
+                      if(!strcasecmp(value, getSpecialSettingString(i, bankSettingArray[j])))
+                      {
+                            *settingsStruct->specialCasePtrArray[i] = bankSettingArray[j];
+                            break;
+                      }
+                  }
+              break;
+              case (2):
+                  for(j = 0; j < LedSettingArraySize; j++)
+                  {
+                      if(!strncasecmp(value, getSpecialSettingString(i, ledArraySetting[j]), 2))
+                      {
+                            *settingsStruct->specialCasePtrArray[i] = ledArraySetting[j];
+                            break;
+                      }
+                  }
+                  break;
+              case (3):
+                  for(j = 0; j < LcdSettingArraySize; j++)
+                  {
+                      if(!strncasecmp(value, getSpecialSettingString(i, lcdArraySetting[j]), 2))
+                      {
+                            *settingsStruct->specialCasePtrArray[i] = lcdArraySetting[j];
+                            break;
+                      }
+                  }
               } //switch(i)
-          } //!if(i < IPTEXTPARAMGROUP){
-      } //if(!strncmp(compareBuf, xblastcfgstrings[i], valueStartPtr) && !settingLoaded[i])
-    } //for(i = 0; i < NBTXTPARAMS; i++)
+
+              return 1;
+        }
+    }
 
     return 1; /* OK */
 }
@@ -203,15 +252,29 @@ int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct)
     {
         for(i = 0; i < BoolParamGroup; i++)
         {
-            ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], settingsStruct->boolSettingsPtrArray[i], settingsFileLocation);
+            ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i], settingsFileLocation);
         }
 
         for(i = 0; i < NumParamGroup; i++)
         {
-            ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], settingsStruct->numSettingsPtrArray[i], settingsFileLocation);
+            ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i], settingsFileLocation);
         }
 
-        //TODO: IP, Text and Special params
+        for(i = 0; i < IPParamGroup; i++)
+        {
+            sprintf(tempStringBuf, "%u.%u.%u.%u", settingsStruct->IPsettingsPtrArray[i][0], settingsStruct->IPsettingsPtrArray[i][1], settingsStruct->IPsettingsPtrArray[i][2], settingsStruct->IPsettingsPtrArray[i][3]);
+            ini_puts(NULL, xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf, settingsFileLocation);
+        }
+
+        for(i = 0; i < TextParamGroup; i++)
+        {
+            ini_puts(NULL, xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i], settingsFileLocation);
+        }
+
+        for(i = 0; i < SpecialParamGroup; i++)
+        {
+            ini_puts(NULL, xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]), settingsFileLocation);
+        }
     }
     else
     {
@@ -239,7 +302,7 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStr
         settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.customTextBoot);
         settingsStruct->boolSettingsPtrArray[i++] = &(tempLPCmodSettings->LCDsettings.displayBIOSNameBoot);
 
-        int i = 0;
+        i = 0;
         //Numerical values
         settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.backgroundColorPreset);
         settingsStruct->numSettingsPtrArray[i++] = &(tempLPCmodSettings->OSsettings.fanSpeed);
