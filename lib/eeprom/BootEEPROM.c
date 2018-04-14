@@ -16,6 +16,7 @@
 #include "lib/LPCMod/xblastDebug.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include "RecoveryImages.h"
 #include "EEPROMStrings.h"

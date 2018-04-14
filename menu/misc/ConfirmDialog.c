@@ -18,7 +18,7 @@
 #define ComparebufSize 100
 char bypassConfirmDialog[ComparebufSize];        //Arbitrary length
 
-bool ConfirmDialog(char * string, bool critical)
+bool ConfirmDialog(const char * string, bool critical)
 {
     unsigned int yPos = 120;
     unsigned int stringLength = strlen(string);

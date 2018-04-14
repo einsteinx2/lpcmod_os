@@ -29,7 +29,7 @@ TEXTMENU *ToolsMenuInit(void)
     {
         //Save EEPROM data to flash
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption,"Save EEPROM to modchip");
+        strcpy(itemPtr->szCaption,"Save EEPROM to modchip");
         itemPtr->functionPtr = saveEEPromToFlash;
         TextMenuAddItem(menuPtr, itemPtr);
         saveEEPROMPtr = itemPtr;
@@ -86,11 +86,11 @@ TEXTMENU *ToolsMenuInit(void)
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "TSOP recover force bank : ");
         if(A19controlModBoot == BNKTSOPSPLIT0)
-            sprintf(itemPtr->szParameter, "%s", "Bank0");
+            strcpy(itemPtr->szParameter, "Bank0");
         else if(A19controlModBoot == BNKTSOPSPLIT1)
-            sprintf(itemPtr->szParameter, "%s", "Bank1");
+            strcpy(itemPtr->szParameter, "Bank1");
         else
-            sprintf(itemPtr->szParameter, "%s", "No");
+            strcpy(itemPtr->szParameter, "No");
         itemPtr->functionPtr = nextA19controlModBootValue;
         itemPtr->functionDataPtr= itemPtr->szParameter;
         itemPtr->functionLeftPtr=prevA19controlModBootValue;

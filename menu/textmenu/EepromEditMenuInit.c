@@ -12,6 +12,7 @@
 #include "lpcmod_v1.h"
 #include "FlashMenuActions.h"
 #include "string.h"
+#include "stdio.h"
 #include "FatFSAccessor.h"
 #include "WebServerOps.h"
 
@@ -147,7 +148,7 @@ TEXTMENU* EEPROMFileRestoreMenuInit(void)
                     // If it's a (readable) file - i.e. not a directory.
                     // AND it's filesize is divisible by 256k.
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
+                    strcpy(itemPtr->szCaption, fnames[i]+strlen(path));
                     itemPtr->functionPtr = restoreEEPROMFromFile;
                     itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
                     TextMenuAddItem(menuPtr, itemPtr);

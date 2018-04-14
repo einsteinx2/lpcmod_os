@@ -20,6 +20,7 @@
 #include "lib/cromwell/cromSystem.h"
 #include "xblast/settings/xblastSettingsImportExport.h"
 #include "string.h"
+#include "stdio.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "menu/misc/ProgressBar.h"
 TEXTMENUITEM* saveEEPROMPtr;
@@ -244,16 +245,16 @@ void nextA19controlModBootValue(void* itemPtr)
     {
         case BNKFULLTSOP:
             A19controlModBoot = BNKTSOPSPLIT0;
-            sprintf(itemPtr, "%s", "Bank0");
+            strcpy(itemPtr, "Bank0");
             break;
         case BNKTSOPSPLIT0:
             A19controlModBoot = BNKTSOPSPLIT1;
-            sprintf(itemPtr, "%s", "Bank1");
+            strcpy(itemPtr, "Bank1");
             break;
         case BNKTSOPSPLIT1:
         default:
             A19controlModBoot = BNKFULLTSOP;
-            sprintf(itemPtr, "%s", "No");
+            strcpy(itemPtr, "No");
             break;
     }
 }
@@ -264,16 +265,16 @@ void prevA19controlModBootValue(void* itemPtr)
     {
         case BNKTSOPSPLIT1:
             A19controlModBoot = BNKTSOPSPLIT0;
-            sprintf(itemPtr, "%s", "Bank0");
+            strcpy(itemPtr,  "Bank0");
             break;
         case BNKFULLTSOP:
             A19controlModBoot = BNKTSOPSPLIT1;
-            sprintf(itemPtr, "%s", "Bank1");
+            strcpy(itemPtr,  "Bank1");
             break;
         case BNKTSOPSPLIT0:
         default:
             A19controlModBoot = BNKFULLTSOP;
-            sprintf(itemPtr, "%s", "No");
+            strcpy(itemPtr, "No");
             break;
     }
 }

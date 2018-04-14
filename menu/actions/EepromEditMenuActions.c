@@ -14,6 +14,7 @@
 #include "lib/LPCMod/xblastDebug.h"
 #include "MenuActions.h"
 #include "string.h"
+#include "stdio.h"
 #include "boot.h"
 #include "menu/misc/OnScreenKeyboard.h"
 #include "menu/misc/ConfirmDialog.h"

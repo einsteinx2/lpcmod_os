@@ -19,6 +19,7 @@
 #include "FlashDriver.h"
 #include "Gentoox.h"
 #include "string.h"
+#include "stdio.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
 #include "lib/cromwell/cromSystem.h"

@@ -13,6 +13,7 @@
 #include "FatFSAccessor.h"
 #include "LEDMenuActions.h"
 #include "string.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include "MenuActions.h"
 #include "NetworkMenuActions.h"
@@ -170,7 +171,7 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
         if(0 == strcasecmp(xblastCfgStringsStruct.textSettingsStringArray[i], key))
         {
-            sprintf(settingsStruct->textSettingsPtrArray[i], "%s", value);
+            strcpy(settingsStruct->textSettingsPtrArray[i], value);
             return 1;
         }
     }

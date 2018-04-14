@@ -34,6 +34,7 @@
 #include "lib/cromwell/cromSystem.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
+#include "stdio.h"
 
 #define TRANSPARENTNESS 0x30
 #define SELECTED 0xff

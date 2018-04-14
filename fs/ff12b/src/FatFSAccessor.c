@@ -15,6 +15,7 @@
 #include "../../../pc_tools/fatfs_test/src/FatFSTestHelper.h"
 #else
 #include "string.h"
+#include "stdio.h"
 #include "BootIde.h"
 #include "lib/LPCMod/xblastDebug.h"
 #endif
@@ -633,7 +634,7 @@ int fatxchdir(const char* path)
 
     if(FR_OK == f_chdir(path))
     {
-        sprintf(cwd, "%s", path);
+        strcpy(cwd, path);
         return 0;
     }
 

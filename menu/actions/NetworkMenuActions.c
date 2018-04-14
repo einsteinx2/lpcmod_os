@@ -9,12 +9,13 @@
 #include "NetworkMenuActions.h"
 #include "boot.h"
 #include "string.h"
+#include "stdio.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 #include "menu/misc/OnScreenKeyboard.h"
 
 void toggleUseDHCP(void * itemStr) {
     (LPCmodSettings.OSsettings.useDHCP) = (LPCmodSettings.OSsettings.useDHCP)? 0 : 1;
-    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.useDHCP? "Yes" : "No");
+    strcpy(itemStr,LPCmodSettings.OSsettings.useDHCP? "Yes" : "No");
 }
 
 void editStaticIP(void * itemStr){
@@ -78,7 +79,7 @@ bool editIPfield(unsigned char * addr) {
     return result;
 }
 
-unsigned short myAtoi(char *str)
+unsigned short myAtoi(const char *str)
 {
     unsigned char i;
     unsigned short res = 0;

@@ -14,6 +14,7 @@
 #include "TextMenu.h"
 #include "lpcmod_v1.h"
 #include "string.h"
+#include "stdio.h"
 #include "MenuActions.h"
 #include "lib/time/timeManagement.h"
 #include "lib/cromwell/cromString.h"
@@ -469,25 +470,25 @@ void FormatDriveFG(void* driveId)
 {
     unsigned char nDriveIndex = (*(unsigned char *)driveId) & 0x0f;
     unsigned char formatOption = (*(unsigned char *)driveId) & 0xf0;
-    unsigned char buffer[100];
+    const char* string;
     XboxDiskLayout selectedLayout = XboxDiskLayout_Base;
 
     switch(formatOption)
     {
         case F_GEQUAL:                                  //Split amount of sectors evenly on 2 partitions
-            sprintf(buffer, "%s", "Confirm format:\n\2F:, G: Split evenly?");
+            string =  "Confirm format:\n\2F:, G: Split evenly?";
             selectedLayout = XboxDiskLayout_FGSplit;
             break;
         case FMAX_G:            //F = LBASIZE_1024GB - 1 and G: takes the rest
-            sprintf(buffer, "%s", "Confirm format:\n\2Max F:, G: takes the rest?");
+            string =  "Confirm format:\n\2Max F:, G: takes the rest?";
             selectedLayout = XboxDiskLayout_FMaxGRest;
             break;
         case F137_G:            //F = LBASIZE_137GB and G takes the rest
-            sprintf(buffer, "%s", "Confirm format:\n\2F: = 120GB, G: takes the rest?");
+            string =  "Confirm format:\n\2F: = 120GB, G: takes the rest?";
             selectedLayout = XboxDiskLayout_F120GRest;
             break;
         case F_NOG:             //F < LBASIZE_1024GB - 1.
-            sprintf(buffer, "%s", "Confirm format:\n\2F: take all, no G:?");
+            string =  "Confirm format:\n\2F: take all, no G:?";
             selectedLayout = XboxDiskLayout_FOnly;
             break;
         default:
@@ -496,7 +497,7 @@ void FormatDriveFG(void* driveId)
     }
 
 
-    if(ConfirmDialog(buffer, 1) == false)
+    if(ConfirmDialog(string, 1) == false)
     {
         if(fdisk(nDriveIndex, selectedLayout))
         {
@@ -555,11 +556,11 @@ void AssertSMARTEnableDisable(void* customString)
     }
     if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled)
     {
-        sprintf(tempItemPtr->string1, "%s", "Disable");
+        strcpy(tempItemPtr->string1, "Disable");
     }
     else
     {
-        sprintf(tempItemPtr->string1, "%s", "Enable");
+        strcpy(tempItemPtr->string1, "Enable");
     }
 }
 

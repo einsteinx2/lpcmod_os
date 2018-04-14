@@ -15,6 +15,7 @@
 #include "FatFSAccessor.h"
 #include "lpcmod_v1.h"
 #include "string.h"
+#include "stdio.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "xblast/HardwareIdentifier.h"
 #include "FatFSAccessor.h"
@@ -49,8 +50,7 @@ TEXTMENU* XBlastScriptMenuInit(void)
 
         if(LPCmodSettings.flashScript.scriptSize > 0)
         {
-            itemPtr = malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
+            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
             strcpy(itemPtr->szCaption, "Save script to flash");
             itemPtr->functionPtr = deleteFlashScriptFromFlash;
             itemPtr->functionDataPtr = NULL;
@@ -71,8 +71,8 @@ TEXTMENU* XBlastScriptMenuInit(void)
     if(isXBE() == false || isXBlastOnLPC())
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption,"Enable Boot script : ");
-        sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+        strcpy(itemPtr->szCaption, "Enable Boot script : ");
+        strcpy(itemPtr->szParameter, LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
         itemPtr->functionPtr = toggleRunBootScript;
         itemPtr->functionDataPtr= itemPtr->szParameter;
         itemPtr->functionLeftPtr=toggleRunBootScript;
@@ -83,8 +83,8 @@ TEXTMENU* XBlastScriptMenuInit(void)
     }
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption,"Enable Bank script : ");
-    sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
+    strcpy(itemPtr->szCaption, "Enable Bank script : ");
+    strcpy(itemPtr->szParameter, LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
     itemPtr->functionPtr = toggleRunBankScript;
     itemPtr->functionDataPtr= itemPtr->szParameter;
     itemPtr->functionLeftPtr=toggleRunBankScript;
@@ -108,7 +108,7 @@ TEXTMENU* RunScriptMenuInit(void)
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
-    sprintf(menuPtr->szCaption, "%s", getScriptDirectoryLocation() + strlen("MASTER_"));
+    strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
 
     if(isMounted(HDD_Master, Part_C))
     {
@@ -129,7 +129,7 @@ TEXTMENU* RunScriptMenuInit(void)
                     // If it's a (readable) file - i.e. not a directory.
                     // AND it's filesize is divisible by 256k.
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fileInfo.name);
+                    strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = loadRunScriptNoParams;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
                     TextMenuAddItem(menuPtr, itemPtr);
@@ -160,7 +160,7 @@ TEXTMENU* RunScriptMenuInit(void)
     {
         // If the partition couldn't be opened at all.
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Error reading C:\\ partition.");
+        strcpy(itemPtr->szCaption, "Error reading C:\\ partition.");
         itemPtr->functionPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -179,7 +179,7 @@ TEXTMENU* SaveScriptMenuInit(void)
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
-    sprintf(menuPtr->szCaption, "%s", getScriptDirectoryLocation() + strlen("MASTER_"));
+    strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
 
     if(isMounted(HDD_Master, Part_C))
     {
@@ -200,7 +200,7 @@ TEXTMENU* SaveScriptMenuInit(void)
                     // If it's a (readable) file - i.e. not a directory.
                     // AND it's filesize is divisible by 256k.
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fileInfo.name);
+                    strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = saveScriptToFlash;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
                     TextMenuAddItem(menuPtr, itemPtr);
@@ -231,7 +231,7 @@ TEXTMENU* SaveScriptMenuInit(void)
     {
         // If the partition couldn't be opened at all.
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Error reading C:\\ partition.");
+        strcpy(itemPtr->szCaption, "Error reading C:\\ partition.");
         itemPtr->functionPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }

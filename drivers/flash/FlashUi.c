@@ -15,6 +15,7 @@
 #include "i2c.h"
 #include "cromwell.h"
 #include "string.h"
+#include "stdio.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromSystem.h"
 #include "Gentoox.h"
@@ -117,7 +118,7 @@ static bool FlashPrintResult(void)
 {
     bool isError = false;
     bool isCritical = false;
-    char string[100];
+    const char* string;
 
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     VIDEO_ATTR=0xffef37;
@@ -151,40 +152,40 @@ static bool FlashPrintResult(void)
         switch (res)
         {
         case FlashErrorcodes_UserAbort:
-            sprintf(string, "%s", "Flashing aborted.");
+            string = "Flashing aborted.";
             break;
         case FlashErrorcodes_MD5Mismatch:
-            sprintf(string, "%s", "MD5 mismatch.");
+            string = "MD5 mismatch.";
             break;
         case FlashErrorcodes_InvalidUpdateFile:
-            sprintf(string, "%s", "Invalid XBlast OS update file.");
+            string = "Invalid XBlast OS update file.";
             break;
         case FlashErrorcodes_UnknownFlash:
-            sprintf(string, "%s", "Unknown flash device.\n           Write-Protect is enabled?");
+            string = "Unknown flash device.\n           Write-Protect is enabled?";
             break;
         case FlashErrorcodes_WriteProtect:
-            sprintf(string, "%s", "Cannot write to device.");
+            string = "Cannot write to device.";
             break;
         case FlashErrorcodes_FileSizeError:
-            sprintf(string, "File size error.");
+            string = "File size error.";
             break;
         case FlashErrorcodes_FailedErase:
-            sprintf(string, "%s", "Erasing failed, please reflash.");
+            string = "Erasing failed, please reflash.";
             isError = true;
             isCritical = true;
             break;
         case FlashErrorcodes_FailedProgram:
-            sprintf(string, "%s", "Programming failed, please reflash.");
+            string = "Programming failed, please reflash.";
             isError = true;
             isCritical = true;
             break;
         case FlashErrorcodes_FlashContentError:
-            sprintf(string, "%s", "Active flash bank does not contain XBlast OS image.\n           Not saving.");
+            string = "Active flash bank does not contain XBlast OS image.\n           Not saving.";
             isError = true;
             break;
         case FlashErrorcodes_UndefinedError:
         default:
-            sprintf(string, "%s", "Unknown error! Congrats, you're not supposed to be here.");
+            string = "Unknown error! Congrats, you're not supposed to be here.";
             isError = true;
             break;
         }

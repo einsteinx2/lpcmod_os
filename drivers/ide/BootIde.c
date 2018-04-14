@@ -10,6 +10,7 @@
 #include "BootIde.h"
 #include "cromwell.h"
 #include "string.h"
+#include "stdio.h"
 #include "video.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/time/timeManagement.h"

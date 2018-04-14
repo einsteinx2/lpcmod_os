@@ -14,6 +14,7 @@
 #include "xblast/scriptEngine/xblastScriptEngine.h"
 #include "lib/LPCMod/xblastDebug.h"
 #include "string.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include <stddef.h>
 

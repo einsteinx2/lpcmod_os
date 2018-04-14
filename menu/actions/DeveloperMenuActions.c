@@ -20,6 +20,7 @@
 #include "MenuActions.h"
 #include "FlashDriver.h"
 #include "string.h"
+#include "stdio.h"
 
 void LPCIOWrite(void* ignored)
 {

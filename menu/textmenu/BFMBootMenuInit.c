@@ -73,7 +73,7 @@ TEXTMENU* BFMBootMenuInit(void)
                     // If it's a (readable) file - i.e. not a directory.
                     // AND it's filesize is divisible by 256k.
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
+                    strcpy(itemPtr->szCaption, fnames[i]+strlen(path));
                     itemPtr->functionPtr = bootBFMBios;
                     itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
                     TextMenuAddItem(menuPtr, itemPtr);

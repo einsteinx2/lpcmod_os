@@ -35,7 +35,7 @@ void incrementVideoStandard(void * itemStr)
     }
 
     EepromSetVideoStandard(newValue);
-    sprintf(itemStr, "%s", getVideoStandardText(newValue));
+    strcpy(itemStr, getVideoStandardText(newValue));
 }
 
 void decrementVideoStandard(void * itemStr)
@@ -59,7 +59,7 @@ void decrementVideoStandard(void * itemStr)
     }
 
     EepromSetVideoStandard(newValue);
-    sprintf(itemStr, "%s", getVideoStandardText(newValue));
+    strcpy(itemStr, getVideoStandardText(newValue));
 }
 
 void incrementVideoformat(void * itemStr)
@@ -80,7 +80,7 @@ void incrementVideoformat(void * itemStr)
     }
     EepromSetVideoFormat(format);
 
-    sprintf(itemStr, "%s", getScreenFormatText(format));
+    strcpy(itemStr, getScreenFormatText(format));
 }
 
 void decrementVideoformat(void * itemStr)
@@ -100,7 +100,7 @@ void decrementVideoformat(void * itemStr)
         format = EEPROM_VidScreenLetterbox;                             //Set to Letterbox
     }
     EepromSetVideoFormat(format);
-    sprintf(itemStr, "%s", getScreenFormatText(format));
+    strcpy(itemStr, getScreenFormatText(format));
 }
 
 void toggle480p(void * itemStr)
@@ -108,12 +108,12 @@ void toggle480p(void * itemStr)
     if (eeprom.VideoFlags[2] & EEPROM_VidResolutionEnable480p)         //480p already enabled?
     {
         eeprom.VideoFlags[2] &= ~EEPROM_VidResolutionEnable480p;       //Disable
-        sprintf(itemStr, "%s", "No");
+        strcpy(itemStr, "No");
     }
     else
     {
         eeprom.VideoFlags[2] |= EEPROM_VidResolutionEnable480p;
-        sprintf(itemStr, "%s", "Yes");
+        strcpy(itemStr, "Yes");
     }
     EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
@@ -123,12 +123,12 @@ void toggle720p(void * itemStr)
     if (eeprom.VideoFlags[2] & EEPROM_VidResolutionEnable720p)         //720p already enabled?
     {
         eeprom.VideoFlags[2] &= ~EEPROM_VidResolutionEnable720p;       //Disable
-        sprintf(itemStr, "%s", "No");
+        strcpy(itemStr, "No");
     }
     else
     {
         eeprom.VideoFlags[2] |= EEPROM_VidResolutionEnable720p;
-        sprintf(itemStr, "%s", "Yes");
+        strcpy(itemStr, "Yes");
     }
     EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
@@ -138,12 +138,12 @@ void toggle1080i(void * itemStr)
     if (eeprom.VideoFlags[2] & EEPROM_VidResolutionEnable1080i)         //1080i already enabled?
     {
         eeprom.VideoFlags[2] &= ~EEPROM_VidResolutionEnable1080i;       //Disable
-        sprintf(itemStr, "%s", "No");
+        strcpy(itemStr, "No");
     }
     else
     {
         eeprom.VideoFlags[2] |= EEPROM_VidResolutionEnable1080i;
-        sprintf(itemStr, "%s", "Yes");
+        strcpy(itemStr, "Yes");
     }
     EepromCRC(eeprom.Checksum3,eeprom.TimeZoneBias,0x5b);
 }
@@ -161,5 +161,5 @@ void toggleVGA(void* itemStr)
 
     BootVgaInitializationKernelNG((CURRENT_VIDEO_MODE_DETAILS *)&vmode);
 
-    sprintf(itemStr, "%s", LPCmodSettings.OSsettings.enableVGA? "Yes" : "No");
+    strcpy(itemStr, LPCmodSettings.OSsettings.enableVGA? "Yes" : "No");
 }

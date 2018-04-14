@@ -251,7 +251,7 @@ void toggleRunBootScript(void * itemStr)
             UIFooter();
         }
     }
-    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+    strcpy(itemStr, LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
 }
 
 void toggleRunBankScript(void * itemStr)
@@ -275,7 +275,7 @@ void toggleRunBankScript(void * itemStr)
             UIFooter();
         }
     }
-    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
+    strcpy(itemStr, LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
 }
 
 void deleteFlashScriptFromFlash(void * ignored)

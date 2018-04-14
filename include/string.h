@@ -43,8 +43,6 @@ void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n)
 
 size_t strlen (const char *__s);
 
-int sprintf(char * buf, const char *fmt, ...);
-
 char *strchr(const char *s, int c);
 
 char* strnstr(const char* s, const char* find, size_t slen);

@@ -78,7 +78,7 @@ void OnScreenKeyboard(char * string, unsigned char maxLength, unsigned char line
     //Array of function pointers to let "line" value decide which function needs to be called.
     char oldString[20];
 
-    sprintf(oldString, "%s", string);	//Copy input string in case user cancels.
+    strcpy(oldString, string);	//Copy input string in case user cancels.
     textpos = strlen(string);           //Place cursor at end of entering string.
     
     if(kbType == IP_KEYPAD)
@@ -201,7 +201,7 @@ void OnScreenKeyboard(char * string, unsigned char maxLength, unsigned char line
        
         if(risefall_xpad_STATE(XPAD_STATE_BACK))       //Cancel
         {
-    	    sprintf(string, "%s", oldString);
+            strcpy(string, oldString);
     	    exit = true;
         }
 

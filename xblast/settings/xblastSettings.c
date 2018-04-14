@@ -12,6 +12,7 @@
 #include "LEDMenuActions.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
+#include "stdio.h"
 #include "boot.h"
 
 #define HDD4780_DEFAULT_NBLINES    4
@@ -115,42 +116,42 @@ void LPCMod_LCDBankString(char * string, unsigned char bankID){
     switch(bankID){
         case BNK512:
             if(LPCmodSettings.OSsettings.biosName512Bank[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName512Bank);
+                strcpy(string, LPCmodSettings.OSsettings.biosName512Bank);
             }
             else{
-                sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK512));
+                strcpy(string, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK512));
             }
             break;
         case BNK256:
             if(LPCmodSettings.OSsettings.biosName256Bank[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName256Bank);
+                strcpy(string, LPCmodSettings.OSsettings.biosName256Bank);
             }
             else{
-                sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK256));
+                strcpy(string, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK256));
             }
             break;
         case BNKTSOPSPLIT0:
         case BNKFULLTSOP:
             if(LPCmodSettings.OSsettings.biosNameTSOPFullSplit0[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosNameTSOPFullSplit0);
+                strcpy(string, LPCmodSettings.OSsettings.biosNameTSOPFullSplit0);
             }
             else{
                 if(LPCmodSettings.OSsettings.TSOPcontrol)
-                    sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT0));
+                    strcpy(string, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT0));
                 else
-                    sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKFULLTSOP));
+                    strcpy(string, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKFULLTSOP));
             }
             break;
         case BNKTSOPSPLIT1:
             if(LPCmodSettings.OSsettings.biosNameTSOPSplit1[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosNameTSOPSplit1);
+                strcpy(string, LPCmodSettings.OSsettings.biosNameTSOPSplit1);
             }
             else{
-                sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT1));
+                strcpy(string, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT1));
             }
             break;
          default:
-         	sprintf(string, "%s", "Settings");
+             strcpy(string, "Settings");
          	break;
     }
 }

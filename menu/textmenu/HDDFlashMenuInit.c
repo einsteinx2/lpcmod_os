@@ -14,6 +14,7 @@
 #include "memory_layout.h"
 #include "FatFSAccessor.h"
 #include "string.h"
+#include "stdio.h"
 
 
 void HDDFlashMenuDynamic(void* unused)
@@ -28,7 +29,7 @@ void HDDFlashMenuDynamic(void* unused)
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
-    sprintf(menuPtr->szCaption, "%s", getBIOSDirectoryLocation() + strlen("MASTER_"));
+    strcpy(menuPtr->szCaption, getBIOSDirectoryLocation() + strlen("MASTER_"));
 
     if(isMounted(HDD_Master, Part_C))
     {
@@ -49,7 +50,7 @@ void HDDFlashMenuDynamic(void* unused)
                     // If it's a (readable) file - i.e. not a directory.
                     // AND it's filesize is divisible by 256k.
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fileInfo.name);
+                    strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = FlashBiosFromHDD;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
                     TextMenuAddItem(menuPtr, itemPtr);

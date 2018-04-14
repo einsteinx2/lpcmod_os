@@ -15,6 +15,7 @@
 #include "LEDMenuActions.h"
 #include "lib/LPCMod/BootLCD.h"
 #include "string.h"
+#include "stdio.h"
 #include "xblast/settings/xblastSettings.h"
 #include "menu/misc/OnScreenKeyboard.h"
 #include "menu/misc/ConfirmDialog.h"
@@ -50,7 +51,7 @@ void decrementActiveBank(void* itemStr)
         break;
     }
 
-    sprintf(itemStr, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
     return;
 }
 
@@ -86,7 +87,7 @@ void incrementActiveBank(void* itemStr)
         break;
     }
 
-    sprintf(itemStr, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
     return;
 }
 
@@ -119,7 +120,7 @@ void decrementAltBank(void* itemStr)
         break;
     }
 
-    sprintf(itemStr, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
     return;
 }
 
@@ -154,7 +155,7 @@ void incrementAltBank(void* itemStr)
         break;
     }
 
-    sprintf(itemStr, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
     return;
 }
 
@@ -182,7 +183,7 @@ void incrementbootTimeout(void* itemStr)
 void toggleQuickboot(void* itemStr)
 {
     (LPCmodSettings.OSsettings.Quickboot) = (LPCmodSettings.OSsettings.Quickboot)? 0 : 1;
-    sprintf(itemStr,"%s",LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
+    strcpy(itemStr,LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
 }
 
 void resetSettings(void* ignored)
@@ -255,15 +256,15 @@ void toggleTSOPcontrol(void* customStruct)
     }
 
     reorderTSOPNameMenuEntries(params);
-    sprintf(params->powerButString, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
-    sprintf(params->ejectButString, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
-    sprintf(params->tsopControlString, "%s", (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
+    strcpy(params->powerButString, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+    strcpy(params->ejectButString, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+    strcpy(params->tsopControlString, (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
 }
 
 void toggleTSOPhide(void* itemStr)
 {
     LPCmodSettings.OSsettings.TSOPhide = LPCmodSettings.OSsettings.TSOPhide ? 0 : 1;
-    sprintf(itemStr, "%s", LPCmodSettings.OSsettings.TSOPhide ? "Yes" : "No");
+    strcpy(itemStr, LPCmodSettings.OSsettings.TSOPhide ? "Yes" : "No");
 }
 
 void reorderTSOPNameMenuEntries(BankSelectCommonParams* params)
