@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#include "string.h"
-#include <ctype.h>
+#include "include/string.h"
+#include "ctype.h"
 typedef unsigned char u_char;
 
 int
