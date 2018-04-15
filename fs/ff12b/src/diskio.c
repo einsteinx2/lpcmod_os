@@ -11,6 +11,7 @@
 
 #include "diskio.h"		/* FatFs lower layer API */
 #include "BootIde.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include <stdio.h>
 #include <errno.h>
 
@@ -32,6 +33,11 @@ DSTATUS disk_status (
 {
     DSTATUS status = tsaHarddiskInfo[pdrv].m_fDriveExists ? RES_OK : STA_NOINIT;
     status |= tsaHarddiskInfo[pdrv].m_fAtapi ? STA_PROTECT : RES_OK;
+    if(status)
+    {
+        debugSPIPrint(DEBUG_FATX_FS, "Error status %u\n", status);
+    }
+
 	return status;
 }
 
@@ -67,6 +73,7 @@ DRESULT disk_read (
     int returnValue;
     for(i = 0; i < count; i++)
     {
+        debugSPIPrint(DEBUG_FATX_FS, "i=%u count=%u sector=0x%X\n", i, count, sector);
         returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
         if(returnValue)
         {

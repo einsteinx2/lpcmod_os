@@ -90,7 +90,7 @@ void HDDFlashMenuDynamic(void* unused)
     {
         // If the partition couldn't be opened at all.
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Error reading C:\\ partition.");
+        strcpy(itemPtr->szCaption, "Error reading C:\\ partition.");
         itemPtr->functionPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }

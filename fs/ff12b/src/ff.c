@@ -6578,8 +6578,8 @@ FRESULT fatx_getmbr(
 
     if(mem_cmp(BackupPartTable.Magic, ((XboxPartitionTable*)buf)->Magic, 16))
     {
-            mem_cpy(workingMbr, &BackupPartTable, sizeof(XboxPartitionTable));
-            result = FR_NO_FILE;
+        mem_cpy(workingMbr, &BackupPartTable, sizeof(XboxPartitionTable));
+        result = FR_NO_FILE;
     }
     else
     {
@@ -6639,7 +6639,7 @@ FRESULT fatx_getbrfr(
 ) {
     BYTE buf[_MAX_SS];
     const BYTE* brfrMagic = (const unsigned char*)FATX_DRIVE_MAGIC;
-    if (disk_read(pdrv, buf, 0, 3) != RES_OK) return FR_DISK_ERR;   /* Load BRFR */
+    if (disk_read(pdrv, buf, 3, 1) != RES_OK) return FR_DISK_ERR;   /* Load BRFR */
 
     if(mem_cmp(buf, brfrMagic, 4))
     {
