@@ -15,6 +15,11 @@
 #include "stdio.h"
 #include "boot.h"
 
+// Globals
+_LPCmodSettings LPCmodSettings;
+_LPCmodSettings LPCmodSettingsOrigFromFlash;
+const unsigned char LPCmodSettingsTextFieldsMaxLength = _SettingsMaxTextFieldsLength;
+
 #define HDD4780_DEFAULT_NBLINES    4
 #define HDD4780_DEFAULT_LINELGTH    20
 

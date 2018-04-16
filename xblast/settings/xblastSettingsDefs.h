@@ -14,11 +14,13 @@
 //Change when newer version is made
 //Migrate settings to current version(if necessary) on fetch from flash to avoid issues.
 typedef _LPCmodSettings_V1 _LPCmodSettings;
+#define _SettingsMaxTextFieldsLength _SettingsMaxTextFieldsLength_V1
 #define CurrentSettingsVersionNumber 1
 
 // Globals
-_LPCmodSettings LPCmodSettings;
-_LPCmodSettings LPCmodSettingsOrigFromFlash;
+extern _LPCmodSettings LPCmodSettings;
+extern _LPCmodSettings LPCmodSettingsOrigFromFlash;
+extern const unsigned char LPCmodSettingsTextFieldsMaxLength;
 
 
 //Items below should always follow the current settings version
