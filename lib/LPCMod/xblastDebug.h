@@ -31,6 +31,7 @@
 #define DEBUG_USB_WARN          0
 
 #define DEBUG_FATX_FS           1
+#define DEBUG_CORE_FATFS        1
 
 #if DEBUG_USB >= 1
 #define DEBUG 1

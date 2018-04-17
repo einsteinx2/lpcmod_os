@@ -39,6 +39,7 @@
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.903272323" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.include.paths.2145183633" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/FatFS}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1951459033" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="_LARGEFILE64_SOURCE=1"/>
@@ -46,7 +47,7 @@
 									<listOptionValue builtIn="false" value="_LARGE_FILE_SOURCE=1"/>
 									<listOptionValue builtIn="false" value="_FILE_OFFSET_BITS=64"/>
 								</option>
-								<option id="gnu.c.compiler.option.dialect.std.1433365934" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
+								<option id="gnu.c.compiler.option.dialect.std.1433365934" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.126951803" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1657560340" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug"/>
@@ -106,6 +107,10 @@
 									<listOptionValue builtIn="false" value="_PCSIM=1"/>
 									<listOptionValue builtIn="false" value="_LARGE_FILE_SOURCE=1"/>
 									<listOptionValue builtIn="false" value="_FILE_OFFSET_BITS=64"/>
+								</option>
+								<option id="gnu.c.compiler.option.include.paths.530879559" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/FatFS}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/src}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.689066272" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>

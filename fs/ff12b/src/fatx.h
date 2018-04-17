@@ -8,6 +8,8 @@
 #ifndef FATX_H_
 #define FATX_H_
 
+#include "lib/LPCMod/xblastDebug.h"
+
 #define XBOX_EXTEND_STARTLBA   (0x00EE8AB0UL)
 #define XBOX_STORE_STARTLBA    (0x0055F400UL)
 #define XBOX_SYSTEM_STARTLBA    (0x00465400UL)
