@@ -2407,13 +2407,14 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #else       /* Non LFN configuration */
         dp->obj.attr = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK;
 #ifdef _USE_FATX
-        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < dp->dir[DIRx_NameLgth] && FATX_FILENAME_MAX >= dp->dir[DIRx_NameLgth])) && !mem_cmp(dp->dir + (ISFATX_FS(fs->fs_typex) ? DIRx_Name : DIR_Name), dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
+        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < dp->dir[DIRx_NameLgth] && FATX_FILENAME_MAX >= dp->dir[DIRx_NameLgth])) && (fatxNameLgth == dp->dir[DIRx_NameLgth]) && !mem_cmp(dp->dir + (ISFATX_FS(fs->fs_typex) ? DIRx_Name : DIR_Name), dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
 #else
         if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;  /* Is it a valid entry? */
 #endif
 #endif
         res = dir_next(dp, 0);  /* Next entry */
     } while (res == FR_OK);
+    debugSPIPrint(DEBUG_CORE_FATFS, "res: %u\n", res);
 
     return res;
 }
@@ -3130,6 +3131,7 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             {
                 ns = dp->fnx[NSFLAG];
             }
+            debugSPIPrint(DEBUG_CORE_FATFS, "dir_find res:%u  ns:%u\n", res, ns);
             if (res != FR_OK) {             /* Failed to find the object */
                 if (res == FR_NO_FILE) {    /* Object is not found */
                     if (_FS_RPATH && (ns & NS_DOT)) {   /* If dot entry is not exist, stay there */
@@ -3154,6 +3156,7 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             if (ns & NS_LAST) break;            /* Last segment matched. Function completed. */
             /* Get into the sub-directory */
             if (!(obj->attr & AM_DIR)) {        /* It is not a sub-directory and cannot follow */
+                debugSPIPrint(DEBUG_CORE_FATFS, "It is not a sub-directory and cannot follow\n");
                 res = FR_NO_PATH; break;
             }
 #if (_FS_EXFAT || defined(_USE_FATX))
@@ -3724,11 +3727,13 @@ FRESULT f_open (
     mode &= _FS_READONLY ? FA_READ : FA_READ | FA_WRITE | FA_CREATE_ALWAYS | FA_CREATE_NEW | FA_OPEN_ALWAYS | FA_OPEN_APPEND | FA_SEEKEND;
     res = find_volume(&path, &fs, mode);
     if (res == FR_OK) {
+        debugSPIPrint(DEBUG_CORE_FATFS, "Find_Volume OK\n");
         dj.obj.fs = fs;
         INIT_NAMBUF(fs);
         res = follow_path(&dj, path);   /* Follow the file path */
 #if !_FS_READONLY   /* R/W configuration */
         if (res == FR_OK) {
+            debugSPIPrint(DEBUG_CORE_FATFS, "Follow path OK\n");
 #ifdef _USE_FATX
             if ((ISFATX_FS(fs->fs_typex) && (dj.fnx[NSxFLAG] & NS_NONAME)) || (NOTFATX_FS(fs->fs_typex) && (dj.fnx[NSFLAG] & NS_NONAME))) {    /* Origin directory itself? */
 #else
