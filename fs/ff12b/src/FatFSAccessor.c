@@ -762,7 +762,7 @@ const char* fatxgets(char* out, unsigned int len, FILEX handle)
 
     outValidation = f_gets(out, len, &FileHandleArray[handle]);
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" len:%u  ptr:0x%08X\n", out, len, (unsigned int)outValidation);
+    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" len:%u  ptr:0x%08X  buflen:%u\n", out, strlen(out), (unsigned int)outValidation, len);
 
     return outValidation;
 }
