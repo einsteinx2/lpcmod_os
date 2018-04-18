@@ -19,6 +19,7 @@
 #include "lib/LPCMod/xblastDebug.h"
 #endif
 #include <stdarg.h>
+#include <limits.h>
 
 /*---------------------------------------------------------------*/
 /* Private static variables */
@@ -34,6 +35,9 @@ static FIL FileHandleArray[MaxOpenFileCount];
 
 #define MaxOpenDirCount (_FS_LOCK / 2)
 static DIR DirectoryHandleArray[MaxOpenDirCount];
+
+#define RootFolderHandle INT_MAX
+static unsigned char rootFolderListCount;
 
 #define MaxPathLength 255
 static char cwd[MaxPathLength + sizeof('\0')];
@@ -491,6 +495,13 @@ DIREX fatxopendir(const char* path)
     FRESULT result;
     unsigned char i;
 
+    if(PathSep == path[0] && sizeof(PathSep) == strlen(path))
+    {
+        /* Special case to list all mounted partitions */
+        rootFolderListCount = 0;
+        return RootFolderHandle;
+    }
+
     /* Find unused Directory descriptor in array */
     for (i = 0; i < MaxOpenDirCount; i++)
     {
@@ -523,6 +534,23 @@ FileInfo fatxreaddir(DIREX handle)
 {
     FileInfo returnStruct;
     FILINFO getter;
+
+    if(RootFolderHandle == handle)
+    {
+        if(0 < isMounted(rootFolderListCount / NbFATXPartPerHDD, rootFolderListCount % NbFATXPartPerHDD))
+        {
+            returnStruct.attributes = FileAttr_Directory;
+            returnStruct.modDate = 0;
+            returnStruct.modTime = 0;
+            returnStruct.size = 0;
+            sprintf(returnStruct.name, "%s:%c", PartitionNameList[rootFolderListCount], PathSep);
+            returnStruct.nameLength = strlen(PartitionNameList[rootFolderListCount]);
+
+            rootFolderListCount++;
+
+            return returnStruct;
+        }
+    }
 
     if(0 == handle || (MaxOpenDirCount < handle))
     {
@@ -618,6 +646,12 @@ int fatxrewinddir(DIREX handle)
 int fatxclosedir(DIREX handle)
 {
     debugSPIPrint(DEBUG_FATX_FS, "Closing handle%u\n", handle);
+
+    if(RootFolderHandle == handle)
+    {
+        rootFolderListCount = 0;    /* Not necessary but why not */
+        return 0;
+    }
     DIRE_HANDLE_VALID(handle)
     if(0 == DirectoryHandleArray[handle].obj.fs)
     {
@@ -663,9 +697,25 @@ int fatxrename(const char* path, const char* newName)
 
 int fatxchdir(const char* path)
 {
+    char* sepPos;
     if(MaxPathLength < strlen(path))
     {
         return -1;
+    }
+
+    if(0 == strcmp(path, ".."))
+    {
+        sepPos = strrchr(path, PathSep);
+        if(NULL == sepPos)
+        {
+            return -1;
+        }
+
+        /* Make sure it's not the partition identifier's PathSep */
+        if(path + strlen(PartitionNameStrings[HDD_Master][Part_C]) + strlen(":") + sizeof(PathSep) < sepPos)
+        {
+            sepPos[sizeof(PathSep)]  = '\0';
+        }
     }
 
     if(FR_OK == f_chdir(path))

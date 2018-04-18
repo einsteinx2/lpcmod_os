@@ -21,6 +21,8 @@
 #define Part_Y    3
 #define Part_Z    4
 
+#define PathSep   '\\'
+
 extern const char* const * const  PartitionNameStrings[NbDrivesSupported];
 
 typedef enum
