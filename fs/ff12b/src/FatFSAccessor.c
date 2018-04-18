@@ -761,7 +761,7 @@ int fatxgets(char* out, unsigned int len, FILEX handle)
 
     f_gets(out, len, &FileHandleArray[handle]);
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" lenL%u\n", out, len);
+    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" len:%u\n", out, len);
 
     return 0;
 }
