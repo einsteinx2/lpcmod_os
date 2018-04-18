@@ -345,11 +345,10 @@ void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStr
         settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->LCDsettings.customString2;
         settingsStruct->textSettingsPtrArray[i++] = tempLPCmodSettings->LCDsettings.customString3;
 
-        i = 0;
-        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->OSsettings.activeBank);
-        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->OSsettings.altBank);
-        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->OSsettings.LEDColor);
-        settingsStruct->specialCasePtrArray[i++] = &(tempLPCmodSettings->LCDsettings.lcdType);
+        settingsStruct->specialCasePtrArray[SpecialSettingsPtrArrayIndexName_ActiveBank] = &(tempLPCmodSettings->OSsettings.activeBank);
+        settingsStruct->specialCasePtrArray[SpecialSettingsPtrArrayIndexName_AltBank] = &(tempLPCmodSettings->OSsettings.altBank);
+        settingsStruct->specialCasePtrArray[SpecialSettingsPtrArrayIndexName_LEDColor] = &(tempLPCmodSettings->OSsettings.LEDColor);
+        settingsStruct->specialCasePtrArray[SpecialSettingsPtrArrayIndexName_LCDType] = &(tempLPCmodSettings->LCDsettings.lcdType);
 }
 
 void importNewSettingsFromCFGLoad(_LPCmodSettings* newSettings)
