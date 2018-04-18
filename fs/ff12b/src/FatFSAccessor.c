@@ -71,8 +71,8 @@ PARTITION VolToPart[_VOLUMES] =
 #define DIRE_VALID(x, y) memset(&y, 0x00, sizeof(FileInfo)); \
                         if((MaxOpenDirCount <= x) || (0 == DirectoryHandleArray[x].obj.fs)) return y;
 
-#define FILE_HANDLE_VALID(x) if(0 == handle || (MaxOpenFileCount < handle)) return -1; x -= 1;
-#define DIRE_HANDLE_VALID(x) if(0 == handle || (MaxOpenDirCount < handle)) return -1; x -= 1;
+#define FILE_HANDLE_VALID(x) if(0 == x || (MaxOpenFileCount < x)) return -1; x -= 1;
+#define DIRE_HANDLE_VALID(x) if(0 == x || (MaxOpenDirCount < x)) return -1; x -= 1;
 
 extern
 int get_ldnumber (      /* Returns logical drive number (-1:invalid drive) */
@@ -754,16 +754,17 @@ int fatxprintf(FILEX handle, const char* sz, ...)
     return wrote;
 }
 
-int fatxgets(char* out, unsigned int len, FILEX handle)
+const char* fatxgets(char* out, unsigned int len, FILEX handle)
 {
-    FILE_HANDLE_VALID(handle)
-    FILE_VALID(handle)
+    char* outValidation;
+    if(0 == handle || (MaxOpenFileCount < handle)) return NULL; handle -= 1;
+    if((MaxOpenFileCount <= handle) || (0 == FileHandleArray[handle].obj.fs)) return NULL;
 
-    f_gets(out, len, &FileHandleArray[handle]);
+    outValidation = f_gets(out, len, &FileHandleArray[handle]);
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" len:%u\n", out, len);
+    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" len:%u  ptr:0x%08X\n", out, len, (unsigned int)outValidation);
 
-    return 0;
+    return outValidation;
 }
 
 long long int fatxtell(FILEX handle)
