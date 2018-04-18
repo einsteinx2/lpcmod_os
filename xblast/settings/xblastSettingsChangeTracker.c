@@ -80,6 +80,7 @@ unsigned char LPCMod_CountNumberOfChangesInSettings(bool generateChangeStruct, O
     unsigned char i, j;
     _settingsPtrStruct originalSettingsPtrStruct;
     setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
+    setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
 
     for(i = 0; i < BoolParamGroup; i++)
     {

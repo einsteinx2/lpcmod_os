@@ -244,6 +244,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
 
     if(isMounted(HDD_Master, Part_C))
     {
+        setCFGFileTransferPtr(LPCmodSettingsPtr, settingsStruct);
         if(1 != ini_browse(iniCallback, settingsStruct, settingsFileLocation))
         {
             debugSPIPrint(DEBUG_SETTINGS, "ini_browse fail\n");
