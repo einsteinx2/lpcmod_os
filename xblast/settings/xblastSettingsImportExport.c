@@ -120,10 +120,13 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
      LCDTYPE_KS0073
     };
 
+    debugSPIPrint(DEBUG_SETTINGS, "key:%s  value:%s  len:%u\n", key, value, strlen(value));
+
     for(i = 0; i < BoolParamGroup; i++)
     {
         if(0 == strcasecmp(xblastCfgStringsStruct.boolSettingsStringArray[i], key))
         {
+            debugSPIPrint(DEBUG_SETTINGS, "found bool setting: %s\n", xblastCfgStringsStruct.boolSettingsStringArray[i]);
             if(*value >='0' && *value <='9')
             {
                 *settingsStruct->boolSettingsPtrArray[i] = (unsigned char)strtol(value, NULL, 0);
@@ -146,6 +149,7 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
         if(0 == strcasecmp(xblastCfgStringsStruct.numSettingsStringArray[i], key))
         {
+            debugSPIPrint(DEBUG_SETTINGS, "found num setting: %s\n", xblastCfgStringsStruct.numSettingsStringArray[i]);
             if(*value >='0' && *value <='9')
             {
                 *settingsStruct->numSettingsPtrArray[i] = (unsigned char)strtol(value, NULL, 0);
@@ -162,7 +166,11 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
         if(0 == strcasecmp(xblastCfgStringsStruct.IPsettingsStringArray[i], key))
         {
-            assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i], value);
+            debugSPIPrint(DEBUG_SETTINGS, "found IP setting: %s\n", xblastCfgStringsStruct.IPsettingsStringArray[i]);
+            if(strlen("255.255.255.255") > strlen(value))
+            {
+                assertCorrectIPString(settingsStruct->IPsettingsPtrArray[i], value);
+            }
             return 1;
         }
     }
@@ -171,7 +179,11 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
         if(0 == strcasecmp(xblastCfgStringsStruct.textSettingsStringArray[i], key))
         {
-            strcpy(settingsStruct->textSettingsPtrArray[i], value);
+            debugSPIPrint(DEBUG_SETTINGS, "found text setting: %s len:%u\n", xblastCfgStringsStruct.textSettingsStringArray[i]);
+            if(LPCmodSettingsTextFieldsMaxLength > strlen(value))
+            {
+                strcpy(settingsStruct->textSettingsPtrArray[i], value);
+            }
             return 1;
         }
     }
@@ -180,6 +192,7 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
       if(0 == strcasecmp(xblastCfgStringsStruct.specialSettingsStringArray[i], key))
       {
+          debugSPIPrint(DEBUG_SETTINGS, "found special setting: %s len:%u\n", xblastCfgStringsStruct.specialSettingsStringArray[i]);
           switch(i)
           {
               case (0):
@@ -233,6 +246,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
     {
         if(1 != ini_browse(iniCallback, settingsStruct, settingsFileLocation))
         {
+            debugSPIPrint(DEBUG_SETTINGS, "ini_browse fail\n");
             return 4;
         }
     }

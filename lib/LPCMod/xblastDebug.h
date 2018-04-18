@@ -24,6 +24,7 @@
 #define DEBUG_GENERAL_UI        0
 #define DEBUG_SCRIPT            0
 #define DEBUG_MISC              0
+#define DEBUG_SETTINGS          1
 
 #define DEBUG_USB               0
 #define DEBUG_USB_INFO          0
@@ -31,7 +32,7 @@
 #define DEBUG_USB_WARN          0
 
 #define DEBUG_FATX_FS           1
-#define DEBUG_CORE_FATFS        1
+#define DEBUG_CORE_FATFS        0
 
 #if DEBUG_USB >= 1
 #define DEBUG 1
