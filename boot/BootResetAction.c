@@ -507,6 +507,7 @@ extern void BootResetAction ( void )
                     }
                     if(0 == res)
                     {
+                        debugSPIPrint(DEBUG_SETTINGS, "Could not find valid bank.script file on HDD. Forcing setting to '0'.\n");
                         LPCmodSettings.OSsettings.runBankScript = 0;
                     }
 
@@ -522,6 +523,7 @@ extern void BootResetAction ( void )
                      }
                      if(0 == res)
                      {
+                         debugSPIPrint(DEBUG_SETTINGS, "Could not find valid boot.script file on HDD. Forcing setting to '0'.\n");
                          LPCmodSettings.OSsettings.runBootScript = 0;
                      }
 
