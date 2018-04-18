@@ -33,8 +33,8 @@ static const char* const ChangeStringArrow          = " -> ";
 
 #define SimpleChangeStringGen(setting, type) sprintf(currentChangeEntry->changeString, "%s\""type"\"%s\""type"\"", \
                                                         ChangeStringLabelSeparator, \
-                                                        originalSettingsPtrStruct.setting, \
-                                                        ChangeStringArrow, settingsPtrStruct.setting);
+                                                        *originalSettingsPtrStruct.setting, \
+                                                        ChangeStringArrow, *settingsPtrStruct.setting);
 
 #define IPChangeStringGen(index)  sprintf(currentChangeEntry->changeString, "%s\"%u.%u.%u.%u\"%s\"%u.%u.%u.%u\"", \
                                         ChangeStringLabelSeparator, \
@@ -48,7 +48,10 @@ static const char* const ChangeStringArrow          = " -> ";
                                         settingsPtrStruct.IPsettingsPtrArray[index][2], \
                                         settingsPtrStruct.IPsettingsPtrArray[index][3]);
 
-#define TextChangeStringGen SimpleChangeStringGen
+#define TextChangeStringGen(setting, type) sprintf(currentChangeEntry->changeString, "%s\""type"\"%s\""type"\"", \
+                                                        ChangeStringLabelSeparator, \
+                                                        originalSettingsPtrStruct.setting, \
+                                                        ChangeStringArrow, settingsPtrStruct.setting);
 
 #define SpecialChangeStringGen(index) sprintf(currentChangeEntry->changeString, "%s\"%s\"%s\"%s\"", \
                                                         ChangeStringLabelSeparator, \
