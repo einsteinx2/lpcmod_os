@@ -106,6 +106,8 @@ TEXTMENU* RunScriptMenuInit(void)
     FileInfo fileInfo;
     unsigned short n = 0;
 
+	debugSPIPrint(DEBUG_SCRIPT, "Listing scripts in %s\n", getScriptDirectoryLocation());
+
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
     strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
@@ -176,6 +178,8 @@ TEXTMENU* SaveScriptMenuInit(void)
     DIREX dirHandle;
     FileInfo fileInfo;
     unsigned short n = 0;
+    
+    debugSPIPrint(DEBUG_SCRIPT, "Listing scripts in %s\n", getScriptDirectoryLocation());
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
 

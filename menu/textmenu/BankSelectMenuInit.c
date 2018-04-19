@@ -17,6 +17,7 @@
 #include "xblast/HardwareIdentifier.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "WebServerOps.h"
+#include "BootIde.h"
 
 
 TEXTMENU* BankSelectMenuInit(void)
@@ -93,6 +94,7 @@ void BankSelectDynamic(void* bank)
     int i = 0;
     FlashBank target = *(FlashBank *)bank;
 
+    debugSPIPrint(DEBUG_GENERAL_UI, "Generating menu.\n");
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
     if(TSOPRecoveryMode)
@@ -190,9 +192,10 @@ void BankSelectDynamic(void* bank)
 #endif
 #endif
 
+    debugSPIPrint(DEBUG_GENERAL_UI, "%u   %u\n", BootIdeDeviceConnected(0), BootIdeDeviceIsATAPI(0));
     for (i = 0; i < 2; ++i)
     {
-        if(tsaHarddiskInfo[i].m_fDriveExists && tsaHarddiskInfo[i].m_fAtapi)
+        if(BootIdeDeviceConnected(i) && BootIdeDeviceIsATAPI(i))
         {
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
             strcpy(itemPtr->szCaption, "CD Flash (image.bin)");// (hd%c)",i ? 'b':'a');
@@ -205,8 +208,9 @@ void BankSelectDynamic(void* bank)
     }
 
     //Only Master HDD will be supported here.
-    if(tsaHarddiskInfo[0].m_fDriveExists && tsaHarddiskInfo[0].m_fAtapi == 0)
+    if(BootIdeDeviceConnected(0) && 0 == BootIdeDeviceIsATAPI(0))
     {
+        debugSPIPrint(DEBUG_GENERAL_UI, "Generating menu for HDD%u\n", 0);
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "HDD Flash");
         itemPtr->functionPtr = HDDFlashMenuDynamic;

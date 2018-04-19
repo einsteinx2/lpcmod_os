@@ -192,13 +192,17 @@ int isMounted(unsigned char driveNumber, unsigned char partitionNumber)
 {
     if(NbDrivesSupported <= driveNumber)
     {
+        debugSPIPrint(DEBUG_FATX_FS, "Invalid drive number : %u\n", driveNumber);
         return -1;
     }
 
     if(NbFATXPartPerHDD <= partitionNumber)
     {
+        debugSPIPrint(DEBUG_FATX_FS, "Invalid partition number : %u\n", partitionNumber);
         return -1;
     }
+
+    debugSPIPrint(DEBUG_FATX_FS, "Drive/Part %u/%u = %u\n", driveNumber, partitionNumber, FatXFs[driveNumber][partitionNumber].fs_typex);
 
     return FatXFs[driveNumber][partitionNumber].fs_typex;
 }

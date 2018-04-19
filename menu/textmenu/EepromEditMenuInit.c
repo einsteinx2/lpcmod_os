@@ -105,9 +105,11 @@ TEXTMENU* EEPROMFileRestoreMenuInit(void)
 
     strcpy(menuPtr->szCaption, getEEPROMDirectoryLocation() + strlen("MASTER_"));
 
+    debugSPIPrint(DEBUG_EEPROM_DRIVER, "Listing eeproms in %s\n", getEEPROMDirectoryLocation());
+
     if(isMounted(HDD_Master, Part_C))
     {
-        dirHandle = fatxopendir(getBIOSDirectoryLocation());
+        dirHandle = fatxopendir(getEEPROMDirectoryLocation());
         if(dirHandle)
         {
             do

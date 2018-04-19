@@ -2968,7 +2968,11 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
                 break;
             }
             if(i >= ni) return FR_INVALID_NAME;
-            if (chk_chr("\"*+,:;<=>\?[]|\x7F", c)) return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
+            if (chk_chr("\"*+,:;<=>\?[]|\x7F", c))
+            {
+                debugSPIPrint(DEBUG_CORE_FATFS, "invalid char %c\n", c);
+                return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
+            }
             //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
             sfn[i++] = c;
         }
@@ -3035,7 +3039,11 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
     }
     }
     *path = p + si;                     /* Return pointer to the next segment */
-    if (i == 0) return FR_INVALID_NAME; /* Reject nul string */
+    if (i == 0)
+    {
+        debugSPIPrint(DEBUG_CORE_FATFS, "null string\n");
+        return FR_INVALID_NAME; /* Reject nul string */
+    }
 
     if (sfn[0] == DDEM) sfn[0] = RDDEM; /* If the first character collides with DDEM, replace it with RDDEM */
 #ifdef _USE_FATX
