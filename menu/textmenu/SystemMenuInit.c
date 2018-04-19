@@ -44,8 +44,8 @@ TEXTMENU *SystemMenuInit(void) {
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption,"LED");
     itemPtr->szParameter[0]=0;
-    itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = LEDMenuInit();
+    itemPtr->functionPtr=dynamicDrawChildTextMenu;
+    itemPtr->functionDataPtr = LEDMenuInit;
     TextMenuAddItem(menuPtr, itemPtr);
     
     //FAN SPEED
@@ -68,16 +68,16 @@ TEXTMENU *SystemMenuInit(void) {
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Video settings");
     itemPtr->szParameter[0]=0;
-    itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = VideoMenuInit();
+    itemPtr->functionPtr=dynamicDrawChildTextMenu;
+    itemPtr->functionDataPtr = VideoMenuInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //VIDEO SETTINGS MENU
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Network settings");
     itemPtr->szParameter[0]=0;
-    itemPtr->functionPtr=DrawChildTextMenu;
-    itemPtr->functionDataPtr = NetworkMenuInit();
+    itemPtr->functionPtr=dynamicDrawChildTextMenu;
+    itemPtr->functionDataPtr = NetworkMenuInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //DVD REGION SETTINGS MENU

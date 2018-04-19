@@ -8,6 +8,8 @@
 #ifndef LIB_LPCMOD_XBLASTDEBUG_H_
 #define LIB_LPCMOD_XBLASTDEBUG_H_
 
-#define debugSPIPrint(activate,...)
+#include <stdio.h>
+
+#define debugSPIPrint(activate,...) printf(__VA_ARGS__)
 
 #endif /* LIB_LPCMOD_XBLASTDEBUG_H_ */

@@ -337,8 +337,8 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         return -1;
         break;
     }
-    debugSPIPrint(DEBUG_FATX_FS, "F volume StartLBA: %llu  sizeLBA%llu\n", workingMbr.TableEntries[5].LBAStart, workingMbr.TableEntries[5].LBASize);
-    debugSPIPrint(DEBUG_FATX_FS, "G volume StartLBA: %llu  sizeLBA%llu\n", workingMbr.TableEntries[6].LBAStart, workingMbr.TableEntries[6].LBASize);
+    debugSPIPrint(DEBUG_FATX_FS, "F volume StartLBA: %u  sizeLBA%u\n", workingMbr.TableEntries[5].LBAStart, workingMbr.TableEntries[5].LBASize);
+    debugSPIPrint(DEBUG_FATX_FS, "G volume StartLBA: %u  sizeLBA%u\n", workingMbr.TableEntries[6].LBAStart, workingMbr.TableEntries[6].LBASize);
 
     return fatx_fdisk(driveNumber, &workingMbr);
 }
@@ -499,7 +499,7 @@ DIREX fatxopendir(const char* path)
     FRESULT result;
     unsigned char i;
 
-    if(PathSep == path[0] && sizeof(PathSep) == strlen(path))
+    if(0 == strcmp(path, PathSep))
     {
         /* Special case to list all mounted partitions */
         rootFolderListCount = 0;
@@ -547,7 +547,7 @@ FileInfo fatxreaddir(DIREX handle)
             returnStruct.modDate = 0;
             returnStruct.modTime = 0;
             returnStruct.size = 0;
-            sprintf(returnStruct.name, "%s:%c", PartitionNameList[rootFolderListCount], PathSep);
+            sprintf(returnStruct.name, "%s:"PathSep, PartitionNameList[rootFolderListCount]);
             returnStruct.nameLength = strlen(PartitionNameList[rootFolderListCount]);
 
             rootFolderListCount++;
@@ -709,16 +709,16 @@ int fatxchdir(const char* path)
 
     if(0 == strcmp(path, ".."))
     {
-        sepPos = strrchr(path, PathSep);
+        sepPos = strrchr(path, cPathSep);
         if(NULL == sepPos)
         {
             return -1;
         }
 
         /* Make sure it's not the partition identifier's PathSep */
-        if(path + strlen(PartitionNameStrings[HDD_Master][Part_C]) + strlen(":") + sizeof(PathSep) < sepPos)
+        if(path + strlen(PartitionNameStrings[HDD_Master][Part_C]) + strlen(":") + sizeof(cPathSep) < sepPos)
         {
-            sepPos[sizeof(PathSep)]  = '\0';
+            sepPos[sizeof(cPathSep)]  = '\0';
         }
     }
 
@@ -811,7 +811,12 @@ int fatxprintf(FILEX handle, const char* sz, ...)
 const char* fatxgets(char* out, unsigned int len, FILEX handle)
 {
     char* outValidation;
-    if(0 == handle || (MaxOpenFileCount < handle)) return NULL; handle -= 1;
+    if(0 == handle || (MaxOpenFileCount < handle))
+    {
+        return NULL;
+    }
+    handle -= 1;
+
     if((MaxOpenFileCount <= handle) || (0 == FileHandleArray[handle].obj.fs)) return NULL;
 
     outValidation = f_gets(out, len, &FileHandleArray[handle]);

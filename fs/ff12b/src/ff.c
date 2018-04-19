@@ -2978,11 +2978,11 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
         }
 
         /* Refuse to handle "." and ".." directory entries on FATX */
-        if('.' == sfn[0] && 1 == i)
+        if(1 == i && '.' == sfn[0])
         {
             return FR_INVALID_NAME;
         }
-        if(mem_cmp(sfn, "..", 2) == 0 && 2 == i)
+        if(2 == i && mem_cmp(sfn, "..", 2) == 0)
         {
             return FR_INVALID_NAME;
         }

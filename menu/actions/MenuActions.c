@@ -30,9 +30,24 @@ void DrawChildTextMenu(void* menu)
 
 void ResetDrawChildTextMenu(TEXTMENU* menu)
 {
+    debugSPIPrint(DEBUG_GENERAL_UI, "Drawing menu %s\n", menu->szCaption);
     TextMenu(menu, menu->firstMenuItem);
+    debugSPIPrint(DEBUG_GENERAL_UI, "Exiting menu %s\n", menu->szCaption);
     freeTextMenuAllocMem(menu);
     debugSPIPrint(DEBUG_GENERAL_UI, "Returning to previous menu\n");
+}
+
+void dynamicDrawChildTextMenu(void* menuInitFct)
+{
+    TEXTMENU* (*fctPtr)(void) = menuInitFct;
+    if(NULL == menuInitFct)
+    {
+        return;
+    }
+
+    TEXTMENU* menu = (*fctPtr)();
+    debugSPIPrint(DEBUG_GENERAL_UI, "Generated menu %s\n", menu->szCaption);
+    ResetDrawChildTextMenu(menu);
 }
 
 void DrawLargeHDDTextMenu(unsigned char drive)

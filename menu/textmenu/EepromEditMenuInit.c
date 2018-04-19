@@ -18,7 +18,7 @@
 
 TEXTMENU* EEPROMFileRestoreMenuInit(void);
 
-TEXTMENU* eepromEditMenuDynamic(void)
+TEXTMENU* eepromEditMenuInit(void)
 {
     TEXTMENUITEM* itemPtr;
     TEXTMENU* menuPtr;
@@ -58,8 +58,8 @@ TEXTMENU* eepromEditMenuDynamic(void)
 */
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Restore from file");
-    itemPtr->functionPtr = DrawChildTextMenu;
-    itemPtr->functionDataPtr = EEPROMFileRestoreMenuInit();
+    itemPtr->functionPtr = dynamicDrawChildTextMenu;
+    itemPtr->functionDataPtr = EEPROMFileRestoreMenuInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));

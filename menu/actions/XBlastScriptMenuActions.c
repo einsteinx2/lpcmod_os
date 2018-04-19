@@ -21,7 +21,7 @@
 #include "FatFSAccessor.h"
 #include "lib/LPCMod/xblastDebug.h"
 
-static const char* const biosDirectoryLocation = "MASTER_C:\\XBlast\\scripts\\";
+static const char* const biosDirectoryLocation = "MASTER_C:"PathSep"XBlast"PathSep"scripts";
 
 const char* const getScriptDirectoryLocation(void)
 {

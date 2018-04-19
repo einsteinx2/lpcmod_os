@@ -93,7 +93,7 @@ void warningDisplayEepromEditMenu(void* ignored)
 
     editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
     memcpy(editeeprom, &eeprom, sizeof(EEPROMDATA));   //Initial copy into edition buffer.
-    ResetDrawChildTextMenu(eepromEditMenuDynamic());
+    dynamicDrawChildTextMenu(eepromEditMenuInit);
     free(editeeprom);
     editeeprom = NULL;
 }

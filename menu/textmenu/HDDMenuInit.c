@@ -275,8 +275,6 @@ void HDDFormatMenuDynamic(void* drive)
         itemPtr->noSelect = NOSELECTERROR;
         TextMenuAddItem(menuPtr, itemPtr);
     }
-
-    ResetDrawChildTextMenu(menuPtr);
 }
 
 void HDDLockUnlockMenuDynamic(void* drive)

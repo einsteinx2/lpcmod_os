@@ -477,11 +477,11 @@ extern void BootResetAction ( void )
         {
             //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
             debugSPIPrint(DEBUG_BOOT_LOG, "Trying to load new JPEG from HDD.\n");
-            if(LPCMod_ReadJPGFromHDD("MASTER_C:\\XBlast\\icons.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD("MASTER_C:"PathSep"XBlast"PathSep"icons.jpg") == false)
             {
                 debugSPIPrint(DEBUG_BOOT_LOG, "\"icons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
             }
-            if(LPCMod_ReadJPGFromHDD("MASTER_C:\\XBlast\\backdrop.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD("MASTER_C:"PathSep"XBlast"PathSep"backdrop.jpg") == false)
             {
                 debugSPIPrint(DEBUG_BOOT_LOG, "\"backdrop.jpg\" loaded. Repainting.\n");
                 printMainMenuHeader();
@@ -496,7 +496,7 @@ extern void BootResetAction ( void )
                 {
                     importNewSettingsFromCFGLoad(&tempLPCmodSettings);
                     res = 0;
-                    FILEX fileHandle = fatxopen("MASTER_C:\\XBlast\\scripts\\bank.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                    FILEX fileHandle = fatxopen("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"bank.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
                     if(fileHandle)
                     {
                         if(fatxsize(fileHandle) > 0)
@@ -512,7 +512,7 @@ extern void BootResetAction ( void )
                     }
 
                     res = 0;
-                     fileHandle = fatxopen("MASTER_C:\\XBlast\\scripts\\boot.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                     fileHandle = fatxopen("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
                      if(fileHandle)
                      {
                          if(fatxsize(fileHandle) > 0)
@@ -532,7 +532,7 @@ extern void BootResetAction ( void )
                     {
                         debugSPIPrint(DEBUG_BOOT_LOG, "Running boot script.\n");
                         i = BNKOS;
-                        loadRunScriptWithParams("MASTER_C:\\XBlast\\scripts\\boot.script", 1, &i);
+                        loadRunScriptWithParams("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", 1, &i);
 
                         debugSPIPrint(DEBUG_BOOT_LOG, "Boot script execution done.\n");
                     }
