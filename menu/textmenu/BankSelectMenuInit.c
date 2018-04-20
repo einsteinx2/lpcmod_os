@@ -192,7 +192,6 @@ void BankSelectDynamic(void* bank)
 #endif
 #endif
 
-    debugSPIPrint(DEBUG_GENERAL_UI, "%u   %u\n", BootIdeDeviceConnected(0), BootIdeDeviceIsATAPI(0));
     for (i = 0; i < 2; ++i)
     {
         if(BootIdeDeviceConnected(i) && BootIdeDeviceIsATAPI(i))
@@ -218,5 +217,6 @@ void BankSelectDynamic(void* bank)
     }
 
     ResetDrawChildTextMenu(menuPtr);
+    switchOSBank(FlashBank_OSBank);
 }
 
