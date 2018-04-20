@@ -35,8 +35,8 @@ TEXTMENU* XBlastScriptMenuInit(void)
     //Run Script.
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Run script from HDD");
-    itemPtr->functionPtr = DrawChildTextMenu;
-    itemPtr->functionDataPtr = RunScriptMenuInit();
+    itemPtr->functionPtr = dynamicDrawChildTextMenu;
+    itemPtr->functionDataPtr = RunScriptMenuInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Save script to flash.
@@ -44,14 +44,14 @@ TEXTMENU* XBlastScriptMenuInit(void)
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Save script to flash");
-        itemPtr->functionPtr = DrawChildTextMenu;
-        itemPtr->functionDataPtr = SaveScriptMenuInit();
+        itemPtr->functionPtr = dynamicDrawChildTextMenu;
+        itemPtr->functionDataPtr = SaveScriptMenuInit;
         TextMenuAddItem(menuPtr, itemPtr);
 
         if(LPCmodSettings.flashScript.scriptSize > 0)
         {
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-            strcpy(itemPtr->szCaption, "Save script to flash");
+            strcpy(itemPtr->szCaption, "Erase script from flash");
             itemPtr->functionPtr = deleteFlashScriptFromFlash;
             itemPtr->functionDataPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
@@ -120,7 +120,7 @@ TEXTMENU* RunScriptMenuInit(void)
             do
             {
                 fileInfo = fatxreaddir(dirHandle);
-                if(0 == fileInfo.nameLength)
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
                 {
                    break;
                 }
@@ -134,7 +134,7 @@ TEXTMENU* RunScriptMenuInit(void)
                     strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = loadRunScriptNoParams;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
-                    TextMenuAddItem(menuPtr, itemPtr);
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                 }
             } while(1);
 
@@ -193,7 +193,7 @@ TEXTMENU* SaveScriptMenuInit(void)
             do
             {
                 fileInfo = fatxreaddir(dirHandle);
-                if(0 == fileInfo.nameLength)
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
                 {
                    break;
                 }
@@ -207,7 +207,7 @@ TEXTMENU* SaveScriptMenuInit(void)
                     strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = saveScriptToFlash;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
-                    TextMenuAddItem(menuPtr, itemPtr);
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                 }
             } while(1);
 

@@ -115,7 +115,7 @@ TEXTMENU* EEPROMFileRestoreMenuInit(void)
             do
             {
                 fileInfo = fatxreaddir(dirHandle);
-                if(0 == fileInfo.nameLength)
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
                 {
                    break;
                 }
@@ -129,7 +129,7 @@ TEXTMENU* EEPROMFileRestoreMenuInit(void)
                     strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = restoreEEPROMFromFile;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
-                    TextMenuAddItem(menuPtr, itemPtr);
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                     eeproms++;
                 }
             } while(1);

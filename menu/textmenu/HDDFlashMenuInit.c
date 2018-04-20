@@ -40,7 +40,7 @@ void HDDFlashMenuDynamic(void* unused)
             do
             {
                 fileInfo = fatxreaddir(dirHandle);
-                if(0 == fileInfo.nameLength)
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
                 {
                    break;
                 }
@@ -54,10 +54,11 @@ void HDDFlashMenuDynamic(void* unused)
                     strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = FlashBiosFromHDD;
                     itemPtr->functionDataPtr = itemPtr->szCaption;
-                    TextMenuAddItem(menuPtr, itemPtr);
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                     bioses++;
                 }
             } while(1);
+            fatxclosedir(dirHandle);
 
             if(0 == n)
             {
@@ -75,8 +76,6 @@ void HDDFlashMenuDynamic(void* unused)
                 itemPtr->functionPtr = NULL;
                 TextMenuAddItem(menuPtr, itemPtr);
             }
-
-            fatxclosedir(dirHandle);
         }
         else
         {

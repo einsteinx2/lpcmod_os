@@ -54,6 +54,51 @@ void TextMenuAddItem(TEXTMENU *menu, TEXTMENUITEM *newMenuItem)
     newMenuItem->previousMenuItem = currentMenuItem; 
 }
 
+void TextMenuAddItemInOrder(TEXTMENU *menu, TEXTMENUITEM *newMenuItem)
+{
+    TEXTMENUITEM *menuItem = menu->firstMenuItem;
+    TEXTMENUITEM *currentMenuItem=NULL;
+
+    if(NULL == menuItem)
+    {
+        /* This is the first icon in the chain */
+        menu->firstMenuItem = newMenuItem;
+        newMenuItem->nextMenuItem = NULL;
+        newMenuItem->previousMenuItem = NULL;
+    }
+    else
+    {
+        while (menuItem != NULL)
+        {
+            currentMenuItem = menuItem;
+            if(0 > strcasecmp(newMenuItem->szCaption, menuItem->szCaption))
+            {
+                /* New szCaption alphabetically comes first */
+                newMenuItem->previousMenuItem = menuItem->previousMenuItem;
+                menuItem->previousMenuItem = newMenuItem;
+                if(NULL != newMenuItem->previousMenuItem)
+                {
+                    newMenuItem->previousMenuItem->nextMenuItem = newMenuItem;
+                }
+                else
+                {
+                    menu->firstMenuItem = newMenuItem;
+                    newMenuItem->previousMenuItem = NULL;
+                }
+                newMenuItem->nextMenuItem = menuItem;
+
+                /* Next item of menuItem stays the same */
+
+                return;
+            }
+            menuItem = menuItem->nextMenuItem;
+        }
+        currentMenuItem->nextMenuItem = newMenuItem;
+        newMenuItem->previousMenuItem = currentMenuItem;
+        newMenuItem->nextMenuItem = NULL;
+    }
+}
+
 void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUITEM *selectedItem)
 {
     TEXTMENUITEM *item = NULL;
