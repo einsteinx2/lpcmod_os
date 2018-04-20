@@ -267,11 +267,12 @@ unsigned char ReadFromIO(unsigned short address)
 #ifdef SPITRACE
 void printTextSPI(const char * functionName, char * buffer, ...)
 {
+#define MaxBuffSize 1024
     unsigned char pos;
     char i;
     int stringLength;
-    char tempBuf[200];
-    char outputBuf[200];
+    char tempBuf[MaxBuffSize];
+    char outputBuf[MaxBuffSize];
 
     va_list args;
     LPCMod_FastWriteIO(0x2, 0); //CLK to '0'
@@ -285,8 +286,10 @@ void printTextSPI(const char * functionName, char * buffer, ...)
     }
 
     stringLength = strlen(outputBuf);
-    if(stringLength > 200)
-        stringLength = 200;
+    if(stringLength > MaxBuffSize)
+    {
+        stringLength = MaxBuffSize;
+    }
 
     //Will NOT send null terminating character at the end.
     for(pos = 0; pos < stringLength; pos++){
