@@ -268,32 +268,32 @@ int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct)
     {
         for(i = 0; i < BoolParamGroup; i++)
         {
-            debugSPIPrintInt(DEBUG_SETTINGS, "%s=%u", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
+            debugSPIPrint(DEBUG_SETTINGS, "%s=%u", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
             ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i], settingsFileLocation);
         }
 
         for(i = 0; i < NumParamGroup; i++)
         {
-            debugSPIPrintInt(DEBUG_SETTINGS, "%s=%u", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
+            debugSPIPrint(DEBUG_SETTINGS, "%s=%u", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
             ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i], settingsFileLocation);
         }
 
         for(i = 0; i < IPParamGroup; i++)
         {
             sprintf(tempStringBuf, "%u.%u.%u.%u", settingsStruct->IPsettingsPtrArray[i][0], settingsStruct->IPsettingsPtrArray[i][1], settingsStruct->IPsettingsPtrArray[i][2], settingsStruct->IPsettingsPtrArray[i][3]);
-            debugSPIPrintInt(DEBUG_SETTINGS, "%s=%s", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
+            debugSPIPrint(DEBUG_SETTINGS, "%s=%s", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
             ini_puts(NULL, xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf, settingsFileLocation);
         }
 
         for(i = 0; i < TextParamGroup; i++)
         {
-            debugSPIPrintInt(DEBUG_SETTINGS, "%s=%s", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
+            debugSPIPrint(DEBUG_SETTINGS, "%s=%s", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
             ini_puts(NULL, xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i], settingsFileLocation);
         }
 
         for(i = 0; i < SpecialParamGroup; i++)
         {
-            debugSPIPrintInt(DEBUG_SETTINGS, "%s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]));
+            debugSPIPrint(DEBUG_SETTINGS, "%s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]));
             ini_puts(NULL, xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]), settingsFileLocation);
         }
     }
