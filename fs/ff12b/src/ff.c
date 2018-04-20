@@ -21,6 +21,10 @@
 #include "ff.h"         /* Declarations of FatFs API */
 #include "diskio.h"     /* Declarations of device I/O functions */
 
+#ifdef _USE_FATX
+#include "ctype.h"
+#endif
+
 /*--------------------------------------------------------------------------
 
    Module Private Definitions
@@ -2335,7 +2339,8 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
     BYTE a, ord, sum;
 #endif
 #ifdef _USE_FATX
-    BYTE fatxNameLgth = 0;
+    BYTE fatxNameLgth = 0, i;
+    char normalizedFatXName[FATX_FILENAME_MAX];
     while(fatxNameLgth < FATX_FILENAME_MAX)
     {
         if(0xFF == dp->fnx[fatxNameLgth] || 0x00 == dp->fnx[fatxNameLgth])
@@ -2376,6 +2381,14 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
         if(ISFATX_FS(fs->fs_typex))
         {
             c = dp->dir[DIRx_NameLgth];  /* Test for the entry type */
+            if(FATX_FILENAME_MAX < c)
+            {
+                c = 0;
+                if(DDEM == c)
+                {
+                    continue;
+                }
+            }
         }
         else
 #endif
@@ -2407,7 +2420,14 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #else       /* Non LFN configuration */
         dp->obj.attr = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK;
 #ifdef _USE_FATX
-        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < dp->dir[DIRx_NameLgth] && FATX_FILENAME_MAX >= dp->dir[DIRx_NameLgth])) && (fatxNameLgth == dp->dir[DIRx_NameLgth]) && !mem_cmp(dp->dir + (ISFATX_FS(fs->fs_typex) ? DIRx_Name : DIR_Name), dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
+        i = 0 ;
+        while(i < c)
+        {
+            normalizedFatXName[i] = (char)toupper(dp->dir[DIRx_Name + i]);
+            i++;
+        }
+
+        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < c && FATX_FILENAME_MAX >= c)) && (fatxNameLgth == c) && !mem_cmp(ISFATX_FS(fs->fs_typex) ? (const void*)normalizedFatXName : dp->dir + DIR_Name, dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
 #else
         if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;  /* Is it a valid entry? */
 #endif
@@ -2974,7 +2994,7 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
                 return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
             }
             //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
-            sfn[i++] = c;
+            sfn[i++] = (char)toupper(c);
         }
 
         /* Refuse to handle "." and ".." directory entries on FATX */

@@ -77,6 +77,7 @@ DRESULT disk_read (
         returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
         if(returnValue)
         {
+            debugSPIPrint(DEBUG_CORE_FATFS, "!!!Error : %u\n", returnValue);
             break;
         }
     }
