@@ -45,12 +45,12 @@ void FlashBiosFromHDD (void *fname) {
     char fullPathName[255 + sizeof('\0')];
     FILEX fileHandle;
 
-    if(255 < (strlen(getBIOSDirectoryLocation()) + strlen(filename)))
+    if(255 < (strlen(getBIOSDirectoryLocation()) + sizeof(cPathSep) + strlen(filename)))
     {
         return;
     }
 
-    sprintf(fullPathName, "%s%s", getBIOSDirectoryLocation(), filename);
+    sprintf(fullPathName, "%s"PathSep"%s", getBIOSDirectoryLocation(), filename);
 
     memset (fileBuf, 0x00, 1024 * 1024);   //Fill with 0.
     fileHandle = fatxopen(fullPathName, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);

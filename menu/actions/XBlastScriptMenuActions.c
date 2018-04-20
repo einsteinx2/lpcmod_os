@@ -18,6 +18,7 @@
 #include "Gentoox.h"
 #include "MenuActions.h"
 #include "string.h"
+#include "stdio.h"
 #include "FatFSAccessor.h"
 #include "lib/LPCMod/xblastDebug.h"
 
@@ -32,7 +33,9 @@ const char* const getScriptDirectoryLocation(void)
 static FILEX openScript(const char* filename, unsigned int* outSize)
 {
     FILEX handle;
-    handle = fatxopen(filename, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+    char fullPathName[256 + sizeof('\0')];
+    sprintf(fullPathName, "%s"PathSep"%s", getScriptDirectoryLocation(), filename);
+    handle = fatxopen(fullPathName, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
 
     if(0 == handle)
     {

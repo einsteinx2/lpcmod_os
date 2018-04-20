@@ -252,12 +252,12 @@ void restoreEEPROMFromFile(void *fname)
     char fullPathName[255 + sizeof('\0')];
     FILEX fileHandle;
 
-    if(255 < (strlen(getEEPROMDirectoryLocation()) + strlen(filename)))
+    if(255 < (strlen(getEEPROMDirectoryLocation()) + sizeof(cPathSep) + strlen(filename)))
     {
         return;
     }
 
-    sprintf(fullPathName, "%s%s", getEEPROMDirectoryLocation(), filename);
+    sprintf(fullPathName, "%s"PathSep"%s", getEEPROMDirectoryLocation(), filename);
 
     fileHandle = fatxopen(fullPathName, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
     if(fileHandle)
