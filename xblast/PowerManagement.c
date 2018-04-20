@@ -24,7 +24,7 @@ void assertBankScriptExecBankBoot(void * data)
 
     if(LPCmodSettings.OSsettings.runBankScript)
     {
-        sprintf(path, "%s%s", getScriptDirectoryLocation(), "bank.script");
+        sprintf(path, "%s"PathSep"%s", getScriptDirectoryLocation(), "bank.script");
         loadRunScriptNoParams(path);
     }
 
@@ -38,7 +38,7 @@ void assertBankScriptExecTSOPBoot(void * data)
 
     if(LPCmodSettings.OSsettings.runBankScript)
     {
-        sprintf(path, "%s%s", getScriptDirectoryLocation(), "bank.script");
+        sprintf(path, "%s"PathSep"%s", getScriptDirectoryLocation(), "bank.script");
         loadRunScriptNoParams(path);
     }
 
