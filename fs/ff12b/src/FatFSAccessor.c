@@ -688,13 +688,16 @@ int fatxdelete(const char* path)
 int fatxrename(const char* path, const char* newName)
 {
     FRESULT result;
+    const char *drive = (const char*)strrchr(newName, cPathSep);
+    drive = (drive == NULL) ? newName : drive + 1;
+
     if(FATX_FILENAME_MAX < strlen(newName))
     {
         return -1;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" to \"%s\"\n", path, newName);
-    result = f_rename(path, newName);
+    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" to \"%s\"\n", path, drive);
+    result = f_rename(path, drive);
     if(FR_OK != result)
     {
         debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
