@@ -43,7 +43,6 @@ const _xblastCfgStringsStruct xblastCfgStringsStruct =
   "displaybootmsg",
   "customtextboot",
   "displaybiosnameboot"
-
  },
 
  //Contains numerical values
@@ -269,32 +268,52 @@ int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct)
         for(i = 0; i < BoolParamGroup; i++)
         {
             debugSPIPrint(DEBUG_SETTINGS, "%s=%u\n", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
-            ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i], settingsFileLocation);
+            if(0 == ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i], settingsFileLocation))
+            {
+                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%u\n", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
+                return 1;
+            }
         }
 
         for(i = 0; i < NumParamGroup; i++)
         {
             debugSPIPrint(DEBUG_SETTINGS, "%s=%u\n", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
-            ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i], settingsFileLocation);
+            if(0 == ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i], settingsFileLocation))
+            {
+                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%u\n", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
+                return 1;
+            }
         }
 
         for(i = 0; i < IPParamGroup; i++)
         {
             sprintf(tempStringBuf, "%u.%u.%u.%u", settingsStruct->IPsettingsPtrArray[i][0], settingsStruct->IPsettingsPtrArray[i][1], settingsStruct->IPsettingsPtrArray[i][2], settingsStruct->IPsettingsPtrArray[i][3]);
             debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
-            ini_puts(NULL, xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf, settingsFileLocation);
+            if(0 == ini_puts(NULL, xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf, settingsFileLocation))
+            {
+                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
+                return 1;
+            }
         }
 
         for(i = 0; i < TextParamGroup; i++)
         {
             debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
-            ini_puts(NULL, xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i], settingsFileLocation);
+            if(0 == ini_puts(NULL, xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i], settingsFileLocation))
+            {
+                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
+                return 1;
+            }
         }
 
         for(i = 0; i < SpecialParamGroup; i++)
         {
             debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]));
-            ini_puts(NULL, xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]), settingsFileLocation);
+            if(0 == ini_puts(NULL, xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]), settingsFileLocation))
+            {
+                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]));
+                return 1;
+            }
         }
     }
     else
