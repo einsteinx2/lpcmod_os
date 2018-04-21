@@ -2385,15 +2385,21 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
             c = dp->dir[DIRx_NameLgth];  /* Test for the entry type */
             if(FATX_FILENAME_MAX < c)
             {
+                /* Workaround to deal with FATX entries not setting the first char of the name to DDEM */
                 if(DDEM == c)
                 {
+                    /* If in fact deleted entry, move to next dir entry */
                     res = dir_next(dp, 0);
                     if(FR_OK == res)
                     {
+                        /* restart from the top in do..while loop */
                         continue;
                     }
                     break;
                 }
+                /* entry space is not deleted entry(DDEM) */
+                /* Assume at end of directory entry list */
+                /* Prepare to return FR_NO_FILE */
                 c = 0;
             }
         }
