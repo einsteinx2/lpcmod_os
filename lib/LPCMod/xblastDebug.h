@@ -24,7 +24,7 @@
 #define DEBUG_GENERAL_UI        0
 #define DEBUG_SCRIPT            0
 #define DEBUG_MISC              0
-#define DEBUG_SETTINGS          1
+#define DEBUG_SETTINGS          0
 
 #define DEBUG_USB               0
 #define DEBUG_USB_INFO          0
