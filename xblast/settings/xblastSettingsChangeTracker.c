@@ -29,7 +29,7 @@ static const char* const ChangeStringArrow          = " -> ";
 
 #define TextChangeStringSizeCalc(old, new) (strlen(old) + strlen(new) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
 
-#define SpecialChangeStringSizeCalc(index) (strlen(getSpecialSettingString(index, *originalSettingsPtrStruct.specialCasePtrArray[index])) + strlen(getSpecialSettingString(index, *settingsPtrStruct.specialCasePtrArray[index])) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
+#define SpecialChangeStringSizeCalc(index) (strlen(getSpecialSettingDisplayString(index, *originalSettingsPtrStruct.specialCasePtrArray[index])) + strlen(getSpecialSettingDisplayString(index, *settingsPtrStruct.specialCasePtrArray[index])) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
 
 #define SimpleChangeStringGen(setting) if(NULL != currentChangeEntry->changeString ) \
                                             sprintf(currentChangeEntry->changeString, "%s\"%u\"%s\"%u\"", \
@@ -59,9 +59,9 @@ static const char* const ChangeStringArrow          = " -> ";
 #define SpecialChangeStringGen(index) if(NULL != currentChangeEntry->changeString ) \
                                             sprintf(currentChangeEntry->changeString, "%s\"%s\"%s\"%s\"", \
                                                 ChangeStringLabelSeparator, \
-                                                getSpecialSettingString(index, *originalSettingsPtrStruct.specialCasePtrArray[index]), \
+                                                getSpecialSettingDisplayString(index, *originalSettingsPtrStruct.specialCasePtrArray[index]), \
                                                 ChangeStringArrow, \
-                                                getSpecialSettingString(index, *settingsPtrStruct.specialCasePtrArray[index]));
+                                                getSpecialSettingDisplayString(index, *settingsPtrStruct.specialCasePtrArray[index]));
 
 #define AddChange() if(NULL != currentChangeEntry) putNewChangeInList(output, currentChangeEntry); numberOfChanges += 1; break;
 

@@ -26,7 +26,7 @@ int testBank(int bank);
 
 //void TSOPRecoveryReboot(void *ignored);
 
-void saveXBlastcfg(void* ignored);
+void saveXBlastcfg(void* fileExist);
 void loadXBlastcfg(void* ignored);
 
 void prevA19controlModBootValue(void* itemPtr);

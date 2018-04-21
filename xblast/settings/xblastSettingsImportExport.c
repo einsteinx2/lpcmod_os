@@ -25,7 +25,12 @@
 #include "xblastSettings.h"
 #include <stddef.h>
 
-static const char* const settingsFileLocation = "MASTER_C:\\XBlast\\xblast.cfg";
+static const char* const settingsFileLocation = "MASTER_C:"PathSep"XBlast"PathSep"xblast.cfg";
+
+const char* const getSettingsFileLocation(void)
+{
+    return settingsFileLocation;
+}
 
 const _xblastCfgStringsStruct xblastCfgStringsStruct =
 {
@@ -194,31 +199,31 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
           debugSPIPrint(DEBUG_SETTINGS, "found special setting: %s len:%u\n", xblastCfgStringsStruct.specialSettingsStringArray[i]);
           switch(i)
           {
-              case (0):
-              case (1):
+              case SpecialSettingsPtrArrayIndexName_ActiveBank:
+              case SpecialSettingsPtrArrayIndexName_AltBank:
                   for(j = 0; j < BankSettingArraySize; j++)
                   {
-                      if(!strcasecmp(value, getSpecialSettingString(i, bankSettingArray[j])))
+                      if(!strcasecmp(value, getSpecialSettingTextString(i, bankSettingArray[j])))
                       {
                             *settingsStruct->specialCasePtrArray[i] = bankSettingArray[j];
                             break;
                       }
                   }
               break;
-              case (2):
+              case SpecialSettingsPtrArrayIndexName_LEDColor:
                   for(j = 0; j < LedSettingArraySize; j++)
                   {
-                      if(!strncasecmp(value, getSpecialSettingString(i, ledArraySetting[j]), 2))
+                      if(!strncasecmp(value, getSpecialSettingTextString(i, ledArraySetting[j]), 2))
                       {
                             *settingsStruct->specialCasePtrArray[i] = ledArraySetting[j];
                             break;
                       }
                   }
                   break;
-              case (3):
+              case SpecialSettingsPtrArrayIndexName_LCDType:
                   for(j = 0; j < LcdSettingArraySize; j++)
                   {
-                      if(!strncasecmp(value, getSpecialSettingString(i, lcdArraySetting[j]), 2))
+                      if(!strncasecmp(value, getSpecialSettingTextString(i, lcdArraySetting[j]), 2))
                       {
                             *settingsStruct->specialCasePtrArray[i] = lcdArraySetting[j];
                             break;
@@ -263,62 +268,55 @@ int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct)
     unsigned char i;
     char tempStringBuf[50];
 
-    if(isMounted(HDD_Master, Part_C))
+    for(i = 0; i < BoolParamGroup; i++)
     {
-        for(i = 0; i < BoolParamGroup; i++)
+        debugSPIPrint(DEBUG_SETTINGS, "%s=%u\n", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
+        if(0 == ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i], settingsFileLocation))
         {
-            debugSPIPrint(DEBUG_SETTINGS, "%s=%u\n", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
-            if(0 == ini_putl(NULL, xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i], settingsFileLocation))
-            {
-                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%u\n", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
-                return 1;
-            }
-        }
-
-        for(i = 0; i < NumParamGroup; i++)
-        {
-            debugSPIPrint(DEBUG_SETTINGS, "%s=%u\n", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
-            if(0 == ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i], settingsFileLocation))
-            {
-                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%u\n", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
-                return 1;
-            }
-        }
-
-        for(i = 0; i < IPParamGroup; i++)
-        {
-            sprintf(tempStringBuf, "%u.%u.%u.%u", settingsStruct->IPsettingsPtrArray[i][0], settingsStruct->IPsettingsPtrArray[i][1], settingsStruct->IPsettingsPtrArray[i][2], settingsStruct->IPsettingsPtrArray[i][3]);
-            debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
-            if(0 == ini_puts(NULL, xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf, settingsFileLocation))
-            {
-                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
-                return 1;
-            }
-        }
-
-        for(i = 0; i < TextParamGroup; i++)
-        {
-            debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
-            if(0 == ini_puts(NULL, xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i], settingsFileLocation))
-            {
-                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
-                return 1;
-            }
-        }
-
-        for(i = 0; i < SpecialParamGroup; i++)
-        {
-            debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]));
-            if(0 == ini_puts(NULL, xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]), settingsFileLocation))
-            {
-                debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingString(i, *settingsStruct->specialCasePtrArray[i]));
-                return 1;
-            }
+            debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%u\n", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsStruct->boolSettingsPtrArray[i]);
+            return 1;
         }
     }
-    else
+
+    for(i = 0; i < NumParamGroup; i++)
     {
-        UiHeader("Error opening partition.");
+        debugSPIPrint(DEBUG_SETTINGS, "%s=%u\n", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
+        if(0 == ini_putl(NULL, xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i], settingsFileLocation))
+        {
+            debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%u\n", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsStruct->numSettingsPtrArray[i]);
+            return 1;
+        }
+    }
+
+    for(i = 0; i < IPParamGroup; i++)
+    {
+        sprintf(tempStringBuf, "%u.%u.%u.%u", settingsStruct->IPsettingsPtrArray[i][0], settingsStruct->IPsettingsPtrArray[i][1], settingsStruct->IPsettingsPtrArray[i][2], settingsStruct->IPsettingsPtrArray[i][3]);
+        debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
+        if(0 == ini_puts(NULL, xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf, settingsFileLocation))
+        {
+            debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.IPsettingsStringArray[i], tempStringBuf);
+            return 1;
+        }
+    }
+
+    for(i = 0; i < TextParamGroup; i++)
+    {
+        debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
+        if(0 == ini_puts(NULL, xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i], settingsFileLocation))
+        {
+            debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.textSettingsStringArray[i], settingsStruct->textSettingsPtrArray[i]);
+            return 1;
+        }
+    }
+
+    for(i = 0; i < SpecialParamGroup; i++)
+    {
+        debugSPIPrint(DEBUG_SETTINGS, "%s=%s\n", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingTextString(i, *settingsStruct->specialCasePtrArray[i]));
+        if(0 == ini_puts(NULL, xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingTextString(i, *settingsStruct->specialCasePtrArray[i]), settingsFileLocation))
+        {
+            debugSPIPrint(DEBUG_SETTINGS, "!!!Error on writing: %s=%s\n", xblastCfgStringsStruct.specialSettingsStringArray[i], getSpecialSettingTextString(i, *settingsStruct->specialCasePtrArray[i]));
+            return 1;
+        }
     }
 
     UIFooter();
