@@ -375,7 +375,7 @@ FILEX fatxopen(const char* path, FileOpenMode mode)
     {
         if(0 == FileHandleArray[i].obj.fs)
         {
-            debugSPIPrint(DEBUG_FATX_FS, "found unused handle slot %u\n", i);
+            debugSPIPrint(DEBUG_FATX_FS, "found unused handle slot %u\n", i + 1);
             break;
         }
     }
@@ -390,7 +390,7 @@ FILEX fatxopen(const char* path, FileOpenMode mode)
     result = f_open(&FileHandleArray[i], path, mode);
     if(FR_OK != result)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Open Fail...  result=%u\n", result);
+        debugSPIPrint(DEBUG_FATX_FS, "Open Fail...  result:%u\n", result);
         return 0;
     }
 
@@ -400,12 +400,15 @@ FILEX fatxopen(const char* path, FileOpenMode mode)
 
 int fatxclose(FILEX handle)
 {
-    debugSPIPrint(DEBUG_FATX_FS, "Closing handle%u\n", handle);
+    FRESULT result;
+    debugSPIPrint(DEBUG_FATX_FS, "Closing handle %u\n", handle);
     FILE_HANDLE_VALID(handle)
 
     if(0 != FileHandleArray[handle].obj.fs)
     {
-        return f_close(&FileHandleArray[handle]);
+        result = f_close(&FileHandleArray[handle]);
+        debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
+        return result;
     }
     return -1;
 }
@@ -526,7 +529,7 @@ DIREX fatxopendir(const char* path)
     result = f_opendir(&DirectoryHandleArray[i], path);
     if(FR_OK != result)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Open Fail...  result=%u\n", result);
+        debugSPIPrint(DEBUG_FATX_FS, "Open Fail...  result%u\n", result);
         return 0;
     }
 
@@ -684,14 +687,17 @@ int fatxdelete(const char* path)
 
 int fatxrename(const char* path, const char* newName)
 {
+    FRESULT result;
     if(FATX_FILENAME_MAX < strlen(newName))
     {
         return -1;
     }
 
     debugSPIPrint(DEBUG_FATX_FS, "\"%s\" to \"%s\"\n", path, newName);
-    if(FR_OK != f_rename(path, newName))
+    result = f_rename(path, newName);
+    if(FR_OK != result)
     {
+        debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
         return -1;
     }
 

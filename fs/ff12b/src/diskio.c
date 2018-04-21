@@ -73,11 +73,10 @@ DRESULT disk_read (
     int returnValue;
     for(i = 0; i < count; i++)
     {
-        debugSPIPrint(DEBUG_CORE_FATFS, "i=%u count=%u sector=0x%X\n", i, count, sector);
         returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
         if(returnValue)
         {
-            debugSPIPrint(DEBUG_CORE_FATFS, "!!!Error : %u\n", returnValue);
+            debugSPIPrint(DEBUG_CORE_FATFS, "!!!Error : %u      i=%u count=%u sector=0x%X\n", returnValue, i, count, sector);
             break;
         }
     }
@@ -106,6 +105,7 @@ DRESULT disk_write (
         returnValue = BootIdeWriteSector(pdrv, buff + (i* 512), sector + i, 0);
         if(returnValue)
         {
+            debugSPIPrint(DEBUG_CORE_FATFS, "!!!Error : %u      i=%u count=%u sector=0x%X\n", returnValue, i, count, sector);
             break;
         }
     }

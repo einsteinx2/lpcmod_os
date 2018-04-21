@@ -440,8 +440,9 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     }
     /* End 48-bit LBA */   
 
-    tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported = drive_info[86] & 1ul<<12;
-    tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported = drive_info[86] & 1ul<<13;
+    tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported = (drive_info[86] & 1ul<<12) ? 1 : 0;
+    tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported = (drive_info[86] & 1ul<<13)  ? 1 : 0;
+    debugSPIPrint(DEBUG_IDE_DRIVER, "flush cache support:%u   ext:%u\n", tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported, tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported);
     
     { 
         unsigned short * pw=(unsigned short *)&(drive_info[10]);
@@ -1179,10 +1180,8 @@ int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int 
 
     if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8)
     {
-        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x0a to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
     } else {
-        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x02 to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02);
     }
 
@@ -1300,10 +1299,8 @@ int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int bloc
 
     if (tsaHarddiskInfo[nDriveIndex].m_wCountHeads > 8)
     {
-        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x0a to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x0a);
     } else {
-        debugSPIPrint(DEBUG_IDE_DRIVER, "Disable IRQ. 0x02 to Device Control reg.\n");
         IoOutputByte(IDE_REG_CONTROL(uIoBase), 0x02);
     }
 
@@ -1344,11 +1341,13 @@ int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int bloc
                 IDE_DH_LBA;
         }
         }       
+    debugSPIPrint(DEBUG_IDE_DRIVER, "Send Write cmd.\n");
     if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp, false)) 
     {
         printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
     }
+    debugSPIPrint(DEBUG_IDE_DRIVER, "Send Write data.\n");
     status = BootIdeWriteData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
 
     if(retry > 0)
@@ -1367,6 +1366,7 @@ int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int bloc
     else
         BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH, &tsicp);
 */
+    debugSPIPrint(DEBUG_IDE_DRIVER, "status=%u.\n", status);
     return status;
 }
 
@@ -1506,6 +1506,8 @@ int BootIdeFlushCache(int nDriveIndex)
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     unsigned short uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
+
+    debugSPIPrint(DEBUG_IDE_DRIVER, "drive:%u   ext:%u   normal:%u\n", nDriveIndex, tsaHarddiskInfo[nDriveIndex].m_fFlushCacheExtSupported, tsaHarddiskInfo[nDriveIndex].m_fFlushCacheSupported);
 
     if(tsaHarddiskInfo[nDriveIndex].m_fFlushCacheExtSupported)        //LBA48 drive
     {
