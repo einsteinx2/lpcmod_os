@@ -888,6 +888,7 @@ UINT inc_lock ( /* Increment object open counter and returns its index (0:Intern
         Files[i].ctr = 0;
     }
 
+    debugSPIPrint(DEBUG_CORE_FATFS, "acc=%u   i=%u  ctr=0x%x\n", acc, i, Files[i].ctr);
     if (acc && Files[i].ctr) return 0;  /* Access violation (int err) */
 
     Files[i].ctr = acc ? 0x100 : Files[i].ctr + 1;  /* Set semaphore value */
@@ -904,7 +905,7 @@ FRESULT dec_lock (  /* Decrement object open counter */
     WORD n;
     FRESULT res;
 
-
+    debugSPIPrint(DEBUG_CORE_FATFS, "i=%u  ctr=0x%x\n", i, Files[i].ctr);
     if (--i < _FS_LOCK) {   /* Shift index number origin from 0 */
         n = Files[i].ctr;
         if (n == 0x100) n = 0;      /* If write mode open, delete the entry */
@@ -915,6 +916,7 @@ FRESULT dec_lock (  /* Decrement object open counter */
     } else {
         res = FR_INT_ERR;           /* Invalid index nunber */
     }
+    debugSPIPrint(DEBUG_CORE_FATFS, "i=%u  ctr=0x%x    n=%u\n", i, Files[i].ctr, n);
     return res;
 }
 
@@ -2340,7 +2342,7 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #endif
 #ifdef _USE_FATX
     BYTE fatxNameLgth = 0, i;
-    char normalizedFatXName[FATX_FILENAME_MAX];
+    char normalizedTargetFatXName[FATX_FILENAME_MAX], normalizedCheckFatXName[FATX_FILENAME_MAX];
     while(fatxNameLgth < FATX_FILENAME_MAX)
     {
         if(0xFF == dp->fnx[fatxNameLgth] || 0x00 == dp->fnx[fatxNameLgth])
@@ -2423,11 +2425,12 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
         i = 0 ;
         while(i < c)
         {
-            normalizedFatXName[i] = (char)toupper(dp->dir[DIRx_Name + i]);
+            normalizedTargetFatXName[i] = (char)toupper(dp->fnx[i]);
+            normalizedCheckFatXName[i] = (char)toupper(dp->dir[DIRx_Name + i]);
             i++;
         }
 
-        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < c && FATX_FILENAME_MAX >= c)) && (fatxNameLgth == c) && !mem_cmp(ISFATX_FS(fs->fs_typex) ? (const void*)normalizedFatXName : dp->dir + DIR_Name, dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
+        if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < c && FATX_FILENAME_MAX >= c)) && (fatxNameLgth == c) && !mem_cmp(ISFATX_FS(fs->fs_typex) ? (const void*)normalizedCheckFatXName : dp->dir + DIR_Name, ISFATX_FS(fs->fs_typex) ? (const void*)normalizedTargetFatXName : dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
 #else
         if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;  /* Is it a valid entry? */
 #endif
@@ -2994,7 +2997,7 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
                 return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
             }
             //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
-            sfn[i++] = (char)toupper(c);
+            sfn[i++] = c;
         }
 
         /* Refuse to handle "." and ".." directory entries on FATX */
@@ -4265,7 +4268,7 @@ FRESULT f_sync (
             }
         }
     }
-
+    debugSPIPrint(DEBUG_CORE_FATFS, "res=%u\n", res);
     LEAVE_FF(fs, res);
 }
 
@@ -4304,6 +4307,7 @@ FRESULT f_close (
 #endif
         }
     }
+    debugSPIPrint(DEBUG_CORE_FATFS, "res=%u\n", res);
     return res;
 }
 
