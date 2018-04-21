@@ -23,7 +23,6 @@
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
 #include "lib/cromwell/cromSystem.h"
-#include "LEDMenuActions.h"
 #include "WebServerOps.h"
 
 extern int etherboot(void);
@@ -129,5 +128,4 @@ void enableWebupdate (void *whatever) {
 void FlashFooter(void)
 {
     UIFooter();
-    initialSetLED (LPCmodSettings.OSsettings.LEDColor);
 }

@@ -14,6 +14,8 @@
 #include "lib/cromwell/cromSystem.h"
 #include "lib/time/timeManagement.h"
 #include "lib/LPCMod/xblastDebug.h"
+#include "LEDMenuActions.h"
+#include "xblast/settings/xblastSettings.h"
 #include <stddef.h>
 
 void AdvancedMenu(void *textmenu)
@@ -103,4 +105,5 @@ void UIFooter(void)
             break;
         }
     }
+    initialSetLED(LPCmodSettings.OSsettings.LEDColor);
 }

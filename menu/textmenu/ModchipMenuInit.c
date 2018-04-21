@@ -47,7 +47,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Power button boot : ");
-        strcpy(itemPtr->szParameter, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+        strcpy(itemPtr->szParameter, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
         customParams->powerButString = itemPtr->szParameter;
         itemPtr->functionPtr = incrementActiveBank;
         itemPtr->functionDataPtr = customParams->powerButString;
@@ -60,11 +60,11 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Eject button boot : ");
-        strcpy(itemPtr->szParameter, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+        strcpy(itemPtr->szParameter, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
         customParams->ejectButString = itemPtr->szParameter;
         itemPtr->functionPtr = incrementAltBank;
         itemPtr->functionDataPtr = customParams->ejectButString;
-        itemPtr->functionLeftPtr = incrementAltBank;
+        itemPtr->functionLeftPtr = decrementAltBank;
         itemPtr->functionLeftDataPtr = customParams->ejectButString;
         itemPtr->functionRightPtr = incrementAltBank;
         itemPtr->functionRightDataPtr = customParams->ejectButString;

@@ -51,7 +51,7 @@ void decrementActiveBank(void* itemStr)
         break;
     }
 
-    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+    strcpy(itemStr, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
     return;
 }
 
@@ -87,7 +87,7 @@ void incrementActiveBank(void* itemStr)
         break;
     }
 
-    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+    strcpy(itemStr, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
     return;
 }
 
@@ -120,7 +120,7 @@ void decrementAltBank(void* itemStr)
         break;
     }
 
-    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+    strcpy(itemStr, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
     return;
 }
 
@@ -155,7 +155,7 @@ void incrementAltBank(void* itemStr)
         break;
     }
 
-    strcpy(itemStr, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+    strcpy(itemStr, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
     return;
 }
 
@@ -256,8 +256,8 @@ void toggleTSOPcontrol(void* customStruct)
     }
 
     reorderTSOPNameMenuEntries(params);
-    strcpy(params->powerButString, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
-    strcpy(params->ejectButString, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+    strcpy(params->powerButString, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+    strcpy(params->ejectButString, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
     strcpy(params->tsopControlString, (LPCmodSettings.OSsettings.TSOPcontrol)? "Yes" : "No");
 }
 

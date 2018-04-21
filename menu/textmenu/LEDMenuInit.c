@@ -22,27 +22,27 @@ TEXTMENU* LEDMenuInit(void)
     strcpy(menuPtr->szCaption, "LED menu");
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_GREEN));
+    strcpy(itemPtr->szCaption, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_GREEN));
     itemPtr->functionPtr = LEDGreen;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_RED));
+    strcpy(itemPtr->szCaption, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_RED));
     itemPtr->functionPtr = LEDRed;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_ORANGE));
+    strcpy(itemPtr->szCaption, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_ORANGE));
     itemPtr->functionPtr = LEDOrange;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_CYCLE));
+    strcpy(itemPtr->szCaption, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_CYCLE));
     itemPtr->functionPtr = LEDCycle;
     TextMenuAddItem(menuPtr, itemPtr);
     
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, getSpecialSettingString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_OFF));
+    strcpy(itemPtr->szCaption, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_LEDColor, LED_OFF));
     itemPtr->functionPtr = LEDOff;
     TextMenuAddItem(menuPtr, itemPtr);
 
