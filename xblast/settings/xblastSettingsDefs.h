@@ -51,7 +51,7 @@ _settingsPtrStruct settingsPtrStruct;
 
 typedef struct {
     const char *boolSettingsStringArray[BoolParamGroup];
-    const char *numSettingsStringArray[BoolParamGroup];
+    const char *numSettingsStringArray[NumParamGroup];
     const char *IPsettingsStringArray[IPParamGroup];
     const char *textSettingsStringArray[TextParamGroup];
     const char *specialSettingsStringArray[SpecialParamGroup];
