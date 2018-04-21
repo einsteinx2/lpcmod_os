@@ -115,7 +115,7 @@ TEXTMENU *ToolsMenuInit(void)
     {
         //Save xblast.cfg
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption, "Save C:\\xblast.cfg");
+        strcpy(itemPtr->szCaption, "Save C:\\XBlast\\xblast.cfg");
         itemPtr->functionPtr = saveXBlastcfg;
         itemPtr->functionDataPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
@@ -123,7 +123,7 @@ TEXTMENU *ToolsMenuInit(void)
 #endif
     //Load xblast.cfg
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
+    strcpy(itemPtr->szCaption, "Load C:\\XBlast\\xblast.cfg");
     itemPtr->functionPtr = loadXBlastcfg;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
