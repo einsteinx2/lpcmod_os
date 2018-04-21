@@ -2385,11 +2385,16 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
             c = dp->dir[DIRx_NameLgth];  /* Test for the entry type */
             if(FATX_FILENAME_MAX < c)
             {
-                c = 0;
                 if(DDEM == c)
                 {
-                    continue;
+                    res = dir_next(dp, 0);
+                    if(FR_OK == res)
+                    {
+                        continue;
+                    }
+                    break;
                 }
+                c = 0;
             }
         }
         else
@@ -2999,7 +3004,7 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
             //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
             sfn[i++] = c;
         }
-
+        debugSPIPrint(DEBUG_CORE_FATFS, "sfn:%s\n", sfn);
         /* Refuse to handle "." and ".." directory entries on FATX */
         if(1 == i && '.' == sfn[0])
         {
@@ -3150,8 +3155,10 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
     } else {                                /* Follow path */
         for (;;) {
             res = create_name(dp, &path);   /* Get a segment name of the path */
+            debugSPIPrint(DEBUG_CORE_FATFS, "create_name res:%u    path:%s\n", res, path);
             if (res != FR_OK) break;
             res = dir_find(dp);             /* Find an object with the segment name */
+            debugSPIPrint(DEBUG_CORE_FATFS, "dir_find res:%u\n", res);
 #ifdef _USE_FATX
             if(ISFATX_FS(fs->fs_typex))
             {
@@ -5253,10 +5260,12 @@ FRESULT f_rename (
 
     get_ldnumber(&path_new);                        /* Ignore drive number of new name */
     res = find_volume(&path_old, &fs, FA_WRITE);    /* Get logical drive of the old object */
+    debugSPIPrint(DEBUG_CORE_FATFS, "find_volume res:%u\n", res);
     if (res == FR_OK) {
         djo.obj.fs = fs;
         INIT_NAMBUF(fs);
         res = follow_path(&djo, path_old);      /* Check old object */
+        debugSPIPrint(DEBUG_CORE_FATFS, "follow_path res:%u\n", res);
 #ifdef _USE_FATX
         if(ISFATX_FS(fs->fs_typex))
         {
@@ -5270,6 +5279,7 @@ FRESULT f_rename (
 #if _FS_LOCK != 0
         if (res == FR_OK) res = chk_lock(&djo, 2);
 #endif
+        debugSPIPrint(DEBUG_CORE_FATFS, "chk_lock res:%u\n", res);
         if (res == FR_OK) {                     /* Object to be renamed is found */
 #if _FS_EXFAT
             if (fs->fs_type == FS_EXFAT) {  /* At exFAT */
@@ -5356,6 +5366,7 @@ FRESULT f_rename (
             }
             if (res == FR_OK) {
                 res = dir_remove(&djo);     /* Remove old entry */
+                debugSPIPrint(DEBUG_CORE_FATFS, "dir_remove res:%u\n", res);
                 if (res == FR_OK) {
                     res = sync_fs(fs);
                 }

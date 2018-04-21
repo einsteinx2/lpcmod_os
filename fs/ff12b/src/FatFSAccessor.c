@@ -688,7 +688,7 @@ int fatxdelete(const char* path)
 int fatxrename(const char* path, const char* newName)
 {
     FRESULT result;
-    const char *drive = (const char*)strrchr(newName, cPathSep);
+    const char *drive = (const char*)strchr(newName, ':');
     drive = (drive == NULL) ? newName : drive + 1;
 
     if(FATX_FILENAME_MAX < strlen(newName))
