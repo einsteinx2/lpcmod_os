@@ -759,6 +759,20 @@ int main(int argc, char *argv[]) {
     #endif  /* _MULTI_PARTITION */
     #endif  /* _USE_MKFS */
     #endif  /* !_FS_READONLY */
+                case 's' :  /* fs <path> - stats the file/dir */
+                    while (*ptr == ' ') ptr++;
+                    FileInfo info = fatxstat(ptr);
+                    if(0 < strlen(info.name) && FATX_FILENAME_MAX > strlen(info.name) && 0 < info.nameLength)
+                    {
+                        printf("name:%s  (%u)\n", info.name, info.nameLength);
+                        printf("attribute:%u  size:%u\n", info.attributes, info.size);
+                        printf("date:%u  time:%u\n", info.modDate, info.modTime);
+                    }
+                    else
+                    {
+                        printf("!!!Error\n");
+                    }
+                    break;
                 default:
                     printf(_T("Not implemented\n"));
                     break;
