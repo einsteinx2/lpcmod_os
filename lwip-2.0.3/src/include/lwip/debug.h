@@ -37,6 +37,10 @@
 #ifndef LWIP_HDR_DEBUG_H
 #define LWIP_HDR_DEBUG_H
 
+#if DEBUG_LWIP >= 1
+#define LWIP_DEBUG
+#endif
+
 #include "lwip/arch.h"
 #include "lwip/opt.h"
 
@@ -46,9 +50,6 @@
  * @{
  */
 
-#if DEBUG_LWIP >= 1
-#define LWIP_DEBUG
-#endif
 
 /** @name Debug level (LWIP_DBG_MIN_LEVEL)
  * @{
