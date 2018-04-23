@@ -201,7 +201,7 @@ void saveXBlastcfg(void* fileExist)
 
     if(filePresent)
     {
-        sprintf(tempString, "\"%s\" exists\nOverwrite?", getSettingsFileLocation() + strlen("MASTER_"));
+        sprintf(tempString, "\"%s\" exists\n\2Overwrite?", getSettingsFileLocation() + strlen("MASTER_"));
         if(0 == ConfirmDialog(tempString, 1))
         {
             return;
