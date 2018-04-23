@@ -104,6 +104,7 @@ void FatFS_init(void)
     memset(FileHandleArray, 0x00, sizeof(FIL) * MaxOpenFileCount);
     memset(DirectoryHandleArray, 0x00, sizeof(DIR) * MaxOpenDirCount);
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
+    cwd[0] = cPathSep;
     debugSPIPrint(DEBUG_FATX_FS, "init internal FatFS.\n");
     fatx_init();
 
@@ -477,10 +478,14 @@ FileInfo fatxstat(const char* path)
     FileInfo returnStruct;
     FILINFO getter;
     memset(&returnStruct, 0x00, sizeof(FileInfo));
+    debugSPIPrint(DEBUG_FATX_FS, "path:\"%s\"\n", path);
     if(FR_OK == f_stat(path, &getter))
     {
         convertToFileInfo(&returnStruct, &getter);
     }
+    debugSPIPrint(DEBUG_FATX_FS, "name:%s (%u)\n", returnStruct.name, returnStruct.nameLength);
+    debugSPIPrint(DEBUG_FATX_FS, "flags:%u size:%u\n", returnStruct.attributes, returnStruct.size);
+    debugSPIPrint(DEBUG_FATX_FS, "date:%u time:%u\n", returnStruct.modDate, returnStruct.modTime);
 
     return returnStruct;
 }
@@ -501,6 +506,8 @@ DIREX fatxopendir(const char* path)
 {
     FRESULT result;
     unsigned char i;
+
+    debugSPIPrint(DEBUG_FATX_FS, "Open dir:\"%s\"\n", path);
 
     if(0 == strcmp(path, PathSep))
     {
@@ -544,19 +551,23 @@ FileInfo fatxreaddir(DIREX handle)
 
     if(RootFolderHandle == handle)
     {
+        returnStruct.attributes = FileAttr_Directory;
+        returnStruct.modDate = 0;
+        returnStruct.modTime = 0;
+        returnStruct.size = 0;
         if(0 < isMounted(rootFolderListCount / NbFATXPartPerHDD, rootFolderListCount % NbFATXPartPerHDD))
         {
-            returnStruct.attributes = FileAttr_Directory;
-            returnStruct.modDate = 0;
-            returnStruct.modTime = 0;
-            returnStruct.size = 0;
             sprintf(returnStruct.name, "%s:"PathSep, PartitionNameList[rootFolderListCount]);
-            returnStruct.nameLength = strlen(PartitionNameList[rootFolderListCount]);
+            returnStruct.nameLength = strlen(PartitionNameList[rootFolderListCount]) + sizeof(':') + sizeof(cPathSep);
 
             rootFolderListCount++;
-
-            return returnStruct;
         }
+        else
+        {
+            returnStruct.name[0] = '\0';
+            returnStruct.nameLength = 0;
+        }
+        return returnStruct;
     }
 
     if(0 == handle || (MaxOpenDirCount < handle))
@@ -711,32 +722,49 @@ int fatxrename(const char* path, const char* newName)
 int fatxchdir(const char* path)
 {
     char* sepPos;
+    FRESULT result;
+    char fullPath[300];
+    debugSPIPrint(DEBUG_FATX_FS, "Request path:\"%s\"\n", path);
     if(MaxPathLength < strlen(path))
     {
+        debugSPIPrint(DEBUG_FATX_FS, "!!!Error, too long.\n");
         return -1;
     }
 
+
     if(0 == strcmp(path, ".."))
     {
-        sepPos = strrchr(path, cPathSep);
+        sepPos = strrchr(cwd, cPathSep);
         if(NULL == sepPos)
         {
             return -1;
         }
 
         /* Make sure it's not the partition identifier's PathSep */
-        if(path + strlen(PartitionNameStrings[HDD_Master][Part_C]) + strlen(":") + sizeof(cPathSep) < sepPos)
+        if(cwd + strlen(PartitionNameStrings[HDD_Master][Part_C]) + strlen(":") + sizeof(cPathSep) < sepPos)
         {
             sepPos[sizeof(cPathSep)]  = '\0';
         }
+        path = cwd;
+    }
+    else
+    {
+        sprintf(fullPath, "%s"PathSep"%s", cwd, path);
+        path = fullPath;
     }
 
-    if(FR_OK == f_chdir(path))
+
+    debugSPIPrint(DEBUG_FATX_FS, "Result path:\"%s\"\n", path);
+
+    result = f_chdir(path);
+    debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
+    if(FR_OK == result)
     {
         strcpy(cwd, path);
         return 0;
     }
 
+    debugSPIPrint(DEBUG_FATX_FS, "!!!Error  result:%u\n", result);
     return -1;
 }
 
