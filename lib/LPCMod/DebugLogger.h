@@ -10,7 +10,7 @@
 
 void debugLoggerInit(void);
 void logRotate(void);
-void printTextLogger(const char* functionName, char* buffer, ...);
+void printTextLogger(const char* debugFlag, const char* functionName, char* buffer, ...);
 
 
 #endif /* LIB_LPCMOD_DEBUGLOGGER_H_ */
