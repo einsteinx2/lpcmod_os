@@ -22,27 +22,27 @@ TEXTMENU *InfoMenuInit(void) {
     strcpy(menuPtr->szCaption, "Info Menu");
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Temperature");
+    strcpy(itemPtr->szCaption, "Temperature");
     itemPtr->functionPtr = ShowTemperature;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Video");
+    strcpy(itemPtr->szCaption, "Video");
     itemPtr->functionPtr = ShowVideo;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"EEPROM");
+    strcpy(itemPtr->szCaption, "EEPROM");
     itemPtr->functionPtr = ShowEeprom;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Flash Device");
+    strcpy(itemPtr->szCaption, "Flash Device");
     itemPtr->functionPtr = ShowFlashChip;
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    sprintf(itemPtr->szCaption,"Uncommitted change(s)");
+    strcpy(itemPtr->szCaption, "Uncommitted change(s)");
     itemPtr->functionPtr = UncommittedChangesMenuDynamic;
     TextMenuAddItem(menuPtr, itemPtr);
         

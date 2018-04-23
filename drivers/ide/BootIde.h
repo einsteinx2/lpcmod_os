@@ -85,8 +85,15 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size);
 int DriveSecurityChange(unsigned uIoBase, int driveId, ide_command_t ide_cmd, unsigned char *password);
 int CalculateDrivePassword(int driveId, unsigned char *key, unsigned char *eepromPtr);
 bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master_password);
-int BootIdeWriteSector(int nDriveIndex, void * pbBuffer, unsigned int block, unsigned char retry);
+int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int block, unsigned char retry);
 int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA, unsigned short len, unsigned char retry);
+
+int BootIdeFlushCache(int nDriveIndex);
+unsigned long long BootIdeGetSectorCount(int nDriveIndex);
+int BootIdeGetSectorSize(int nDriveIndex);
+int BootIdeDeviceConnected(int nDriveIndex);
+int BootIdeDeviceIsATAPI(int nDriveIndex);
+int BootIdeDeviceIsLocked(int nDriveIndex);
 
 bool driveToggleSMARTFeature(int nDriveIndex, unsigned short smart_cmd);
 int driveSMARTRETURNSTATUS(int nDriveIndex);

@@ -20,8 +20,10 @@
 #include "lib/cromwell/cromSystem.h"
 #include "xblast/settings/xblastSettingsImportExport.h"
 #include "string.h"
+#include "stdio.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "menu/misc/ProgressBar.h"
+#include "Gentoox.h"
 TEXTMENUITEM* saveEEPROMPtr;
 TEXTMENUITEM* restoreEEPROMPtr;
 TEXTMENUITEM* editEEPROMPtr;
@@ -92,7 +94,7 @@ void warningDisplayEepromEditMenu(void* ignored)
 
     editeeprom = (EEPROMDATA *)malloc(sizeof(EEPROMDATA));
     memcpy(editeeprom, &eeprom, sizeof(EEPROMDATA));   //Initial copy into edition buffer.
-    ResetDrawChildTextMenu(eepromEditMenuDynamic());
+    dynamicDrawChildTextMenu(eepromEditMenuInit);
     free(editeeprom);
     editeeprom = NULL;
 }
@@ -192,18 +194,45 @@ void TSOPRecoveryReboot(void *ignored){
     while(1);
 }
 */
-void saveXBlastcfg(void* ignored)
+void saveXBlastcfg(void* fileExist)
 {
-    LPCMod_SaveCFGToHDD();
+    unsigned char filePresent = *(unsigned char*)fileExist;
+    char tempString[50];
+
+    if(filePresent)
+    {
+        sprintf(tempString, "\"%s\" exists\nOverwrite?", getSettingsFileLocation() + strlen("MASTER_"));
+        if(0 == ConfirmDialog(tempString, 1))
+        {
+            return;
+        }
+    }
+
+    sprintf(tempString, "Saving \"%s\"", getSettingsFileLocation() + strlen("MASTER_"));
+    UiHeader(tempString);
+
+    if(LPCMod_SaveCFGToHDD(&settingsPtrStruct))
+    {
+        printk("\n           Error!");
+        cromwellError();
+    }
+    else
+    {
+        printk("\n           Success.");
+    }
+
+    UIFooter();
 }
 
 void loadXBlastcfg(void* ignored)
 {
     int result;
+    char tempString[50];
     _LPCmodSettings tempSettings;
     if(ConfirmDialog("Restore settings from \"xblast.cfg\"?", 1))
     {
-        UiHeader("Loading from C:\\xblast.cfg aborted.");
+        sprintf(tempString, "Loading from \"%s\" aborted.", getSettingsFileLocation() + strlen("MASTER_"));
+        UiHeader(tempString);
         result = 1;
     }
     else
@@ -215,7 +244,7 @@ void loadXBlastcfg(void* ignored)
     {
         importNewSettingsFromCFGLoad(&tempSettings);
         UiHeader("Success.");
-        printk("\n           Settings loaded from \"C:\\XBlast\\xblast.cfg\".");
+        printk("\n           Settings loaded from \"%s\".", getSettingsFileLocation() + strlen("MASTER_"));
     }
     else
     {
@@ -228,10 +257,10 @@ void loadXBlastcfg(void* ignored)
             printk("\n           Unable to open partition. Is drive formatted?");
             break;
         case 3:
-            printk("\n           File \"C:\\XBlast\\xblast.cfg\" not found.");
+            printk("\n           File \"%s\" not found.", getSettingsFileLocation() + strlen("MASTER_"));
             break;
         case 4:
-            printk("\n           Unable to open \"C:\\XBlast\\xblast.cfg\".");
+            printk("\n           Unable to open \"%s\".", getSettingsFileLocation() + strlen("MASTER_"));
             break;
         }
     }
@@ -244,16 +273,16 @@ void nextA19controlModBootValue(void* itemPtr)
     {
         case BNKFULLTSOP:
             A19controlModBoot = BNKTSOPSPLIT0;
-            sprintf(itemPtr, "%s", "Bank0");
+            strcpy(itemPtr, "Bank0");
             break;
         case BNKTSOPSPLIT0:
             A19controlModBoot = BNKTSOPSPLIT1;
-            sprintf(itemPtr, "%s", "Bank1");
+            strcpy(itemPtr, "Bank1");
             break;
         case BNKTSOPSPLIT1:
         default:
             A19controlModBoot = BNKFULLTSOP;
-            sprintf(itemPtr, "%s", "No");
+            strcpy(itemPtr, "No");
             break;
     }
 }
@@ -264,16 +293,16 @@ void prevA19controlModBootValue(void* itemPtr)
     {
         case BNKTSOPSPLIT1:
             A19controlModBoot = BNKTSOPSPLIT0;
-            sprintf(itemPtr, "%s", "Bank0");
+            strcpy(itemPtr,  "Bank0");
             break;
         case BNKFULLTSOP:
             A19controlModBoot = BNKTSOPSPLIT1;
-            sprintf(itemPtr, "%s", "Bank1");
+            strcpy(itemPtr,  "Bank1");
             break;
         case BNKTSOPSPLIT0:
         default:
             A19controlModBoot = BNKFULLTSOP;
-            sprintf(itemPtr, "%s", "No");
+            strcpy(itemPtr, "No");
             break;
     }
 }

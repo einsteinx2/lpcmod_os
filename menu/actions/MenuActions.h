@@ -17,6 +17,7 @@ void AdvancedMenu(void *menu);
 //Used to display child menus
 void DrawChildTextMenu(void* menu);
 void ResetDrawChildTextMenu(TEXTMENU* menu);
+void dynamicDrawChildTextMenu(void* menuInitFct);
 void DrawLargeHDDTextMenu(unsigned char drive);
 
 void SetWidescreen(void *);

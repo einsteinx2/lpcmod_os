@@ -33,7 +33,7 @@
 
 #if 0 /* UNUSED */
 #include <stdio.h>
-#include <ctype.h>
+#include "ctype.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -58,7 +58,7 @@
 #endif
 #endif /* UNUSED */
 
-#include <ctype.h>  /* isdigit() */
+#include "ctype.h"  /* isdigit() */
 
 #include "netif/ppp/ppp_impl.h"
 

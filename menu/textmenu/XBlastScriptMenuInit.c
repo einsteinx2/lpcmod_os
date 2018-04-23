@@ -12,12 +12,13 @@
 #include "boot.h"
 #include "BootIde.h"
 #include "memory_layout.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "lpcmod_v1.h"
 #include "string.h"
+#include "stdio.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "xblast/HardwareIdentifier.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 
 TEXTMENU* RunScriptMenuInit(void);
 TEXTMENU* SaveScriptMenuInit(void);
@@ -34,8 +35,8 @@ TEXTMENU* XBlastScriptMenuInit(void)
     //Run Script.
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Run script from HDD");
-    itemPtr->functionPtr = DrawChildTextMenu;
-    itemPtr->functionDataPtr = RunScriptMenuInit();
+    itemPtr->functionPtr = dynamicDrawChildTextMenu;
+    itemPtr->functionDataPtr = RunScriptMenuInit;
     TextMenuAddItem(menuPtr, itemPtr);
 
     //Save script to flash.
@@ -43,15 +44,14 @@ TEXTMENU* XBlastScriptMenuInit(void)
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Save script to flash");
-        itemPtr->functionPtr = DrawChildTextMenu;
-        itemPtr->functionDataPtr = SaveScriptMenuInit();
+        itemPtr->functionPtr = dynamicDrawChildTextMenu;
+        itemPtr->functionDataPtr = SaveScriptMenuInit;
         TextMenuAddItem(menuPtr, itemPtr);
 
         if(LPCmodSettings.flashScript.scriptSize > 0)
         {
-            itemPtr = malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            strcpy(itemPtr->szCaption, "Save script to flash");
+            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+            strcpy(itemPtr->szCaption, "Erase script from flash");
             itemPtr->functionPtr = deleteFlashScriptFromFlash;
             itemPtr->functionDataPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
@@ -71,8 +71,8 @@ TEXTMENU* XBlastScriptMenuInit(void)
     if(isXBE() == false || isXBlastOnLPC())
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption,"Enable Boot script : ");
-        sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
+        strcpy(itemPtr->szCaption, "Enable Boot script : ");
+        strcpy(itemPtr->szParameter, LPCmodSettings.OSsettings.runBootScript? "Yes" : "No");
         itemPtr->functionPtr = toggleRunBootScript;
         itemPtr->functionDataPtr= itemPtr->szParameter;
         itemPtr->functionLeftPtr=toggleRunBootScript;
@@ -83,8 +83,8 @@ TEXTMENU* XBlastScriptMenuInit(void)
     }
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption,"Enable Bank script : ");
-    sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
+    strcpy(itemPtr->szCaption, "Enable Bank script : ");
+    strcpy(itemPtr->szParameter, LPCmodSettings.OSsettings.runBankScript? "Yes" : "No");
     itemPtr->functionPtr = toggleRunBankScript;
     itemPtr->functionDataPtr= itemPtr->szParameter;
     itemPtr->functionLeftPtr=toggleRunBankScript;
@@ -99,106 +99,70 @@ TEXTMENU* XBlastScriptMenuInit(void)
 
 TEXTMENU* RunScriptMenuInit(void)
 {
-    TEXTMENUITEM *itemPtr;
-    TEXTMENU *menuPtr;
-    FATXFILEINFO fileinfo;
-    FATXPartition *partition;
+    TEXTMENUITEM* itemPtr;
+    TEXTMENU* menuPtr;
 
-    char *fnames[4096]; //Because Each dir can have up to 4096 files when not in root of partition.
-    short n=0, i=0;
-    int bioses=0;
-    int res;
-    int dcluster;
-    char *path="\\XBlast\\scripts\\";      //And we're not in root.
-    char fullPath[25];
-    char *fullPathptr = fullPath;
-    for(i = 0; i < 4096; i++)   //Not really useful but good practice.
+    DIREX dirHandle;
+    FileInfo fileInfo;
+    unsigned short n = 0;
+
+	debugSPIPrint(DEBUG_SCRIPT, "Listing scripts in %s\n", getScriptDirectoryLocation());
+
+    menuPtr = calloc(1, sizeof(TEXTMENU));
+
+    strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
+
+    if(isMounted(HDD_Master, Part_C))
     {
-        fnames[i] = NULL;
-    }
-    memset(fullPath, 0, 20);
-
-    // Generate the menu title.
-    strcpy(fullPath, "'C:");
-    fullPathptr += 3;
-    strcpy(fullPathptr, path);
-    fullPathptr += strlen(path);
-    strcpy(fullPathptr, "'");
-    fullPathptr = NULL;
-
-    //Only supports script file fetch from Master HDD.
-    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0,sizeof(TEXTMENU));
-
-    strcpy(menuPtr->szCaption, fullPath);
-
-    if(partition != NULL)
-    {
-        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-
-        if((dcluster != -1) && (dcluster != 1))
+        dirHandle = fatxopendir(getScriptDirectoryLocation());
+        if(dirHandle)
         {
-            dcluster = FATXFindDir(partition, dcluster, "scripts");
-        }
-
-        if((dcluster != -1) && (dcluster != 1))
-        {
-            n = FATXListDir(partition, dcluster, &fnames[0], 4096, path);
-            for (i=0; i<n; i++)
+            do
             {
+                fileInfo = fatxreaddir(dirHandle);
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
+                {
+                   break;
+                }
+                n++;
                 // Check the file.
-                res = FATXFindFile(partition, fnames[i], FATX_ROOT_FAT_CLUSTER, &fileinfo);
-
-                if((res) && (fileinfo.fileSize))
+                if(0 < fileInfo.size)
                 {
                     // If it's a (readable) file - i.e. not a directory.
-                    // AND it's filesize is at least 1 byte.
-                    itemPtr = malloc(sizeof(TEXTMENUITEM));
-                    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
-                    itemPtr->functionPtr = loadRunScript;
-                    itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
-                    TextMenuAddItem(menuPtr, itemPtr);
-                    bioses++;
+                    // AND it's filesize is divisible by 256k.
+                    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+                    strcpy(itemPtr->szCaption, fileInfo.name);
+                    itemPtr->functionPtr = loadRunScriptNoParams;
+                    itemPtr->functionDataPtr = itemPtr->szCaption;
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                 }
-            }
-            if(n < 1)
+            } while(1);
+
+            if(0 == n)
             {
                 // If there were no directories and no files.
-                itemPtr = malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"No files in %s.", fullPath);
+                itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption, "No files in %s.", getScriptDirectoryLocation() + strlen("MASTER_"));
                 itemPtr->functionPtr = NULL;
                 TextMenuAddItem(menuPtr, itemPtr);
             }
-            else if(bioses==0)
-            {
-                // If there were directories, but no files.
-                itemPtr = malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"No script in %s.", fullPath);
-                itemPtr->functionPtr = NULL;
-                TextMenuAddItem(menuPtr, itemPtr);
-            }
+
+            fatxclosedir(dirHandle);
         }
         else
         {
-            // If C:\BIOS doesnt exist.
-            itemPtr = malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"%s does not exist.", fullPath);
+            // If C:\XBlast\Scripts doesnt exist.
+            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption, "%s does not exist.", getScriptDirectoryLocation() + strlen("MASTER_"));
             itemPtr->functionPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
         }
-        CloseFATXPartition(partition);
     }
     else
     {
         // If the partition couldn't be opened at all.
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption,"Error reading C:\\ partition.");
+        strcpy(itemPtr->szCaption, "Error reading C:\\ partition.");
         itemPtr->functionPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }
@@ -208,108 +172,70 @@ TEXTMENU* RunScriptMenuInit(void)
 
 TEXTMENU* SaveScriptMenuInit(void)
 {
-    TEXTMENUITEM *itemPtr;
-    TEXTMENU *menuPtr;
-    FATXFILEINFO fileinfo;
-    FATXPartition *partition;
+    TEXTMENUITEM* itemPtr;
+    TEXTMENU* menuPtr;
 
-    char *fnames[4096]; //Because Each dir can have up to 4096 files when not in root of partition.
-    short n=0, i=0;
-    int bioses=0;
-    int res;
-    int dcluster;
-    char *path="\\XBlast\\scripts\\";      //And we're not in root.
-    char fullPath[25];
-    char *fullPathptr = fullPath;
-    for(i = 0; i < 4096; i++)   //Not really useful but good practice.
+    DIREX dirHandle;
+    FileInfo fileInfo;
+    unsigned short n = 0;
+    
+    debugSPIPrint(DEBUG_SCRIPT, "Listing scripts in %s\n", getScriptDirectoryLocation());
+
+    menuPtr = calloc(1, sizeof(TEXTMENU));
+
+    strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
+
+    if(isMounted(HDD_Master, Part_C))
     {
-        fnames[i] = NULL;
-    }
-    memset(fullPath, 0, 20);
-
-    // Generate the menu title.
-    strcpy(fullPath, "'C:");
-    fullPathptr += 3;
-    strcpy(fullPathptr, path);
-    fullPathptr += strlen(path);
-    strcpy(fullPathptr, "'");
-    fullPathptr = NULL;
-
-    //Only supports BIOS file fetch from Master HDD.
-    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-
-    menuPtr = (TEXTMENU*)malloc(sizeof(TEXTMENU));
-    memset(menuPtr,0,sizeof(TEXTMENU));
-
-    strcpy(menuPtr->szCaption, fullPath);
-
-    if(partition != NULL)
-    {
-        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-        if((dcluster != -1) && (dcluster != 1))
+        dirHandle = fatxopendir(getScriptDirectoryLocation());
+        if(dirHandle)
         {
-            dcluster = FATXFindDir(partition, dcluster, "scripts");
-        }
-
-        if((dcluster != -1) && (dcluster != 1))
-        {
-            n = FATXListDir(partition, dcluster, &fnames[0], 4096, path);
-
-            for (i=0; i<n; i++)
+            do
             {
+                fileInfo = fatxreaddir(dirHandle);
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
+                {
+                   break;
+                }
+                n++;
                 // Check the file.
-                res = FATXFindFile(partition, fnames[i], FATX_ROOT_FAT_CLUSTER, &fileinfo);
-
-                if((res) && (fileinfo.fileSize))
+                if(0 < fileInfo.size)
                 {
                     // If it's a (readable) file - i.e. not a directory.
-                    // AND it's filesize is at least 1 byte.
-                    itemPtr = malloc(sizeof(TEXTMENUITEM));
-                    memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fnames[i]+strlen(path));
+                    // AND it's filesize is divisible by 256k.
+                    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+                    strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = saveScriptToFlash;
-                    itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
-                    TextMenuAddItem(menuPtr, itemPtr);
-                    bioses++;
+                    itemPtr->functionDataPtr = itemPtr->szCaption;
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                 }
-            }
+            } while(1);
 
-            if(n < 1)
+            if(0 == n)
             {
                 // If there were no directories and no files.
-                itemPtr = malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"No files in %s.", fullPath);
+                itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption, "No files in %s.", getScriptDirectoryLocation() + strlen("MASTER_"));
                 itemPtr->functionPtr = NULL;
                 TextMenuAddItem(menuPtr, itemPtr);
             }
-            else if(bioses==0)
-            {
-                // If there were directories, but no files.
-                itemPtr = malloc(sizeof(TEXTMENUITEM));
-                memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption,"No script in %s.", fullPath);
-                itemPtr->functionPtr = NULL;
-                TextMenuAddItem(menuPtr, itemPtr);
-            }
+
+            fatxclosedir(dirHandle);
         }
         else
         {
-            // If C:\BIOS doesnt exist.
-            itemPtr = malloc(sizeof(TEXTMENUITEM));
-            memset(itemPtr,0x00,sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption,"%s does not exist.", fullPath);
+            // If C:\XBlast\Scripts doesnt exist.
+            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption, "%s does not exist.", getScriptDirectoryLocation() + strlen("MASTER_"));
             itemPtr->functionPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
         }
-
-        CloseFATXPartition(partition);
     }
     else
     {
         // If the partition couldn't be opened at all.
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption,"Error reading C:\\ partition.");
+        strcpy(itemPtr->szCaption, "Error reading C:\\ partition.");
         itemPtr->functionPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }

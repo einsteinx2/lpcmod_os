@@ -15,7 +15,7 @@ ETHERBOOT := yes
 LWIPFOLDER := lwip-2.0.3
 
 INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/cdrom \
-	-I$(TOPDIR)/fs/fatx -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/eeprom -I$(TOPDIR)/lib/crypt \
+	-I$(TOPDIR)/fs/ff12b/src -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/eeprom -I$(TOPDIR)/lib/crypt \
 	-I$(TOPDIR)/drivers/video -I$(TOPDIR)/drivers/ide -I$(TOPDIR)/drivers/flash -I$(TOPDIR)/lib/misc \
 	-I$(TOPDIR)/boot_xbe/ -I$(TOPDIR)/fs/grub -I$(TOPDIR)/lib/cromwell/font \
 	-I$(TOPDIR)/startuploader -I$(TOPDIR)/drivers/cpu -I$(TOPDIR)/menu \
@@ -189,13 +189,20 @@ OBJECTS-CROM += $(TOPDIR)/obj/BootEEPROM.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLPCMod.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDRingBuffer.o
-OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
-#OBJECTS-CROM += $(TOPDIR)/obj/ff.o
+#OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o
+OBJECTS-CROM += $(TOPDIR)/obj/ff.o
+OBJECTS-CROM += $(TOPDIR)/obj/diskio.o
+OBJECTS-CROM += $(TOPDIR)/obj/FatFSAccessor.o
+OBJECTS-CROM += $(TOPDIR)/obj/minIni.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
 OBJECTS-CROM += $(TOPDIR)/obj/md5.o
 OBJECTS-CROM += $(TOPDIR)/obj/crc32.o
 OBJECTS-CROM += $(TOPDIR)/obj/strtol.o
+OBJECTS-CROM += $(TOPDIR)/obj/strnstr.o
+OBJECTS-CROM += $(TOPDIR)/obj/strcasecmp.o
+OBJECTS-CROM += $(TOPDIR)/obj/memrchr.o
+OBJECTS-CROM += $(TOPDIR)/obj/strrchr.o
 OBJECTS-CROM += $(TOPDIR)/obj/cromSystem.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
 OBJECTS-CROM += $(TOPDIR)/obj/functionsAccessor.o

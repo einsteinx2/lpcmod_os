@@ -18,7 +18,7 @@
 #include "memory_layout.h"
 #include "rc4.h"
 #include "sha1.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "cpu.h"
 #include "BootIde.h"
 #include "MenuActions.h"
@@ -34,6 +34,7 @@
 #include "lib/cromwell/cromSystem.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
+#include "stdio.h"
 
 #define TRANSPARENTNESS 0x30
 #define SELECTED 0xff

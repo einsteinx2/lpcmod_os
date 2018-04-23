@@ -12,12 +12,46 @@
 #include "LEDMenuActions.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
+#include "stdio.h"
 #include "boot.h"
+
+// Globals
+_LPCmodSettings LPCmodSettings;
+_LPCmodSettings LPCmodSettingsOrigFromFlash;
+const unsigned char LPCmodSettingsTextFieldsMaxLength = _SettingsMaxTextFieldsLength;
 
 #define HDD4780_DEFAULT_NBLINES    4
 #define HDD4780_DEFAULT_LINELGTH    20
 
 #define DEFAULT_FANSPEED    20
+
+
+// Privates
+static const char* const szText_BNK512 = "BNK512";
+static const char* const szText_BNK256 = "BNK256";
+static const char* const szText_BNKTSOPSPLIT0 = "BNKTSOPSPLIT0";
+static const char* const szText_BNKFULLTSOP = "BNKFULLTSOP";
+static const char* const szText_BNKTSOPSPLIT1 = "BNKTSOPSPLIT1";
+static const char* const szText_BNKOS = "BNKOS";
+
+static const char* const szDisplay_BNK512 = "512KB bank";
+static const char* const szDisplay_BNK256 = "256KB bank";
+static const char* const szDisplay_BNKTSOPSPLIT0 = "OnBoard Bank0";
+static const char* const szDisplay_BNKFULLTSOP = "OnBoard BIOS";
+static const char* const szDisplay_BNKTSOPSPLIT1 = "OnBoard Bank1";
+static const char* const szDisplay_BNKOS = "XBlast OS";
+
+static const char* const szText_LED_OFF = "Off";
+static const char* const szText_LED_GREEN = "Green";
+static const char* const szText_LED_RED = "Red";
+static const char* const szText_LED_ORANGE = "Orange";
+static const char* const szText_LED_CYCLE = "Cycle";
+
+static const char* const szText_LCDTYPE_HD44780 = "HD44780";
+static const char* const szText_LCDTYPE_KS0073 = "KS0073";
+static const char* const getSpecialSettingStringCommon(unsigned char SpecialSettingindex, unsigned char value);
+
+
 
 //Sets default values to most important settings.
 void populateSettingsStructWithDefault(_LPCmodSettings *inout)
@@ -111,51 +145,65 @@ void populateSettingsStructWithDefault(_LPCmodSettings *inout)
     inout->flashScript.scriptSize = 0;
 }
 
-void LPCMod_LCDBankString(char * string, unsigned char bankID){
-    switch(bankID){
+void LPCMod_LCDBankString(char * string, unsigned char bankID)
+{
+    switch(bankID)
+    {
         case BNK512:
-            if(LPCmodSettings.OSsettings.biosName512Bank[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName512Bank);
+            if('\0' != LPCmodSettings.OSsettings.biosName512Bank[0])
+            {
+                strcpy(string, LPCmodSettings.OSsettings.biosName512Bank);
             }
-            else{
-                sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK512));
+            else
+            {
+                strcpy(string, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK512));
             }
             break;
         case BNK256:
-            if(LPCmodSettings.OSsettings.biosName256Bank[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosName256Bank);
+            if('\0' != LPCmodSettings.OSsettings.biosName256Bank[0])
+            {
+                strcpy(string, LPCmodSettings.OSsettings.biosName256Bank);
             }
-            else{
-                sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK256));
+            else
+            {
+                strcpy(string, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNK256));
             }
             break;
         case BNKTSOPSPLIT0:
         case BNKFULLTSOP:
-            if(LPCmodSettings.OSsettings.biosNameTSOPFullSplit0[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosNameTSOPFullSplit0);
+            if('\0' != LPCmodSettings.OSsettings.biosNameTSOPFullSplit0[0])
+            {
+                strcpy(string, LPCmodSettings.OSsettings.biosNameTSOPFullSplit0);
             }
-            else{
+            else
+            {
                 if(LPCmodSettings.OSsettings.TSOPcontrol)
-                    sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT0));
+                {
+                    strcpy(string, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT0));
+                }
                 else
-                    sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKFULLTSOP));
+                {
+                    strcpy(string, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKFULLTSOP));
+                }
             }
             break;
         case BNKTSOPSPLIT1:
-            if(LPCmodSettings.OSsettings.biosNameTSOPSplit1[0] != 0){
-                sprintf(string, "%s", LPCmodSettings.OSsettings.biosNameTSOPSplit1);
+            if('\0' != LPCmodSettings.OSsettings.biosNameTSOPSplit1[0])
+            {
+                strcpy(string, LPCmodSettings.OSsettings.biosNameTSOPSplit1);
             }
-            else{
-                sprintf(string, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT1));
+            else
+            {
+                strcpy(string, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, BNKTSOPSPLIT1));
             }
             break;
          default:
-         	sprintf(string, "%s", "Settings");
+             strcpy(string, "Settings");
          	break;
     }
 }
 
-const char* getSpecialSettingString(unsigned char SpecialSettingindex, unsigned char value)
+const char* const getSpecialSettingTextString(unsigned char SpecialSettingindex, unsigned char value)
 {
     switch(SpecialSettingindex)
     {
@@ -164,46 +212,88 @@ const char* getSpecialSettingString(unsigned char SpecialSettingindex, unsigned 
         switch(value)
         {
         case BNK512:
-            return "512KB bank";
+            return szText_BNK512;
         case BNK256:
-            return "256KB bank";
+            return szText_BNK256;
         case BNKTSOPSPLIT0:
-            return "OnBoard Bank0";
+            return szText_BNKTSOPSPLIT0;
         case BNKFULLTSOP:
-            return "OnBoard BIOS";
+            return szText_BNKFULLTSOP;
         case BNKTSOPSPLIT1:
-            return "OnBoard Bank1";
+            return szText_BNKTSOPSPLIT1;
         case BNKOS:
-            return "XBlast OS";
+            return szText_BNKOS;
         }
         break;
-    case SpecialSettingsPtrArrayIndexName_LEDColor:
-        switch(value)
-        {
-        case LED_OFF:
-            return "Off";
-        case LED_GREEN:
-            return "Green";
-        case LED_RED:
-            return "Red";
-        case LED_ORANGE:
-            return "Orange";
-        case LED_CYCLE:
-            return "Cycle";
-        }
-        break;
-    case SpecialSettingsPtrArrayIndexName_LCDType:
-        switch(value)
-        {
-        case LCDTYPE_HD44780:
-            return "HD44780";
-        case LCDTYPE_KS0073:
-            return "KS0073";
-        }
-        break;
+    default:
+        return getSpecialSettingStringCommon(SpecialSettingindex, value);
+    break;
     }
 
     return NULL;
+}
+
+const char* const getSpecialSettingDisplayString(unsigned char SpecialSettingindex, unsigned char value)
+{
+    switch(SpecialSettingindex)
+    {
+    case SpecialSettingsPtrArrayIndexName_ActiveBank:
+    case SpecialSettingsPtrArrayIndexName_AltBank:
+        switch(value)
+        {
+        case BNK512:
+            return szDisplay_BNK512;
+        case BNK256:
+            return szDisplay_BNK256;
+        case BNKTSOPSPLIT0:
+            return szDisplay_BNKTSOPSPLIT0;
+        case BNKFULLTSOP:
+            return szDisplay_BNKFULLTSOP;
+        case BNKTSOPSPLIT1:
+            return szDisplay_BNKTSOPSPLIT1;
+        case BNKOS:
+            return szDisplay_BNKOS;
+        }
+        break;
+    default:
+        return getSpecialSettingStringCommon(SpecialSettingindex, value);
+    break;
+    }
+
+    return NULL;
+}
+
+static const char* const getSpecialSettingStringCommon(unsigned char SpecialSettingindex, unsigned char value)
+{
+    switch(SpecialSettingindex)
+        {
+        case SpecialSettingsPtrArrayIndexName_LEDColor:
+            switch(value)
+            {
+            case LED_OFF:
+                return szText_LED_OFF;
+            case LED_GREEN:
+                return szText_LED_GREEN;
+            case LED_RED:
+                return szText_LED_RED;
+            case LED_ORANGE:
+                return szText_LED_ORANGE;
+            case LED_CYCLE:
+                return szText_LED_CYCLE;
+            }
+            break;
+        case SpecialSettingsPtrArrayIndexName_LCDType:
+            switch(value)
+            {
+            case LCDTYPE_HD44780:
+                return szText_LCDTYPE_HD44780;
+            case LCDTYPE_KS0073:
+                return szText_LCDTYPE_KS0073;
+            }
+            break;
+        }
+
+        return NULL;
 }
 
 bool emergencyRecoverSettings(void)

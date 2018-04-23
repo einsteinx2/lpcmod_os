@@ -29,9 +29,12 @@ typedef unsigned short	WCHAR;
 /* These types MUST be 32-bit */
 typedef long			LONG;
 typedef unsigned long	DWORD;
+typedef long long       LONGLONG;
 
 /* This type MUST be 64-bit (Remove this for C89 compatibility) */
 typedef unsigned long long QWORD;
+
+typedef void *          HANDLE;
 
 #endif
 

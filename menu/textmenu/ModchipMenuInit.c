@@ -4,6 +4,7 @@
 #include "boot.h"
 #include "ModchipMenuActions.h"
 #include "string.h"
+#include "stdio.h"
 #include "xblast/HardwareIdentifier.h"
 #include "xblast/settings/xblastSettings.h"
 
@@ -32,7 +33,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Quickboot : ");
-        sprintf(itemPtr->szParameter, "%s", LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
+        strcpy(itemPtr->szParameter, LPCmodSettings.OSsettings.Quickboot? "Yes" : "No");
         itemPtr->functionPtr = toggleQuickboot;
         itemPtr->functionDataPtr = itemPtr->szParameter;
         itemPtr->functionLeftPtr = toggleQuickboot;
@@ -46,7 +47,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Power button boot : ");
-        sprintf(itemPtr->szParameter, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
+        strcpy(itemPtr->szParameter, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_ActiveBank, LPCmodSettings.OSsettings.activeBank));
         customParams->powerButString = itemPtr->szParameter;
         itemPtr->functionPtr = incrementActiveBank;
         itemPtr->functionDataPtr = customParams->powerButString;
@@ -59,11 +60,11 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Eject button boot : ");
-        sprintf(itemPtr->szParameter, "%s", getSpecialSettingString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
+        strcpy(itemPtr->szParameter, getSpecialSettingDisplayString(SpecialSettingsPtrArrayIndexName_AltBank, LPCmodSettings.OSsettings.altBank));
         customParams->ejectButString = itemPtr->szParameter;
         itemPtr->functionPtr = incrementAltBank;
         itemPtr->functionDataPtr = customParams->ejectButString;
-        itemPtr->functionLeftPtr = incrementAltBank;
+        itemPtr->functionLeftPtr = decrementAltBank;
         itemPtr->functionLeftDataPtr = customParams->ejectButString;
         itemPtr->functionRightPtr = incrementAltBank;
         itemPtr->functionRightDataPtr = customParams->ejectButString;
@@ -74,7 +75,7 @@ TEXTMENU *ModchipMenuInit(void)
             //Don't show this when Xbox motherboard is not 1.0/1.1.
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
             strcpy(itemPtr->szCaption, "Control Xbox TSOP : ");
-            sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPcontrol) ? "Yes" : "No");
+            strcpy(itemPtr->szParameter, (LPCmodSettings.OSsettings.TSOPcontrol) ? "Yes" : "No");
             customParams->tsopControlString = itemPtr->szParameter;
             itemPtr->functionPtr = toggleTSOPcontrol;
             itemPtr->functionDataPtr = customParams;
@@ -88,7 +89,7 @@ TEXTMENU *ModchipMenuInit(void)
     
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "Hide TSOP boot icon : ");
-        sprintf(itemPtr->szParameter, "%s", (LPCmodSettings.OSsettings.TSOPhide) ? "Yes" : "No");
+        strcpy(itemPtr->szParameter, (LPCmodSettings.OSsettings.TSOPhide) ? "Yes" : "No");
         itemPtr->functionPtr = toggleTSOPhide;
         itemPtr->functionDataPtr = itemPtr->szParameter;
         itemPtr->functionLeftPtr = toggleTSOPhide;
@@ -98,14 +99,14 @@ TEXTMENU *ModchipMenuInit(void)
         TextMenuAddItem(menuPtr, itemPtr);
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Bank0(512KB) BIOS name");
+        strcpy(itemPtr->szCaption, "Bank0(512KB) BIOS name");
         itemPtr->functionPtr = editBIOSName;
         itemPtr->functionDataPtr = malloc(sizeof(FlashBank));
         *(char*)itemPtr->functionDataPtr = FlashBank_512Bank;
         TextMenuAddItem(menuPtr, itemPtr);
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Bank1(256KB) BIOS name");
+        strcpy(itemPtr->szCaption, "Bank1(256KB) BIOS name");
         customParams->bank256ItemPtr = itemPtr;
         itemPtr->functionPtr = editBIOSName;
         itemPtr->functionDataPtr = malloc(sizeof(FlashBank));
@@ -114,7 +115,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         customParams->tsopBank0ItemPtr = itemPtr;
-        sprintf(itemPtr->szCaption, "TSOP bank0 name");
+        strcpy(itemPtr->szCaption, "TSOP bank0 name");
         itemPtr->functionPtr = editBIOSName;
         itemPtr->functionDataPtr = malloc(sizeof(FlashBank));
         *(char*)itemPtr->functionDataPtr = FlashBank_SplitTSOP0Bank;
@@ -122,7 +123,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         customParams->tsopBank1ItemPtr = itemPtr;
-        sprintf(itemPtr->szCaption, "TSOP bank1 name");
+        strcpy(itemPtr->szCaption, "TSOP bank1 name");
         itemPtr->functionPtr = editBIOSName;
         itemPtr->functionDataPtr = malloc(sizeof(FlashBank));
         *(char*)itemPtr->functionDataPtr = FlashBank_SplitTSOP1Bank;
@@ -130,7 +131,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         customParams->tsopFullItemPtr = itemPtr;
-        sprintf(itemPtr->szCaption, "TSOP BIOS name");
+        strcpy(itemPtr->szCaption, "TSOP BIOS name");
         itemPtr->functionPtr = editBIOSName;
         itemPtr->functionDataPtr= malloc(sizeof(FlashBank));
         *(char*)itemPtr->functionDataPtr = FlashBank_FullTSOPBank;
@@ -138,7 +139,7 @@ TEXTMENU *ModchipMenuInit(void)
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         customParams->resetAllItemPtr = itemPtr;
-        sprintf(itemPtr->szCaption, "Reset all settings");
+        strcpy(itemPtr->szCaption, "Reset all settings");
         itemPtr->functionPtr = resetSettings;
         TextMenuAddItem(menuPtr, itemPtr);
 
@@ -147,12 +148,12 @@ TEXTMENU *ModchipMenuInit(void)
     else
     {
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Reboot from Modchip");
+        strcpy(itemPtr->szCaption, "Reboot from Modchip");
         itemPtr->noSelect = NOSELECTERROR;
         TextMenuAddItem(menuPtr, itemPtr);
 
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "to edit these settings.");
+        strcpy(itemPtr->szCaption, "to edit these settings.");
         itemPtr->noSelect = NOSELECTERROR;
         TextMenuAddItem(menuPtr, itemPtr);
     }

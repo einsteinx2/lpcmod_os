@@ -13,7 +13,7 @@
 typedef struct OSSettingsChangeEntry
 {
     const char* label;
-    char changeString[21 + 21 + 3];
+    char* changeString;
     void* newSetting;
     void* origSettings;
     unsigned char settingSize;

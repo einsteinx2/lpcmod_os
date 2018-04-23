@@ -20,6 +20,7 @@
 #include "MenuActions.h"
 #include "FlashDriver.h"
 #include "string.h"
+#include "stdio.h"
 
 void LPCIOWrite(void* ignored)
 {
@@ -454,88 +455,109 @@ void settingsPrintData(void * ignored){
     printk("\n           Persistent settings\n");
     VIDEO_ATTR=0xffc8c8c8;
     
-    for(i = 0; i < NBTXTPARAMS; i++){
-        if(i < IPTEXTPARAMGROUP){
-            if((i%2) == 0){ //Pair increments
-                printk("\n");
-            }
-                printk("           %s%u", xblastcfgstrings[i], *settingsPtrStruct.settingsPtrArray[i]);
-        }
-        else if(i < TEXTPARAMGROUP)
+    for(i = 0; i < BoolParamGroup; i++)
+    {
+        if((i%2) == 0) //Pair increments
         {
-            if((i%2) == 0)
-            {
-                printk("\n");
-            }
-            printk("           %s%u.%u.%u.%u", xblastcfgstrings[i], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][0], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][1], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][2], settingsPtrStruct.IPsettingsPtrArray[i-IPTEXTPARAMGROUP][3]);
+            printk("\n");
         }
-        else if(i < SPECIALPARAMGROUP)
-            printk("\n           %s%s", xblastcfgstrings[i],  settingsPtrStruct.textSettingsPtrArray[i-TEXTPARAMGROUP]);
-        else{
-            switch(i){
-                case (SPECIALPARAMGROUP):
-                    printk("\n");
-                /* Fall through */
-                case (SPECIALPARAMGROUP + 1):
-                    switch(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
-                        case BNK512:
-                            sprintf(specialCasesBuf, "BNK512");
-                            break;
-                        case BNK256:
-                            sprintf(specialCasesBuf, "BNK256");
-                            break;
-                        case BNKTSOPSPLIT0:
-                            sprintf(specialCasesBuf, "BNKTSOPSPLIT0");
-                            break;
-                        case BNKTSOPSPLIT1:
-                            sprintf(specialCasesBuf, "BNKTSOPSPLIT1");
-                            break;
-                        case BNKFULLTSOP:
-                            sprintf(specialCasesBuf, "BNKFULLTSOP");
-                            break;
-                        case BNKOS:
-                            sprintf(specialCasesBuf, "BNKOS");
-                            break;
-                        default:
-                            sprintf(specialCasesBuf, "Error!");
-                            break;
-                    }
-                    printk("           %s%s", xblastcfgstrings[i], specialCasesBuf);
-                    break;
-                case (SPECIALPARAMGROUP + 2):
-                    switch(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]){
-                        case LED_OFF:
-                            sprintf(specialCasesBuf, "LED_OFF");
-                            break;
-                        case LED_GREEN:
-                            sprintf(specialCasesBuf, "LED_GREEN");
-                            break;
-                        case LED_RED:
-                            sprintf(specialCasesBuf, "LED_RED");
-                            break;
-                        case LED_ORANGE:
-                            sprintf(specialCasesBuf, "LED_ORANGE");
-                            break;
-                        case LED_CYCLE:
-                            sprintf(specialCasesBuf, "LED_CYCLE");
-                            break;
-                        default:
-                            sprintf(specialCasesBuf, "LED_FIRSTBOOT?");
-                            break;
-                    }
-                    printk("\n           %s%s", xblastcfgstrings[i], specialCasesBuf);
-                    break;
-                case (SPECIALPARAMGROUP + 3):
-                    if(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] == LCDTYPE_HD44780)
-                        printk("\n           %s%s", xblastcfgstrings[i], "HD44780");
-                    else if(*settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] == LCDTYPE_KS0073)
-                        printk("\n           %s%s", xblastcfgstrings[i], "KS0073");
-                    else
-                        printk("\n           %s%s", xblastcfgstrings[i], "Error!");
+        printk("           %s=%u", xblastCfgStringsStruct.boolSettingsStringArray[i], *settingsPtrStruct.boolSettingsPtrArray[i]);
+    }
+    printk("\n");
+
+    for(i = 0; i < NumParamGroup; i++)
+    {
+        if((i%2) == 0) //Pair increments
+        {
+            printk("\n");
+        }
+        printk("           %s=%u", xblastCfgStringsStruct.numSettingsStringArray[i], *settingsPtrStruct.numSettingsPtrArray[i]);
+    }
+    printk("\n");
+
+    for(i = 0; i < IPParamGroup; i++)
+    {
+        if((i%2) == 0) //Pair increments
+        {
+            printk("\n");
+        }
+        printk("           %s=%u.%u.%u.%u", xblastCfgStringsStruct.IPsettingsStringArray[i], settingsPtrStruct.IPsettingsPtrArray[i][0], settingsPtrStruct.IPsettingsPtrArray[i][1], settingsPtrStruct.IPsettingsPtrArray[i][2], settingsPtrStruct.IPsettingsPtrArray[i][3]);
+    }
+
+    for(i = 0; i < TextParamGroup; i++)
+    {
+        printk("\n           %s=%s", xblastCfgStringsStruct.textSettingsStringArray[i], settingsPtrStruct.textSettingsPtrArray[i]);
+    }
+
+    for(i = 0; i< SpecialParamGroup; i++)
+    {
+        switch(i)
+        {
+            case SpecialSettingsPtrArrayIndexName_ActiveBank:
+                printk("\n");
+            /* Fall through */
+            case SpecialSettingsPtrArrayIndexName_AltBank:
+                switch(*settingsPtrStruct.specialCasePtrArray[i])
+                {
+                    case BNK512:
+                        sprintf(specialCasesBuf, "BNK512");
+                        break;
+                    case BNK256:
+                        sprintf(specialCasesBuf, "BNK256");
+                        break;
+                    case BNKTSOPSPLIT0:
+                        sprintf(specialCasesBuf, "BNKTSOPSPLIT0");
+                        break;
+                    case BNKTSOPSPLIT1:
+                        sprintf(specialCasesBuf, "BNKTSOPSPLIT1");
+                        break;
+                    case BNKFULLTSOP:
+                        sprintf(specialCasesBuf, "BNKFULLTSOP");
+                        break;
+                    case BNKOS:
+                        sprintf(specialCasesBuf, "BNKOS");
+                        break;
+                    default:
+                        sprintf(specialCasesBuf, "Error!");
+                        break;
+                }
+                printk("           %s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], specialCasesBuf);
                 break;
-            }
+            case SpecialSettingsPtrArrayIndexName_LEDColor:
+                switch(*settingsPtrStruct.specialCasePtrArray[i])
+                {
+                    case LED_OFF:
+                        sprintf(specialCasesBuf, "LED_OFF");
+                        break;
+                    case LED_GREEN:
+                        sprintf(specialCasesBuf, "LED_GREEN");
+                        break;
+                    case LED_RED:
+                        sprintf(specialCasesBuf, "LED_RED");
+                        break;
+                    case LED_ORANGE:
+                        sprintf(specialCasesBuf, "LED_ORANGE");
+                        break;
+                    case LED_CYCLE:
+                        sprintf(specialCasesBuf, "LED_CYCLE");
+                        break;
+                    default:
+                        sprintf(specialCasesBuf, "LED_FIRSTBOOT?");
+                        break;
+                }
+                printk("\n           %s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], specialCasesBuf);
+                break;
+            case SpecialSettingsPtrArrayIndexName_LCDType:
+                if(*settingsPtrStruct.specialCasePtrArray[i] == LCDTYPE_HD44780)
+                    printk("\n           %s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], "HD44780");
+                else if(*settingsPtrStruct.specialCasePtrArray[i] == LCDTYPE_KS0073)
+                    printk("\n           %s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], "KS0073");
+                else
+                    printk("\n           %s=%s", xblastCfgStringsStruct.specialSettingsStringArray[i], "Error!");
+            break;
         }
     }
+
     UIFooter();
 }
 

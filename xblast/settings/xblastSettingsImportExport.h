@@ -10,8 +10,10 @@
 
 #include "xblastSettingsDefs.h"
 
+const char* const getSettingsFileLocation(void);
+
 int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct *settingsStruct);
-int LPCMod_SaveCFGToHDD(void);
+int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct);
 void setCFGFileTransferPtr(_LPCmodSettings * tempLPCmodSettings, _settingsPtrStruct *settingsStruct);
 
 void importNewSettingsFromCFGLoad(_LPCmodSettings* newSettings);

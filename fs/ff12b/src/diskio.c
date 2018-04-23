@@ -6,14 +6,22 @@
 /* This is an example of glue functions to attach various exsisting      */
 /* storage control modules to the FatFs module with a defined API.       */
 /*-----------------------------------------------------------------------*/
+#define _FILE_OFFSET_BITS 64
+#define __USE_LARGEFILE
 
 #include "diskio.h"		/* FatFs lower layer API */
+#include "BootIde.h"
+#include "lib/LPCMod/xblastDebug.h"
+#include <stdio.h>
+#include <errno.h>
 
-/* Definitions of physical drive number for each drive */
-#define DEV_RAM		0	/* Example: Map Ramdisk to physical drive 0 */
-#define DEV_MMC		1	/* Example: Map MMC/SD card to physical drive 1 */
-#define DEV_USB		2	/* Example: Map USB MSD to physical drive 2 */
 
+typedef struct {
+    DSTATUS status;
+    WORD sz_sector;
+    QWORD n_sectors;
+    HANDLE h_drive;
+} STAT;
 
 /*-----------------------------------------------------------------------*/
 /* Get Drive Status                                                      */
@@ -23,32 +31,14 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
+    DSTATUS status = tsaHarddiskInfo[pdrv].m_fDriveExists ? RES_OK : STA_NOINIT;
+    status |= tsaHarddiskInfo[pdrv].m_fAtapi ? STA_PROTECT : RES_OK;
+    if(status)
+    {
+        debugSPIPrint(DEBUG_CORE_FATFS, "Error status %u\n", status);
+    }
 
-	switch (pdrv) {
-	case DEV_RAM :
-		result = RAM_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_MMC :
-		result = MMC_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_USB :
-		result = USB_disk_status();
-
-		// translate the reslut code here
-
-		return stat;
-	}
-	return STA_NOINIT;
+	return status;
 }
 
 
@@ -57,36 +47,12 @@ DSTATUS disk_status (
 /* Inidialize a Drive                                                    */
 /*-----------------------------------------------------------------------*/
 
-DSTATUS disk_initialize (
+DRESULT disk_initialize (
 	BYTE pdrv				/* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
-	int result;
-
-	switch (pdrv) {
-	case DEV_RAM :
-		result = RAM_disk_initialize();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_MMC :
-		result = MMC_disk_initialize();
-
-		// translate the reslut code here
-
-		return stat;
-
-	case DEV_USB :
-		result = USB_disk_initialize();
-
-		// translate the reslut code here
-
-		return stat;
-	}
-	return STA_NOINIT;
+    disk_status(pdrv);
+	return RES_OK;
 }
 
 
@@ -102,39 +68,20 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	DRESULT res;
-	int result;
+#define DEFAULT_RETRY_COUNT 3
+    UINT i;
+    int returnValue;
+    for(i = 0; i < count; i++)
+    {
+        returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
+        if(returnValue)
+        {
+            debugSPIPrint(DEBUG_CORE_FATFS, "!!!Error : %u      i=%u count=%u sector=0x%X\n", returnValue, i, count, sector);
+            break;
+        }
+    }
 
-	switch (pdrv) {
-	case DEV_RAM :
-		// translate the arguments here
-
-		result = RAM_disk_read(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_MMC :
-		// translate the arguments here
-
-		result = MMC_disk_read(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_USB :
-		// translate the arguments here
-
-		result = USB_disk_read(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-	}
-
-	return RES_PARERR;
+	return returnValue;
 }
 
 
@@ -150,39 +97,20 @@ DRESULT disk_write (
 	UINT count			/* Number of sectors to write */
 )
 {
-	DRESULT res;
-	int result;
+#define DEFAULT_RETRY_COUNT 3
+    UINT i;
+    int returnValue;
+    for(i = 0; i < count; i++)
+    {
+        returnValue = BootIdeWriteSector(pdrv, buff + (i* 512), sector + i, 0);
+        if(returnValue)
+        {
+            debugSPIPrint(DEBUG_CORE_FATFS, "!!!Error : %u      i=%u count=%u sector=0x%X\n", returnValue, i, count, sector);
+            break;
+        }
+    }
 
-	switch (pdrv) {
-	case DEV_RAM :
-		// translate the arguments here
-
-		result = RAM_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_MMC :
-		// translate the arguments here
-
-		result = MMC_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-
-	case DEV_USB :
-		// translate the arguments here
-
-		result = USB_disk_write(buff, sector, count);
-
-		// translate the reslut code here
-
-		return res;
-	}
-
-	return RES_PARERR;
+    return returnValue;
 }
 
 
@@ -197,29 +125,31 @@ DRESULT disk_ioctl (
 	void *buff		/* Buffer to send/receive control data */
 )
 {
-	DRESULT res;
-	int result;
+    DRESULT res = RES_PARERR;
+    switch (cmd) {
+    case CTRL_SYNC:         /* Nothing to do */
+        res = BootIdeFlushCache(pdrv);
+        break;
 
-	switch (pdrv) {
-	case DEV_RAM :
+    case GET_SECTOR_COUNT:  /* Get number of sectors on the drive */
+        *(DWORD*)buff = BootIdeGetSectorCount(pdrv);
+        res = RES_OK;
+        break;
 
-		// Process of the command for the RAM drive
+    case GET_SECTOR_SIZE:   /* Get size of sector for generic read/write */
+        *(WORD*)buff = BootIdeGetSectorSize(pdrv);
+        res = RES_OK;
+        break;
 
-		return res;
+    case GET_BLOCK_SIZE:    /* Get internal block size in unit of sector */
+        // TODO: Fetch block size from device in case flash device are ever supported in XBlast OS.
+        *(DWORD*)buff = SZ_BLOCK;
+        res = RES_OK;
+        break;
 
-	case DEV_MMC :
+    }
 
-		// Process of the command for the MMC/SD card
+    return res;
 
-		return res;
-
-	case DEV_USB :
-
-		// Process of the command the USB drive
-
-		return res;
-	}
-
-	return RES_PARERR;
 }
 

@@ -8,16 +8,19 @@
  ***************************************************************************/
 #include "EepromEditMenuActions.h"
 #include "ToolsMenuActions.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "lpcmod_v1.h"
 #include "lib/cromwell/cromString.h"
 #include "lib/LPCMod/xblastDebug.h"
 #include "MenuActions.h"
 #include "string.h"
+#include "stdio.h"
 #include "boot.h"
 #include "menu/misc/OnScreenKeyboard.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "xblast/HardwareIdentifier.h"
+
+static const char* const eepromDirectoryLocation = "MASTER_C:"PathSep"XBlast"PathSep"eeproms";
 
 void displayEditEEPROMBuffer(void *ignored)
 {
@@ -235,20 +238,44 @@ void editMACAddress(void *ignored)
     }
 }
 
+const char* const getEEPROMDirectoryLocation(void)
+{
+    return eepromDirectoryLocation;
+}
+
 void restoreEEPROMFromFile(void *fname)
 {
-    int res;
-    FATXFILEINFO fileinfo;
-    FATXPartition *partition;
+    int res = 0;
+    unsigned char fileBuf[sizeof(EEPROMDATA)];
+    unsigned int size;
+    const char* filename = (const char *)fname;
+    char fullPathName[255 + sizeof('\0')];
+    FILEX fileHandle;
 
-    partition = OpenFATXPartition (0, SECTOR_SYSTEM, SYSTEM_SIZE);
+    if(255 < (strlen(getEEPROMDirectoryLocation()) + sizeof(cPathSep) + strlen(filename)))
+    {
+        return;
+    }
 
-    res = LoadFATXFile(partition, fname, &fileinfo);
+    sprintf(fullPathName, "%s"PathSep"%s", getEEPROMDirectoryLocation(), filename);
+
+    fileHandle = fatxopen(fullPathName, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+    if(fileHandle)
+    {
+        size = fatxsize(fileHandle);
+        if(sizeof(EEPROMDATA) == size)
+        {
+            if(size == fatxread(fileHandle, fileBuf, size))
+            {
+                res = 1;
+            }
+        }
+        fatxclose(fileHandle);
+    }
     UiHeader("Load EEPROM image from HDD");
     if(res)
     {
-        updateEEPROMEditBufferFromInputBuffer(fileinfo.buffer, fileinfo.fileSize, true);
-        free(fileinfo.buffer);
+        updateEEPROMEditBufferFromInputBuffer(fileBuf, size, true);
     }
     else
     {

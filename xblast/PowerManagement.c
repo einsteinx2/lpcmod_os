@@ -11,23 +11,21 @@
 #include "lpcmod_v1.h"
 #include "boot.h"
 #include "lib/LPCMod/BootLPCMod.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "xblast/scriptEngine/xblastScriptEngine.h"
 #include "xblast/HardwareIdentifier.h"
+#include "XBlastScriptMenuActions.h"
+#include "stdio.h"
 
 void assertBankScriptExecBankBoot(void * data)
 {
-    FATXFILEINFO fileinfo;
     int bank = *(unsigned char *)data;
+    char path[100];
 
     if(LPCmodSettings.OSsettings.runBankScript)
     {
-        extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo))
-        {
-            runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
-            free(fileinfo.buffer);
-        }
+        sprintf(path, "%s"PathSep"%s", getScriptDirectoryLocation(), "bank.script");
+        loadRunScriptNoParams(path);
     }
 
     BootModBios(bank);
@@ -35,17 +33,13 @@ void assertBankScriptExecBankBoot(void * data)
 
 void assertBankScriptExecTSOPBoot(void * data)
 {
-    FATXFILEINFO fileinfo;
     int bank = *(unsigned char *)data;
+    char path[100];
 
     if(LPCmodSettings.OSsettings.runBankScript)
     {
-        extern bool loadScriptFromHDD(char * filename, FATXFILEINFO *fileinfo);
-        if(loadScriptFromHDD("\\XBlast\\scripts\\bank.script", &fileinfo))
-        {
-            runScript(fileinfo.buffer, fileinfo.fileSize, 1, (int*)&bank);
-            free(fileinfo.buffer);
-        }
+        sprintf(path, "%s"PathSep"%s", getScriptDirectoryLocation(), "bank.script");
+        loadRunScriptNoParams(path);
     }
 
     BootOriginalBios(bank);

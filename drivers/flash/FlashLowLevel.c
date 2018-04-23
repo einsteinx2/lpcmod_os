@@ -8,6 +8,7 @@
 #include "FlashLowLevel.h"
 #include "memory_layout.h"
 #include "string.h"
+#include "stdio.h"
 #include "lib/time/timeManagement.h"
 #include "lib/LPCMod/xblastDebug.h"
 
@@ -114,7 +115,7 @@ static inline bool _28xxxDeviceIsBusy(void)
         flashDevice.m_fIsBelievedCapableOfWriteAndErase = false;
         if(lastStatusRegisterState & 0x08)
         {
-            sprintf(flashDevice.m_szAdditionalErrorInfo, "%s", "This chip requires +5V on pin 11 (Vpp).");
+            strcpy(flashDevice.m_szAdditionalErrorInfo, "This chip requires +5V on pin 11 (Vpp).");
         }
         else
         {
@@ -219,7 +220,7 @@ static bool _MatchDevice(const KNOWN_FLASH_TYPE* output)
                     i = sprintf(flashDevice.m_szAdditionalErrorInfo, "%s","Master Lock SET  "); // reuse 'i'
                     flashDevice.m_fIsBelievedCapableOfWriteAndErase = false;
 
-                    i += sprintf(&flashDevice.m_szAdditionalErrorInfo[i], "%s","Block(64KB) Locks: ");
+                    i += sprintf(&flashDevice.m_szAdditionalErrorInfo[i],"Block(64KB) Locks: ");
 
                     while(n < flashDevice.flashType.m_dwLengthInBytes)
                     {

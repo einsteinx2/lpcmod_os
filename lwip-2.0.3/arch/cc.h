@@ -48,6 +48,7 @@ typedef signed     long    s32_t;
 
 typedef u32_t mem_ptr_t;
 #endif
+#include "ctype.h"
 
 /* For LWIP_RAND */
 extern int rand (void);
@@ -60,6 +61,11 @@ extern int rand (void);
 #define U32_F "u"
 #define S32_F "d"
 #define X32_F "x"
+
+/* Define functions available in Cromwell */
+#define lwip_strnstr strnstr
+#define lwip_stricmp stricmp
+#define lwip_strnicmp strnicmp
 
 /* Compiler hints for packing structures */
 #define PACK_STRUCT_FIELD(x) x//__attribute__((packed))

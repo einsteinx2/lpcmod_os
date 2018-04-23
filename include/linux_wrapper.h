@@ -79,6 +79,7 @@ return dest;
 #include "../lib/cromwell/cromString.h"
 #include "lib/time/timeManagement.h"
 #include "string.h"
+#include "stdio.h"
 #include "config.h"
 #endif
 #else

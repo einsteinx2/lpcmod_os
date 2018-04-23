@@ -10,6 +10,8 @@
 
 #include "BootEEPROM.h"
 
+#define _TextFieldsMaxLength 20
+
 //Configuration parameters saved in flash
 typedef struct {
     unsigned char    activeBank;        //Default Flash bank to load BIOS from.
@@ -25,10 +27,10 @@ typedef struct {
     unsigned char    runBootScript;      //Will execute script at OS boot.
     unsigned char    enableVGA;          //Display as per Frosty's VGA settings.
     unsigned char     backgroundColorPreset;
-    char    biosName512Bank[21];        //512KB bank name. 20 characters max to properly display on LCD.
-    char    biosName256Bank[21];        //256KB bank name
-    char    biosNameTSOPFullSplit0[21];        //Reserved for future use.
-    char    biosNameTSOPSplit1[21];        //Reserved for future use.
+    char    biosName512Bank[_TextFieldsMaxLength + sizeof('\0')];        //512KB bank name. 20 characters max to properly display on LCD.
+    char    biosName256Bank[_TextFieldsMaxLength + sizeof('\0')];        //256KB bank name
+    char    biosNameTSOPFullSplit0[_TextFieldsMaxLength + sizeof('\0')];        //Reserved for future use.
+    char    biosNameTSOPSplit1[_TextFieldsMaxLength + sizeof('\0')];        //Reserved for future use.
     unsigned char    enableNetwork;        //Future use. For now, network is enabled only by NetFlash or WebUpdate
     unsigned char    useDHCP;        //Self Explanatory
     unsigned char    staticIP[4];        //Only useful when useDHCP is set to false.
@@ -49,10 +51,10 @@ typedef struct {
     unsigned char displayMsgBoot;        //Display text on LCD while booting
     unsigned char customTextBoot;        //Display custom text instead of default text.
     unsigned char displayBIOSNameBoot;        //Display BIOS name of active bank when booting
-    char customString0[21];        //1 of 4 strings to be displayed either when in OS or while booting.
-    char customString1[21];        //20 characters max to properly display on LCD.
-    char customString2[21];
-    char customString3[21];
+    char customString0[_TextFieldsMaxLength + sizeof('\0')];        //1 of 4 strings to be displayed either when in OS or while booting.
+    char customString1[_TextFieldsMaxLength + sizeof('\0')];        //20 characters max to properly display on LCD.
+    char customString2[_TextFieldsMaxLength + sizeof('\0')];
+    char customString3[_TextFieldsMaxLength + sizeof('\0')];
     unsigned char reserved[163];
 }__attribute__((packed))_LCDsettings_V1;                //For a total of 256 bytes
 
@@ -85,5 +87,8 @@ typedef struct {
     _scriptEntry_V1 flashScript;
     _CRC32SettingsValue crc32Value;
 }__attribute__((packed)) _LPCmodSettings_V1;
+
+#define _SettingsMaxTextFieldsLength_V1  _TextFieldsMaxLength;
+
 
 #endif /* XBLASTSETTINGSDEFS_V1_H_ */

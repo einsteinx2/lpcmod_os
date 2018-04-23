@@ -14,8 +14,57 @@
 #include "xblast/scriptEngine/xblastScriptEngine.h"
 #include "lib/LPCMod/xblastDebug.h"
 #include "string.h"
+#include "stdio.h"
 #include "stdlib.h"
 #include <stddef.h>
+#include <limits.h>
+
+static const char* const ChangeStringLabelSeparator = " : ";
+static const char* const ChangeStringArrow          = " -> ";
+#define SimpleChangeStringSizeCalc(x) ((2 * x) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
+
+#define ByteStringSize 3
+#define NbBytesPerIP    4
+#define IPChangeStringSizeCalc() ((2 * (NbBytesPerIP * ByteStringSize + 3 * sizeof('.'))) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
+
+#define TextChangeStringSizeCalc(old, new) (strlen(old) + strlen(new) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
+
+#define SpecialChangeStringSizeCalc(index) (strlen(getSpecialSettingDisplayString(index, *originalSettingsPtrStruct.specialCasePtrArray[index])) + strlen(getSpecialSettingDisplayString(index, *settingsPtrStruct.specialCasePtrArray[index])) + strlen(ChangeStringArrow) + strlen(ChangeStringLabelSeparator) + sizeof("\0") + (4 * sizeof('\"')))
+
+#define SimpleChangeStringGen(setting) if(NULL != currentChangeEntry->changeString ) \
+                                            sprintf(currentChangeEntry->changeString, "%s\"%u\"%s\"%u\"", \
+                                                ChangeStringLabelSeparator, \
+                                                *originalSettingsPtrStruct.setting, \
+                                                ChangeStringArrow, *settingsPtrStruct.setting);
+
+#define IPChangeStringGen(index)  if(NULL != currentChangeEntry->changeString ) \
+                                        sprintf(currentChangeEntry->changeString, "%s\"%u.%u.%u.%u\"%s\"%u.%u.%u.%u\"", \
+                                            ChangeStringLabelSeparator, \
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[index][0], \
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[index][1], \
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[index][2], \
+                                            originalSettingsPtrStruct.IPsettingsPtrArray[index][3], \
+                                            ChangeStringArrow, \
+                                            settingsPtrStruct.IPsettingsPtrArray[index][0], \
+                                            settingsPtrStruct.IPsettingsPtrArray[index][1], \
+                                            settingsPtrStruct.IPsettingsPtrArray[index][2], \
+                                            settingsPtrStruct.IPsettingsPtrArray[index][3]);
+
+#define TextChangeStringGen(setting) if(NULL != currentChangeEntry->changeString ) \
+                                            sprintf(currentChangeEntry->changeString, "%s\"%s\"%s\"%s\"", \
+                                                ChangeStringLabelSeparator, \
+                                                originalSettingsPtrStruct.setting, \
+                                                ChangeStringArrow, settingsPtrStruct.setting);
+
+#define SpecialChangeStringGen(index) if(NULL != currentChangeEntry->changeString ) \
+                                            sprintf(currentChangeEntry->changeString, "%s\"%s\"%s\"%s\"", \
+                                                ChangeStringLabelSeparator, \
+                                                getSpecialSettingDisplayString(index, *originalSettingsPtrStruct.specialCasePtrArray[index]), \
+                                                ChangeStringArrow, \
+                                                getSpecialSettingDisplayString(index, *settingsPtrStruct.specialCasePtrArray[index]));
+
+#define AddChange() if(NULL != currentChangeEntry) putNewChangeInList(output, currentChangeEntry); numberOfChanges += 1; break;
+
 
 static void putNewChangeInList(OSSettingsChangeList* list, OSSettingsChangeEntry_t* change);
 
@@ -30,99 +79,124 @@ unsigned char LPCMod_CountNumberOfChangesInSettings(bool generateChangeStruct, O
     int numberOfChanges = 0;
     OSSettingsChangeEntry_t* currentChangeEntry;
     output->changeCount = 0;
+    char testTypeLength[30];
 
     unsigned char i, j;
     _settingsPtrStruct originalSettingsPtrStruct;
     setCFGFileTransferPtr(&LPCmodSettingsOrigFromFlash, &originalSettingsPtrStruct);
+    setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
 
-    for(i = 0; i < NBTXTPARAMS; i++)
+    for(i = 0; i < BoolParamGroup; i++)
     {
         currentChangeEntry = NULL;
-        if(i < IPTEXTPARAMGROUP)
+        if(*originalSettingsPtrStruct.boolSettingsPtrArray[i] != *settingsPtrStruct.boolSettingsPtrArray[i])
         {
-            if(*originalSettingsPtrStruct.settingsPtrArray[i] != *settingsPtrStruct.settingsPtrArray[i])
+            if(generateChangeStruct)
             {
-                if(generateChangeStruct)
+                currentChangeEntry = malloc(sizeof(OSSettingsChangeEntry_t));
+                if(NULL != currentChangeEntry)
                 {
-                    currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
-                    currentChangeEntry->label = xblastcfgstrings[i];
-                    sprintf(currentChangeEntry->changeString, "%u -> %u", *originalSettingsPtrStruct.settingsPtrArray[i], *settingsPtrStruct.settingsPtrArray[i]);
-                    currentChangeEntry->origSettings = originalSettingsPtrStruct.settingsPtrArray[i];
-                    currentChangeEntry->newSetting = settingsPtrStruct.settingsPtrArray[i];
+                    currentChangeEntry->label = xblastCfgStringsStruct.boolSettingsStringArray[i];
+                    sprintf(testTypeLength, "%u", UCHAR_MAX);
+                    currentChangeEntry->changeString = malloc(SimpleChangeStringSizeCalc(strlen(testTypeLength)));
+                    SimpleChangeStringGen(boolSettingsPtrArray[i]);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.boolSettingsPtrArray[i];
+                    currentChangeEntry->newSetting = settingsPtrStruct.boolSettingsPtrArray[i];
                     currentChangeEntry->settingSize = 1;
                 }
-                numberOfChanges += 1;
             }
+            AddChange();
         }
-        else if(i < TEXTPARAMGROUP)
+    }
+
+    for(i = 0; i < NumParamGroup; i++)
+    {
+        currentChangeEntry = NULL;
+        if(*originalSettingsPtrStruct.numSettingsPtrArray[i] != *settingsPtrStruct.numSettingsPtrArray[i])
         {
-            for(j = 0; j < 4; j++)
+            if(generateChangeStruct)
             {
-                if(originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j] != settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][j])
+                currentChangeEntry = malloc(sizeof(OSSettingsChangeEntry_t));
+                if(NULL != currentChangeEntry)
                 {
-                    if(generateChangeStruct)
-                    {
-                        currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
-                        currentChangeEntry->label = xblastcfgstrings[i];
-                        sprintf(currentChangeEntry->changeString, "\"%u.%u.%u.%u\" -> \"%u.%u.%u.%u\"",
-                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
-                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
-                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
-                                    originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3],
-                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][0],
-                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][1],
-                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][2],
-                                    settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP][3]);
-                        currentChangeEntry->origSettings = originalSettingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP];
-                        currentChangeEntry->newSetting = settingsPtrStruct.IPsettingsPtrArray[i - IPTEXTPARAMGROUP];
-                        currentChangeEntry->settingSize = 4;
-                    }
-                    numberOfChanges += 1;
-                    break;
+                    currentChangeEntry->label = xblastCfgStringsStruct.numSettingsStringArray[i];
+                    sprintf(testTypeLength, "%u", UCHAR_MAX);
+                    currentChangeEntry->changeString = malloc(SimpleChangeStringSizeCalc(strlen(testTypeLength)));
+                    SimpleChangeStringGen(numSettingsPtrArray[i]);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.numSettingsPtrArray[i];
+                    currentChangeEntry->newSetting = settingsPtrStruct.numSettingsPtrArray[i];
+                    currentChangeEntry->settingSize = 1;
                 }
             }
+            AddChange();
         }
-        else if(i < SPECIALPARAMGROUP)
+    }
+
+    for(i = 0; i < IPParamGroup; i++)
+    {
+        if(0 != memcmp(originalSettingsPtrStruct.IPsettingsPtrArray[i], settingsPtrStruct.IPsettingsPtrArray[i], 4))
         {
-            unsigned char origLength = strlen(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
-            unsigned char newLength = strlen(settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
-            if(origLength != newLength ||
-               strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]))
+            if(generateChangeStruct)
             {
-                if(generateChangeStruct)
+                currentChangeEntry = malloc(sizeof(OSSettingsChangeEntry_t));
+                if(NULL != currentChangeEntry)
                 {
-                    currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
-                    currentChangeEntry->label = xblastcfgstrings[i];
-                    sprintf(currentChangeEntry->changeString, "\"%s\" -> \"%s\"", originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP], settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP]);
-                    currentChangeEntry->origSettings = originalSettingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP];
-                    currentChangeEntry->newSetting = settingsPtrStruct.textSettingsPtrArray[i - TEXTPARAMGROUP];
+                    currentChangeEntry->label = xblastCfgStringsStruct.IPsettingsStringArray[i];
+                    currentChangeEntry->changeString = malloc(IPChangeStringSizeCalc());
+                    IPChangeStringGen(i);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.IPsettingsPtrArray[i];
+                    currentChangeEntry->newSetting = settingsPtrStruct.IPsettingsPtrArray[i];
+                    currentChangeEntry->settingSize = 4;
+                }
+            }
+            AddChange();
+        }
+    }
+
+
+
+    for(i = 0; i < TextParamGroup; i++)
+    {
+        unsigned char origLength = strlen(originalSettingsPtrStruct.textSettingsPtrArray[i]);
+        unsigned char newLength = strlen(settingsPtrStruct.textSettingsPtrArray[i]);
+        if(origLength != newLength ||
+           strcmp(originalSettingsPtrStruct.textSettingsPtrArray[i], settingsPtrStruct.textSettingsPtrArray[i]))
+        {
+            if(generateChangeStruct)
+            {
+                currentChangeEntry = malloc(sizeof(OSSettingsChangeEntry_t));
+                if(NULL != currentChangeEntry)
+                {
+                    currentChangeEntry->label = xblastCfgStringsStruct.textSettingsStringArray[i];
+                    currentChangeEntry->changeString = malloc(TextChangeStringSizeCalc(originalSettingsPtrStruct.textSettingsPtrArray[i], settingsPtrStruct.textSettingsPtrArray[i]));
+                    TextChangeStringGen(textSettingsPtrArray[i]);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.textSettingsPtrArray[i];
+                    currentChangeEntry->newSetting = settingsPtrStruct.textSettingsPtrArray[i];
                     currentChangeEntry->settingSize = origLength > newLength ? origLength : newLength;
                 }
-                numberOfChanges += 1;
             }
+            AddChange();
         }
-        else
+    }
+
+    for(i = 0; i < SpecialParamGroup; i++)
+    {
+        if(*originalSettingsPtrStruct.specialCasePtrArray[i] != *settingsPtrStruct.specialCasePtrArray[i])
         {
-            if(*originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP] != *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP])
+            if(generateChangeStruct)
             {
-                if(generateChangeStruct)
+                currentChangeEntry = malloc(sizeof(OSSettingsChangeEntry_t));
+                if(NULL != currentChangeEntry)
                 {
-                    currentChangeEntry = calloc(1, sizeof(OSSettingsChangeEntry_t));
-                    currentChangeEntry->label = xblastcfgstrings[i];
-                    const char* origString = getSpecialSettingString(i - SPECIALPARAMGROUP, *originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
-                    const char* newString = getSpecialSettingString(i - SPECIALPARAMGROUP, *settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP]);
-                    sprintf(currentChangeEntry->changeString, "\"%s\" -> \"%s\"", origString, newString);
-                    currentChangeEntry->origSettings = originalSettingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP];
-                    currentChangeEntry->newSetting = settingsPtrStruct.specialCasePtrArray[i - SPECIALPARAMGROUP];
+                    currentChangeEntry->label = xblastCfgStringsStruct.specialSettingsStringArray[i];
+                    currentChangeEntry->changeString = malloc(SpecialChangeStringSizeCalc(i));
+                    SpecialChangeStringGen(i);
+                    currentChangeEntry->origSettings = originalSettingsPtrStruct.specialCasePtrArray[i];
+                    currentChangeEntry->newSetting = settingsPtrStruct.specialCasePtrArray[i];
                     currentChangeEntry->settingSize = 1;
                 }
-                numberOfChanges += 1;
             }
-        }
-
-        if(currentChangeEntry != NULL)
-        {
-            putNewChangeInList(output, currentChangeEntry);
+            AddChange();
         }
     }
 
@@ -130,19 +204,22 @@ unsigned char LPCMod_CountNumberOfChangesInSettings(bool generateChangeStruct, O
 }
 
 
-bool LPCMod_checkForBootScriptChanges(void){
+bool LPCMod_checkForBootScriptChanges(void)
+{
     unsigned int oldBufferSize, modifiedBufferSize;
 
     //If there's both a new script to save and a script already saved in flash. Check if they are different.
     modifiedBufferSize = LPCmodSettings.flashScript.scriptSize;
     oldBufferSize = LPCmodSettingsOrigFromFlash.flashScript.scriptSize;
 
-    if(modifiedBufferSize != oldBufferSize){    //Scripts size differ.
+    if(modifiedBufferSize != oldBufferSize)    //Scripts size differ.
+    {
         return true;
     }
 
     //If above condition is false, it means both script have the same size
-    if(memcmp(LPCmodSettings.flashScript.scriptData, LPCmodSettingsOrigFromFlash.flashScript.scriptData, ScriptSavedInFlashMaxSizeInBytes)){
+    if(memcmp(LPCmodSettings.flashScript.scriptData, LPCmodSettingsOrigFromFlash.flashScript.scriptData, ScriptSavedInFlashMaxSizeInBytes))
+    {
         return true;
     }
 
@@ -166,9 +243,10 @@ void cleanOSSettingsChangeListStruct(OSSettingsChangeList* input)
     OSSettingsChangeEntry_t* nextEntry;
     OSSettingsChangeEntry_t* curEntry = input->firstChangeEntry;
 
-    while(curEntry != NULL)
+    while(NULL != curEntry)
     {
         nextEntry = curEntry->nextChange;
+        free(curEntry->changeString);
         free(curEntry);
         curEntry = nextEntry;
     }
@@ -181,14 +259,16 @@ static void putNewChangeInList(OSSettingsChangeList* list, OSSettingsChangeEntry
 {
     OSSettingsChangeEntry_t* cycler = list->firstChangeEntry;
 
-    if(list->firstChangeEntry == NULL)
+    change->nextChange = NULL;
+
+    if(NULL == list->firstChangeEntry)
     {
         list->firstChangeEntry = change;
         list->changeCount = 1;
         return;
     }
 
-    while(cycler->nextChange != NULL)
+    while(NULL != cycler->nextChange)
     {
         cycler = cycler->nextChange;
     }

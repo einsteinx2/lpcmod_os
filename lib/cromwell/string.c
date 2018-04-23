@@ -5,7 +5,7 @@
  *      Author: bennyboy
  */
 
-#include "string.h"
+#include "include/string.h"
 
 void *memset (void *__s, int __c, size_t __n)
 {
@@ -140,21 +140,6 @@ int strcmp(const char* s1,const char* s2)
        if (*s1++ == 0)
            return (0);
    return (*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
-}
-
-
-
-char *strrchr0(char *string, char ch)
-{
-        char *ptr = string;
-    while(*ptr != 0) {
-        if(*ptr == ch) {
-            return ptr;
-        } else {
-            ptr++;
-        }
-    }
-    return NULL;
 }
 
 void chrreplace(char *string, char search, char ch) {

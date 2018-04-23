@@ -12,82 +12,67 @@
 #include "boot.h"
 #include "BootIde.h"
 #include "memory_layout.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "string.h"
+#include "stdio.h"
 
 
 void HDDFlashMenuDynamic(void* unused)
 {
     TEXTMENUITEM* itemPtr;
     TEXTMENU* menuPtr;
-    FATXFILEINFO fileinfo;
-    FATXPartition* partition;
 
-    char* fnames[4096]; //Because Each dir can have up to 4096 files when not in root of partition.
-    short n = 0, i = 0;
-    int bioses = 0;
-    int res;
-    int dcluster;
-    char* path = "\\BIOS\\";      //And we're not in root.
-    char fullPath[20];
-    char* fullPathptr = fullPath;
-    for(i = 0; i < 4096; i++)   //Not really useful but good practice.
-    {
-        fnames[i] = NULL;
-    }
-    memset(fullPath, 0, 20);
+    DIREX dirHandle;
+    FileInfo fileInfo;
+    unsigned short n = 0;
+    unsigned short bioses = 0;
 
-    // Generate the menu title.
-    strcpy(fullPath, "'C:");
-    fullPathptr += 3;
-    strcpy(fullPathptr, path);
-    fullPathptr += strlen(path);
-    strcpy(fullPathptr, "'");
-    fullPathptr = NULL;
-
-    //Only supports BIOS file fetch from Master HDD.
-    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-
+    debugSPIPrint(DEBUG_GENERAL_UI, "Listing BIOSes in %s\n", getBIOSDirectoryLocation());
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
-    strcpy(menuPtr->szCaption, fullPath);
+    strcpy(menuPtr->szCaption, getBIOSDirectoryLocation() + strlen("MASTER_"));
 
-    if(partition != NULL)
+    if(isMounted(HDD_Master, Part_C))
     {
-        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "BIOS");
-        if((dcluster != -1) && (dcluster != 1))
+        dirHandle = fatxopendir(getBIOSDirectoryLocation());
+        if(dirHandle)
         {
-            n = FATXListDir(partition, dcluster, &fnames[0], 4096, path);
-            for (i = 0; i < n; i++)
+            do
             {
+                fileInfo = fatxreaddir(dirHandle);
+                if(0 == fileInfo.nameLength || '\0' == fileInfo.name[0])
+                {
+                   break;
+                }
+                n++;
                 // Check the file.
-                res = FATXFindFile(partition, fnames[i], FATX_ROOT_FAT_CLUSTER, &fileinfo);
-        
-                if(res && (fileinfo.fileSize % (256 * 1024) == 0))
+                if((fileInfo.size % (256 * 1024) == 0))
                 {
                     // If it's a (readable) file - i.e. not a directory.
                     // AND it's filesize is divisible by 256k.
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                    sprintf(itemPtr->szCaption, "%s", fnames[i] + strlen(path));
+                    strcpy(itemPtr->szCaption, fileInfo.name);
                     itemPtr->functionPtr = FlashBiosFromHDD;
-                    itemPtr->functionDataPtr = fnames[i];       //allocating char* pointer contained in char **fnames so char **fnames can be destroyed
-                    TextMenuAddItem(menuPtr, itemPtr);
+                    itemPtr->functionDataPtr = itemPtr->szCaption;
+                    TextMenuAddItemInOrder(menuPtr, itemPtr);
                     bioses++;
                 }
-            }
-            if(n < 1)
+            } while(1);
+            fatxclosedir(dirHandle);
+
+            if(0 == n)
             {
                 // If there were no directories and no files.
                 itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption, "No files in C:\\BIOS.");
+                sprintf(itemPtr->szCaption, "No files in %s.", getBIOSDirectoryLocation() + strlen("MASTER_"));
                 itemPtr->functionPtr = NULL;
                 TextMenuAddItem(menuPtr, itemPtr);
             }
-            else if(bioses == 0)
+            else if(0 == bioses)
             {
                 // If there were directories, but no files.
                 itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-                sprintf(itemPtr->szCaption, "No BIOS files in C:\\BIOS.");
+                sprintf(itemPtr->szCaption, "No BIOS files in %s.", getBIOSDirectoryLocation() + strlen("MASTER_"));
                 itemPtr->functionPtr = NULL;
                 TextMenuAddItem(menuPtr, itemPtr);
             }
@@ -96,18 +81,16 @@ void HDDFlashMenuDynamic(void* unused)
         {
             // If C:\BIOS doesnt exist.
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption, "C:\\BIOS does not exist.");
+            sprintf(itemPtr->szCaption, "%s does not exist.", getBIOSDirectoryLocation() + strlen("MASTER_"));
             itemPtr->functionPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
         }
-
-        CloseFATXPartition(partition);
     }
     else
     {
         // If the partition couldn't be opened at all.
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Error reading C:\\ partition.");
+        strcpy(itemPtr->szCaption, "Error reading C:\\ partition.");
         itemPtr->functionPtr = NULL;
         TextMenuAddItem(menuPtr, itemPtr);
     }

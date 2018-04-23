@@ -35,8 +35,6 @@ int atoi(const char *str);
 
 int strcmp(const char* s1,const char* s2);
 
-char *strrchr0(char *string, char ch);
-
 void chrreplace(char *string, char search, char ch);
 
 void *memmove(void *dest, const void *src, size_t count);
@@ -45,9 +43,15 @@ void *memcpy (void *__restrict __dest, const void *__restrict __src, size_t __n)
 
 size_t strlen (const char *__s);
 
-int sprintf(char * buf, const char *fmt, ...);
-
 char *strchr(const char *s, int c);
+char* strrchr(const char* s, int c);
+
+char* strnstr(const char* s, const char* find, size_t slen);
+
+int strcasecmp(const char *s1, const char *s2);
+#define stricmp strcasecmp
+int strncasecmp(const char *s1, const char *s2, size_t n);
+#define strnicmp strncasecmp
 
 #endif /* INCLUDE_STRING_H_ */
 #endif

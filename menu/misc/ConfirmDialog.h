@@ -10,6 +10,6 @@
 
 #include <stdbool.h>
 
-bool ConfirmDialog(char * string, bool critical);
+bool ConfirmDialog(const char * string, bool critical);
 
 #endif /* MENU_MISC_CONFIRMDIALOG_H_ */

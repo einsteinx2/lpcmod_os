@@ -14,7 +14,7 @@
 
 #include "boot.h"
 #include "BootEEPROM.h"
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "i2c.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/LPCMod/BootLCD.h"
@@ -159,8 +159,7 @@ extern void BootResetAction ( void )
     unsigned char tempFanSpeed = 20;
     int res, dcluster;
     _LPCmodSettings *tempLPCmodSettings;
-    FATXPartition *partition;
-    FATXFILEINFO fileinfo;
+    unsigned char* fileBuffPtr;;
 
     unsigned char EjectButtonPressed=0;
 
@@ -465,6 +464,9 @@ extern void BootResetAction ( void )
     debugSPIPrint(DEBUG_BOOT_LOG, "Starting IDE init.\n");
     BootIdeInit();
     debugSPIPrint(DEBUG_BOOT_LOG, "IDE init done.\n");
+    debugSPIPrint(DEBUG_BOOT_LOG, "Starting FatFS init.\n");
+    FatFS_init();
+    debugSPIPrint(DEBUG_BOOT_LOG, "FatFS init done.\n");
 
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
@@ -475,11 +477,11 @@ extern void BootResetAction ( void )
         {
             //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
             debugSPIPrint(DEBUG_BOOT_LOG, "Trying to load new JPEG from HDD.\n");
-            if(LPCMod_ReadJPGFromHDD("\\XBlast\\icons.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD("MASTER_C:"PathSep"XBlast"PathSep"icons.jpg") == false)
             {
-                debugSPIPrint(DEBUG_BOOT_LOG, "\"Ã¬cons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
+                debugSPIPrint(DEBUG_BOOT_LOG, "\"icons.jpg\" loaded. Moving on to \"backdrop.jpg\".\n");
             }
-            if(LPCMod_ReadJPGFromHDD("\\XBlast\\backdrop.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD("MASTER_C:"PathSep"XBlast"PathSep"backdrop.jpg") == false)
             {
                 debugSPIPrint(DEBUG_BOOT_LOG, "\"backdrop.jpg\" loaded. Repainting.\n");
                 printMainMenuHeader();
@@ -493,39 +495,45 @@ extern void BootResetAction ( void )
                 if(returnValue == 0)
                 {
                     importNewSettingsFromCFGLoad(&tempLPCmodSettings);
-
-                    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-                    if(partition != NULL)
+                    res = 0;
+                    FILEX fileHandle = fatxopen("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"bank.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                    if(fileHandle)
                     {
-                        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-                        if((dcluster != -1) && (dcluster != 1))
+                        if(fatxsize(fileHandle) > 0)
                         {
-                            dcluster = FATXFindDir(partition, dcluster, "scripts");
+                            res = 1;
                         }
-                        if((dcluster != -1) && (dcluster != 1))
-                        {
-                            res = FATXFindFile(partition, "bank.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
-                            if(res == 0 || fileinfo.fileSize == 0)
-                            {
-                                LPCmodSettings.OSsettings.runBankScript = 0;
-                            }
-                            res = FATXFindFile(partition, "boot.script", FATX_ROOT_FAT_CLUSTER, &fileinfo);
-                            if(res == 0 || fileinfo.fileSize == 0)
-                            {
-                                LPCmodSettings.OSsettings.runBootScript = 0;
-                            }
-                        }
-                            CloseFATXPartition(partition);
+                        fatxclose(fileHandle);
                     }
+                    if(0 == res)
+                    {
+                        debugSPIPrint(DEBUG_SETTINGS, "Could not find valid bank.script file on HDD. Forcing setting to '0'.\n");
+                        LPCmodSettings.OSsettings.runBankScript = 0;
+                    }
+
+                    res = 0;
+                     fileHandle = fatxopen("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                     if(fileHandle)
+                     {
+                         if(fatxsize(fileHandle) > 0)
+                         {
+                             res = 1;
+                         }
+                         fatxclose(fileHandle);
+                     }
+                     if(0 == res)
+                     {
+                         debugSPIPrint(DEBUG_SETTINGS, "Could not find valid boot.script file on HDD. Forcing setting to '0'.\n");
+                         LPCmodSettings.OSsettings.runBootScript = 0;
+                     }
+
                     //bootScriptSize should not have changed if we're here.
                     if(LPCmodSettings.OSsettings.runBootScript && LPCmodSettings.flashScript.scriptSize == 0)
                     {
                         debugSPIPrint(DEBUG_BOOT_LOG, "Running boot script.\n");
-                        if(loadScriptFromHDD("\\XBlast\\scripts\\boot.script", &fileinfo))
-                        {
-                            i = BNKOS;
-                            runScript(fileinfo.buffer, fileinfo.fileSize, 1, &i);
-                        }
+                        i = BNKOS;
+                        loadRunScriptWithParams("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", 1, &i);
+
                         debugSPIPrint(DEBUG_BOOT_LOG, "Boot script execution done.\n");
                     }
                 }
@@ -546,47 +554,9 @@ extern void BootResetAction ( void )
     videosavepage = malloc(FB_SIZE);
 
     //Check for unformatted drives.
-    for (i=0; i<2; ++i)
-    {
-        if (tsaHarddiskInfo[i].m_fDriveExists && tsaHarddiskInfo[i].m_fAtapi == false
-            && tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND - 1)
-            && (tsaHarddiskInfo[i].m_securitySettings&0x0002) == 0)
-        {    //Drive not locked.
-            if(tsaHarddiskInfo[i].m_enumDriveType != EDT_XBOXFS)
-            {
-                debugSPIPrint(DEBUG_BOOT_LOG, "No FATX detected on %s HDD.\n", i ? "Slave" : "Master");
-                // We save the complete framebuffer to memory (we restore at exit)
-                //videosavepage = malloc(FB_SIZE);
-                memcpy(videosavepage,(void*)FB_START,FB_SIZE);
-                char ConfirmDialogString[50];
-                sprintf(ConfirmDialogString, "Format new drive (%s)?", i ? "slave":"master");
-                if(ConfirmDialog(ConfirmDialogString, 1) == false)
-                {
-                    debugSPIPrint(DEBUG_BOOT_LOG, "Formatting base partitions.\n");
-                    FATXFormatDriveC(i, 0);                     //'0' is for non verbose
-                    FATXFormatDriveE(i, 0);
-                    FATXFormatCacheDrives(i, 0);
-                    FATXSetBRFR(i);
-                    //If there's enough sectors to make F and/or G drive(s).
-                    if(tsaHarddiskInfo[i].m_dwCountSectorsTotal >= (SECTOR_EXTEND + SECTORS_SYSTEM))
-                    {
-                        debugSPIPrint(DEBUG_BOOT_LOG, "Show user extended partitions format options.\n");
-                        DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
-                    }
+    formatNewDrives();
+    
 
-                    if(tsaHarddiskInfo[i].m_fHasMbr == 0)       //No MBR
-                    {
-                        FATXSetInitMBR(i); // Since I'm such a nice program, I will integrate the partition table to the MBR.
-                    }
-                    debugSPIPrint(DEBUG_BOOT_LOG, "HDD format done.\n");
-                }
-                memcpy((void*)FB_START,videosavepage,FB_SIZE);
-                //free(videosavepage);
-            }
-        }
-    }
-    
-    
 //    printk("i2C=%d SMC=%d, IDE=%d, tick=%d una=%d unb=%d\n", nCountI2cinterrupts, nCountInterruptsSmc, nCountInterruptsIde, BIOS_TICK_COUNT, nCountUnusedInterrupts, nCountUnusedInterruptsPic2);
     IconMenuInit();
     debugSPIPrint(DEBUG_BOOT_LOG, "Starting IconMenu.\n");

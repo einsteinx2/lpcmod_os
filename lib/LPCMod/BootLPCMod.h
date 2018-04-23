@@ -44,6 +44,8 @@ struct _GenPurposeIOs{
 unsigned short LPCMod_HW_rev(void);
 void LPCMod_ReadIO(struct _GenPurposeIOs *GPIOstruct);
 int LPCMod_ReadJPGFromHDD(const char *jpgFilename);
+void formatNewDrives(void);
+
 void LPCMod_WriteIO(unsigned char port, unsigned char value);
 void LPCMod_FastWriteIO(unsigned char port, unsigned char value);
 void LPCMod_WriteGenPurposeIOs(void);

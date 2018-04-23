@@ -19,7 +19,7 @@ TEXTMENU* BFMBootMenuInit(void);
 TEXTMENU* CDMenuInit(void);
 TEXTMENU* DeveloperMenuInit(void);
 TEXTMENU* EEPROMFileRestoreMenuInit(void);
-TEXTMENU* eepromEditMenuDynamic(void);
+TEXTMENU* eepromEditMenuInit(void);
 TEXTMENU* HDDMenuInit(void);
 TEXTMENU* InfoMenuInit(void);
 TEXTMENU* LCDMenuInit(void);

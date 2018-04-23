@@ -7,7 +7,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "BootFATX.h"
+#include "FatFSAccessor.h"
 #include "video.h"
 #include "BootLPCMod.h"
 #include "lpcmod_v1.h"
@@ -19,6 +19,11 @@
 #include "i2c.h"
 #include "boot.h"
 #include "stdio.h"
+#include "BootIde.h"
+#include "MenuActions.h"
+#include "misc/ConfirmDialog.h"
+#include "Gentoox.h"
+#include "lib/cromwell/cromString.h"
 
 //Probes CPLD for chip revision and return a single byte ID.
 //SmartXX compliant but need to mask out upper nibble
@@ -122,35 +127,101 @@ void quickboot(unsigned char bank)
 
 int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 {
-    FATXFILEINFO fileinfo;
-    FATXPartition *partition;
-    int res = false;
-    int dcluster;
+    unsigned char* fileBuff;
     
+    FILEX handle = fatxopen(jpgFilename, FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
 
-    partition = OpenFATXPartition(0, SECTOR_SYSTEM, SYSTEM_SIZE);
-    if(partition != NULL){
-        dcluster = FATXFindDir(partition, FATX_ROOT_FAT_CLUSTER, "XBlast");
-        if((dcluster != -1) && (dcluster != 1)) {
-            res = FATXFindFile(partition, (char *)jpgFilename, FATX_ROOT_FAT_CLUSTER, &fileinfo);
-        }
-        if(LoadFATXFile(partition, (char *)jpgFilename, &fileinfo)){
-		if(res && fileinfo.fileSize){        //File exist and is loaded.
-		    BootVideoJpegUnpackAsRgb(fileinfo.buffer, &jpegBackdrop, fileinfo.fileSize);
-		    free(fileinfo.buffer);
-		}
-		else{
-		    return -1;
-		}
-	}
-	else
-	    return -1;
-        CloseFATXPartition(partition);
-    }
-    else
+    if(0 == handle)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "No jpg file.\n");
         return -1;
+    }
+
+    unsigned int size = fatxsize(handle);
+    fileBuff = malloc(size * sizeof(unsigned char));
+
+    if(NULL == fileBuff)
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        return -1;
+    }
+
+    if(fatxread(handle, fileBuff, size) != size)
+    {
+        free(fileBuff);
+        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        return -1;
+    }
+
+    BootVideoJpegUnpackAsRgb(fileBuff, &jpegBackdrop, size);
+    free(fileBuff);
+
+    if(fatxclose(handle))
+    {
+        debugSPIPrint(DEBUG_BOOT_LOG, "Error close jpg file.\n");
+    }
 
     return 0;
+}
+
+void formatNewDrives(void)
+{
+    const char* failureString = "\n           Could not format ";
+    unsigned char i;
+    memcpy(videosavepage,(void*)FB_START,FB_SIZE);
+
+    for (i = 0; i < NbDrivesSupported; ++i)
+    {
+        if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i) && XBOX_EXTEND_STARTLBA <= BootIdeGetSectorCount(i) &&  0 == BootIdeDeviceIsLocked(i) && 0 == isFATXFormattedDrive(i))
+        {
+            debugSPIPrint(DEBUG_BOOT_LOG, "No FATX detected on %s HDD.\n", i ? "Slave" : "Master");
+            char ConfirmDialogString[50];
+            sprintf(ConfirmDialogString, "Format new drive (%s)?", i ? "slave":"master");
+            if(ConfirmDialog(ConfirmDialogString, 1) == false)
+            {
+                debugSPIPrint(DEBUG_BOOT_LOG, "Formatting base partitions.\n");
+                fdisk(i, XboxDiskLayout_Base);
+                if(fatxmkfs(i, Part_C))
+                {
+                    cromwellError();
+                    printk("%sC:\\", failureString);
+                    break;
+                }
+                if(fatxmkfs(i, Part_E))
+                {
+                    cromwellError();
+                    printk("%sE:\\", failureString);
+                    break;
+                }
+                if(fatxmkfs(i, Part_X))
+                {
+                    cromwellError();
+                    printk("%sX:\\", failureString);
+                    break;
+                }
+                if(fatxmkfs(i, Part_Y))
+                {
+                    cromwellError();
+                    printk("%sY:\\", failureString);
+                    break;
+                }
+                if(fatxmkfs(i, Part_Z))
+                {
+                    cromwellError();
+                    printk("%sZ:\\", failureString);
+                    break;
+                }
+
+                if((XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE) <= BootIdeGetSectorCount(i))
+                {
+                    debugSPIPrint(DEBUG_BOOT_LOG, "Show user extended partitions format options.\n");
+                    DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
+                }
+                debugSPIPrint(DEBUG_BOOT_LOG, "HDD format done.\n");
+            }
+        }
+    }
+    memcpy((void*)FB_START,videosavepage,FB_SIZE);
 }
 
 //Use this function only for in OS operations.
@@ -196,11 +267,12 @@ unsigned char ReadFromIO(unsigned short address)
 #ifdef SPITRACE
 void printTextSPI(const char * functionName, char * buffer, ...)
 {
+#define MaxBuffSize 1024
     unsigned char pos;
     char i;
     int stringLength;
-    char tempBuf[200];
-    char outputBuf[200];
+    char tempBuf[MaxBuffSize];
+    char outputBuf[MaxBuffSize];
 
     va_list args;
     LPCMod_FastWriteIO(0x2, 0); //CLK to '0'
@@ -214,8 +286,10 @@ void printTextSPI(const char * functionName, char * buffer, ...)
     }
 
     stringLength = strlen(outputBuf);
-    if(stringLength > 200)
-        stringLength = 200;
+    if(stringLength > MaxBuffSize)
+    {
+        stringLength = MaxBuffSize;
+    }
 
     //Will NOT send null terminating character at the end.
     for(pos = 0; pos < stringLength; pos++){
@@ -230,5 +304,6 @@ void printTextSPI(const char * functionName, char * buffer, ...)
     //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
     wait_us_blocking(50);
 }
+
 #endif
 

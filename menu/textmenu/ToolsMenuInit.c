@@ -11,16 +11,19 @@
 #include "ToolsMenuActions.h"
 #include "lpcmod_v1.h"
 #include "string.h"
+#include "stdio.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "xblast/settings/xblastSettingsDefs.h"
+#include "xblast/settings/xblastSettingsImportExport.h"
 #include "xblast/HardwareIdentifier.h"
-
+#include "FatFSAccessor.h"
 
 TEXTMENU *ToolsMenuInit(void)
 {
     TEXTMENUITEM *itemPtr;
     TEXTMENU *menuPtr;
     int i=0;
+    FileInfo cfgFileInfo;
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Tools");
@@ -29,7 +32,7 @@ TEXTMENU *ToolsMenuInit(void)
     {
         //Save EEPROM data to flash
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption,"Save EEPROM to modchip");
+        strcpy(itemPtr->szCaption,"Save EEPROM to modchip");
         itemPtr->functionPtr = saveEEPromToFlash;
         TextMenuAddItem(menuPtr, itemPtr);
         saveEEPROMPtr = itemPtr;
@@ -86,11 +89,11 @@ TEXTMENU *ToolsMenuInit(void)
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "TSOP recover force bank : ");
         if(A19controlModBoot == BNKTSOPSPLIT0)
-            sprintf(itemPtr->szParameter, "%s", "Bank0");
+            strcpy(itemPtr->szParameter, "Bank0");
         else if(A19controlModBoot == BNKTSOPSPLIT1)
-            sprintf(itemPtr->szParameter, "%s", "Bank1");
+            strcpy(itemPtr->szParameter, "Bank1");
         else
-            sprintf(itemPtr->szParameter, "%s", "No");
+            strcpy(itemPtr->szParameter, "No");
         itemPtr->functionPtr = nextA19controlModBootValue;
         itemPtr->functionDataPtr= itemPtr->szParameter;
         itemPtr->functionLeftPtr=prevA19controlModBootValue;
@@ -111,22 +114,29 @@ TEXTMENU *ToolsMenuInit(void)
         TextMenuAddItem(menuPtr, itemPtr);
     }
 */
-#ifdef DEV_FEATURES
+    if(isMounted(HDD_Master, Part_C))
     {
+#ifdef DEV_FEATURES
+        cfgFileInfo = fatxstat(getSettingsFileLocation());
         //Save xblast.cfg
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        strcpy(itemPtr->szCaption, "Save C:\\xblast.cfg");
+        sprintf(itemPtr->szCaption, "Save %s", getSettingsFileLocation() + strlen("MASTER_"));
         itemPtr->functionPtr = saveXBlastcfg;
-        itemPtr->functionDataPtr = NULL;
+        itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+        *(unsigned char*)itemPtr->functionDataPtr = cfgFileInfo.size ? 1 : 0;
+        itemPtr->dataPtrAlloc = 1;
         TextMenuAddItem(menuPtr, itemPtr);
-    }
 #endif
-    //Load xblast.cfg
-    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    strcpy(itemPtr->szCaption, "Load C:\\xblast.cfg");
-    itemPtr->functionPtr = loadXBlastcfg;
-    itemPtr->functionDataPtr = NULL;
-    TextMenuAddItem(menuPtr, itemPtr);
+        if(cfgFileInfo.size)
+        {
+            //Load xblast.cfg
+            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption, "Load %s", getSettingsFileLocation() + strlen("MASTER_"));
+            itemPtr->functionPtr = loadXBlastcfg;
+            itemPtr->functionDataPtr = NULL;
+            TextMenuAddItem(menuPtr, itemPtr);
+        }
+    }
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "XBlast scripts");
