@@ -280,6 +280,7 @@ void printTextSPI(const char * functionName, char * buffer, ...)
         va_start(args, buffer);
         vsprintf(tempBuf,buffer,args);
         sprintf(outputBuf, "[%s] %s", functionName, tempBuf);
+        va_end(args);
     }
     else{
         sprintf(outputBuf, "[%s]\n", functionName);
