@@ -21,8 +21,8 @@
 #define Part_Y    3
 #define Part_Z    4
 
-#define cPathSep   '\\'
-#define PathSep    "\\"
+#define cPathSep   '/'
+#define PathSep    "/"
 
 extern const char* const * const  PartitionNameStrings[NbDrivesSupported];
 
