@@ -12,7 +12,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include <stddef.h>
-#include <ctype.h>
+#include "ctype.h"
 
 
 static int skip_atoi(const char **s)

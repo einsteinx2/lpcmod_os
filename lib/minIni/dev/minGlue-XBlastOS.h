@@ -19,7 +19,7 @@
  */
 #include "FatFSAccessor.h"                   /* include tff.h for Tiny-FatFs */
 
-#define INI_FILETYPE    FILEX*
+#define INI_FILETYPE    FILEX
 #define ini_openread(filename,file)   (0 != (*(file) = fatxopen(filename, FileOpenMode_Read | FileOpenMode_OpenExistingOnly)))
 #define ini_openwrite(filename,file)  (0 != (*(file) = fatxopen(filename, FileOpenMode_Write | FileOpenMode_CreateAlways)))
 #define ini_close(file)               (0 == fatxclose(*(file)))

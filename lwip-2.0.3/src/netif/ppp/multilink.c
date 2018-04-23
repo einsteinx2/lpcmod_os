@@ -41,7 +41,7 @@
  */
 
 #include <string.h>
-#include <ctype.h>
+#include "ctype.h"
 #include <stdlib.h>
 #include <netdb.h>
 #include <errno.h>

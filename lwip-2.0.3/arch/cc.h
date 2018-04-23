@@ -48,7 +48,7 @@ typedef signed     long    s32_t;
 
 typedef u32_t mem_ptr_t;
 #endif
-#include <ctype.h>
+#include "ctype.h"
 
 /* For LWIP_RAND */
 extern int rand (void);

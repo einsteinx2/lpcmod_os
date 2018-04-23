@@ -17,6 +17,21 @@
 
 inline void BootPciInterruptEnable()  {    __asm__ __volatile__  (  "sti" ); }
 
+int tolower(int ch)
+{
+      if ( (unsigned int)(ch - 'A') < 26u )
+            ch += 'a' - 'A';
+      return ch;
+}
+
+int toupper(int ch)
+{
+    if(ch>='a' && ch<='z')
+        return('A' + ch - 'a');
+    else
+        return(ch);
+}
+
 /* -------------------------------------------------------------------- */
 
 

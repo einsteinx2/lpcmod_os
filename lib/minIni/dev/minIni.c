@@ -38,9 +38,9 @@
 #endif
 
 #if !defined __T || defined INI_ANSIONLY
-  #include <ctype.h>
+  #include "ctype.h"
   #include "string.h"
-  #include "stdlib.h""
+  #include "stdlib.h"
   #define TCHAR     char
   #define __T(s)    s
   #define _tcscat   strcat

@@ -5,7 +5,7 @@
  *      Author: bennyboy
  */
 
-#include "string.h"
+#include "include/string.h"
 
 void *memset (void *__s, int __c, size_t __n)
 {
