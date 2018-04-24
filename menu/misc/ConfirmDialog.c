@@ -44,7 +44,7 @@ bool ConfirmDialog(const char * string, bool critical)
            risefall_xpad_STATE(XPAD_STATE_START)
            && XPAD_current[0].keys[5]) //white button
         {
-            debugSPIPrint(DEBUG_GENERAL_UI, "All correct buttons pressed. Accepting.\n");
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "All correct buttons pressed. Accepting.");
             strncpy(bypassConfirmDialog, string, stringLength);
             result = false;
             break;
