@@ -32,11 +32,11 @@ void DrawChildTextMenu(void* menu)
 
 void ResetDrawChildTextMenu(TEXTMENU* menu)
 {
-    debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Drawing menu %s\n", menu->szCaption);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Drawing menu %s\n", menu->szCaption);
     TextMenu(menu, menu->firstMenuItem);
-    debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Exiting menu %s\n", menu->szCaption);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Exiting menu %s\n", menu->szCaption);
     freeTextMenuAllocMem(menu);
-    debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Returning to previous menu\n");
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Returning to previous menu\n");
 }
 
 void dynamicDrawChildTextMenu(void* menuInitFct)
@@ -48,7 +48,7 @@ void dynamicDrawChildTextMenu(void* menuInitFct)
     }
 
     TEXTMENU* menu = (*fctPtr)();
-    debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Generated menu %s\n", menu->szCaption);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Generated menu %s\n", menu->szCaption);
     ResetDrawChildTextMenu(menu);
 }
 
@@ -67,14 +67,14 @@ void freeTextMenuAllocMem(TEXTMENU* menu)
 
     if(menu != NULL)
     {
-        debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "freeing menu %s\n", menu->szCaption);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "freeing menu %s\n", menu->szCaption);
         while(currentItem != NULL)
         {
             nextItem = currentItem->nextMenuItem;
-            debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free menu item : %s\n", currentItem->szCaption);
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free menu item : %s\n", currentItem->szCaption);
             if(currentItem->functionDataPtr != NULL && currentItem->dataPtrAlloc)
             {
-                debugSPIPrint(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free alloc param\n");
+                XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free alloc param\n");
                 free(currentItem->functionDataPtr);
             }
             free(currentItem);

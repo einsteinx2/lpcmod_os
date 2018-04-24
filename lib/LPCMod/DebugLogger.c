@@ -143,7 +143,7 @@ void lwipXBlastPrint(unsigned char lwipDbgLevel, const char* activate, const cha
     }
     va_list vargs;
     va_start(vargs, functionName);
-    XblastLogger(convertedLogLevel, activate, functionName, vargs);
+    XBlastLogger(convertedLogLevel, activate, functionName, vargs);
     va_end(vargs);
 }
 

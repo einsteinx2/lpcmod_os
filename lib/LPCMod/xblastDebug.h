@@ -53,7 +53,7 @@
 #endif
 
 extern void lwipXBlastPrint(unsigned char lwipDbgLevel, const char* activate, const char* functionName, ...);
-#define XblastLogger(level, activate,...) do { if(CURRENT_DBG_LVL <= level) printTextLogger(level, #activate, __func__, ##__VA_ARGS__); }while(0)
+#define XBlastLogger(level, activate,...) do { if(CURRENT_DBG_LVL <= level) printTextLogger(level, #activate, __func__, ##__VA_ARGS__); }while(0)
 //TODO: modify usbSPIPrint to take Debug log levels into account
 #define usbSPIPrint(activate, ...) do { printTextLogger(activate, __func__, ##__VA_ARGS__); }while(0)
 #else
