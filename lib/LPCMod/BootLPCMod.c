@@ -12,7 +12,6 @@
 #include "BootLPCMod.h"
 #include "lpcmod_v1.h"
 #include "LEDMenuActions.h"
-#include "lib/time/timeManagement.h"
 #include "xblast/HardwareIdentifier.h"
 #include "string.h"
 #include "stdlib.h"
@@ -265,45 +264,25 @@ unsigned char ReadFromIO(unsigned short address)
 }
 
 #ifdef SPITRACE
-void printTextSPI(const char * functionName, char * buffer, ...)
+void printTextSPI(const char* buffer)
 {
-#define MaxBuffSize 1024
-    unsigned char pos;
     char i;
-    int stringLength;
-    char tempBuf[MaxBuffSize];
-    char outputBuf[MaxBuffSize];
 
-    va_list args;
     LPCMod_FastWriteIO(0x2, 0); //CLK to '0'
-    if(buffer != NULL){
-        va_start(args, buffer);
-        vsprintf(tempBuf,buffer,args);
-        sprintf(outputBuf, "[%s] %s", functionName, tempBuf);
-        va_end(args);
-    }
-    else{
-        sprintf(outputBuf, "[%s]\n", functionName);
-    }
 
-    stringLength = strlen(outputBuf);
-    if(stringLength > MaxBuffSize)
-    {
-        stringLength = MaxBuffSize;
-    }
 
     //Will NOT send null terminating character at the end.
-    for(pos = 0; pos < stringLength; pos++){
+    while('\0' != *buffer)
+    {
         LPCMod_FastWriteIO(0x4, 0); // /CS to '0'
         for(i = 7; i >= 0; i--){
-            LPCMod_FastWriteIO(0x3, (outputBuf[pos] >> i)&0x01); //CLK to '0' + MOSI data bit set
+            LPCMod_FastWriteIO(0x3, (*buffer >> i)&0x01); //CLK to '0' + MOSI data bit set
             LPCMod_FastWriteIO(0x2, 0x2); //CLK to '1'
         }
         LPCMod_FastWriteIO(0x2, 0); //CLK to '0'.
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
+        buffer++;
     }
-    //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
-    wait_us_blocking(50);
 }
 
 #endif

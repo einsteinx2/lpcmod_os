@@ -73,6 +73,7 @@
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.597532290" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="DEV_FEATURES=1"/>
 									<listOptionValue builtIn="false" value="SPITRACE=1"/>
+									<listOptionValue builtIn="false" value="DEBUGLOGGER=1"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.229067442" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -158,8 +159,8 @@
 			</target>
 			<target name="debug" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
 				<buildCommand>make</buildCommand>
-				<buildArguments>-j16</buildArguments>
-				<buildTarget>DEBUG=1</buildTarget>
+				<buildArguments>DEBUG=1 -j16</buildArguments>
+				<buildTarget>DEBUG=1 SPITRACE=1</buildTarget>
 				<stopOnError>true</stopOnError>
 				<useDefaultCommand>true</useDefaultCommand>
 				<runAllBuilders>true</runAllBuilders>

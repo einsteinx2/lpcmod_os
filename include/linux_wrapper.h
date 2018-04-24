@@ -530,11 +530,11 @@ void my_wait_for_completion(struct completion*);
 #include "lib/LPCMod/xblastDebug.h"
 #ifdef DEBUG_MODE
 #define dev_printk(lvl,x,f,arg...) usbSPIPrint(f, ## arg)
-#define dev_dbg(x,f,arg...) usbSPIPrint(f, ## arg)
-#define dev_info(x,f,arg...) usbSPIPrint(f,## arg)
-#define dev_warn(x,f,arg...) usbSPIPrint(f,## arg)
-#define dev_err(x,f,arg...) usbSPIPrint(f,## arg)
-#define pr_debug(f,arg...) usbSPIPrint(f,## arg)
+#define dev_dbg(x,f,arg...) usbSPIPrint(#x, f, ## arg)
+#define dev_info(x,f,arg...) usbSPIPrint(#x, f,## arg)
+#define dev_warn(x,f,arg...) usbSPIPrint(#x, f,## arg)
+#define dev_err(x,f,arg...) usbSPIPrint(#x, f,## arg)
+#define pr_debug(f,arg...) usbSPIPrint("pr_debug", f,## arg)
 #define usbprintk usbSPIPrint
 #endif
 

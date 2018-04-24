@@ -9,6 +9,7 @@ GCC_4.2 := $(shell expr `$(CC) -dumpversion` \>= 4.2)
 GCC_6.2 := $(shell expr `$(CC) -dumpversion` \>= 6.2)
 
 DEBUG ?= 0 #run make with "DEBUG=1" argument to enable extra debug
+SPITRACE ?= 0 #run make with "SPITRACE=1" argument to enable debig strings prints on SPI. Must have "DEBUG" = 1
 TSOPCTRL ?= 0 #Override TSOP control availability based on Xbox Revision
 VGA ?= 0 #Generates VGA enabled by default image. Does not override existing setting in flash.
 ETHERBOOT := yes
@@ -64,7 +65,10 @@ ETH_CFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
 endif
 
 ifeq ($(DEBUG), 1)
-DEBUG_FLAGS = -DDEV_FEATURES -DSPITRACE
+DEBUG_FLAGS = -DDEV_FEATURES -DDEBUGLOGGER
+ifeq ($(SPITRACE), 1)
+DEBUG_FLAGS += -DSPITRACE
+endif
 CROM_CFLAGS += $(DEBUG_FLAGS)
 ETH_CFLAGS += $(DEBUG_FLAGS)
 endif
@@ -187,6 +191,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/FlashDriver.o
 OBJECTS-CROM += $(TOPDIR)/obj/FlashUi.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootEEPROM.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLPCMod.o
+OBJECTS-CROM += $(TOPDIR)/obj/DebugLogger.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootLCD.o
 OBJECTS-CROM += $(TOPDIR)/obj/LCDRingBuffer.o
 #OBJECTS-CROM += $(TOPDIR)/obj/BootFATX.o

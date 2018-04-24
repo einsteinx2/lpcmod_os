@@ -467,6 +467,9 @@ extern void BootResetAction ( void )
     debugSPIPrint(DEBUG_BOOT_LOG, "Starting FatFS init.\n");
     FatFS_init();
     debugSPIPrint(DEBUG_BOOT_LOG, "FatFS init done.\n");
+    debugSPIPrint(DEBUG_BOOT_LOG, "Starting DebugLogger init.\n");
+    debugLoggerInit();
+    debugSPIPrint(DEBUG_BOOT_LOG, "DebugLogger init done.\n");
 
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
