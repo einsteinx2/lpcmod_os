@@ -32,11 +32,11 @@ void DrawChildTextMenu(void* menu)
 
 void ResetDrawChildTextMenu(TEXTMENU* menu)
 {
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Drawing menu %s\n", menu->szCaption);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Drawing menu %s", menu->szCaption);
     TextMenu(menu, menu->firstMenuItem);
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Exiting menu %s\n", menu->szCaption);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Exiting menu %s", menu->szCaption);
     freeTextMenuAllocMem(menu);
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Returning to previous menu\n");
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Returning to previous menu");
 }
 
 void dynamicDrawChildTextMenu(void* menuInitFct)
@@ -48,7 +48,7 @@ void dynamicDrawChildTextMenu(void* menuInitFct)
     }
 
     TEXTMENU* menu = (*fctPtr)();
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Generated menu %s\n", menu->szCaption);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Generated menu %s", menu->szCaption);
     ResetDrawChildTextMenu(menu);
 }
 
@@ -67,14 +67,14 @@ void freeTextMenuAllocMem(TEXTMENU* menu)
 
     if(menu != NULL)
     {
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "freeing menu %s\n", menu->szCaption);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "freeing menu %s", menu->szCaption);
         while(currentItem != NULL)
         {
             nextItem = currentItem->nextMenuItem;
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free menu item : %s\n", currentItem->szCaption);
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free menu item : %s", currentItem->szCaption);
             if(currentItem->functionDataPtr != NULL && currentItem->dataPtrAlloc)
             {
-                XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free alloc param\n");
+                XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "free alloc param");
                 free(currentItem->functionDataPtr);
             }
             free(currentItem);

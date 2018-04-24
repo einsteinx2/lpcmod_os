@@ -209,7 +209,7 @@ void BankSelectDynamic(void* bank)
     //Only Master HDD will be supported here.
     if(BootIdeDeviceConnected(0) && 0 == BootIdeDeviceIsATAPI(0))
     {
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Generating menu for HDD%u\n", 0);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Generating menu for HDD%u", 0);
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "HDD Flash");
         itemPtr->functionPtr = HDDFlashMenuDynamic;
