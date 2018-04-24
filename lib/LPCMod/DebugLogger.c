@@ -11,6 +11,7 @@
 #include "string.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include "lwip/debug.h" /* lwip */
 
 #define MaxBuffSize 1024
 
@@ -24,6 +25,7 @@ static FIL activeLogHandle;
 
 static void writeString(const char* string, unsigned char writeToLogFile);
 static unsigned char checkDebugFlag(const char* szDebugFlag);
+static const char* const getLogLevelString(unsigned char logLevel);
 
 void debugLoggerInit(void)
 {
@@ -73,7 +75,7 @@ unsigned char logRotate(void)
     return 0;
 }
 
-void printTextLogger(const char* debugFlag, const char* functionName, char* buffer, ...)
+void printTextLogger(unsigned char logLevel, const char* debugFlag, const char* functionName, char* buffer, ...)
 {
     FRESULT result;
     va_list vl;
@@ -84,7 +86,7 @@ void printTextLogger(const char* debugFlag, const char* functionName, char* buff
     {
         writeToLogfile = checkDebugFlag(debugFlag);
         va_start(vl,buffer);
-        sprintf(tempBuf, "[%s][%s] ", debugFlag, functionName);
+        sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
         writeString(tempBuf, writeToLogfile);
         vsprintf(tempBuf,buffer,vl);
         writeString(tempBuf, writeToLogfile);
@@ -98,6 +100,51 @@ void printTextLogger(const char* debugFlag, const char* functionName, char* buff
             debugSPIPrint(DEBUG_LOGGER, "Sync log to drive. result:%u", result);
         }
     }
+}
+
+
+//TODO: replace with macro to eliminate va_args handling?
+void lwipXBlastPrint(unsigned char lwipDbgLevel, const char* activate, const char* functionName, ...)
+{
+    unsigned char convertedLogLevel = DBG_LVL_FATAL;
+
+    /* Remove DBG_ON flag */
+    lwipDbgLevel &= ~(unsigned char)(LWIP_DBG_ON);
+
+    if(lwipDbgLevel & LWIP_DBG_HALT)
+    {
+        convertedLogLevel = DBG_LVL_FATAL;
+    }
+    else if(lwipDbgLevel & LWIP_DBG_TRACE)
+    {
+        convertedLogLevel = DBG_LVL_TRACE;
+    }
+    else if((lwipDbgLevel & LWIP_DBG_STATE) || (lwipDbgLevel & LWIP_DBG_FRESH))
+    {
+        convertedLogLevel = DBG_LVL_DEBUG;
+    }
+    else
+    {
+        switch(lwipDbgLevel & LWIP_DBG_MASK_LEVEL)
+        {
+        case LWIP_DBG_LEVEL_ALL:
+            convertedLogLevel = DBG_LVL_INFO;
+            break;
+        case LWIP_DBG_LEVEL_WARNING:
+            convertedLogLevel = DBG_LVL_WARN;
+            break;
+        case LWIP_DBG_LEVEL_SERIOUS:
+            convertedLogLevel = DBG_LVL_ERROR;
+            break;
+        case LWIP_DBG_LEVEL_SEVERE:
+            convertedLogLevel = DBG_LVL_FATAL;
+            break;
+        }
+    }
+    va_list vargs;
+    va_start(vargs, functionName);
+    XblastLogger(convertedLogLevel, activate, functionName, vargs);
+    va_end(vargs);
 }
 
 static void writeString(const char* string, unsigned char writeToLogFile)
@@ -144,4 +191,25 @@ static unsigned char checkDebugFlag(const char* szDebugFlag)
     }
 
     return 1;
+}
+
+static const char* const getLogLevelString(unsigned char logLevel)
+{
+    switch(logLevel)
+    {
+    case DBG_LVL_FATAL:
+        return "FATAL";
+    case DBG_LVL_ERROR:
+        return "ERROR";
+    case DBG_LVL_WARN:
+        return "WARN";
+    case DBG_LVL_INFO:
+        return "INFO";
+    case DBG_LVL_DEBUG:
+        return "DEBUG";
+    case DBG_LVL_TRACE:
+        return "TRACE";
+    }
+
+    return "\0";
 }

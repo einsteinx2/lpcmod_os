@@ -150,7 +150,7 @@
 #endif
 
 #ifdef LWIP_DEBUG
-#include "lib/LPCMod/BootLPCMod.h"
+#include "lib/LPCMod/xblastDebug.h"
 #ifndef LWIP_PLATFORM_DIAG
 #error "If you want to use LWIP_DEBUG, LWIP_PLATFORM_DIAG(message) needs to be defined in your arch/cc.h"
 #endif
@@ -159,7 +159,7 @@
                                    ((debug) & LWIP_DBG_ON) && \
                                    ((debug) & LWIP_DBG_TYPES_ON) && \
                                    ((s16_t)((debug) & LWIP_DBG_MASK_LEVEL) >= LWIP_DBG_MIN_LEVEL)) { \
-                                 LWIP_PLATFORM_DIAG(message); \
+                                 LWIP_PLATFORM_DIAG(debug, message); \
                                  if ((debug) & LWIP_DBG_HALT) { \
                                    while(1); \
                                  } \

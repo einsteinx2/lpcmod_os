@@ -11,6 +11,14 @@
 #include "DebugLogger.h"
 
 #define STRINGIFY(x) #x
+#define DBG_LVL_FATAL     5
+#define DBG_LVL_ERROR     4
+#define DBG_LVL_WARN      3
+#define DBG_LVL_INFO      2
+#define DBG_LVL_DEBUG     1
+#define DBG_LVL_TRACE     0   /* Not implement for now */
+
+#define CURRENT_DBG_LVL DBG_LVL_WARN
 
 #ifdef DEBUGLOGGER
 #define DEBUG_ALWAYS_SHOW       1
@@ -23,7 +31,7 @@
 #define DEBUG_IDE_LOCK          0
 #define DEBUG_VIDEO_DRIVER      0
 #define DEBUG_EEPROM_DRIVER     0
-#define DEBUG_LWIP              0
+#define DEBUG_LWIP              1
 #define DEBUG_HW_ID             0
 #define DEBUG_GENERAL_UI        0
 #define DEBUG_SCRIPT            0
@@ -43,11 +51,10 @@
 #define DEBUG 1
 #define DEBUG_MODE 1
 #endif
-#ifdef SPITRACE
-extern void printTextSPI(const char* buffer);
-#endif
-#define debugSPIPrint(activate,...) do { if(activate) printTextLogger(#activate, __func__, ##__VA_ARGS__); }while(0)
-#define lwipSPIPrint(...) do { printTextLogger("DEBUG_LWIP", __func__, ##__VA_ARGS__); }while(0)
+
+extern void lwipXBlastPrint(unsigned char lwipDbgLevel, const char* activate, const char* functionName, ...);
+#define XblastLogger(level, activate,...) do { if(CURRENT_DBG_LVL <= level) printTextLogger(level, #activate, __func__, ##__VA_ARGS__); }while(0)
+//TODO: modify usbSPIPrint to take Debug log levels into account
 #define usbSPIPrint(activate, ...) do { printTextLogger(activate, __func__, ##__VA_ARGS__); }while(0)
 #else
 #ifdef __FLASH_SIMULATOR__

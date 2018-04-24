@@ -73,12 +73,12 @@ extern int rand (void);
 
 /* Plaform specific diagnostic output */
 #ifdef LWIP_DEBUG
-#define LWIP_PLATFORM_DIAG(x)	do {lwipSPIPrint x;} while(0) //Replaced printf
+#define LWIP_PLATFORM_DIAG(activate, message)	do { lwipXBlastPrint(activate, #activate, __func__, message); } while(0) //Replaced printf
 
-#define LWIP_PLATFORM_ASSERT(x) do {lwipSPIPrint("Assertion \"%s\" failed at line %d in %s\n", \
+#define LWIP_PLATFORM_ASSERT(x) do {lwipXBlastPrint(LWIP_DBG_LEVEL_SEVERE, "ASSERT", __func__, "Assertion \"%s\" failed at line %d in %s\n", \
                                      x, __LINE__, __FILE__); /*fflush(NULL); abort();*/} while(0)
 #else
-#define LWIP_PLATFORM_DIAG(x)
+#define LWIP_PLATFORM_DIAG(activate, x)
 #define LWIP_PLATFORM_ASSERT(x)
 #endif
 
