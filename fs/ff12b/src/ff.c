@@ -888,7 +888,7 @@ UINT inc_lock ( /* Increment object open counter and returns its index (0:Intern
         Files[i].ctr = 0;
     }
 
-    debugSPIPrint(DEBUG_CORE_FATFS, "acc=%u   i=%u  ctr=0x%x\n", acc, i, Files[i].ctr);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "acc=%u   i=%u  ctr=0x%x", acc, i, Files[i].ctr);
     if (acc && Files[i].ctr) return 0;  /* Access violation (int err) */
 
     Files[i].ctr = acc ? 0x100 : Files[i].ctr + 1;  /* Set semaphore value */
@@ -905,7 +905,7 @@ FRESULT dec_lock (  /* Decrement object open counter */
     WORD n;
     FRESULT res;
 
-    debugSPIPrint(DEBUG_CORE_FATFS, "i=%u  ctr=0x%x\n", i, Files[i].ctr);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "i=%u  ctr=0x%x", i, Files[i].ctr);
     if (--i < _FS_LOCK) {   /* Shift index number origin from 0 */
         n = Files[i].ctr;
         if (n == 0x100) n = 0;      /* If write mode open, delete the entry */
@@ -916,7 +916,7 @@ FRESULT dec_lock (  /* Decrement object open counter */
     } else {
         res = FR_INT_ERR;           /* Invalid index nunber */
     }
-    debugSPIPrint(DEBUG_CORE_FATFS, "i=%u  ctr=0x%x    n=%u\n", i, Files[i].ctr, n);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "i=%u  ctr=0x%x    n=%u", i, Files[i].ctr, n);
     return res;
 }
 
@@ -2448,7 +2448,7 @@ FRESULT dir_find (  /* FR_OK(0):succeeded, !=0:error */
 #endif
         res = dir_next(dp, 0);  /* Next entry */
     } while (res == FR_OK);
-    debugSPIPrint(DEBUG_CORE_FATFS, "res: %u\n", res);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "res: %u", res);
 
     return res;
 }
@@ -3004,13 +3004,13 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
             if(i >= ni) return FR_INVALID_NAME;
             if (chk_chr("\"*+,:;<=>\?[]|\x7F", c))
             {
-                debugSPIPrint(DEBUG_CORE_FATFS, "invalid char %c\n", c);
+                XBlastLogger(DBG_LVL_WARN, DEBUG_CORE_FATFS, "invalid char %c", c);
                 return FR_INVALID_NAME;  /* Reject illegal chrs for SFN */
             }
             //if (IsLower(c)) c -= 0x20;  /* To upper */ //FATX supports varying case chars
             sfn[i++] = c;
         }
-        debugSPIPrint(DEBUG_CORE_FATFS, "sfn:%s\n", sfn);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "sfn:%s", sfn);
         /* Refuse to handle "." and ".." directory entries on FATX */
         if(1 == i && '.' == sfn[0])
         {
@@ -3075,7 +3075,7 @@ FRESULT create_name (   /* FR_OK: successful, FR_INVALID_NAME: could not create 
     *path = p + si;                     /* Return pointer to the next segment */
     if (i == 0)
     {
-        debugSPIPrint(DEBUG_CORE_FATFS, "null string\n");
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "null string");
         return FR_INVALID_NAME; /* Reject nul string */
     }
 
@@ -3161,10 +3161,10 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
     } else {                                /* Follow path */
         for (;;) {
             res = create_name(dp, &path);   /* Get a segment name of the path */
-            debugSPIPrint(DEBUG_CORE_FATFS, "create_name res:%u    path:%s\n", res, path);
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "create_name res:%u    path:%s", res, path);
             if (res != FR_OK) break;
             res = dir_find(dp);             /* Find an object with the segment name */
-            debugSPIPrint(DEBUG_CORE_FATFS, "dir_find res:%u\n", res);
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "dir_find res:%u", res);
 #ifdef _USE_FATX
             if(ISFATX_FS(fs->fs_typex))
             {
@@ -3175,7 +3175,7 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             {
                 ns = dp->fnx[NSFLAG];
             }
-            debugSPIPrint(DEBUG_CORE_FATFS, "dir_find res:%u  ns:%u\n", res, ns);
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "dir_find res:%u  ns:%u", res, ns);
             if (res != FR_OK) {             /* Failed to find the object */
                 if (res == FR_NO_FILE) {    /* Object is not found */
                     if (_FS_RPATH && (ns & NS_DOT)) {   /* If dot entry is not exist, stay there */
@@ -3200,7 +3200,7 @@ FRESULT follow_path (   /* FR_OK(0): successful, !=0: error code */
             if (ns & NS_LAST) break;            /* Last segment matched. Function completed. */
             /* Get into the sub-directory */
             if (!(obj->attr & AM_DIR)) {        /* It is not a sub-directory and cannot follow */
-                debugSPIPrint(DEBUG_CORE_FATFS, "It is not a sub-directory and cannot follow\n");
+                XBlastLogger(DBG_LVL_TRACE, DEBUG_CORE_FATFS, "It is not a sub-directory and cannot follow");
                 res = FR_NO_PATH; break;
             }
 #if (_FS_EXFAT || defined(_USE_FATX))
@@ -3771,13 +3771,13 @@ FRESULT f_open (
     mode &= _FS_READONLY ? FA_READ : FA_READ | FA_WRITE | FA_CREATE_ALWAYS | FA_CREATE_NEW | FA_OPEN_ALWAYS | FA_OPEN_APPEND | FA_SEEKEND;
     res = find_volume(&path, &fs, mode);
     if (res == FR_OK) {
-        debugSPIPrint(DEBUG_CORE_FATFS, "Find_Volume OK\n");
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "Find_Volume OK");
         dj.obj.fs = fs;
         INIT_NAMBUF(fs);
         res = follow_path(&dj, path);   /* Follow the file path */
 #if !_FS_READONLY   /* R/W configuration */
         if (res == FR_OK) {
-            debugSPIPrint(DEBUG_CORE_FATFS, "Follow path OK\n");
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "Follow path OK");
 #ifdef _USE_FATX
             if ((ISFATX_FS(fs->fs_typex) && (dj.fnx[NSxFLAG] & NS_NONAME)) || (NOTFATX_FS(fs->fs_typex) && (dj.fnx[NSFLAG] & NS_NONAME))) {    /* Origin directory itself? */
 #else
@@ -4281,7 +4281,7 @@ FRESULT f_sync (
             }
         }
     }
-    debugSPIPrint(DEBUG_CORE_FATFS, "res=%u\n", res);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "res=%u", res);
     LEAVE_FF(fs, res);
 }
 
@@ -4320,7 +4320,7 @@ FRESULT f_close (
 #endif
         }
     }
-    debugSPIPrint(DEBUG_CORE_FATFS, "res=%u\n", res);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "res=%u", res);
     return res;
 }
 
@@ -5266,12 +5266,12 @@ FRESULT f_rename (
 
     get_ldnumber(&path_new);                        /* Ignore drive number of new name */
     res = find_volume(&path_old, &fs, FA_WRITE);    /* Get logical drive of the old object */
-    debugSPIPrint(DEBUG_CORE_FATFS, "find_volume res:%u\n", res);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "find_volume res:%u", res);
     if (res == FR_OK) {
         djo.obj.fs = fs;
         INIT_NAMBUF(fs);
         res = follow_path(&djo, path_old);      /* Check old object */
-        debugSPIPrint(DEBUG_CORE_FATFS, "follow_path res:%u\n", res);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "follow_path res:%u", res);
 #ifdef _USE_FATX
         if(ISFATX_FS(fs->fs_typex))
         {
@@ -5285,7 +5285,7 @@ FRESULT f_rename (
 #if _FS_LOCK != 0
         if (res == FR_OK) res = chk_lock(&djo, 2);
 #endif
-        debugSPIPrint(DEBUG_CORE_FATFS, "chk_lock res:%u\n", res);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "chk_lock res:%u", res);
         if (res == FR_OK) {                     /* Object to be renamed is found */
 #if _FS_EXFAT
             if (fs->fs_type == FS_EXFAT) {  /* At exFAT */
@@ -5372,7 +5372,7 @@ FRESULT f_rename (
             }
             if (res == FR_OK) {
                 res = dir_remove(&djo);     /* Remove old entry */
-                debugSPIPrint(DEBUG_CORE_FATFS, "dir_remove res:%u\n", res);
+                XBlastLogger(DBG_LVL_DEBUG, DEBUG_CORE_FATFS, "dir_remove res:%u", res);
                 if (res == FR_OK) {
                     res = sync_fs(fs);
                 }

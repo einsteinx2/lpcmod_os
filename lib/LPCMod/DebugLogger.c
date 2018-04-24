@@ -50,25 +50,25 @@ unsigned char logRotate(void)
     }
 
     sprintf(newName, "%s.%u", ActiveLogFileLocation, i);
-    debugSPIPrint(DEBUG_LOGGER, "Erase file: %s.", newName);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Erase file: %s.", newName);
     f_unlink(newName);
 
     while(0 <= --i)
     {
         sprintf(fullPath, "%s.%u", ActiveLogFileLocation, i);
-        debugSPIPrint(DEBUG_LOGGER, "Rename:%s -> %s.", fullPath, newName);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Rename:%s -> %s.", fullPath, newName);
         f_rename(fullPath, newName);
         strcpy(newName, fullPath);
     }
 
-    debugSPIPrint(DEBUG_LOGGER, "Rename:%s -> %s.", ActiveLogFileLocation, fullPath);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Rename:%s -> %s.", ActiveLogFileLocation, fullPath);
     f_rename(ActiveLogFileLocation, fullPath);
 
     result = f_open(&activeLogHandle, ActiveLogFileLocation, FA_OPEN_APPEND | FA_WRITE);
-    debugSPIPrint(DEBUG_LOGGER, "Open:%s.", ActiveLogFileLocation);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Open:%s.", ActiveLogFileLocation);
     if(FR_OK != result)
     {
-        debugSPIPrint(DEBUG_LOGGER, "Couldn't open log file.");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_LOGGER, "Couldn't open log file.");
         return 1;
     }
 
@@ -97,7 +97,7 @@ void printTextLogger(unsigned char logLevel, const char* debugFlag, const char* 
         if(initDone && writeToLogfile)
         {
             result = f_sync(&activeLogHandle);
-            debugSPIPrint(DEBUG_LOGGER, "Sync log to drive. result:%u", result);
+            XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Sync log to drive. result:%u", result);
         }
     }
 }
@@ -157,9 +157,9 @@ static void writeString(const char* string, unsigned char writeToLogFile)
     /* Write to log file*/
     if(initDone && writeToLogFile)
     {
-        debugSPIPrint(DEBUG_LOGGER, "WriteToLog:\"%s\"", string);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "WriteToLog:\"%s\"", string);
         result = f_puts(string, &activeLogHandle);
-        debugSPIPrint(DEBUG_LOGGER, "puts result:%u", result);
+        XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "puts result:%u", result);
     }
 #ifdef SPITRACE
     else
