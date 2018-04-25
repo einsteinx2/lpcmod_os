@@ -39,7 +39,7 @@ static unsigned char previousPercent = 0;
 //Selects which function should be called for flashing.
 void FlashFileFromBuffer(unsigned char *fileBuf, unsigned int fileSize, bool askConfirm)
 {
-    XBlastLogger(DBG_LVL_INFO, DEBUG_FLASH_UI,"New image to flash. size=%u", fileSize);
+    XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_INFO, "New image to flash. size=%u", fileSize);
 
     if(Flash_getProgress().currentFlashOp == FlashOp_Idle)
     {
@@ -126,7 +126,7 @@ static bool FlashPrintResult(void)
 #ifndef DEV_FEATURES
     if(mustRestart == true)
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_FLASH_UI,"Flash update sequence restart system");
+        XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_INFO, "Flash update sequence restart system");
         // Set LED to oxox.
         inputLED();
         Flash_freeFlashFSM();
@@ -213,19 +213,19 @@ bool SaveXBlastOSSettings(void)
 
     if(memcmp(&LPCmodSettings, &LPCmodSettingsOrigFromFlash, sizeof(_LPCmodSettings)) == 0)
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_FLASH_UI,"No setting changed since last boot. Skipping save to flash.");
+        XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_INFO, "No setting changed since last boot. Skipping save to flash.");
         return true;
     }
 
     if(isXBlastOnTSOP())
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_FLASH_UI,"XBlast detected but running from TSOP. Can't save to LPC flash.");
+        XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_INFO, "XBlast detected but running from TSOP. Can't save to LPC flash.");
         return true;
     }
 
     if(isXBlastCompatible() == false && isXBE())
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_FLASH_UI,"No XBlast HW detected.Came from XBE. Assume no flash to same to.");
+        XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_INFO, "No XBlast HW detected.Came from XBE. Assume no flash to same to.");
         return true;
     }
 
@@ -368,7 +368,7 @@ bool executeFlashDriverUI(void)
     case FlashTask_WriteBios:
         if(flashProgress.currentFlashOp == FlashOp_PendingOp)
         {
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_FLASH_UI,"Flash update sequence pending op");
+            XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_DEBUG, "Flash update sequence pending op");
             VIDEO_ATTR=0xffef37;
 
             if(mustRestart)
@@ -392,13 +392,13 @@ bool executeFlashDriverUI(void)
         }
         else if(flashProgress.currentFlashOp == FlashOp_Completed)
         {
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_FLASH_UI,"Flash update sequence completed");
+            XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_DEBUG, "Flash update sequence completed");
             FlashPrintResult();
             Flash_freeFlashFSM();
         }
         else if(flashProgress.currentFlashOp == FlashOp_Error)
         {
-            XBlastLogger(DBG_LVL_ERROR, DEBUG_FLASH_UI,"!!Flash update sequence error!! errorCode=%u", flashProgress.flashErrorCode);
+            XBlastLogger(DEBUG_FLASH_UI, DBG_LVL_ERROR, "!!Flash update sequence error!! errorCode=%u", flashProgress.flashErrorCode);
             FlashPrintResult();
             Flash_freeFlashFSM();
         }

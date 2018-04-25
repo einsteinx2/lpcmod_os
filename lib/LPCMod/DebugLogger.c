@@ -51,32 +51,32 @@ unsigned char logRotate(void)
     }
 
     sprintf(newName, "%s.%u", ActiveLogFileLocation, i);
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Erase file: %s.", newName);
+    XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Erase file: %s.", newName);
     f_unlink(newName);
 
     while(0 <= --i)
     {
         sprintf(fullPath, "%s.%u", ActiveLogFileLocation, i);
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Rename:%s -> %s.", fullPath, newName);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Rename:%s -> %s.", fullPath, newName);
         f_rename(fullPath, newName);
         strcpy(newName, fullPath);
     }
 
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Rename:%s -> %s.", ActiveLogFileLocation, fullPath);
+    XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Rename:%s -> %s.", ActiveLogFileLocation, fullPath);
     f_rename(ActiveLogFileLocation, fullPath);
 
     result = f_open(&activeLogHandle, ActiveLogFileLocation, FA_OPEN_APPEND | FA_WRITE);
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Open:%s.", ActiveLogFileLocation);
+    XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Open:%s.", ActiveLogFileLocation);
     if(FR_OK != result)
     {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_LOGGER, "Couldn't open log file.");
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_ERROR, "Couldn't open log file.");
         return 1;
     }
 
     return 0;
 }
 
-void printTextLogger(unsigned char logLevel, const char* debugFlag, const char* functionName, char* buffer, ...)
+void printTextLogger(const char* debugFlag, unsigned char logLevel, const char* functionName, char* buffer, ...)
 {
     FRESULT result;
     va_list vl;
@@ -98,14 +98,14 @@ void printTextLogger(unsigned char logLevel, const char* debugFlag, const char* 
         if(initDone && writeToLogfile)
         {
             result = f_sync(&activeLogHandle);
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "Sync log to drive. result:%u", result);
+            XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
         }
     }
 }
 
 
 //TODO: replace with macro to eliminate va_args handling?
-void lwipXBlastPrint(unsigned char lwipDbgLevel, const char* activate, const char* functionName, ...)
+void lwipXBlastPrint(const char* category, unsigned char lwipDbgLevel, const char* functionName, ...)
 {
     unsigned char convertedLogLevel = DBG_LVL_FATAL;
 
@@ -144,7 +144,7 @@ void lwipXBlastPrint(unsigned char lwipDbgLevel, const char* activate, const cha
     }
     va_list vargs;
     va_start(vargs, functionName);
-    printTextLogger(convertedLogLevel, activate, functionName, vargs);
+    printTextLogger(category, convertedLogLevel, functionName, vargs);
     va_end(vargs);
 }
 
@@ -158,9 +158,9 @@ static void writeString(const char* string, unsigned char writeToLogFile)
     /* Write to log file*/
     if(initDone && writeToLogFile)
     {
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "WriteToLog:\"%s\"", string);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "WriteToLog:\"%s\"", string);
         result = f_puts(string, &activeLogHandle);
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_LOGGER, "puts result:%u", result);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts result:%u", result);
     }
 #ifdef SPITRACE
     else

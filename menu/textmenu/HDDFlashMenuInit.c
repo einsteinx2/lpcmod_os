@@ -27,7 +27,7 @@ void HDDFlashMenuDynamic(void* unused)
     unsigned short n = 0;
     unsigned short bioses = 0;
 
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_GENERAL_UI, "Listing BIOSes in %s", getBIOSDirectoryLocation());
+    XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_DEBUG, "Listing BIOSes in %s", getBIOSDirectoryLocation());
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
     strcpy(menuPtr->szCaption, getBIOSDirectoryLocation() + strlen("MASTER_"));

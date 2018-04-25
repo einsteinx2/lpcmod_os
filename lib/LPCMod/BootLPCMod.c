@@ -101,12 +101,12 @@ void quickboot(unsigned char bank)
 {
     if(bank > BOOTFROMTSOP)
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_BOOT_LOG, "Booting XBlast flash bank");
+        XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Booting XBlast flash bank");
         switchBootBank(bank);
     }
     else
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_BOOT_LOG, "Booting TSOP flash bank");
+        XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Booting TSOP flash bank");
         //If booting from TSOP, use of the XODUS_CONTROL register is fine.
         if(getMotherboardRevision() == XboxMotherboardRevision_1_6 || getMotherboardRevision() == XboxMotherboardRevision_UNKNOWN)
         {
@@ -132,7 +132,7 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 
     if(0 == handle)
     {
-        XBlastLogger(DBG_LVL_INFO, DEBUG_BOOT_LOG, "No jpg file.");
+        XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "No jpg file.");
         return -1;
     }
 
@@ -141,14 +141,14 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 
     if(NULL == fileBuff)
     {
-        XBlastLogger(DBG_LVL_FATAL, DEBUG_BOOT_LOG, "malloc failed.");
+        XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_FATAL, "malloc failed.");
         return -1;
     }
 
     if(fatxread(handle, fileBuff, size) != size)
     {
         free(fileBuff);
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_BOOT_LOG, "Read incomplete.");
+        XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_ERROR, "Read incomplete.");
         return -1;
     }
 
@@ -157,7 +157,7 @@ int LPCMod_ReadJPGFromHDD(const char *jpgFilename)
 
     if(fatxclose(handle))
     {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_BOOT_LOG, "Error close jpg file.");
+        XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_ERROR, "Error close jpg file.");
     }
 
     return 0;
@@ -173,12 +173,12 @@ void formatNewDrives(void)
     {
         if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i) && XBOX_EXTEND_STARTLBA <= BootIdeGetSectorCount(i) &&  0 == BootIdeDeviceIsLocked(i) && 0 == isFATXFormattedDrive(i))
         {
-            XBlastLogger(DBG_LVL_INFO, DEBUG_BOOT_LOG, "No FATX detected on %s HDD.", i ? "Slave" : "Master");
+            XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "No FATX detected on %s HDD.", i ? "Slave" : "Master");
             char ConfirmDialogString[50];
             sprintf(ConfirmDialogString, "Format new drive (%s)?", i ? "slave":"master");
             if(ConfirmDialog(ConfirmDialogString, 1) == false)
             {
-                XBlastLogger(DBG_LVL_INFO, DEBUG_BOOT_LOG, "Formatting base partitions.");
+                XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Formatting base partitions.");
                 fdisk(i, XboxDiskLayout_Base);
                 if(fatxmkfs(i, Part_C))
                 {
@@ -213,10 +213,10 @@ void formatNewDrives(void)
 
                 if((XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE) <= BootIdeGetSectorCount(i))
                 {
-                    XBlastLogger(DBG_LVL_DEBUG, DEBUG_BOOT_LOG, "Show user extended partitions format options.");
+                    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_DEBUG, "Show user extended partitions format options.");
                     DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.
                 }
-                XBlastLogger(DBG_LVL_INFO, DEBUG_BOOT_LOG, "HDD format done.");
+                XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "HDD format done.");
             }
         }
     }

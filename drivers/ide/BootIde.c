@@ -133,7 +133,7 @@ int BootIdeWaitDataReady(unsigned uIoBase)
     do {
         if (((IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x88) == 0x08)){       //DRQ bit raised and BSY bit cleared.
             if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01){
-                XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Error bit raised.");
+                XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Error bit raised.");
                 return 2;        //ERR bit raised, return 2.
             }
             return 0;                                                           //Everything good, move on.
@@ -142,10 +142,10 @@ int BootIdeWaitDataReady(unsigned uIoBase)
     } while (i != 0);
 
     if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Error bit raised after timed out.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Error bit raised after timed out.");
         return 2;                //ERR bit raised.
     }
-    XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Timeout error.");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Timeout error.");
     return 1;                                                                   //Timeout error.
 }
 
@@ -163,14 +163,14 @@ int BootIdeIssueAtaCommand(
     {
         n=BootIdeWaitNotBusy(uIoBase);
         if(n == -1)    {// as our command may be being used to clear the error, not a good policy to check too closely!
-            XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Error on BootIdeIssueAtaCommand wait 1: ret=%d, error %02X", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
             return n;
         }
     }
      
      /* 48-bit LBA */   
         /* this won't hurt for non 48-bit LBA commands since we re-write these registers below */   
-    //XblastLogger(DEBUG_IDE_DRIVER,"Issuing ATA command.");
+    //XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Issuing ATA command.");
     IoOutputByte(IDE_REG_SECTOR_COUNT(uIoBase), params->m_bCountSectorExt);   
     IoOutputByte(IDE_REG_LBA_LOW(uIoBase), params->m_bSectorExt);
     IoOutputByte(IDE_REG_LBA_MID(uIoBase), params->m_wCylinderExt & 0xFF);
@@ -191,7 +191,7 @@ int BootIdeIssueAtaCommand(
     if(n)
     {
 //        printk("\n      error on BootIdeIssueAtaCommand wait 3: ret=%d, error %02X\n", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Error on BootIdeIssueAtaCommand wait 2: ret=%d, error %02X", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Error on BootIdeIssueAtaCommand wait 2: ret=%d, error %02X", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
         return n;
     }
 
@@ -204,7 +204,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 {
     unsigned short * ptr = (unsigned short *) buf;
     if (BootIdeWaitDataReady(uIoBase)) {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Data not ready..");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Data not ready..");
         return 1;
     }
 
@@ -216,7 +216,7 @@ int BootIdeReadData(unsigned uIoBase, void * buf, size_t size)
 
     IoInputByte(IDE_REG_STATUS(uIoBase));
     if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Ended with an error.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Ended with an error.");
         return 2;
     }
     return 0;
@@ -243,7 +243,7 @@ int BootIdeWriteData(unsigned uIoBase, const void * buf, unsigned int size)
     
     n=BootIdeWaitNotBusy(uIoBase);
     if(n) {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Waiting for good status reg returned error : %d", n);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Waiting for good status reg returned error : %d", n);
         return n;
     }
 
@@ -289,7 +289,7 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, size_t size)
     wait_us_blocking(1);
     n=BootIdeWaitNotBusy(uIoBase);
     if(n) {
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Waiting for good status reg returned error : %d", n);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Waiting for good status reg returned error : %d", n);
         return n;
     }
     wait_us_blocking(1);
@@ -385,31 +385,31 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
     n=BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false);
     
     if(n == -1){
-    	XBlastLogger(DBG_LVL_WARN, DEBUG_IDE_DRIVER,"No device at %s position. Halting init.", nIndexDrive? "slave" : "master");
+    	XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_WARN, "No device at %s position. Halting init.", nIndexDrive? "slave" : "master");
     	return 1;
     }
     
     if(n == 1) {
     	cl = IoInputByte(IDE_REG_LBA_MID(uIoBase));
     	ch = IoInputByte(IDE_REG_LBA_HIGH(uIoBase));
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive is ATAPI, surely DVD drive.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Drive is ATAPI, surely DVD drive.");
         if((cl == 0x14 && ch == 0xEB) || (cl == 0x69 && ch == 0x96)){
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Issuing ATAPI IDENTIFY command.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Issuing ATAPI IDENTIFY command.");
             if (BootIdeIssueAtaCommand(uIoBase,IDE_CMD_PACKET_IDENTIFY,&tsicp, false)) {
-                XBlastLogger(DBG_LVL_WARN, DEBUG_IDE_DRIVER,"ATAPI IDENTIFY command returned error. Drive not detected. Halting!");
+                XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_WARN, "ATAPI IDENTIFY command returned error. Drive not detected. Halting!");
                 return 1;
             }
             tsaHarddiskInfo[nIndexDrive].m_fAtapi=true;
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Succesfully identified ATAPI device.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Succesfully identified ATAPI device.");
         }
         else{
-            XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Magic ATAPI values identifier not valid.");
-            XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Unknown device at %s position. Halting init.",nIndexDrive? "slave" : "master");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Magic ATAPI values identifier not valid.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Unknown device at %s position. Halting init.",nIndexDrive? "slave" : "master");
             return 1;
         }
     } 
     else{
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive is not ATAPI, so IDE.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Drive is not ATAPI, so IDE.");
         tsaHarddiskInfo[nIndexDrive].m_fAtapi=false;
     }
         
@@ -442,7 +442,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
     tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported = (drive_info[86] & 1ul<<12) ? 1 : 0;
     tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported = (drive_info[86] & 1ul<<13)  ? 1 : 0;
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER, "flush cache support:%u   ext:%u", tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported, tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported);
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "flush cache support:%u   ext:%u", tsaHarddiskInfo[nIndexDrive].m_fFlushCacheSupported, tsaHarddiskInfo[nIndexDrive].m_fFlushCacheExtSupported);
     
     { 
         unsigned short * pw=(unsigned short *)&(drive_info[10]);
@@ -459,7 +459,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
     if (tsaHarddiskInfo[nIndexDrive].m_fAtapi) {
      // CDROM/DVD
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"ATAPI device specific init routine.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "ATAPI device specific init routine.");
                 // We Detected a CD-DVD or so, as there are no Heads ...
         tsaHarddiskInfo[nIndexDrive].m_fAtapi=true;
 #ifndef SILENT_MODE
@@ -471,14 +471,14 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             tsaHarddiskInfo[nIndexDrive].m_szSerial,
             tsaHarddiskInfo[nIndexDrive].m_szFirmware);
 #endif
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"hd%c:", nIndexDrive+'a');
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %s",tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "hd%c:", nIndexDrive+'a');
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s",tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
         if (isXBE() == false)
         {
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Reset ATAPI device specific requirement from cold boot.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Reset ATAPI device specific requirement from cold boot.");
               // this is the only way to clear the ATAPI ''I have been reset'' error indication
             unsigned char ba[128];
             ba[2]=0x06;
@@ -496,7 +496,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         
         
     if (!tsaHarddiskInfo[nIndexDrive].m_fAtapi) {       //Drive is HDD (not CD/DVD).
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"IDE(HDD) device specific init routine.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "IDE(HDD) device specific init routine.");
         unsigned long ulDriveCapacity1024=((tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal /1000)*512)/1000;
         
 #ifndef SILENT_MODE
@@ -509,10 +509,10 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             ulDriveCapacity1024/1000, ulDriveCapacity1024%1000 
         );
 #endif
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"hd%c:", nIndexDrive+'a');
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"    %u.%uGB", ulDriveCapacity1024/1000, ulDriveCapacity1024%1000);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "hd%c:", nIndexDrive+'a');
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %u.%uGB", ulDriveCapacity1024/1000, ulDriveCapacity1024%1000);
 
         tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
         tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = drive_info[92];
@@ -524,8 +524,8 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             	char userPassword[21];
             	CalculateDrivePassword(nIndexDrive, userPassword, (char *)&eeprom);
             	userPassword[20] = '\0';
-            	XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive requires SECURITY_UNLOCK");
-            	XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Calculated password: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+            	XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Drive requires SECURITY_UNLOCK");
+            	XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Calculated password: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
             	  userPassword[0], userPassword[1], userPassword[2], userPassword[3], userPassword[4], userPassword[5], userPassword[6], userPassword[7],
             	  userPassword[8], userPassword[9], userPassword[10], userPassword[11], userPassword[12], userPassword[13], userPassword[14], userPassword[15],
             	  userPassword[16], userPassword[17], userPassword[18], userPassword[19]);
@@ -535,17 +535,17 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 
         //Useful for READ/WRITE_MLTIPLE commands
         tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer = *((unsigned char *)&(drive_info[47]));
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"HDD support multiple sector transfers of %u sectors per command", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "HDD support multiple sector transfers of %u sectors per command", tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer);
 
         //ATA specs require that we send SET MULTIPLE MOD command at least once to enable MULTIPLE READ/WRITE
         //commands. We send the SET MULTIPLE MODE command with the default number of sector per block.
         //But first let's check if we need to. 
         //If bit8 of word 59 is set along with a valid sector/block value, we don't need to send command.
         if((tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer + 0x0100) != (drive_info[59]&0x01FF)){
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Setting HDD Mutimode sectors to maximum sector per transfer.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Setting HDD Mutimode sectors to maximum sector per transfer.");
             if(BootIdeSetMultimodeSectors(nIndexDrive, tsaHarddiskInfo[nIndexDrive].m_maxBlockTransfer)){
                 printk("\n\n\n\n\n\n\n\n              Unable to change Multimode's sectors per block.");
-                XBlastLogger(DBG_LVL_WARN, DEBUG_IDE_DRIVER,"Unable to change Multimode's sectors per block.");
+                XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_WARN, "Unable to change Multimode's sectors per block.");
                 wait_ms(3000);
                 return 1;
             }
@@ -553,12 +553,12 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         if (drive_info[49] & 0x400) 
         { 
             /* bit 10 of capability word is IORDY supported bit */
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"IORDY control bit supported.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "IORDY control bit supported.");
             tsaHarddiskInfo[nIndexDrive].m_bIORDY = 1;
         }
 
         tsaHarddiskInfo[nIndexDrive].m_minPIOcycle = drive_info[67];       //Value in ns
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Minimum PIO cycle for HDD is %u.", tsaHarddiskInfo[nIndexDrive].m_minPIOcycle);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Minimum PIO cycle for HDD is %u.", tsaHarddiskInfo[nIndexDrive].m_minPIOcycle);
         //Set fastest PIO mode depending on cycle time supplied by HDD.
 
 
@@ -616,7 +616,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x3F3F0000);
         }
         else*/ if(tsaHarddiskInfo[nIndexDrive].m_minPIOcycle <= 383){   //Mode1
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Trying to set PIO mode 1.");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Trying to set PIO mode 1.");
             n = BootIdeSetTransferMode(nIndexDrive, 0x09);
             //Mode1 timing specs are as follow:
             //Register 0x48, set at 0x65656565 for all drives(4)
@@ -632,7 +632,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x4F4F0055);
         }
         else{                                                         //Mode0
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Trying to set PIO mode 0 (default).");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Trying to set PIO mode 0 (default).");
             n = BootIdeSetTransferMode(nIndexDrive, 0x08);
             //Mode0 timing specs are as follow:
             //Register 0x48, set at 0xA8A8A8A8 for all drives(4)
@@ -648,7 +648,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x5C, 0x5F5F00AA);
         }
         if(n){
-            XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.", nIndexDrive);
             printk("\n       BootIdeSetPIOMode:Drive %d: Cannot set PIO mode.\n", nIndexDrive);
         }
 
@@ -668,15 +668,15 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
 */
     }
 
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Common init routine for both IDE and ATAPI devices.");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Common init routine for both IDE and ATAPI devices.");
     if (drive_info[49] & 0x200) 
     { 
         /* bit 9 of capability word is lba supported bit */
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_LBA;
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Drive is accessed by LBA.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Drive is accessed by LBA.");
     } else {
         tsaHarddiskInfo[nIndexDrive].m_bLbaMode = IDE_DH_CHS;
-        XBlastLogger(DBG_LVL_WARN, DEBUG_IDE_DRIVER,"Drive is accessed by CHS(seriously?).");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_WARN, "Drive is accessed by CHS(seriously?).");
     }
 
     //If drive is a hard disk, see what type of partitioning it has.
@@ -684,17 +684,17 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         //Check if drive support S.M.A.R.T.
         tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities = drive_info[82] & 0x0001;
         if(tsaHarddiskInfo[nIndexDrive].m_fHasSMARTcapabilities){
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive support S.M.A.R.T..");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Drive support S.M.A.R.T..");
             //Is S.M.A.R.T. enabled?
             tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled = drive_info[85] & 0x0001;
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"S.M.A.R.T. is %s.", tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled ? "enabled" : "disabled");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "S.M.A.R.T. is %s.", tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled ? "enabled" : "disabled");
             //Bit0 : Support Error Logging.
             //Bit1 : Support S.M.A.R.T. Self-tests.
             tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported = drive_info[84] & 0x0003;
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive support S.M.A.R.T.%s%s.", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x1) ? " error logging" : "", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x2) ? " self-tests" : "");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Drive support S.M.A.R.T.%s%s.", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x1) ? " error logging" : "", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x2) ? " self-tests" : "");
         }
     } 
-    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive init done.");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Drive init done.");
     return 0;
 }
 
@@ -813,7 +813,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     char baBuffer[512];
     unsigned short* drive_info = (unsigned short *)baBuffer;
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
-    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Trying master password unlock on drive %u", driveId);
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Trying master password unlock on drive %u", driveId);
 
     //IDE_CMD_SECURITY_UNLOCK
     if(BootIdeWaitNotBusy(uIoBase))
@@ -827,7 +827,7 @@ bool driveMasterPasswordUnlock(unsigned uIoBase, int driveId, const char *master
     //Set master password flag
     ide_cmd_data[0]|=0x01;
 
-    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Master password is: %s\n", master_password);
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Master password is: %s\n", master_password);
     memcpy(&ide_cmd_data[2],master_password,strlen(master_password));
 
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_SECURITY_UNLOCK, &tsicp, false)) return 1;
@@ -920,9 +920,9 @@ int BootIdeInit(void)
     IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
     //Init both master and slave
 
-    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"IDE init for Master drive");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "IDE init for Master drive");
     BootIdeDriveInit(IDE_BASE1, 0);
-    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"IDE init for Slave drive");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "IDE init for Slave drive");
     BootIdeDriveInit(IDE_BASE1, 1);
         
     if(tsaHarddiskInfo[0].m_fDriveExists && !tsaHarddiskInfo[0].m_fAtapi)
@@ -933,26 +933,26 @@ int BootIdeInit(void)
         tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(0);
         IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Reading IDE cable information through Master drive");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Reading IDE cable information through Master drive");
         if(!BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) 
         {
             unsigned short waBuffer[256];
             BootIdeWaitDataReady(uIoBase);
-            XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Read data back from Master drive");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Read data back from Master drive");
             if(!BootIdeReadData(uIoBase, (unsigned char *)&waBuffer[0], IDE_SECTOR_SIZE)) 
             {
                 if( ((waBuffer[93]&0xc000)!=0) && ((waBuffer[93]&0x8000)==0) && ((waBuffer[93]&0xe000)!=0x6000))     
                 {
-                    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Detected 80-conductors IDE cable");
+                    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Detected 80-conductors IDE cable");
                     tsaHarddiskInfo[0].m_bCableConductors=80;
                 }
                 else
                 {
-                    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Assume 40-conductors IDE cable");
+                    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Assume 40-conductors IDE cable");
                 }
 
             } else {
-                XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER,"Error getting data from IDENTIFY command");
+                XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Error getting data from IDENTIFY command");
             }
         }
     }
@@ -961,7 +961,7 @@ int BootIdeInit(void)
     {
 #ifndef SILENT_MODE
         printk("UDMA2\n");
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"IDE cable limits UDMA support to UDMA2.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "IDE cable limits UDMA support to UDMA2.");
 #endif
     } else 
     {
@@ -974,7 +974,7 @@ int BootIdeInit(void)
 #ifndef SILENT_MODE
         printk("UDMA%d\n", nAta);
 #endif
-        XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"UDMA%u supported by Master drive", nAta);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "UDMA%u supported by Master drive", nAta);
     }
     return 0;
 }
@@ -1344,13 +1344,13 @@ int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int bloc
                 IDE_DH_LBA;
         }
         }       
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER, "Send Write cmd.");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Send Write cmd.");
     if(BootIdeIssueAtaCommand(uIoBase, ideWriteCommand, &tsicp, false)) 
     {
         printk("ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
     }
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER, "Send Write data.");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Send Write data.");
     status = BootIdeWriteData(uIoBase, pbBuffer, IDE_SECTOR_SIZE);
 
     if(retry > 0)
@@ -1369,7 +1369,7 @@ int BootIdeWriteSector(int nDriveIndex, const void * pbBuffer, unsigned int bloc
     else
         BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH, &tsicp);
 */
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER, "status=%u.", status);
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "status=%u.", status);
     return status;
 }
 
@@ -1405,7 +1405,7 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 
     uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
 
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER, "start:%u len:%u retry:%u", startLBA, len, retry);
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "start:%u len:%u retry:%u", startLBA, len, retry);
 
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
@@ -1477,7 +1477,7 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
 
 /*
     //Send FLUSH CACHE (0xE7)
-    //XblastLogger(DEBUG_IDE_DRIVER,"Sending FLUSH CACHE\n");
+    //XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Sending FLUSH CACHE\n");
     ideWriteCommand = IDE_CMD_CACHE_FLUSH;
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
@@ -1486,13 +1486,13 @@ int BootIdeWriteMultiple(int nDriveIndex, void * pbBuffer, unsigned int startLBA
         printk("\n                      ide error %02X...\n", IoInputByte(IDE_REG_ERROR(uIoBase)));
         return 1;
     }
-    //XblastLogger(DEBUG_IDE_DRIVER,"FLUSH CACHE done");
+    //XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "FLUSH CACHE done");
 */    
 
     if(retry > 0)
         retry -= 1;
     if(status && retry){ //Status set to 1 or 2 means error. retry count must not be 0.
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER, "error! offset:%u retry:%u  remaining:%u", startLBA+bufferPtr, retry, remainingLen);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error! offset:%u retry:%u  remaining:%u", startLBA+bufferPtr, retry, remainingLen);
         printk("\n                 BootIdeWriteMultiple: write sector failed. %u retry left.", retry);
 
         //Retry (partial) block from the sector where it failed.
@@ -1508,22 +1508,22 @@ int BootIdeFlushCache(int nDriveIndex)
     unsigned short uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_HEAD(0) | IDE_DH_CHS | IDE_DH_DRIVE(nDriveIndex);
 
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER, "drive:%u   ext:%u   normal:%u", nDriveIndex, tsaHarddiskInfo[nDriveIndex].m_fFlushCacheExtSupported, tsaHarddiskInfo[nDriveIndex].m_fFlushCacheSupported);
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "drive:%u   ext:%u   normal:%u", nDriveIndex, tsaHarddiskInfo[nDriveIndex].m_fFlushCacheExtSupported, tsaHarddiskInfo[nDriveIndex].m_fFlushCacheSupported);
 
     if(tsaHarddiskInfo[nDriveIndex].m_fFlushCacheExtSupported)        //LBA48 drive
     {
-        XBlastLogger(DBG_LVL_TRACE, DEBUG_IDE_DRIVER, "Flush cache Ext");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_TRACE, "Flush cache Ext");
         result = BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH_EXT, &tsicp, false);
     }
     else if(tsaHarddiskInfo[nDriveIndex].m_fFlushCacheSupported)
     {
-        XBlastLogger(DBG_LVL_TRACE, DEBUG_IDE_DRIVER, "Flush cache Ext");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_TRACE, "Flush cache Ext");
         result = BootIdeIssueAtaCommand(uIoBase, IDE_CMD_CACHE_FLUSH, &tsicp, false);
     }
 
     if(result)
     {
-        XBlastLogger(DBG_LVL_ERROR, DEBUG_IDE_DRIVER, "error : %u", result);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error : %u", result);
     }
 
     return result;
@@ -1875,7 +1875,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     memset(ide_cmd_data,0x00,512);
     
     if(masterPassword && (ATACommand == IDE_CMD_SECURITY_UNLOCK || ATACommand == IDE_CMD_SECURITY_DISABLE)){
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"Setting bit for Master Password usage.");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Setting bit for Master Password usage.");
     	//Set master password flag
     	ide_cmd_data[0]|=0x01;
     }
@@ -1884,7 +1884,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
 
     if(masterPassword && tsaHarddiskInfo[nIndexDrive].m_masterPassSupport != 0xFFFF && ATACommand == IDE_CMD_SECURITY_SET_PASSWORD){
         ide_cmd_data[34] = 1;
-        XBlastLogger(DBG_LVL_DEBUG, DEBUG_IDE_DRIVER,"HDD support MasterPassword Index. Setting this to \"1\".");
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "HDD support MasterPassword Index. Setting this to \"1\".");
     }
 
     if(BootIdeIssueAtaCommand(uIoBase, ATACommand, &tsicp, false)){
@@ -1900,7 +1900,7 @@ int HDD_SECURITY_SendATACommand(int nIndexDrive, ide_command_t ATACommand, char 
     }
     
     // check that we are unlocked
-    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Security change command sent. Refreshing drives properties.");
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "Security change command sent. Refreshing drives properties.");
     if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_IDENTIFY, &tsicp, false)) 
     {
         return 1;

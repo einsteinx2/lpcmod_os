@@ -106,7 +106,7 @@ TEXTMENU* RunScriptMenuInit(void)
     FileInfo fileInfo;
     unsigned short n = 0;
 
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_SCRIPT, "Listing scripts in %s", getScriptDirectoryLocation());
+    XBlastLogger(DEBUG_SCRIPT, DBG_LVL_DEBUG, "Listing scripts in %s", getScriptDirectoryLocation());
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
@@ -179,7 +179,7 @@ TEXTMENU* SaveScriptMenuInit(void)
     FileInfo fileInfo;
     unsigned short n = 0;
     
-    XBlastLogger(DBG_LVL_DEBUG, DEBUG_SCRIPT, "Listing scripts in %s", getScriptDirectoryLocation());
+    XBlastLogger(DEBUG_SCRIPT, DBG_LVL_DEBUG, "Listing scripts in %s", getScriptDirectoryLocation());
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
