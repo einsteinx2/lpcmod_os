@@ -39,7 +39,7 @@ static FILEX openScript(const char* filename, unsigned int* outSize)
 
     if(0 == handle)
     {
-        debugSPIPrint(DEBUG_SCRIPT, "No script file.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "No script file.");
         return 0;
     }
 
@@ -57,7 +57,7 @@ int testScriptFromHDD(char * filename)
 
     if(0 == handle || 0 == size)
     {
-        debugSPIPrint(DEBUG_SCRIPT, "Error.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "Error.");
         return -1;
     }
 
@@ -65,14 +65,14 @@ int testScriptFromHDD(char * filename)
 
     if(NULL == fileBuf)
     {
-        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        XBlastLogger(DBG_LVL_FATAL, DEBUG_SCRIPT, "malloc failed.");
         return -1;
     }
 
     if(fatxread(handle, fileBuf, size) != size)
     {
         free(fileBuf);
-        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "Read incomplete.");
         return -1;
     }
     newSize = trimScript(&fileBuf, size);
@@ -98,7 +98,7 @@ void loadRunScriptWithParams(const char *fname, int paramCount, int * param)
 
     if(0 == handle || 0 == size)
     {
-        debugSPIPrint(DEBUG_SCRIPT, "Error.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "Error.");
         return;
     }
 
@@ -106,13 +106,13 @@ void loadRunScriptWithParams(const char *fname, int paramCount, int * param)
 
     if(NULL == fileBuf)
     {
-        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        XBlastLogger(DBG_LVL_FATAL, DEBUG_SCRIPT, "malloc failed.");
         return;
     }
 
     if(fatxread(handle, fileBuf, size) != size)
     {
-        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "Read incomplete.");
         newSize = 0;
     }
     else
@@ -150,7 +150,7 @@ void saveScriptToFlash(void *fname)
 
     if(0 == handle || 0 == size)
     {
-        debugSPIPrint(DEBUG_SCRIPT, "Error.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "Error.");
         return;
     }
 
@@ -158,13 +158,13 @@ void saveScriptToFlash(void *fname)
 
     if(NULL == fileBuf)
     {
-        debugSPIPrint(DEBUG_BOOT_LOG, "malloc failed.\n");
+        XBlastLogger(DBG_LVL_FATAL, DEBUG_SCRIPT, "malloc failed.");
         return;
     }
 
     if(fatxread(handle, fileBuf, size) != size)
     {
-        debugSPIPrint(DEBUG_BOOT_LOG, "Read incomplete.\n");
+        XBlastLogger(DBG_LVL_ERROR, DEBUG_SCRIPT, "Read incomplete.");
         return;
     }
     else

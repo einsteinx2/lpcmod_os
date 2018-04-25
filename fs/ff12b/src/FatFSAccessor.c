@@ -533,7 +533,7 @@ DIREX fatxopendir(const char* path)
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "dir %s\n", path);
+    XBlastLogger(DBG_LVL_DEBUG, DEBUG_FATX_FS, "dir %s", path);
     result = f_opendir(&DirectoryHandleArray[i], path);
     if(FR_OK != result)
     {

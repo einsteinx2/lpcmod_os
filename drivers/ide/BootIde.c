@@ -691,7 +691,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
             //Bit0 : Support Error Logging.
             //Bit1 : Support S.M.A.R.T. Self-tests.
             tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported = drive_info[84] & 0x0003;
-            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive support S.M.A.R.T. %s%s.", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x1) ? "error logging" : "", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x2) ? "self-tests" : "");
+            XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive support S.M.A.R.T.%s%s.", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x1) ? " error logging" : "", (tsaHarddiskInfo[nIndexDrive].m_SMARTFeaturesSupported&0x2) ? " self-tests" : "");
         }
     } 
     XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Drive init done.");
@@ -948,7 +948,7 @@ int BootIdeInit(void)
                 }
                 else
                 {
-                    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Assum 40-conductors IDE cable");
+                    XBlastLogger(DBG_LVL_INFO, DEBUG_IDE_DRIVER,"Assume 40-conductors IDE cable");
                 }
 
             } else {

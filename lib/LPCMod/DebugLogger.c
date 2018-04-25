@@ -12,6 +12,7 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "lwip/debug.h" /* lwip */
+#include "BootLPCMod.h"
 
 #define MaxBuffSize 1024
 
