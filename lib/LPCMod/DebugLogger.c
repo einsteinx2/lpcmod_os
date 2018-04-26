@@ -24,6 +24,7 @@ static const char* const ActiveLogFileLocation = "MASTER_X:" PathSep logFilename
 static unsigned char initDone = 0;
 static FIL activeLogHandle;
 
+static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs);
 static void writeString(const char* const string, unsigned char writeToLogFile);
 static unsigned char checkDebugFlag(const char* const szDebugFlag);
 static const char* const getLogLevelString(unsigned char logLevel);
@@ -78,32 +79,11 @@ unsigned char logRotate(void)
 
 void printTextLogger(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, ...)
 {
-    FRESULT result;
     va_list vl;
-    char tempBuf[MaxBuffSize];
-    unsigned char writeToLogfile;
 
-    if(NULL != activeLogHandle.obj.fs)
-    {
-        writeToLogfile = checkDebugFlag(debugFlag);
-        va_start(vl,buffer);
-        sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
-        writeString(tempBuf, writeToLogfile);
-        vsprintf(tempBuf,buffer,vl);
-        writeString(tempBuf, writeToLogfile);
-        va_end(vl);
-
-        if('\n' != tempBuf[strlen(tempBuf) - 1])
-        {
-            writeString("\n", writeToLogfile);
-        }
-
-        if(initDone && writeToLogfile)
-        {
-            result = f_sync(&activeLogHandle);
-            XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
-        }
-    }
+    va_start(vl,buffer);
+    stringFormat(debugFlag, logLevel, functionName, buffer, &vl);
+    va_end(vl);
 }
 
 
@@ -148,8 +128,35 @@ void lwipXBlastPrint(const char* const category, unsigned char lwipDbgLevel, con
     }
     va_list vargs;
     va_start(vargs, message);
-    printTextLogger(category, convertedLogLevel, functionName, message, vargs);
+    stringFormat(category, convertedLogLevel, functionName, message, &vargs);
     va_end(vargs);
+}
+
+static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs)
+{
+    FRESULT result;
+    char tempBuf[1024];
+    unsigned char writeToLogfile;
+
+    if(NULL != activeLogHandle.obj.fs)
+    {
+        writeToLogfile = checkDebugFlag(debugFlag);
+        sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
+        writeString(tempBuf, writeToLogfile);
+        vsprintf(tempBuf,buffer, *vargs);
+        writeString(tempBuf, writeToLogfile);
+
+        if('\n' != tempBuf[strlen(tempBuf) - 1])
+        {
+            writeString("\n", writeToLogfile);
+        }
+
+        if(initDone && writeToLogfile)
+        {
+            result = f_sync(&activeLogHandle);
+            XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
+        }
+    }
 }
 
 static void writeString(const char* const string, unsigned char writeToLogFile)

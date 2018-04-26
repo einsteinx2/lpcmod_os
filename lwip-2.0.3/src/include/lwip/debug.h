@@ -154,7 +154,7 @@
 #ifndef LWIP_PLATFORM_DIAG
 #error "If you want to use LWIP_DEBUG, LWIP_PLATFORM_DIAG(message) needs to be defined in your arch/cc.h"
 #endif
-#define _Args(...) __VA_ARGS__
+#define _Args(format, ...) format, ##__VA_ARGS__
 #define STRIP_PARENS(X) X
 #define PASS_PARAMETERS(X) STRIP_PARENS( _Args X )
 #define LWIP_DEBUGF(debug, message) do { \
