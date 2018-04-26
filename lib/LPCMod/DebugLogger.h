@@ -10,8 +10,8 @@
 
 void debugLoggerInit(void);
 unsigned char logRotate(void);
-void printTextLogger(const char* debugFlag, unsigned char logLevel, const char* functionName, char* buffer, ...);
-void lwipXBlastPrint(const char* category, unsigned char lwipDbgLevel, const char* functionName, ...);
+void printTextLogger(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, ...);
+void lwipXBlastPrint(const char* const category, unsigned char lwipDbgLevel, const char* const functionName, const char* const message, ...);
 
 
 #endif /* LIB_LPCMOD_DEBUGLOGGER_H_ */

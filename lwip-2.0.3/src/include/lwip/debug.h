@@ -154,12 +154,15 @@
 #ifndef LWIP_PLATFORM_DIAG
 #error "If you want to use LWIP_DEBUG, LWIP_PLATFORM_DIAG(message) needs to be defined in your arch/cc.h"
 #endif
+#define _Args(...) __VA_ARGS__
+#define STRIP_PARENS(X) X
+#define PASS_PARAMETERS(X) STRIP_PARENS( _Args X )
 #define LWIP_DEBUGF(debug, message) do { \
                                if ( \
                                    ((debug) & LWIP_DBG_ON) && \
                                    ((debug) & LWIP_DBG_TYPES_ON) && \
                                    ((s16_t)((debug) & LWIP_DBG_MASK_LEVEL) >= LWIP_DBG_MIN_LEVEL)) { \
-                                 LWIP_PLATFORM_DIAG(debug, message); \
+                                 LWIP_PLATFORM_DIAG(#debug, debug, PASS_PARAMETERS(message)); \
                                  if ((debug) & LWIP_DBG_HALT) { \
                                    while(1); \
                                  } \

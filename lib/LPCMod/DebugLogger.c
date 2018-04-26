@@ -24,8 +24,8 @@ static const char* const ActiveLogFileLocation = "MASTER_X:" PathSep logFilename
 static unsigned char initDone = 0;
 static FIL activeLogHandle;
 
-static void writeString(const char* string, unsigned char writeToLogFile);
-static unsigned char checkDebugFlag(const char* szDebugFlag);
+static void writeString(const char* const string, unsigned char writeToLogFile);
+static unsigned char checkDebugFlag(const char* const szDebugFlag);
 static const char* const getLogLevelString(unsigned char logLevel);
 
 void debugLoggerInit(void)
@@ -76,7 +76,7 @@ unsigned char logRotate(void)
     return 0;
 }
 
-void printTextLogger(const char* debugFlag, unsigned char logLevel, const char* functionName, char* buffer, ...)
+void printTextLogger(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, ...)
 {
     FRESULT result;
     va_list vl;
@@ -93,7 +93,10 @@ void printTextLogger(const char* debugFlag, unsigned char logLevel, const char* 
         writeString(tempBuf, writeToLogfile);
         va_end(vl);
 
-        writeString("\r\n", writeToLogfile);
+        if('\n' != tempBuf[strlen(tempBuf) - 1])
+        {
+            writeString("\n", writeToLogfile);
+        }
 
         if(initDone && writeToLogfile)
         {
@@ -105,8 +108,9 @@ void printTextLogger(const char* debugFlag, unsigned char logLevel, const char* 
 
 
 //TODO: replace with macro to eliminate va_args handling?
-void lwipXBlastPrint(const char* category, unsigned char lwipDbgLevel, const char* functionName, ...)
+void lwipXBlastPrint(const char* const category, unsigned char lwipDbgLevel, const char* const functionName, const char* const message, ...)
 {
+    char* string;
     unsigned char convertedLogLevel = DBG_LVL_FATAL;
 
     /* Remove DBG_ON flag */
@@ -143,12 +147,12 @@ void lwipXBlastPrint(const char* category, unsigned char lwipDbgLevel, const cha
         }
     }
     va_list vargs;
-    va_start(vargs, functionName);
-    printTextLogger(category, convertedLogLevel, functionName, vargs);
+    va_start(vargs, message);
+    printTextLogger(category, convertedLogLevel, functionName, message, vargs);
     va_end(vargs);
 }
 
-static void writeString(const char* string, unsigned char writeToLogFile)
+static void writeString(const char* const string, unsigned char writeToLogFile)
 {
     FRESULT result;
     /* write to SPI debugger, if applicable */
@@ -171,7 +175,7 @@ static void writeString(const char* string, unsigned char writeToLogFile)
 #endif
 }
 
-static unsigned char checkDebugFlag(const char* szDebugFlag)
+static unsigned char checkDebugFlag(const char* const szDebugFlag)
 {
     /* List of Debug categories that must not trigger Logfile writes */
 #define ForbiddenListLength 3
