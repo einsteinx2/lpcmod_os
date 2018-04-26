@@ -512,7 +512,7 @@ int BootIdeDriveInit(unsigned uIoBase, int nIndexDrive)
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "hd%c:", nIndexDrive+'a');
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %u.%uGB", ulDriveCapacity1024/1000, ulDriveCapacity1024%1000);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "    %lu.%luGB", ulDriveCapacity1024/1000, ulDriveCapacity1024%1000);
 
         tsaHarddiskInfo[nIndexDrive].m_securitySettings = drive_info[128];
         tsaHarddiskInfo[nIndexDrive].m_masterPassSupport = drive_info[92];

@@ -76,7 +76,7 @@ DRESULT disk_read (
         returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
         if(returnValue)
         {
-            XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      i=%u count=%u sector=0x%X", returnValue, i, count, sector);
+            XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      i=%u count=%u sector=0x%lX", returnValue, i, count, sector);
             break;
         }
     }
@@ -105,7 +105,7 @@ DRESULT disk_write (
         returnValue = BootIdeWriteSector(pdrv, buff + (i* 512), sector + i, 0);
         if(returnValue)
         {
-            XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      i=%u count=%u sector=0x%X", returnValue, i, count, sector);
+            XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      i=%u count=%u sector=0x%lX", returnValue, i, count, sector);
             break;
         }
     }

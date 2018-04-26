@@ -2931,7 +2931,7 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
             killHttpd = true;
             break;
         case WebServerOps_EEPROMFlash:
-            LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("EEPROMfile size : %s\n", biosSize));
+            LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("EEPROMfile size : %u\n", biosSize));
             if(biosSize != 256)
             {
                 invalidFile = true;

@@ -494,7 +494,7 @@ void IntHandlerException6C(void)
     unsigned int dwEbp = 0;
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Invalid Opcode");
     __asm__ __volatile__ ( " mov %%esp, %%eax\n " : "=a" (dwEbp) );
-    XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "   %08lX:%08lX", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
+    XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "   %08X:%08X", *((volatile unsigned int *)(dwEbp+0x48)), *((volatile unsigned int *)(dwEbp+0x44)));
     while(1) ;
 }
 

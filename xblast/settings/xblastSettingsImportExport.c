@@ -183,7 +183,7 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
         if(0 == strcasecmp(xblastCfgStringsStruct.textSettingsStringArray[i], key))
         {
-            XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "found text setting: %s len:%u", xblastCfgStringsStruct.textSettingsStringArray[i]);
+            XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "found text setting: %s", xblastCfgStringsStruct.textSettingsStringArray[i]);
             if(LPCmodSettingsTextFieldsMaxLength > strlen(value))
             {
                 strcpy(settingsStruct->textSettingsPtrArray[i], value);
@@ -196,7 +196,7 @@ int iniCallback(const char *section, const char *key, const char *value, void *u
     {
       if(0 == strcasecmp(xblastCfgStringsStruct.specialSettingsStringArray[i], key))
       {
-          XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "found special setting: %s len:%u", xblastCfgStringsStruct.specialSettingsStringArray[i]);
+          XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "found special setting: %s", xblastCfgStringsStruct.specialSettingsStringArray[i]);
           switch(i)
           {
               case SpecialSettingsPtrArrayIndexName_ActiveBank:
