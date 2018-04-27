@@ -116,7 +116,6 @@ TEXTMENU *ToolsMenuInit(void)
 */
     if(isMounted(HDD_Master, Part_C))
     {
-#ifdef DEV_FEATURES
         cfgFileInfo = fatxstat(getSettingsFileLocation());
         //Save xblast.cfg
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -126,7 +125,7 @@ TEXTMENU *ToolsMenuInit(void)
         *(unsigned char*)itemPtr->functionDataPtr = cfgFileInfo.size ? 1 : 0;
         itemPtr->dataPtrAlloc = 1;
         TextMenuAddItem(menuPtr, itemPtr);
-#endif
+
         if(cfgFileInfo.size)
         {
             //Load xblast.cfg
