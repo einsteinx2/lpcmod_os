@@ -11,7 +11,7 @@
 
 #define INI_BUFFERSIZE  256       /* maximum line length, maximum path length */
 #define INI_ANSIONLY /* ignore UNICODE or _UNICODE macros, compile as ASCII/ANSI */
-#define INI_LINETERM "\r\n" /* For Windows users */
+#define INI_LINETERM "\n" /* will get converted by FatFS to CRLF */
 #define NDEBUG      /* No Assert macro */
 
 /* You must set _USE_STRFUNC to 1 or 2 in the include file ff.h (or tff.h)

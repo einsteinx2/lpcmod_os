@@ -45,7 +45,7 @@ void FlashLowLevel_Init(void)
     is28xxxProtocol = false;
     memset(&flashDevice, 0x00, sizeof(flashDevice));
 	flashDevice.m_pbMemoryMappedStartAddress = (unsigned char *)LPCFlashadress;
-	debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Setting LPC address to 0x%08X\n", LPCFlashadress);
+	XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_DEBUG, "Setting LPC address to 0x%08X", LPCFlashadress);
 }
 
 bool FlashLowLevel_ReadDevice(void)
@@ -60,14 +60,14 @@ bool FlashLowLevel_ReadDevice(void)
         _ResetFlashICStateMachine();
         _ReadDeviceIDBytes(&flashRead);
 
-        debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Read device ID. manf=0x%02X  dev=0x%02X\n", flashRead.m_bManufacturerId, flashRead.m_bDeviceId);
+        XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_DEBUG, "Read device ID. manf=0x%02X  dev=0x%02X", flashRead.m_bManufacturerId, flashRead.m_bDeviceId);
 
         if(_MatchDevice(&flashRead))
         {
             // Found Device.
-            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Found matching device: %s\n", flashDevice.flashType.m_szFlashDescription);
-            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Additional info: %s\n", flashDevice.m_szAdditionalErrorInfo);
-            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Can Erase/Write: %s\n", flashDevice.m_fIsBelievedCapableOfWriteAndErase ? "Yes" : "No");
+            XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_DEBUG, "Found matching device: %s", flashDevice.flashType.m_szFlashDescription);
+            XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_DEBUG, "Additional info: %s", flashDevice.m_szAdditionalErrorInfo);
+            XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_DEBUG, "Can Erase/Write: %s", flashDevice.m_fIsBelievedCapableOfWriteAndErase ? "Yes" : "No");
             return true;
         }
 
@@ -75,13 +75,13 @@ bool FlashLowLevel_ReadDevice(void)
         {
             // Device not found, try other method.
             is28xxxProtocol = !is28xxxProtocol;
-            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"is28xxxProtocol: %s\n", is28xxxProtocol ? "true" : "false");
+            XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_WARN, "is28xxxProtocol: %s", is28xxxProtocol ? "true" : "false");
             retry = false;
         }
         else
         {
             // Tried both method. No device found.
-            debugSPIPrint(DEBUG_FLASH_LOWLEVEL,"Device not found...\n");
+            XBlastLogger(DEBUG_FLASH_LOWLEVEL, DBG_LVL_WARN, "Device not found...");
             return false;
         }
     }

@@ -999,7 +999,7 @@ void usb_show_device(struct usb_device *);
 void usb_show_string(struct usb_device *dev, char *id, int index);
 
 #ifdef DEBUG
-#define dbg(format, arg...) debugSPIPrint(DEBUG_USB, KERN_DEBUG "%s: " format "\n" , __FILE__ , ## arg)
+#define dbg(format, arg...) USBDebugLogger(DBG_LVL_DEBUG, DEBUG_USB, "%s: " format "\n" , __FILE__ , ## arg)
 #else
 #define dbg(format, arg...) do {} while (0)
 #endif
@@ -1007,9 +1007,9 @@ void usb_show_string(struct usb_device *dev, char *id, int index);
 
 
 #ifdef DEBUG_MODE
-#define info(format, arg...) debugSPIPrint(DEBUG_USB_INFO, KERN_INFO __FILE__ ": " format "\n" , ## arg)
-#define err(format, arg...) debugSPIPrint(DEBUG_USB_ERR, KERN_ERR __FILE__ ": " format "\n" , ## arg)
-#define warn(format, arg...) debugSPIPrint(DEBUG_USB_WARN, KERN_WARNING __FILE__ ": " format "\n" , ## arg)
+#define info(format, arg...) USBDebugLogger(DBG_LVL_INFO, DEBUG_USB, __FILE__ ": " format "\n" , ## arg)
+#define err(format, arg...) USBDebugLogger(DBG_LVL_ERROR, DEBUG_USB, __FILE__ ": " format "\n" , ## arg)
+#define warn(format, arg...) USBDebugLogger(DBG_LVL_WARN, DEBUG_USB, __FILE__ ": " format "\n" , ## arg)
 #endif
 
 #ifndef DEBUG_MODE                                                               

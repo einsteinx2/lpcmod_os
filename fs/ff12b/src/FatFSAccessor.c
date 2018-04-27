@@ -105,7 +105,7 @@ void FatFS_init(void)
     memset(DirectoryHandleArray, 0x00, sizeof(DIR) * MaxOpenDirCount);
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
     cwd[0] = cPathSep;
-    debugSPIPrint(DEBUG_FATX_FS, "init internal FatFS.\n");
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "init internal FatFS.");
     fatx_init();
 
     for(i = 0; i < NbDrivesSupported; i++)
@@ -132,21 +132,21 @@ int mountAll(unsigned char driveNumber)
     {
         return -1;
     }
-    debugSPIPrint(DEBUG_FATX_FS, "Attempting to mount base partitions for drive %u\n", driveNumber);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_INFO, "Attempting to mount base partitions for drive %u", driveNumber);
 
     if(FR_OK == fatx_getbrfr(driveNumber))
     {
-        debugSPIPrint(DEBUG_FATX_FS, "got BRFR\n");
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "got BRFR");
         if(FR_OK == fatx_getmbr(driveNumber, &tempTable))
         {
-            debugSPIPrint(DEBUG_FATX_FS, "got mbr\n");
+            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "got mbr");
             //TODO: constant for number of standard partitions.
             for(i = 0; i < NbFATXPartPerHDD; i++)
             {
-                debugSPIPrint(DEBUG_FATX_FS, "Drive: %u, PartIndex: %u\n", driveNumber, i);
+                XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Drive: %u, PartIndex: %u", driveNumber, i);
                 if(0 == FatXFs[driveNumber][i].fs_typex)
                 {
-                    debugSPIPrint(DEBUG_FATX_FS, "PartFlag: 0x%08X\n", tempTable.TableEntries[i].Flags);
+                    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "PartFlag: 0x%08X", tempTable.TableEntries[i].Flags);
                     if(tempTable.TableEntries[i].Flags & FATX_PE_PARTFLAGS_IN_USE)
                     {
                         fatxmount(driveNumber, i);
@@ -156,12 +156,12 @@ int mountAll(unsigned char driveNumber)
         }
         else
         {
-            debugSPIPrint(DEBUG_FATX_FS, "Error! No MBR.\n");
+            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "Error! No MBR.");
         }
     }
     else
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Error! No BRFR.\n");
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "Error! No BRFR.");
     }
 
     return 0;
@@ -172,18 +172,18 @@ int fatxmount(unsigned char driveNumber, unsigned char partitionNumber)
     int result;
     char mountStr[20];
 
-    sprintf(mountStr, "%s%s", PartitionNameStrings[driveNumber][partitionNumber], ":\\");
+    sprintf(mountStr, "%s:"PathSep, PartitionNameStrings[driveNumber][partitionNumber]);
 
-    debugSPIPrint(DEBUG_FATX_FS, "Mounting \"%s\" partition\n", PartitionNameStrings[driveNumber][partitionNumber]);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_INFO, "Mounting \"%s\" partition", PartitionNameStrings[driveNumber][partitionNumber]);
     //TODO: Constant for mount immediately flag.
     result = f_mount(&FatXFs[driveNumber][partitionNumber], mountStr, 1);
     if(FR_OK == result)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Mount \"%s\" partition success!\n", PartitionNameStrings[driveNumber][partitionNumber]);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_INFO, "Mount \"%s\" partition success!", PartitionNameStrings[driveNumber][partitionNumber]);
     }
     else
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Error! Mount \"%s\" partition. Code: %u!\n", PartitionNameStrings[driveNumber][partitionNumber], result);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "Error! Mount \"%s\" partition. Code: %u!", PartitionNameStrings[driveNumber][partitionNumber], result);
     }
 
     return result;
@@ -193,17 +193,17 @@ int isMounted(unsigned char driveNumber, unsigned char partitionNumber)
 {
     if(NbDrivesSupported <= driveNumber)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Invalid drive number : %u\n", driveNumber);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "Invalid drive number : %u", driveNumber);
         return -1;
     }
 
     if(NbFATXPartPerHDD <= partitionNumber)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Invalid partition number : %u\n", partitionNumber);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "Invalid partition number : %u", partitionNumber);
         return -1;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "Drive/Part %u/%u = %u\n", driveNumber, partitionNumber, FatXFs[driveNumber][partitionNumber].fs_typex);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Drive/Part %u/%u = %u", driveNumber, partitionNumber, FatXFs[driveNumber][partitionNumber].fs_typex);
 
     return FatXFs[driveNumber][partitionNumber].fs_typex;
 }
@@ -217,19 +217,19 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 
     if(NbDrivesSupported <= driveNumber)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Error, out of bound disk: %u\n", driveNumber);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "Error, out of bound disk: %u", driveNumber);
         return -1;
     }
 
     /* Get drive size */
     diskSizeLba = BootIdeGetSectorCount(driveNumber);
-    debugSPIPrint(DEBUG_FATX_FS, "Disk LAB: %llu\n", diskSizeLba);
-    debugSPIPrint(DEBUG_FATX_FS, "fdisk selected layout: %u\n", xboxDiskLayout);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Disk LBA: %llu\n", diskSizeLba);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "fdisk selected layout: %u", xboxDiskLayout);
 
     /* If drive is too small even for stock partition scheme or stock partition scheme is not selected and drive size if smaller or equal than ~8GB*/
     if(((XBOX_EXTEND_STARTLBA - 1) > diskSizeLba) || (XBOX_EXTEND_STARTLBA >= diskSizeLba && XboxDiskLayout_Base != xboxDiskLayout))
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Drive is not ok for selected layout\n");
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "Drive is not ok for selected layout");
         return -1;
     }
 
@@ -247,7 +247,7 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
     case XboxDiskLayout_FOnly:
         if(diskSizeLba - XBOX_EXTEND_STARTLBA < FATX_MIN_PART_SIZE_LBA)
         {
-            debugSPIPrint(DEBUG_FATX_FS, "Disk too small for F volume\n");
+            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_INFO, "Disk too small for F volume");
             return -1;
         }
 
@@ -338,8 +338,8 @@ int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
         return -1;
         break;
     }
-    debugSPIPrint(DEBUG_FATX_FS, "F volume StartLBA: %u  sizeLBA%u\n", workingMbr.TableEntries[5].LBAStart, workingMbr.TableEntries[5].LBASize);
-    debugSPIPrint(DEBUG_FATX_FS, "G volume StartLBA: %u  sizeLBA%u\n", workingMbr.TableEntries[6].LBAStart, workingMbr.TableEntries[6].LBASize);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "F volume StartLBA: %u  sizeLBA%u", workingMbr.TableEntries[5].LBAStart, workingMbr.TableEntries[5].LBASize);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "G volume StartLBA: %u  sizeLBA%u", workingMbr.TableEntries[6].LBAStart, workingMbr.TableEntries[6].LBASize);
 
     return fatx_fdisk(driveNumber, &workingMbr);
 }
@@ -349,14 +349,14 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
     XboxPartitionTable workingMbr;
     unsigned char workBuf[FATX_CHAINTABLE_BLOCKSIZE];
     char partName[22];
-    sprintf(partName, "%s:\\", PartitionNameStrings[driveNumber][partNumber]);
+    sprintf(partName, "%s:"PathSep, PartitionNameStrings[driveNumber][partNumber]);
 
     if(FR_OK != fatx_getmbr(driveNumber, &workingMbr))
     {
         return -1;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "%s\n", partName);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_INFO, "%s", partName);
     if(FR_OK != f_mkfs(partName, FM_FATXANY, FATX_MIN_CLUSTERSIZE_INSECTORS, workBuf, FATX_CHAINTABLE_BLOCKSIZE))
     {
         return -1;
@@ -376,41 +376,42 @@ FILEX fatxopen(const char* path, FileOpenMode mode)
     {
         if(0 == FileHandleArray[i].obj.fs)
         {
-            debugSPIPrint(DEBUG_FATX_FS, "found unused handle slot %u\n", i + 1);
+            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "found unused handle slot %u", i + 1);
             break;
         }
     }
 
     if(MaxOpenFileCount == i)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "no unused handle slot\n");
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "no unused handle slot");
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "%s, mode:%u\n", path, mode);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "%s, mode:%u", path, mode);
     result = f_open(&FileHandleArray[i], path, mode);
     if(FR_OK != result)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Open Fail...  result:%u\n", result);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "Open Fail...  result:%u", result);
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "Open Success!  Handle=%u\n", i + 1);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Open Success!  Handle=%u", i + 1);
     return i + 1;
 }
 
 int fatxclose(FILEX handle)
 {
     FRESULT result;
-    debugSPIPrint(DEBUG_FATX_FS, "Closing handle %u\n", handle);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Closing handle %u", handle);
     FILE_HANDLE_VALID(handle)
 
     if(0 != FileHandleArray[handle].obj.fs)
     {
         result = f_close(&FileHandleArray[handle]);
-        debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "result:%u", result);
         return result;
     }
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_INFO, "Invalid Handle:%u", handle);
     return -1;
 }
 
@@ -421,7 +422,7 @@ int fatxread(FILEX handle, unsigned char* out, unsigned int size)
     FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
-    debugSPIPrint(DEBUG_FATX_FS, "file %u, size:%u\n", handle, size);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %u, size:%u", handle, size);
     if(FR_OK == f_read(&FileHandleArray[handle], out, size, &bytesRead))
     {
         return bytesRead;
@@ -437,7 +438,7 @@ int fatxwrite(FILEX handle, const unsigned char* in, unsigned int size)
     FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
-    debugSPIPrint(DEBUG_FATX_FS, "file %u, size:%u\n", handle, size);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %u, size:%u", handle, size);
     if(FR_OK == f_write(&FileHandleArray[handle], in, size, &bytesWrote))
     {
         return bytesWrote;
@@ -464,7 +465,7 @@ int fatxsync(FILEX handle)
     FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
-    debugSPIPrint(DEBUG_FATX_FS, "file %u\n", handle);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %u", handle);
     if(FR_OK != f_sync(&FileHandleArray[handle]))
     {
         return -1;
@@ -478,14 +479,14 @@ FileInfo fatxstat(const char* path)
     FileInfo returnStruct;
     FILINFO getter;
     memset(&returnStruct, 0x00, sizeof(FileInfo));
-    debugSPIPrint(DEBUG_FATX_FS, "path:\"%s\"\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "path:\"%s\"", path);
     if(FR_OK == f_stat(path, &getter))
     {
         convertToFileInfo(&returnStruct, &getter);
     }
-    debugSPIPrint(DEBUG_FATX_FS, "name:%s (%u)\n", returnStruct.name, returnStruct.nameLength);
-    debugSPIPrint(DEBUG_FATX_FS, "flags:%u size:%u\n", returnStruct.attributes, returnStruct.size);
-    debugSPIPrint(DEBUG_FATX_FS, "date:%u time:%u\n", returnStruct.modDate, returnStruct.modTime);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "name:%s (%u)", returnStruct.name, returnStruct.nameLength);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "flags:%u size:%u", returnStruct.attributes, returnStruct.size);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "date:%u time:%u", returnStruct.modDate, returnStruct.modTime);
 
     return returnStruct;
 }
@@ -493,7 +494,7 @@ FileInfo fatxstat(const char* path)
 
 int fatxmkdir(const char* path)
 {
-    debugSPIPrint(DEBUG_FATX_FS, "dir %s\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "dir %s", path);
     if(FR_OK != f_mkdir(path))
     {
         return -1;
@@ -507,7 +508,7 @@ DIREX fatxopendir(const char* path)
     FRESULT result;
     unsigned char i;
 
-    debugSPIPrint(DEBUG_FATX_FS, "Open dir:\"%s\"\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Open dir:\"%s\"", path);
 
     if(0 == strcmp(path, PathSep))
     {
@@ -521,26 +522,26 @@ DIREX fatxopendir(const char* path)
     {
         if(0 == DirectoryHandleArray[i].obj.fs)
         {
-            debugSPIPrint(DEBUG_FATX_FS, "found unused handle slot %u\n", i);
+            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "found unused handle slot %u", i + 1);
             break;
         }
     }
 
     if(MaxOpenDirCount == i)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "no unused handle slot\n");
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "no unused handle slot");
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "dir %s\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "dir %s", path);
     result = f_opendir(&DirectoryHandleArray[i], path);
     if(FR_OK != result)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "Open Fail...  result%u\n", result);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "Open Fail...  result:%u", result);
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "Open Success!  Handle=%u\n", i + 1);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Open Success!  Handle:%u", i + 1);
     return i + 1;
 }
 
@@ -585,7 +586,7 @@ FileInfo fatxreaddir(DIREX handle)
     if(FR_OK == f_readdir(&DirectoryHandleArray[handle], &getter))
     {
         convertToFileInfo(&returnStruct, &getter);
-        debugSPIPrint(DEBUG_FATX_FS, "dir %s(%u) size:%u attr:%u\n", returnStruct.name, returnStruct.nameLength, returnStruct.size, returnStruct.attributes);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "dir %s(%u) size:%u attr:%u", returnStruct.name, returnStruct.nameLength, returnStruct.size, returnStruct.attributes);
     }
 
     return returnStruct;
@@ -611,11 +612,11 @@ DIREX fatxfindfirst(FileInfo* out, const char* path, const char* pattern)
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "file %s\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %s", path);
     if(FR_OK == f_findfirst(&DirectoryHandleArray[i], &getter, path, pattern))
     {
         convertToFileInfo(out, &getter);
-        debugSPIPrint(DEBUG_FATX_FS, "dir %s(%u) size:%u attr:%u\n", out->name, out->nameLength, out->size, out->attributes);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "dir %s(%u) size:%u attr:%u", out->name, out->nameLength, out->size, out->attributes);
 
     }
 
@@ -637,7 +638,7 @@ int fatxfindnext(DIREX handle, FileInfo* out)
     if(FR_OK == f_findnext(&DirectoryHandleArray[handle], &getter))
     {
         convertToFileInfo(out, &getter);
-        debugSPIPrint(DEBUG_FATX_FS, "dir %s(%u) size:%u attr:%u\n", out->name, out->nameLength, out->size, out->attributes);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "dir %s(%u) size:%u attr:%u", out->name, out->nameLength, out->size, out->attributes);
 
         return 0;
     }
@@ -663,7 +664,7 @@ int fatxrewinddir(DIREX handle)
 
 int fatxclosedir(DIREX handle)
 {
-    debugSPIPrint(DEBUG_FATX_FS, "Closing handle%u\n", handle);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Closing handle%u", handle);
 
     if(RootFolderHandle == handle)
     {
@@ -687,7 +688,7 @@ int fatxclosedir(DIREX handle)
 
 int fatxdelete(const char* path)
 {
-    debugSPIPrint(DEBUG_FATX_FS, "file %s\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %s", path);
     if(FR_OK != f_unlink(path))
     {
         return -1;
@@ -707,11 +708,11 @@ int fatxrename(const char* path, const char* newName)
         return -1;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" to \"%s\"\n", path, drive);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "\"%s\" to \"%s\"", path, drive);
     result = f_rename(path, drive);
     if(FR_OK != result)
     {
-        debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_WARN, "result:%u", result);
         return -1;
     }
 
@@ -724,10 +725,10 @@ int fatxchdir(const char* path)
     char* sepPos;
     FRESULT result;
     char fullPath[300];
-    debugSPIPrint(DEBUG_FATX_FS, "Request path:\"%s\"\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Request path:\"%s\"", path);
     if(MaxPathLength < strlen(path))
     {
-        debugSPIPrint(DEBUG_FATX_FS, "!!!Error, too long.\n");
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "!!!Error, too long.");
         return -1;
     }
 
@@ -754,17 +755,17 @@ int fatxchdir(const char* path)
     }
 
 
-    debugSPIPrint(DEBUG_FATX_FS, "Result path:\"%s\"\n", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Result path:\"%s\"", path);
 
     result = f_chdir(path);
-    debugSPIPrint(DEBUG_FATX_FS, "result:%u\n", result);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "result:%u", result);
     if(FR_OK == result)
     {
         strcpy(cwd, path);
         return 0;
     }
 
-    debugSPIPrint(DEBUG_FATX_FS, "!!!Error  result:%u\n", result);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "!!!Error  result:%u", result);
     return -1;
 }
 
@@ -776,7 +777,7 @@ int fatxchdrive(const char* path)
 
 const char* fatxgetcwd(void)
 {
-    debugSPIPrint(DEBUG_FATX_FS, "%s\n", cwd);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "%s", cwd);
     return cwd;
 }
 
@@ -824,7 +825,7 @@ int fatxputs(const char* sz, FILEX handle)
     FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\"\n", sz);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_TRACE, "\"%s\"", sz);
 
     return f_puts(sz, &FileHandleArray[handle]);
 }
@@ -858,7 +859,7 @@ const char* fatxgets(char* out, unsigned int len, FILEX handle)
 
     outValidation = f_gets(out, len, &FileHandleArray[handle]);
 
-    debugSPIPrint(DEBUG_FATX_FS, "\"%s\" len:%u  ptr:0x%08X  buflen:%u\n", out, strlen(out), (unsigned int)outValidation, len);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_TRACE, "\"%s\" len:%u  ptr:0x%08X  buflen:%u", out, strlen(out), (unsigned int)outValidation, len);
 
     return outValidation;
 }

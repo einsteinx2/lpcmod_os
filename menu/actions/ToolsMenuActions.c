@@ -201,7 +201,7 @@ void saveXBlastcfg(void* fileExist)
 
     if(filePresent)
     {
-        sprintf(tempString, "\"%s\" exists\nOverwrite?", getSettingsFileLocation() + strlen("MASTER_"));
+        sprintf(tempString, "\"%s\" exists\n\2Overwrite?", getSettingsFileLocation() + strlen("MASTER_"));
         if(0 == ConfirmDialog(tempString, 1))
         {
             return;
@@ -337,7 +337,7 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr)
             unlockConfirm[i] = 0;       //Won't relock as no HDD was detected on that port.
         }
 
-        debugSPIPrint(DEBUG_GENERAL_UI, "Drive %u  lock assert result %u\n", i, unlockConfirm[i]);
+        XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_DEBUG, "Drive %u  lock assert result %u", i, unlockConfirm[i]);
     }
 
     if(unlockConfirm[0] == 255 || unlockConfirm[1] == 255)      //error in unlocking one of 2 drives.
@@ -353,7 +353,7 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr)
         {
             if(unlockConfirm[i] == 1)
             {
-                debugSPIPrint(DEBUG_GENERAL_UI, "Relocking drive %u with new HDDKey\n", i);
+                XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_INFO, "Relocking drive %u with new HDDKey", i);
                 LockHDD(i, 0, (unsigned char *)&eeprom);    //0 is for silent mode.
             }
         }

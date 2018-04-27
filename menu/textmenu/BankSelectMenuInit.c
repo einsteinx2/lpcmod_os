@@ -94,7 +94,7 @@ void BankSelectDynamic(void* bank)
     int i = 0;
     FlashBank target = *(FlashBank *)bank;
 
-    debugSPIPrint(DEBUG_GENERAL_UI, "Generating menu.\n");
+    XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_TRACE, "Generating menu.");
     menuPtr = calloc(1, sizeof(TEXTMENU));
 
     if(TSOPRecoveryMode)
@@ -209,7 +209,7 @@ void BankSelectDynamic(void* bank)
     //Only Master HDD will be supported here.
     if(BootIdeDeviceConnected(0) && 0 == BootIdeDeviceIsATAPI(0))
     {
-        debugSPIPrint(DEBUG_GENERAL_UI, "Generating menu for HDD%u\n", 0);
+        XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_DEBUG, "Generating menu for HDD%u", 0);
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "HDD Flash");
         itemPtr->functionPtr = HDDFlashMenuDynamic;

@@ -58,6 +58,10 @@ void switchBootBank(FlashBank bank);
 void WriteToIO(unsigned short address, unsigned char data);
 unsigned char ReadFromIO(unsigned short address);
 
+#ifdef SPITRACE
+void printTextSPI(const char* buffer);
+#endif
+
 /**
  * USB_DEVICE - macro used to describe a specific usb device
  * @vend: the 16 bit USB Vendor ID

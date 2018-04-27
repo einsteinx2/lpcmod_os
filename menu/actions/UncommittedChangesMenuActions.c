@@ -66,7 +66,7 @@ TEXTMENU* generateMenuEntries(void)
             {
               if(currentOSChangeEntry != NULL)
               {
-                  debugSPIPrint(DEBUG_GENERAL_UI, "%s%s\n", currentOSChangeEntry->label, currentOSChangeEntry->changeString);
+                  XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "%s%s", currentOSChangeEntry->label, currentOSChangeEntry->changeString);
                   itemPtr = calloc(1, sizeof(TEXTMENUITEM));
                   sprintf(itemPtr->szCaption, "%s ", currentOSChangeEntry->label);
                   strcpy(itemPtr->szParameter, currentOSChangeEntry->changeString);
@@ -85,7 +85,7 @@ TEXTMENU* generateMenuEntries(void)
             }
             else if(i < (uncommittedChanges + bootScriptChange))
             {
-                debugSPIPrint(DEBUG_GENERAL_UI, "Boot script in flash change\n");
+                XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "Boot script in flash change");
                 itemPtr = calloc(1, sizeof(TEXTMENUITEM));
                 sprintf(itemPtr->szCaption, "Boot script in flash modified");
 #ifdef DEV_FEATURES
@@ -96,7 +96,7 @@ TEXTMENU* generateMenuEntries(void)
             }
             else if(i < (uncommittedChanges + bootScriptChange + backupEEPROMChange))
             {
-                debugSPIPrint(DEBUG_GENERAL_UI, "Backup EEPROM modified\n");
+                XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "Backup EEPROM modified");
                 itemPtr = calloc(1, sizeof(TEXTMENUITEM));
                 sprintf(itemPtr->szCaption, "Backup EEPROM modified");
 #ifdef DEV_FEATURES
@@ -107,10 +107,10 @@ TEXTMENU* generateMenuEntries(void)
             }
             else if(i < (uncommittedChanges + bootScriptChange + backupEEPROMChange + eepromChanges))
             {
-                debugSPIPrint(DEBUG_GENERAL_UI, "New EEPROM change #%u\n", i);
+                XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "New EEPROM change #%u", i);
                 if(currentEEPROMChangeEntry != NULL)
                 {
-                    debugSPIPrint(DEBUG_GENERAL_UI, "%s%s\n", currentEEPROMChangeEntry->label, currentEEPROMChangeEntry->changeString);
+                    XBlastLogger(DEBUG_SETTINGS, DBG_LVL_DEBUG, "%s%s", currentEEPROMChangeEntry->label, currentEEPROMChangeEntry->changeString);
                     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
                     strcpy(itemPtr->szCaption, currentEEPROMChangeEntry->label);
                     strcpy(itemPtr->szParameter, currentEEPROMChangeEntry->changeString);
