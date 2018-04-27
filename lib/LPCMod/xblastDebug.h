@@ -49,7 +49,7 @@
 
 #define DEBUG_FATX_FS           DBG_LVL_DEBUG
 #define DEBUG_CORE_FATFS        DBG_LVL_WARN    /* Not printed in text log to avoid logger loops */
-#define DEBUG_LOGGER            DBG_LVL_ERROR   /* Will essentially double the string prints on SPI. Not printed in text log to avoid logger loops */
+#define DEBUG_LOGGER            DBG_LVL_INFO   /* Will essentially double the string prints on SPI. Not printed in text log to avoid logger loops */
 
 #if DEBUG_USB >= 1
 #define DEBUG 1
