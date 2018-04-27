@@ -33,11 +33,12 @@ static void processTempBuf(void);
 static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs);
 static void writeString(const char* const string, unsigned char writeToLogFile);
 static void put(unsigned char writeToFile, const char* const string);
-static unsigned char checkDebugFlag(const char* const szDebugFlag);
+static unsigned char assertWriteToFile(const char* const szDebugFlag);
 static const char* const getLogLevelString(unsigned char logLevel);
 
 void debugLoggerInit(void)
 {
+    activeLogHandle.obj.fs = NULL;
     if(0 == logRotate())
     {
         processTempBuf();
@@ -155,32 +156,29 @@ static void stringFormat(const char* const debugFlag, unsigned char logLevel, co
     char tempBuf[1024];
     unsigned char writeToLogfile;
 
-    if(NULL != activeLogHandle.obj.fs)
+    writeToLogfile = assertWriteToFile(debugFlag);
+    sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
+    writeString(tempBuf, writeToLogfile);
+    vsprintf(tempBuf,buffer, *vargs);
+    writeString(tempBuf, writeToLogfile);
+
+    if('\n' != tempBuf[strlen(tempBuf) - 1])
     {
-        writeToLogfile = checkDebugFlag(debugFlag);
-        sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
-        writeString(tempBuf, writeToLogfile);
-        vsprintf(tempBuf,buffer, *vargs);
-        writeString(tempBuf, writeToLogfile);
-
-        if('\n' != tempBuf[strlen(tempBuf) - 1])
-        {
-            writeString("\n", writeToLogfile);
-        }
-
-        if(initDone && writeToLogfile)
-        {
-            result = f_sync(&activeLogHandle);
-            XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
-        }
-#ifdef SPITRACE
-        else
-        {
-            //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
-            wait_us_blocking(50);
-        }
-#endif
+        writeString("\n", writeToLogfile);
     }
+
+    if(initDone && writeToLogfile)
+    {
+        result = f_sync(&activeLogHandle);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
+    }
+#ifdef SPITRACE
+    else
+    {
+        //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
+        wait_us_blocking(50);
+    }
+#endif
 }
 
 static void writeString(const char* const string, unsigned char writeToLogFile)
@@ -224,7 +222,7 @@ static void put(unsigned char writeToFile, const char* const string)
     }
 }
 
-static unsigned char checkDebugFlag(const char* const szDebugFlag)
+static unsigned char assertWriteToFile(const char* const szDebugFlag)
 {
     /* List of Debug categories that must not trigger Logfile writes */
 #define ForbiddenListLength 3
@@ -237,6 +235,11 @@ static unsigned char checkDebugFlag(const char* const szDebugFlag)
     unsigned char i;
 
     if(0 == initDone)
+    {
+        return 0;
+    }
+
+    if(NULL == activeLogHandle.obj.fs)
     {
         return 0;
     }
