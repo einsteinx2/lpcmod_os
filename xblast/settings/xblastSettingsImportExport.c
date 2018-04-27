@@ -268,6 +268,7 @@ int LPCMod_SaveCFGToHDD(_settingsPtrStruct *settingsStruct)
 {
     unsigned char i;
     char tempStringBuf[50];
+    setCFGFileTransferPtr(&LPCmodSettings, &settingsPtrStruct);
 
     for(i = 0; i < BoolParamGroup; i++)
     {
