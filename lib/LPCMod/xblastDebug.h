@@ -27,17 +27,17 @@
 /* Message will be shown if CURRENT_DBG_LVL is below the threshold set for the categories below */
 #define DEBUG_ALWAYS_SHOW       DBG_LVL_INFO
 #define DEBUG_BOOT_LOG          DBG_LVL_INFO
-#define DEBUG_FLASH_DRIVER      DBG_LVL_FATAL
-#define DEBUG_FLASH_LOWLEVEL    DBG_LVL_FATAL
+#define DEBUG_FLASH_DRIVER      DBG_LVL_INFO
+#define DEBUG_FLASH_LOWLEVEL    DBG_LVL_WARN
 #define DEBUG_FLASH_UI          DBG_LVL_INFO
-#define DEBUG_EXCEPTIONS        DBG_LVL_FATAL
+#define DEBUG_EXCEPTIONS        DBG_LVL_INFO
 #define DEBUG_IDE_DRIVER        DBG_LVL_INFO   /* Not printed in text log to avoid logger loops */
 #define DEBUG_IDE_LOCK          DBG_LVL_INFO
-#define DEBUG_VIDEO_DRIVER      DBG_LVL_WARN
+#define DEBUG_VIDEO_DRIVER      DBG_LVL_INFO
 #define DEBUG_EEPROM_DRIVER     DBG_LVL_INFO
 #define DEBUG_LWIP              DBG_LVL_INFO
 #define DEBUG_HW_ID             DBG_LVL_INFO
-#define DEBUG_GENERAL_UI        DBG_LVL_WARN
+#define DEBUG_GENERAL_UI        DBG_LVL_INFO
 #define DEBUG_SCRIPT            DBG_LVL_INFO
 #define DEBUG_MISC              DBG_LVL_INFO
 #define DEBUG_SETTINGS          DBG_LVL_INFO
