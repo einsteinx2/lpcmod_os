@@ -42,11 +42,7 @@
 #define DEBUG_MISC              DBG_LVL_INFO
 #define DEBUG_SETTINGS          DBG_LVL_INFO
 
-#define DEBUG_USB               DBG_LVL_INFO   //TODO: fix
-#define DEBUG_USB_INFO          DBG_LVL_INFO   //TODO: fix
-#define DEBUG_USB_ERR           DBG_LVL_INFO   //TODO: fix
-#define DEBUG_USB_WARN          DBG_LVL_INFO   //TODO: fix
-#define DEBUG_USB_DEBUG         DBG_LVL_INFO   //TODO: fix
+#define DEBUG_USB               DBG_LVL_INFO
 
 #define DEBUG_FATX_FS           DBG_LVL_INFO
 #define DEBUG_CORE_FATFS        DBG_LVL_WARN    /* Not printed in text log to avoid logger loops */
@@ -59,14 +55,15 @@
 
 #define XBlastLogger(category, level, string, ...) do { if(category <= level) printTextLogger(#category, level, __func__, string, ##__VA_ARGS__); }while(0)
 
-/* Only prints whne DEBUG_USB is set at LVL_DEBUG or lower */
-#define usbSPIPrint(infostr, unused, string, ...) do { if(DEBUG_USB <= DBG_LVL_DEBUG) printTextLogger(infostr, DEBUG_USB, __func__, string, ##__VA_ARGS__); }while(0)
+/* Only prints when DEBUG_USB is set at LVL_DEBUG or lower */
+#define USBDebugLogger(level, category, string, ...) do { if(category <= level) printTextLogger(#category, level, __func__, string, ##__VA_ARGS__); }while(0)
 #else
 #ifdef __FLASH_SIMULATOR__
 #include <stdio.h>
 #define debugSPIPrint(...) printf(__VA_ARGS__)
 #else
-#define debugSPIPrint(...)
+#define XBlastLogger(...)
+#define USBDebugLogger(...)
 #endif
 #endif
 

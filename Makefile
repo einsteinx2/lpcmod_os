@@ -10,7 +10,7 @@ GCC_6.2 := $(shell expr `$(CC) -dumpversion` \>= 6.2)
 
 DEBUG ?= 0 #run make with "DEBUG=1" argument to enable extra debug
 SPITRACE ?= 0 #run make with "SPITRACE=1" argument to enable debig strings prints on SPI. Must have "DEBUG" = 1
-TSOPCTRL ?= 0 #Override TSOP control availability based on Xbox Revision
+TSOPCTRL ?= 0 #Override TSOP controd availability based on Xbox Revision
 VGA ?= 0 #Generates VGA enabled by default image. Does not override existing setting in flash.
 ETHERBOOT := yes
 LWIPFOLDER := lwip-2.0.3
@@ -65,7 +65,7 @@ ETH_CFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
 endif
 
 ifeq ($(DEBUG), 1)
-DEBUG_FLAGS = -DDEV_FEATURES -DDEBUGLOGGER
+DEBUG_FLAGS = -DDEV_FEATURES
 ifeq ($(SPITRACE), 1)
 DEBUG_FLAGS += -DSPITRACE
 endif
@@ -82,6 +82,9 @@ ifeq ($(VGA), 1)
 CROM_CFLAGS += -DDEFAULT_ENABLE_VGA
 endif
 endif
+
+#DebugLogger always enabled. Make sure to properly set it in xblastDebug.h
+CROM_CFLAGS += -DDEBUGLOGGER
 
 LDFLAGS-ROM     = -s -S -T $(TOPDIR)/scripts/ldscript-crom.ld
 LDFLAGS-XBEBOOT = -s -S -T $(TOPDIR)/scripts/xbeboot.ld
