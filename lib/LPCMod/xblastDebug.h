@@ -44,7 +44,9 @@
 
 #define DEBUG_USB               DBG_LVL_INFO
 
-#define DEBUG_FATX_FS           DBG_LVL_INFO
+#define DEBUG_FATX_FS           DBG_LVL_DEBUG
+#define DEBUG_VROOT             DBG_LVL_DEBUG
+#define DEBUG_FTPD              DBG_LVL_DEBUG
 #define DEBUG_CORE_FATFS        DBG_LVL_WARN    /* Not printed in text log to avoid logger loops */
 #define DEBUG_LOGGER            DBG_LVL_INFO   /* Will essentially double the string prints on SPI. Not printed in text log to avoid logger loops */
 

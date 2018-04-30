@@ -58,6 +58,7 @@
 
 
 #include "httpd.h"
+#include "ftpd.h"
 
 #include "WebServerOps.h"
 #include "xblast/settings/xblastSettingsDefs.h"
@@ -535,6 +536,7 @@ void run_lwip(void)
             ((netif->ip_addr.addr) >> 24 & 0xff));
 
 		httpd_init();
+		ftpd_init();
 
 		currentNetworkState = NetworkState_ServerRunning;
 		XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerRunning");

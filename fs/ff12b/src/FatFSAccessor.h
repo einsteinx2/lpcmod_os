@@ -90,6 +90,8 @@ int isMounted(unsigned char driveNumber, unsigned char partitionNumber);
 int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout);
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber);
 
+int getActivePartName(unsigned char index, const char * * out);
+
 FILEX fatxopen(const char* path, FileOpenMode mode);
 int fatxclose(FILEX handle);
 int fatxread(FILEX handle, unsigned char* out, unsigned int size);
@@ -111,7 +113,6 @@ int fatxrename(const char* path, const char* newName);
 
 int fatxchdir(const char* path);
 int fatxchdrive(const char* path);
-const char* fatxgetcwd(void);
 
 int fatxgetfree(const char* path);
 int fatxgetclustersize(unsigned char driveNumber, unsigned char partNumber);

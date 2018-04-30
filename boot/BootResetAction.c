@@ -15,6 +15,7 @@
 #include "boot.h"
 #include "BootEEPROM.h"
 #include "FatFSAccessor.h"
+#include "VirtualRoot.h"
 #include "i2c.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/LPCMod/BootLCD.h"
@@ -466,6 +467,9 @@ extern void BootResetAction ( void )
     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting FatFS init.");
     FatFS_init();
     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "FatFS init done.");
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting VirtualRoot init.");
+    VirtualRootInit();
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "VirtualRoot init done.");
     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting DebugLogger init.");
     debugLoggerInit();
     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "DebugLogger init done.");

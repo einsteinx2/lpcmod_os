@@ -36,12 +36,6 @@ static FIL FileHandleArray[MaxOpenFileCount];
 #define MaxOpenDirCount (_FS_LOCK / 2)
 static DIR DirectoryHandleArray[MaxOpenDirCount];
 
-#define RootFolderHandle INT_MAX
-static unsigned char rootFolderListCount;
-
-#define MaxPathLength 255
-static char cwd[MaxPathLength + sizeof('\0')];
-
 static const char* const PartitionNameList[_VOLUMES] = { _VOLUME_STRS };
 
 
@@ -103,8 +97,6 @@ void FatFS_init(void)
 #endif
     memset(FileHandleArray, 0x00, sizeof(FIL) * MaxOpenFileCount);
     memset(DirectoryHandleArray, 0x00, sizeof(DIR) * MaxOpenDirCount);
-    memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
-    cwd[0] = cPathSep;
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "init internal FatFS.");
     fatx_init();
 
@@ -364,6 +356,24 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
 
     return 0;
 }
+char text[] = "Toto";
+int getActivePartName(unsigned char index, const char * *  out)
+{
+    while((NbDrivesSupported * NbFATXPartPerHDD) > index)
+    {
+        if(0 < isMounted(index / NbFATXPartPerHDD, index % NbFATXPartPerHDD))
+        {
+            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "11111");
+
+            *out = PartitionNameStrings[index / NbFATXPartPerHDD][index % NbFATXPartPerHDD];
+            index++;
+            return index;
+        }
+        index++;
+    }
+
+    return -1;
+}
 
 
 FILEX fatxopen(const char* path, FileOpenMode mode)
@@ -510,13 +520,6 @@ DIREX fatxopendir(const char* path)
 
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Open dir:\"%s\"", path);
 
-    if(0 == strcmp(path, PathSep))
-    {
-        /* Special case to list all mounted partitions */
-        rootFolderListCount = 0;
-        return RootFolderHandle;
-    }
-
     /* Find unused Directory descriptor in array */
     for (i = 0; i < MaxOpenDirCount; i++)
     {
@@ -549,27 +552,6 @@ FileInfo fatxreaddir(DIREX handle)
 {
     FileInfo returnStruct;
     FILINFO getter;
-
-    if(RootFolderHandle == handle)
-    {
-        returnStruct.attributes = FileAttr_Directory;
-        returnStruct.modDate = 0;
-        returnStruct.modTime = 0;
-        returnStruct.size = 0;
-        if(0 < isMounted(rootFolderListCount / NbFATXPartPerHDD, rootFolderListCount % NbFATXPartPerHDD))
-        {
-            sprintf(returnStruct.name, "%s:"PathSep, PartitionNameList[rootFolderListCount]);
-            returnStruct.nameLength = strlen(PartitionNameList[rootFolderListCount]) + sizeof(':') + sizeof(cPathSep);
-
-            rootFolderListCount++;
-        }
-        else
-        {
-            returnStruct.name[0] = '\0';
-            returnStruct.nameLength = 0;
-        }
-        return returnStruct;
-    }
 
     if(0 == handle || (MaxOpenDirCount < handle))
     {
@@ -666,11 +648,6 @@ int fatxclosedir(DIREX handle)
 {
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Closing handle%u", handle);
 
-    if(RootFolderHandle == handle)
-    {
-        rootFolderListCount = 0;    /* Not necessary but why not */
-        return 0;
-    }
     DIRE_HANDLE_VALID(handle)
     if(0 == DirectoryHandleArray[handle].obj.fs)
     {
@@ -689,8 +666,10 @@ int fatxclosedir(DIREX handle)
 int fatxdelete(const char* path)
 {
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %s", path);
-    if(FR_OK != f_unlink(path))
+    FRESULT result = f_unlink(path);
+    if(FR_OK != result)
     {
+        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "Error!!!  result:%u", result);
         return -1;
     }
 
@@ -722,38 +701,7 @@ int fatxrename(const char* path, const char* newName)
 
 int fatxchdir(const char* path)
 {
-    char* sepPos;
     FRESULT result;
-    char fullPath[300];
-    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Request path:\"%s\"", path);
-    if(MaxPathLength < strlen(path))
-    {
-        XBlastLogger(DEBUG_FATX_FS, DBG_LVL_ERROR, "!!!Error, too long.");
-        return -1;
-    }
-
-
-    if(0 == strcmp(path, ".."))
-    {
-        sepPos = strrchr(cwd, cPathSep);
-        if(NULL == sepPos)
-        {
-            return -1;
-        }
-
-        /* Make sure it's not the partition identifier's PathSep */
-        if(cwd + strlen(PartitionNameStrings[HDD_Master][Part_C]) + strlen(":") + sizeof(cPathSep) < sepPos)
-        {
-            sepPos[sizeof(cPathSep)]  = '\0';
-        }
-        path = cwd;
-    }
-    else
-    {
-        sprintf(fullPath, "%s"PathSep"%s", cwd, path);
-        path = fullPath;
-    }
-
 
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Result path:\"%s\"", path);
 
@@ -761,7 +709,6 @@ int fatxchdir(const char* path)
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "result:%u", result);
     if(FR_OK == result)
     {
-        strcpy(cwd, path);
         return 0;
     }
 
@@ -775,17 +722,11 @@ int fatxchdrive(const char* path)
     return -1;
 }
 
-const char* fatxgetcwd(void)
-{
-    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "%s", cwd);
-    return cwd;
-}
-
-
 int fatxgetfree(const char* path)
 {
     DWORD clusters;
 
+    //TODO: fix for slave drive
     int vol = get_ldnumber(&path);
     FATFS* fatfs = &FatXFs[0][vol];
     if(0 > vol)
