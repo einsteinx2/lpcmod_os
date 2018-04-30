@@ -22,7 +22,8 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 	-I$(TOPDIR)/startuploader -I$(TOPDIR)/drivers/cpu -I$(TOPDIR)/menu \
 	-I$(TOPDIR)/lib/jpeg/ -I$(TOPDIR)/menu/actions -I$(TOPDIR)/menu/textmenu \
 	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/$(LWIPFOLDER) -I$(TOPDIR)/$(LWIPFOLDER)/src/include \
-	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps
+	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps \
+	-I$(TOPDIR)/fs/VirtualRoot -I$(TOPDIR)/lib/lwip-ftpd
 
 #These are intended to be non-overridable.
 CROM_CFLAGS=$(INCLUDE)
@@ -201,6 +202,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/LCDRingBuffer.o
 OBJECTS-CROM += $(TOPDIR)/obj/ff.o
 OBJECTS-CROM += $(TOPDIR)/obj/diskio.o
 OBJECTS-CROM += $(TOPDIR)/obj/FatFSAccessor.o
+OBJECTS-CROM += $(TOPDIR)/obj/VirtualRoot.o
 OBJECTS-CROM += $(TOPDIR)/obj/minIni.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o
@@ -246,7 +248,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/xbox_pci.o
 OBJECTS-CROM += $(TOPDIR)/obj/etherboot_config.o
 endif
 
-OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o err.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timeouts.o udp.o dhcp.o icmp.o ip4.o ip4_addr.o ip4_frag.o etharp.o fs.o httpd.o ethernet.o ip.o)
+OBJECTS-LWIP = $(addprefix $(TOPDIR)/obj/,def.o err.o ethernetif.o inet_chksum.o init.o mem.o memp.o netif.o pbuf.o raw.o stats.o sys.o tcp.o tcp_in.o tcp_out.o timeouts.o udp.o dhcp.o icmp.o ip4.o ip4_addr.o ip4_frag.o etharp.o fs.o httpd.o ethernet.o ip.o vfs.o ftpd.o)
 
 
 OBJECTS-CROM += $(OBJECTS-LWIP)
