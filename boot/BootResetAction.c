@@ -479,11 +479,11 @@ extern void BootResetAction ( void )
         {
             //TODO: Load optional JPEG backdrop from HDD here. Maybe fetch skin name from cfg file?
             XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Trying to load JPEGs from HDD.");
-            if(LPCMod_ReadJPGFromHDD("MASTER_C:"PathSep"XBlast"PathSep"icons.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD(PathSep"MASTER_C"PathSep"XBlast"PathSep"icons.jpg") == false)
             {
                 XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "\"icons.jpg\" loaded. Moving on to \"backdrop.jpg\".");
             }
-            if(LPCMod_ReadJPGFromHDD("MASTER_C:"PathSep"XBlast"PathSep"backdrop.jpg") == false)
+            if(LPCMod_ReadJPGFromHDD(PathSep"MASTER_C"PathSep"XBlast"PathSep"backdrop.jpg") == false)
             {
                 XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "\"backdrop.jpg\" loaded. Repainting.");
                 printMainMenuHeader();
@@ -498,7 +498,7 @@ extern void BootResetAction ( void )
                 {
                     importNewSettingsFromCFGLoad(&tempLPCmodSettings);
                     res = 0;
-                    FILEX fileHandle = fatxopen("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"bank.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                    FILEX fileHandle = fatxopen(PathSep"MASTER_C"PathSep"XBlast"PathSep"scripts"PathSep"bank.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
                     if(fileHandle)
                     {
                         if(fatxsize(fileHandle) > 0)
@@ -514,7 +514,7 @@ extern void BootResetAction ( void )
                     }
 
                     res = 0;
-                     fileHandle = fatxopen("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
+                     fileHandle = fatxopen(PathSep"MASTER_C"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", FileOpenMode_OpenExistingOnly | FileOpenMode_Read);
                      if(fileHandle)
                      {
                          if(fatxsize(fileHandle) > 0)
@@ -534,7 +534,7 @@ extern void BootResetAction ( void )
                     {
                         XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Running boot script.");
                         i = BNKOS;
-                        loadRunScriptWithParams("MASTER_C:"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", 1, &i);
+                        loadRunScriptWithParams(PathSep"MASTER_C"PathSep"XBlast"PathSep"scripts"PathSep"boot.script", 1, &i);
 
                         XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Boot script execution done.");
                     }

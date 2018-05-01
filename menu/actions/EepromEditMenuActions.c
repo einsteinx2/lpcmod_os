@@ -20,7 +20,7 @@
 #include "menu/misc/ConfirmDialog.h"
 #include "xblast/HardwareIdentifier.h"
 
-static const char* const eepromDirectoryLocation = "MASTER_C:"PathSep"XBlast"PathSep"eeproms";
+static const char* const eepromDirectoryLocation = PathSep"MASTER_C"PathSep"XBlast"PathSep"eeproms";
 
 void displayEditEEPROMBuffer(void *ignored)
 {

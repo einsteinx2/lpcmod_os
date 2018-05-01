@@ -25,7 +25,7 @@
 #include "xblastSettings.h"
 #include <stddef.h>
 
-static const char* const settingsFileLocation = "MASTER_C:"PathSep"XBlast"PathSep"xblast.cfg";
+static const char* const settingsFileLocation = PathSep"MASTER_C"PathSep"XBlast"PathSep"xblast.cfg";
 
 const char* const getSettingsFileLocation(void)
 {

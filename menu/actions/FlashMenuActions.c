@@ -28,7 +28,7 @@
 extern int etherboot(void);
 extern int BootLoadFlashCD(int cdromId);
 
-static const char* const biosDirectoryLocation = "MASTER_C:"PathSep"BIOS";
+static const char* const biosDirectoryLocation = PathSep"MASTER_C"PathSep"BIOS";
 
 const char* const getBIOSDirectoryLocation(void)
 {

@@ -22,7 +22,7 @@
 #include "FatFSAccessor.h"
 #include "lib/LPCMod/xblastDebug.h"
 
-static const char* const biosDirectoryLocation = "MASTER_C:"PathSep"XBlast"PathSep"scripts";
+static const char* const biosDirectoryLocation = PathSep"MASTER_C"PathSep"XBlast"PathSep"scripts";
 
 const char* const getScriptDirectoryLocation(void)
 {
@@ -267,7 +267,7 @@ void toggleRunBankScript(void * itemStr)
     else
     {
     	BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
-        if(testScriptFromHDD("MASTER_C:\\XBlast\\scripts\\bank.script"))
+        if(testScriptFromHDD(PathSep"MASTER_C"PathSep"XBlast"PathSep"scripts"PathSep"bank.script"))
         {
             LPCmodSettings.OSsettings.runBankScript = 1;
         }
