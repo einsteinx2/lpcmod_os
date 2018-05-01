@@ -1,5 +1,5 @@
 //============================================================================
-// Name        : fatfs_test.cpp
+// Name        : fatfs_test.c
 // Author      : 
 // Version     :
 // Copyright   : Your copyright notice
