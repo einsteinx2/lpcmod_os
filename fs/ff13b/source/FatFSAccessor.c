@@ -339,7 +339,7 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
     XboxPartitionTable workingMbr;
     unsigned char workBuf[FATX_CHAINTABLE_BLOCKSIZE];
     char partName[22];
-    sprintf(partName, "%s:"PathSep, PartitionNameStrings[driveNumber][partNumber]);
+    sprintf(partName, PathSep"%s"PathSep, PartitionNameStrings[driveNumber][partNumber]);
 
     if(FR_OK != fatx_getmbr(driveNumber, &workingMbr))
     {
