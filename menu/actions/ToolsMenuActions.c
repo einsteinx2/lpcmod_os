@@ -201,14 +201,14 @@ void saveXBlastcfg(void* fileExist)
 
     if(filePresent)
     {
-        sprintf(tempString, "\"%s\" exists\n\2Overwrite?", getSettingsFileLocation() + strlen("MASTER_"));
-        if(0 == ConfirmDialog(tempString, 1))
+        sprintf(tempString, "\"%s\" exists\n\2Overwrite?", getSettingsFileLocation() + strlen("/MASTER_"));
+        if(true == ConfirmDialog(tempString, 1))
         {
             return;
         }
     }
 
-    sprintf(tempString, "Saving \"%s\"", getSettingsFileLocation() + strlen("MASTER_"));
+    sprintf(tempString, "Saving \"%s\"", getSettingsFileLocation() + strlen("/MASTER_"));
     UiHeader(tempString);
 
     if(LPCMod_SaveCFGToHDD(&settingsPtrStruct))

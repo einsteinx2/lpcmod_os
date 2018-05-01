@@ -119,7 +119,7 @@ TEXTMENU *ToolsMenuInit(void)
         cfgFileInfo = fatxstat(getSettingsFileLocation());
         //Save xblast.cfg
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-        sprintf(itemPtr->szCaption, "Save %s", getSettingsFileLocation() + strlen("MASTER_"));
+        sprintf(itemPtr->szCaption, "Save %s", getSettingsFileLocation() + strlen(PathSep"MASTER_"));
         itemPtr->functionPtr = saveXBlastcfg;
         itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
         *(unsigned char*)itemPtr->functionDataPtr = cfgFileInfo.size ? 1 : 0;
@@ -130,7 +130,7 @@ TEXTMENU *ToolsMenuInit(void)
         {
             //Load xblast.cfg
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption, "Load %s", getSettingsFileLocation() + strlen("MASTER_"));
+            sprintf(itemPtr->szCaption, "Load %s", getSettingsFileLocation() + strlen(PathSep"MASTER_"));
             itemPtr->functionPtr = loadXBlastcfg;
             itemPtr->functionDataPtr = NULL;
             TextMenuAddItem(menuPtr, itemPtr);
