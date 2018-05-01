@@ -2676,9 +2676,10 @@ static FRESULT dir_find (	/* FR_OK(0):succeeded, !=0:error */
             normalizedCheckFatXName[i] = (char)toupper(dp->dir[DIRx_Name + i]);
             i++;
         }
-
+        dp->obj.attr = dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_MASK;
         if (!(dp->dir[ISFATX_FS(fs->fs_typex) ? DIRx_Attr : DIR_Attr] & AM_VOL) && (NOTFATX_FS(fs->fs_typex) || (0x00 < c && FATX_FILENAME_MAX >= c)) && (fatxNameLgth == c) && !mem_cmp(ISFATX_FS(fs->fs_typex) ? (const void*)normalizedCheckFatXName : dp->dir + DIR_Name, ISFATX_FS(fs->fs_typex) ? (const void*)normalizedTargetFatXName : dp->fnx, ISFATX_FS(fs->fs_typex) ? fatxNameLgth : 11)) break;  /* Is it a valid entry? */
 #else
+        dp->obj.attr = dp->dir[DIR_Attr] & AM_MASK;
 		if (!(dp->dir[DIR_Attr] & AM_VOL) && !mem_cmp(dp->dir, dp->fn, 11)) break;	/* Is it a valid entry? */
 #endif
 #endif
