@@ -19,7 +19,7 @@
 #define LogRotationDepth 5
 
 #define logFilename "xblast.log"
-static const char* const ActiveLogFileLocation = "MASTER_X:" PathSep logFilename;
+static const char* const ActiveLogFileLocation = PathSep"MASTER_X"PathSep logFilename;
 
 static unsigned char initDone = 0;
 static FIL activeLogHandle; /* _FS_LOCK has an extra slot to account for this file which isn't handled in FatFsAccessor */
