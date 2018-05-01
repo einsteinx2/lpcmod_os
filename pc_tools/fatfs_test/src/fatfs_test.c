@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
 
 #if FF_MULTI_PARTITION
     printf(_T("\nMultiple partition is enabled. Each logical drive is tied to the patition as follows:\n"));
-    for (cnt = 0; cnt < _VOLUMES; cnt++) {
+    for (cnt = 0; cnt < FF_VOLUMES; cnt++) {
         const char *pn[] = {_VOLUME_STRS};
 
         printf(_T("\"%u:\" <== Disk# %u, %s\n"), cnt, VolToPart[cnt].pd, pn[(NbFATXPartPerHDD * VolToPart[cnt].pd) + VolToPart[cnt].pt]);
@@ -592,7 +592,10 @@ int main(int argc, char *argv[]) {
                     break;
 #endif
                 case 'q' :  /* fq - Show current dir path */
+#if 0
+                    /* Handled by VirtualRoot now */
                     printf("%s", fatxgetcwd());
+#endif
                     printf(_T("\n"));
                     break;
 #endif
