@@ -320,7 +320,7 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-#if _MULTI_PARTITION
+#if FF_MULTI_PARTITION
     printf(_T("\nMultiple partition is enabled. Each logical drive is tied to the patition as follows:\n"));
     for (cnt = 0; cnt < _VOLUMES; cnt++) {
         const char *pn[] = {_VOLUME_STRS};
@@ -478,7 +478,7 @@ int main(int argc, char *argv[]) {
                                 (Finfo.attributes & FileAttr_Archive) ? 'A' : '-',
                                 date.year, date.month, date.mday,
                                 date.hours, date.minutes, date.seconds, (QWORD)Finfo.size);
-    #if _USE_LFN && _USE_FIND == 2
+    #if FF_USE_LFN && FF_USE_FIND == 2
                         printf(_T("%-12s  "),Finfo.altname);
     #endif
                         put_uni(Finfo.name);
@@ -492,7 +492,7 @@ int main(int argc, char *argv[]) {
     #endif
                     printf(_T("\n"));
                     break;
-    #if _USE_FIND
+    #if FF_USE_FIND
                 case 'L' :  /* fL <path> <pattern> - Directory search */
                     while (*ptr == ' ') ptr++;
                     ptr2 = ptr;
@@ -500,7 +500,7 @@ int main(int argc, char *argv[]) {
                     *ptr++ = 0;
                     dir = fatxfindfirst(&Finfo, ptr2, ptr);
                     while (dir && Finfo.name[0]) {
-    #if _USE_LFN && _USE_FIND == 2
+    #if FF_USE_LFN && FF_USE_FIND == 2
                         printf(_T("%-12s  "), Finfo.altname);
     #endif
                         put_uni(Finfo.name);
@@ -562,7 +562,7 @@ int main(int argc, char *argv[]) {
                     if (fr == FR_OK)
                         printf(_T("OK\n"));
                     break;
-    #if _USE_FASTSEEK
+#if FF_USE_FASTSEEK
                 case 'E' :  /* fE - Enable fast seek and initialize cluster link map table */
 #if 0
                     file[0].cltbl = SeekTbl;            /* Enable fast seek (set address of buffer) */
@@ -579,24 +579,24 @@ int main(int argc, char *argv[]) {
                     }
 #endif
                     break;
-    #endif  /* _USE_FASTSEEK */
-    #if _FS_RPATH >= 1
+#endif  /* _USE_FASTSEEK */
+#if FF_FS_RPATH >= 1
                 case 'g' :  /* fg <path> - Change current directory */
                     while (*ptr == ' ') ptr++;
                     printf("%s\n", fatxchdir(ptr) ? "Error" : "OK");
                     break;
-    #if _VOLUMES >= 2
+#if FF_VOLUMES >= 2
                 case 'j' :  /* fj <path> - Change current drive */
                     while (*ptr == ' ') ptr++;
                     printf("%s\n", fatxchdrive(ptr) ? "Error" : "OK");
                     break;
-    #endif
+#endif
                 case 'q' :  /* fq - Show current dir path */
                     printf("%s", fatxgetcwd());
                     printf(_T("\n"));
                     break;
-    #endif
-    #if _USE_FORWARD
+#endif
+#if FF_USE_FORWARD
                 case 'f' :  /* ff <len> - Forward data */
 #if 0
                     if (!xatoi(&ptr, &p1)) break;
@@ -605,8 +605,8 @@ int main(int argc, char *argv[]) {
                     if (fr == FR_OK) printf(_T("\n%u bytes tranferred.\n"), s1);
 #endif
                     break;
-    #endif
-    #if !_FS_READONLY
+#endif
+#if !FF_FS_READONLY
                 case 'w' :  /* fw <len> <val> - Write file */
                     if (!xatoi(&ptr, &p1) || !xatoi(&ptr, &p2)) break;
                     memset(Buff, p2, sizeof Buff);
@@ -686,7 +686,7 @@ int main(int argc, char *argv[]) {
                     fatxclose(file[1]);
                     printf(_T("%lu bytes copied.\n"), p1);
                     break;
-    #if _USE_EXPAND
+#if FF_USE_EXPAND
                 case 'h':   /* fh <fsz> <opt> - Allocate contiguous block */
 #if 0
                     if (!xatoll(&ptr, &px) || !xatoi(&ptr, &p2)) break;
@@ -694,8 +694,8 @@ int main(int argc, char *argv[]) {
                     put_rc(fr);
 #endif
                     break;
-    #endif
-    #if _USE_CHMOD
+#endif
+#if FF_USE_CHMOD
                 case 'a' :  /* fa <atrr> <mask> <name> - Change file/dir attribute */
                     if (!xatoi(&ptr, &p1) || !xatoi(&ptr, &p2)) break;
                     while (*ptr == ' ') ptr++;
@@ -710,14 +710,14 @@ int main(int argc, char *argv[]) {
                     while (_USE_LFN && *ptr == ' ') ptr++;
                     put_rc(f_utime(ptr, &Finfo));
                     break;
-    #endif
-    #if _USE_LABEL
+#endif
+#if FF_USE_LABEL
                 case 'b' :  /* fb <name> - Set volume label */
                     while (*ptr == ' ') ptr++;
                     put_rc(f_setlabel(ptr));
                     break;
-    #endif
-    #if _USE_MKFS
+#endif
+#if FF_USE_MKFS
                 case 'm' :  /* fm <ld#> <partition rule> <cluster size> - Create file system */
                     if (!xatoi(&ptr, &p1) || (UINT)p1 > 9 || !xatoi(&ptr, &p2)) break;
                     printf(_T("The volume will be formatted. Are you sure? (Y/n)="));
@@ -735,7 +735,7 @@ int main(int argc, char *argv[]) {
                         printf("MKFS success\n");
                     }
                     break;
-    #if _MULTI_PARTITION
+#if FF_MULTI_PARTITION
                 case 'p' :  /* fp <pd#> <size1> <size2> <size3> <size4> - Create partition table */
                     {
 
@@ -756,9 +756,9 @@ int main(int argc, char *argv[]) {
                         }
                     }
                     break;
-    #endif  /* _MULTI_PARTITION */
-    #endif  /* _USE_MKFS */
-    #endif  /* !_FS_READONLY */
+#endif  /* FF_MULTI_PARTITION */
+#endif  /* FF_USE_MKFS */
+#endif  /* !FF_FS_READONLY */
                 case 's' :  /* fs <path> - stats the file/dir */
                     while (*ptr == ' ') ptr++;
                     FileInfo info = fatxstat(ptr);

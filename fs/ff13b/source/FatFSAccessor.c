@@ -10,7 +10,6 @@
 #ifdef _PCSIM
 #include <string.h>
 #include <stdio.h>
-#define DEBUG_FATX_FS 0
 #include "../../../pc_tools/fatfs_test/src/FatFSTestHelper.h"
 #else
 #include "string.h"

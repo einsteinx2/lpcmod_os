@@ -26,44 +26,39 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>FatFS</name>
-			<type>2</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src</location>
-		</link>
-		<link>
 			<name>src/FatFSAccessor.c</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/FatFSAccessor.c</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/FatFSAccessor.c</location>
 		</link>
 		<link>
 			<name>src/FatFSAccessor.h</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/FatFSAccessor.h</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/FatFSAccessor.h</location>
 		</link>
 		<link>
 			<name>src/fatx.h</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/fatx.h</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/fatx.h</location>
 		</link>
 		<link>
 			<name>src/ff.c</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.c</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/ff.c</location>
 		</link>
 		<link>
 			<name>src/ff.h</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.h</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/ff.h</location>
 		</link>
 		<link>
 			<name>src/ffconf.h</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ffconf.h</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/ffconf.h</location>
 		</link>
 		<link>
 			<name>src/integer.h</name>
 			<type>1</type>
-			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/integer.h</location>
+			<location>/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/integer.h</location>
 		</link>
 	</linkedResources>
 </projectDescription>
