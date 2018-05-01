@@ -547,7 +547,7 @@ int main(int argc, char *argv[]) {
                     while (p1) {
                         if (p1 >= 16) { cnt = 16; p1 -= 16; }
                         else          { cnt = p1; p1 = 0; }
-                        fr -= fatxread(file[0], Buff, cnt);
+                        fr = fatxread(file[0], Buff, cnt);
                         if (fr == -1) { printf("Error\n"); break; }
                         put_dump(Buff, ofs, fr);
                         cnt = (UINT)fr > cnt ? 0 : cnt - fr;
