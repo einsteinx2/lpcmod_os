@@ -701,7 +701,7 @@ int fatxchdir(const char* path)
 {
     FRESULT result;
 
-    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Result path:\"%s\"", path);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "path:\"%s\"", path);
 
     result = f_chdir(path);
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "result:%u", result);
