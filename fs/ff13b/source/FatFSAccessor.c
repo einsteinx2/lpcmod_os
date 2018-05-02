@@ -486,9 +486,12 @@ FileInfo fatxstat(const char* path)
 {
     FileInfo returnStruct;
     FILINFO getter;
+    FRESULT result;
     memset(&returnStruct, 0x00, sizeof(FileInfo));
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "path:\"%s\"", path);
-    if(FR_OK == f_stat(path, &getter))
+    result = f_stat(path, &getter);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "result:%u", result);
+    if(FR_OK == result)
     {
         convertToFileInfo(&returnStruct, &getter);
     }

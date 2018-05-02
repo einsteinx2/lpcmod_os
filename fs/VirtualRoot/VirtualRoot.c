@@ -79,10 +79,12 @@ void VirtualRootInit(void)
 
 FILEX vroot_open(const char* path, FileOpenMode mode)
 {
-    XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"  mode:%u", path, mode);
+    char workPath[300];
+    sprintf(workPath, "%s%s", cwd, path);
+    XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"  mode:%u", workPath, mode);
     if(NULL != currentAccessor)
     {
-        return currentAccessor->open(path, mode);
+        return currentAccessor->open(workPath, mode);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -142,7 +144,7 @@ FileInfo vroot_stat(const char* path)
 
     if(NULL != currentAccessor)
     {
-        sprintf(fullPath, "%s"PathSep"%s", cwd, path);
+        sprintf(fullPath, "%s%s", cwd, path);
         return currentAccessor->stat(fullPath);
     }
 
@@ -317,6 +319,7 @@ static int pathProcess_Absolute(const char* const path)
     {
         currentAccessor = &FatFSAccess;
         strcpy(cwd, path);
+        strcpy(cwd + strlen(cwd), PathSep);
         return 0;
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
