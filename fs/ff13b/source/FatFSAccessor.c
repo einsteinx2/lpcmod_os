@@ -426,12 +426,15 @@ int fatxclose(FILEX handle)
 int fatxread(FILEX handle, unsigned char* out, unsigned int size)
 {
     UINT bytesRead;
+    FRESULT result;
 
     FILE_HANDLE_VALID(handle)
     FILE_VALID(handle)
 
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "file %u, size:%u", handle, size);
-    if(FR_OK == f_read(&FileHandleArray[handle], out, size, &bytesRead))
+    result = f_read(&FileHandleArray[handle], out, size, &bytesRead);
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "result:%u, bytesRead:%u", result, bytesRead);
+    if(FR_OK == result)
     {
         return bytesRead;
     }

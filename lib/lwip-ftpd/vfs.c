@@ -35,7 +35,13 @@ vfs_dirent_t dir_ent;
 static FILEX guard_for_the_whole_fs;
 
 int vfs_read (void* buffer, int dummy, int len, vfs_file_t* file) {
-	return vroot_read(*file, buffer, len);
+    int result = vroot_read(*file, buffer, len);
+
+    if(0 > result)
+    {
+        result = 0;
+    }
+	return result;
 }
 
 vfs_dirent_t* vfs_readdir(vfs_dir_t* dir) {
