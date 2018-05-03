@@ -4,11 +4,11 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/FatFSAccessor.c \
+/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/FatFSAccessor.c \
 ../src/FatFSTestHelper.c \
 ../src/diskio.c \
 ../src/fatfs_test.c \
-/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.c 
+/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/ff.c 
 
 OBJS += \
 ./src/FatFSAccessor.o \
@@ -26,24 +26,24 @@ C_DEPS += \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/FatFSAccessor.o: /home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/FatFSAccessor.c
+src/FatFSAccessor.o: /home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/FatFSAccessor.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -D_LARGEFILE64_SOURCE=1 -D_PCSIM=1 -D_LARGE_FILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I"/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	gcc -D_LARGEFILE64_SOURCE=1 -D_PCSIM=1 -D_LARGE_FILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I"/home/cromwelldev/workspace/lpcmod_os/pc_tools/fatfs_test/src" -I"/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/%.o: ../src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -D_LARGEFILE64_SOURCE=1 -D_PCSIM=1 -D_LARGE_FILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I"/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	gcc -D_LARGEFILE64_SOURCE=1 -D_PCSIM=1 -D_LARGE_FILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I"/home/cromwelldev/workspace/lpcmod_os/pc_tools/fatfs_test/src" -I"/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
-src/ff.o: /home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src/ff.c
+src/ff.o: /home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source/ff.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C Compiler'
-	gcc -D_LARGEFILE64_SOURCE=1 -D_PCSIM=1 -D_LARGE_FILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I"/home/cromwelldev/workspace/lpcmod_os/fs/ff12b/src" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	gcc -D_LARGEFILE64_SOURCE=1 -D_PCSIM=1 -D_LARGE_FILE_SOURCE=1 -D_FILE_OFFSET_BITS=64 -I"/home/cromwelldev/workspace/lpcmod_os/pc_tools/fatfs_test/src" -I"/home/cromwelldev/workspace/lpcmod_os/fs/ff13b/source" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

@@ -3244,7 +3244,7 @@ static FRESULT create_name (	/* FR_OK: successful, FR_INVALID_NAME: could not cr
 
         for (;;) {
             c = (BYTE)p[si++];
-            if (c <= ' ' || c == 0xFF) break;            /* Break if end of the path name */
+            if (c < ' ' || c == 0xFF) break;            /* Break if end of the path name */
             if (c == '/' || c == '\\') {    /* Break if a separator is found */
                 while (p[si] == '/' || p[si] == '\\') si++; /* Skip duplicated separator if exist */
                 break;
