@@ -49,6 +49,7 @@ static int pathProcess_Absolute(const char* const path);
 static int pathProcess_GoingForward(const char* const path);
 static int pathProcess_GoingBack(void);
 
+static void combinePath(char* out, const char* add);
 
 /*-----------------------------------------*/
 
@@ -80,7 +81,7 @@ void VirtualRootInit(void)
 FILEX vroot_open(const char* path, FileOpenMode mode)
 {
     char workPath[300];
-    sprintf(workPath, "%s%s", cwd, path);
+    combinePath(workPath, path);
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"  mode:%u", workPath, mode);
     if(NULL != currentAccessor)
     {
@@ -139,13 +140,13 @@ int vroot_eof(FILEX handle)
 FileInfo vroot_stat(const char* path)
 {
     FileInfo returnStruct;
-    char fullPath[300];
+    char workPath[300];
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"", path);
 
     if(NULL != currentAccessor)
     {
-        sprintf(fullPath, "%s%s", cwd, path);
-        return currentAccessor->stat(fullPath);
+        combinePath(workPath, path);
+        return currentAccessor->stat(workPath);
     }
 
     returnStruct.name[0] = '\0';
@@ -319,7 +320,6 @@ static int pathProcess_Absolute(const char* const path)
     {
         currentAccessor = &FatFSAccess;
         strcpy(cwd, path);
-        strcpy(cwd + strlen(cwd), PathSep);
         return 0;
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
@@ -329,17 +329,17 @@ static int pathProcess_Absolute(const char* const path)
 
 static int pathProcess_GoingForward(const char* const path)
 {
-    char fullPath[300];
+    char workPath[300];
 
     if(cPathSep != *path)
     {
-        sprintf(fullPath, "%s"PathSep"%s"PathSep, cwd, path);
-        XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "New path:\"%s\".", fullPath);
+        combinePath(workPath, path);
+        XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "New path:\"%s\".", workPath);
 
-        if(0 == FatFSAccess.chdir(fullPath))
+        if(0 == FatFSAccess.chdir(workPath))
         {
             currentAccessor = &FatFSAccess;
-            strcpy(cwd, fullPath);
+            strcpy(cwd, workPath);
 
             return 0;
         }
@@ -400,5 +400,19 @@ static int pathProcess_GoingBack(void)
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
 
     return -1;
+}
+
+static void combinePath(char* out, const char* add)
+{
+    int cwdLen = strlen(cwd);
+    if(cwdLen)
+    {
+        if(cPathSep == cwd[cwdLen - 1])
+        {
+            sprintf(out, "%s%s", cwd, add);
+            return;
+        }
+    }
+    sprintf(out, "%s"PathSep"%s", cwd, add);
 }
 
