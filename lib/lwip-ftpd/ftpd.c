@@ -54,7 +54,7 @@ int dbg_printf(const char *fmt, ...);
 #ifdef _MSC_VER
 #define dbg_printf(x) /* x */
 #else
-#define dbg_printf(...) XBlastLogger(DEBUG_FTPD, DBG_LVL_DEBUG, __VA_ARGS__)/* */
+#define dbg_printf(string, ...) XBlastLogger(DEBUG_FTPD, DBG_LVL_DEBUG, string, ##__VA_ARGS__)/* */
 #endif
 #endif
 
@@ -252,7 +252,7 @@ typedef struct sfifo_t
 #define sfifo_used(x)	(((x)->writepos - (x)->readpos) & SFIFO_SIZEMASK(x))
 #define sfifo_space(x)	((x)->size - 1 - sfifo_used(x))
 
-#define DBG(x)
+#define DBG(x) x
 
 /*
  * Alloc buffer, init FIFO etc...
@@ -260,6 +260,7 @@ typedef struct sfifo_t
 static int sfifo_init(sfifo_t *f, int size)
 {
 	memset(f, 0, sizeof(sfifo_t));
+	dbg_printf("fifo init. size:%u", size);
 
 	if(size > SFIFO_MAX_BUFFER_SIZE)
 		return -EINVAL;
