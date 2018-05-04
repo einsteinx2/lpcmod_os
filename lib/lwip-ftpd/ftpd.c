@@ -442,6 +442,7 @@ static void send_file(struct ftpd_datastate *fsd, struct tcp_pcb *pcb)
 			len = 2048;
 		len = vfs_read(buffer, 1, len, fsd->vfs_file);
 		if (len == 0) {
+		    DBG(dbg_printf("len == 0, eof=%u",vfs_eof(fsd->vfs_file)));
 			if (vfs_eof(fsd->vfs_file) == 0)
 				return;
 			vfs_close(fsd->vfs_file);
@@ -451,6 +452,7 @@ static void send_file(struct ftpd_datastate *fsd, struct tcp_pcb *pcb)
 		sfifo_write(&fsd->fifo, buffer, len);
 		send_data(pcb, fsd);
 	} else {
+	    DBG(dbg_printf("No open file"));
 		struct ftpd_msgstate *fsm;
 		struct tcp_pcb *msgpcb;
 
@@ -513,9 +515,12 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 			sfifo_write(&fsd->fifo, buffer, len);
 			fsd->vfs_dirent = NULL;
 		}
+		DBG(dbg_printf("sent: \"%s\"", buffer));
 	} else {
 		struct ftpd_msgstate *fsm;
 		struct tcp_pcb *msgpcb;
+
+		DBG(dbg_printf("dirent NULL"));
 
 		if (sfifo_used(&fsd->fifo) > 0) {
 			send_data(pcb, fsd);
@@ -524,6 +529,7 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 		fsm = fsd->msgfs;
 		msgpcb = fsd->msgpcb;
 
+		DBG(dbg_printf("Closedir"));
 		vfs_closedir(fsd->vfs_dir);
 		fsd->vfs_dir = NULL;
 		ftpd_dataclose(pcb, fsd);
@@ -542,15 +548,19 @@ static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
 
 	switch (fsd->msgfs->state) {
 	case FTPD_LIST:
+	    DBG(dbg_printf("FTPD_LIST"));
 		send_next_directory(fsd, pcb, 0);
 		break;
 	case FTPD_NLST:
+	    DBG(dbg_printf("FTPD_NLST"));
 		send_next_directory(fsd, pcb, 1);
 		break;
 	case FTPD_RETR:
+	    DBG(dbg_printf("FTPD_RETR"));
 		send_file(fsd, pcb);
 		break;
 	default:
+	    DBG(dbg_printf("Not supported"));
 		break;
 	}
 
@@ -560,8 +570,10 @@ static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
 static err_t ftpd_datarecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
+	DBG(dbg_printf("err:%u", err));
 
 	if (err == ERR_OK && p != NULL) {
+	    DBG(dbg_printf("p != NULL"));
 		struct pbuf *q;
 		u16_t tot_len = 0;
 
@@ -580,6 +592,7 @@ static err_t ftpd_datarecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t
 		pbuf_free(p);
 	}
 	if (err == ERR_OK && p == NULL) {
+	    DBG(dbg_printf("p == NULL"));
 		struct ftpd_msgstate *fsm;
 		struct tcp_pcb *msgpcb;
 
@@ -617,15 +630,19 @@ static err_t ftpd_dataconnected(void *arg, struct tcp_pcb *pcb, err_t err)
 
 	switch (fsd->msgfs->state) {
 	case FTPD_LIST:
+	    DBG(dbg_printf("FTPD_LIST"));
 		send_next_directory(fsd, pcb, 0);
 		break;
 	case FTPD_NLST:
+	    DBG(dbg_printf("FTPD_NLST"));
 		send_next_directory(fsd, pcb, 1);
 		break;
 	case FTPD_RETR:
+	    DBG(dbg_printf("FTPD_RETR"));
 		send_file(fsd, pcb);
 		break;
 	default:
+	    DBG(dbg_printf("Not supported"));
 		break;
 	}
 
@@ -651,15 +668,19 @@ static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 
 	switch (fsd->msgfs->state) {
 	case FTPD_LIST:
+	    DBG(dbg_printf("FTPD_LIST"));
 		send_next_directory(fsd, pcb, 0);
 		break;
 	case FTPD_NLST:
+	    DBG(dbg_printf("FTPD_NLST"));
 		send_next_directory(fsd, pcb, 1);
 		break;
 	case FTPD_RETR:
+	    DBG(dbg_printf("FTPD_RETR"));
 		send_file(fsd, pcb);
 		break;
 	default:
+	    DBG(dbg_printf("Not supported"));
 		break;
 	}
 
@@ -668,6 +689,7 @@ static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 
 static int open_dataconnection(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    DBG(dbg_printf("passive:%u", fsm->passive));
 	if (fsm->passive)
 		return 0;
 
@@ -829,6 +851,8 @@ static void cmd_list_common(const char *arg, struct tcp_pcb *pcb, struct ftpd_ms
 
 	fsm->datafs->vfs_dir = vfs_dir;
 	fsm->datafs->vfs_dirent = NULL;
+
+	DBG(dbg_printf("shortlist:%u", shortlist));
 	if (shortlist != 0)
 		fsm->state = FTPD_NLST;
 	else
@@ -955,12 +979,20 @@ static void cmd_pasv(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 		fsm->dataport = port;
 		err = tcp_bind(fsm->datalistenpcb, (ip_addr_t*)&pcb->local_ip, fsm->dataport);
 		if (err == ERR_OK)
+		{
+		    dbg_printf("ERR_OK");
 			break;
+		}
 		if (start_port == port)
+		{
+		    dbg_printf("ERR_CLSD");
 			err = ERR_CLSD;
+		}
 		if (err == ERR_USE) {
+		    dbg_printf("ERR_USE");
 			continue;
 		} else {
+		    dbg_printf("Dataclose");
 			ftpd_dataclose(fsm->datalistenpcb, fsm->datafs);
 			fsm->datalistenpcb = NULL;
 			fsm->datafs = NULL;
@@ -1002,6 +1034,7 @@ static void cmd_abrt(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 		free(fsm->datafs);
 		fsm->datafs = NULL;
 	}
+	dbg_printf("Abort");
 	fsm->state = FTPD_IDLE;
 }
 
@@ -1219,12 +1252,12 @@ static void send_msg(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm, char *msg, 
 	va_start(arg, msg);
 	vsprintf(buffer, msg, arg);
 	va_end(arg);
+	dbg_printf("response: %s", buffer);
 	strcpy(buffer + strlen(buffer), "\r\n");
 	len = strlen(buffer);
 	if (sfifo_space(&fsm->fifo) < len)
 		return;
 	sfifo_write(&fsm->fifo, buffer, len);
-	dbg_printf("response: %s", buffer);
 	send_msgdata(pcb, fsm);
 }
 
@@ -1232,7 +1265,7 @@ static void ftpd_msgerr(void *arg, err_t err)
 {
 	struct ftpd_msgstate *fsm = arg;
 
-	dbg_printf("%s (%i)\n", lwip_strerr(err), err);
+	dbg_printf("%s (%i)", lwip_strerr(err), err);
 	if (fsm == NULL)
 		return;
 	if (fsm->datafs)
@@ -1304,7 +1337,7 @@ static err_t ftpd_msgrecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t 
 			while (((*pt == '\r') || (*pt == '\n')) && pt >= text)
 				*pt-- = '\0';
 
-			dbg_printf("query: %s\n", text);
+			dbg_printf("query: %s", text);
 
 			strncpy(cmd, text, 4);
 			for (pt = cmd; isalpha(*pt) && pt < &cmd[4]; pt++)
@@ -1347,15 +1380,19 @@ static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 		if (fsm->datafs->connected) {
 			switch (fsm->state) {
 			case FTPD_LIST:
+			    DBG(dbg_printf("FTPD_LIST"));
 				send_next_directory(fsm->datafs, fsm->datapcb, 0);
 				break;
 			case FTPD_NLST:
+			    DBG(dbg_printf("FTPD_NLST"));
 				send_next_directory(fsm->datafs, fsm->datapcb, 1);
 				break;
 			case FTPD_RETR:
+			    DBG(dbg_printf("FTPD_RETR"));
 				send_file(fsm->datafs, fsm->datapcb);
 				break;
 			default:
+			    DBG(dbg_printf("Not supported"));
 				break;
 			}
 		}
