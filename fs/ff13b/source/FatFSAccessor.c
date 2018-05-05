@@ -825,10 +825,10 @@ int fatxeof(FILEX handle)
     if(f_eof(&FileHandleArray[handle]))
     {
         /* At end of file */
-        return 0;
+        return 1;
     }
 
-    return 1;
+    return 0;
 }
 
 long long int fatxsize(FILEX handle)
