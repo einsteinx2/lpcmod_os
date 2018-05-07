@@ -58,6 +58,8 @@ int dbg_printf(const char *fmt, ...);
 #endif
 #endif
 
+#define FtpdBufferSize TCP_MSS
+
 #define EINVAL 1
 #define ENOMEM 2
 #define ENODEV 3
@@ -359,6 +361,8 @@ static void ftpd_dataerr(void *arg, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
 
+	dbg_printf("enter");
+
 	dbg_printf("%s (%i)\n", lwip_strerr(err), err);
 	if (fsd == NULL)
 		return;
@@ -369,6 +373,8 @@ static void ftpd_dataerr(void *arg, err_t err)
 
 static void ftpd_dataclose(struct tcp_pcb *pcb, struct ftpd_datastate *fsd)
 {
+    dbg_printf("enter");
+
 	tcp_arg(pcb, NULL);
 	tcp_sent(pcb, NULL);
 	tcp_recv(pcb, NULL);
@@ -391,6 +397,8 @@ static void send_data(struct tcp_pcb *pcb, struct ftpd_datastate *fsd)
 {
 	err_t err;
 	u16_t len;
+
+	dbg_printf("enter");
 
 	if (sfifo_used(&fsd->fifo) > 0) {
 		int i;
@@ -426,11 +434,13 @@ static void send_data(struct tcp_pcb *pcb, struct ftpd_datastate *fsd)
 
 static void send_file(struct ftpd_datastate *fsd, struct tcp_pcb *pcb)
 {
+    dbg_printf("enter");
+
 	if (!fsd->connected)
 		return;
 
 	if (fsd->vfs_file) {
-		char buffer[2048];
+		char buffer[FtpdBufferSize];
 		int len;
 
 		len = sfifo_space(&fsd->fifo);
@@ -438,8 +448,8 @@ static void send_file(struct ftpd_datastate *fsd, struct tcp_pcb *pcb)
 			send_data(pcb, fsd);
 			return;
 		}
-		if (len > 2048)
-			len = 2048;
+		if (len > FtpdBufferSize)
+			len = FtpdBufferSize;
 		len = vfs_read(buffer, 1, len, fsd->vfs_file);
 		if (len == 0) {
 		    DBG(dbg_printf("len == 0, eof=%u",vfs_eof(fsd->vfs_file)));
@@ -474,11 +484,13 @@ static void send_file(struct ftpd_datastate *fsd, struct tcp_pcb *pcb)
 
 static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb, int shortlist)
 {
-	char buffer[1024];
+	char buffer[300];
 	int len;
 
+	dbg_printf("enter");
+
 	while (1) {
-	if (fsd->vfs_dirent == NULL)
+	if (NULL != fsd->vfs_dir && fsd->vfs_dirent == NULL)
 		fsd->vfs_dirent = vfs_readdir(fsd->vfs_dir);
 
 	if (fsd->vfs_dirent) {
@@ -521,17 +533,20 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 		struct tcp_pcb *msgpcb;
 
 		DBG(dbg_printf("dirent NULL"));
-
+		if(NULL != fsd->vfs_dir)
+		{
+            DBG(dbg_printf("Closedir"));
+            vfs_closedir(fsd->vfs_dir);
+            fsd->vfs_dir = NULL;
+		}
 		if (sfifo_used(&fsd->fifo) > 0) {
+		    DBG(dbg_printf("flush data"));
 			send_data(pcb, fsd);
 			return;
 		}
 		fsm = fsd->msgfs;
 		msgpcb = fsd->msgpcb;
 
-		DBG(dbg_printf("Closedir"));
-		vfs_closedir(fsd->vfs_dir);
-		fsd->vfs_dir = NULL;
 		ftpd_dataclose(pcb, fsd);
 		fsm->datapcb = NULL;
 		fsm->datafs = NULL;
@@ -545,6 +560,7 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
 	struct ftpd_datastate *fsd = arg;
+	dbg_printf("enter");
 
 	switch (fsd->msgfs->state) {
 	case FTPD_LIST:
@@ -570,6 +586,7 @@ static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
 static err_t ftpd_datarecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
+	dbg_printf("enter");
 	DBG(dbg_printf("err:%u", err));
 
 	if (err == ERR_OK && p != NULL) {
@@ -614,6 +631,7 @@ static err_t ftpd_datarecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t
 static err_t ftpd_dataconnected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
+	dbg_printf("enter");
 
 	fsd->msgfs->datapcb = pcb;
 	fsd->connected = 1;
@@ -652,6 +670,7 @@ static err_t ftpd_dataconnected(void *arg, struct tcp_pcb *pcb, err_t err)
 static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
+    dbg_printf("enter");
 
 	fsd->msgfs->datapcb = pcb;
 	fsd->connected = 1;
@@ -689,6 +708,7 @@ static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 
 static int open_dataconnection(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    dbg_printf("enter");
     DBG(dbg_printf("passive:%u", fsm->passive));
 	if (fsm->passive)
 		return 0;
@@ -706,7 +726,7 @@ static int open_dataconnection(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 	fsm->datafs->msgfs = fsm;
 	fsm->datafs->msgpcb = pcb;
 
-	if (sfifo_init(&fsm->datafs->fifo, 2000) != 0) {
+	if (sfifo_init(&fsm->datafs->fifo, FtpdBufferSize) != 0) {
 		free(fsm->datafs);
 		send_msg(pcb, fsm, msg451);
 		return 1;
@@ -767,6 +787,7 @@ static void cmd_port(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
        &pHi,
        &pLo
 	};
+	dbg_printf("enter");
 
 	char* argNextArg = (char*)arg;
 
@@ -875,6 +896,7 @@ static void cmd_retr(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 {
 	vfs_file_t *vfs_file;
 	vfs_stat_t st;
+	dbg_printf("enter");
 
 	vfs_stat(fsm->vfs, arg, &st);
 	if (!VFS_ISREG(st.st_mode)) {
@@ -901,6 +923,7 @@ static void cmd_retr(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 static void cmd_stor(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
 	vfs_file_t *vfs_file;
+	dbg_printf("enter");
 
 	vfs_file = vfs_open(fsm->vfs, arg, "wb");
 	if (!vfs_file) {
@@ -934,6 +957,7 @@ static void cmd_pasv(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 	static u16_t port = 4096;
 	static u16_t start_port = 4096;
 	struct tcp_pcb *temppcb;
+	dbg_printf("enter");
 
 	if(NULL != fsm->datalistenpcb)
 	{
@@ -953,7 +977,7 @@ static void cmd_pasv(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 	}
 	memset(fsm->datafs, 0, sizeof(struct ftpd_datastate));
 
-	if (sfifo_init(&fsm->datafs->fifo, 2000) != 0) {
+	if (sfifo_init(&fsm->datafs->fifo, FtpdBufferSize) != 0) {
 		free(fsm->datafs);
 		send_msg(pcb, fsm, msg451);
 		return;
@@ -1024,6 +1048,7 @@ static void cmd_pasv(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 
 static void cmd_abrt(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    dbg_printf("enter");
 	if (fsm->datafs != NULL) {
 		tcp_arg(fsm->datapcb, NULL);
 		tcp_sent(fsm->datapcb, NULL);
@@ -1058,6 +1083,7 @@ static void cmd_mode(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 
 static void cmd_rnfr(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    dbg_printf("enter");
 	if (arg == NULL) {
 		send_msg(pcb, fsm, msg501);
 		return;
@@ -1081,6 +1107,7 @@ static void cmd_rnfr(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 
 static void cmd_rnto(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    dbg_printf("enter");
 	if (fsm->state != FTPD_RNFR) {
 		send_msg(pcb, fsm, msg503);
 		return;
@@ -1103,6 +1130,7 @@ static void cmd_rnto(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 
 static void cmd_mkd(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    dbg_printf("enter");
 	if (arg == NULL) {
 		send_msg(pcb, fsm, msg501);
 		return;
@@ -1121,6 +1149,8 @@ static void cmd_mkd(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *
 static void cmd_rmd(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
 	vfs_stat_t st;
+
+	dbg_printf("enter");
 
 	if (arg == NULL) {
 		send_msg(pcb, fsm, msg501);
@@ -1148,6 +1178,7 @@ static void cmd_rmd(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *
 static void cmd_dele(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
 	vfs_stat_t st;
+	dbg_printf("enter");
 
 	if (arg == NULL) {
 		send_msg(pcb, fsm, msg501);
@@ -1211,6 +1242,8 @@ static void send_msgdata(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 	err_t err;
 	u16_t len;
 
+	dbg_printf("enter");
+
 	if (sfifo_used(&fsm->fifo) > 0) {
 		int i;
 
@@ -1249,6 +1282,8 @@ static void send_msg(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm, char *msg, 
 	char buffer[1024];
 	int len;
 
+	dbg_printf("enter");
+
 	va_start(arg, msg);
 	vsprintf(buffer, msg, arg);
 	va_end(arg);
@@ -1264,6 +1299,8 @@ static void send_msg(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm, char *msg, 
 static void ftpd_msgerr(void *arg, err_t err)
 {
 	struct ftpd_msgstate *fsm = arg;
+
+	dbg_printf("enter");
 
 	dbg_printf("%s (%i)", lwip_strerr(err), err);
 	if (fsm == NULL)
@@ -1281,6 +1318,7 @@ static void ftpd_msgerr(void *arg, err_t err)
 
 static void ftpd_msgclose(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    dbg_printf("enter");
 	tcp_arg(pcb, NULL);
 	tcp_sent(pcb, NULL);
 	tcp_recv(pcb, NULL);
@@ -1301,6 +1339,8 @@ static err_t ftpd_msgsent(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
 	struct ftpd_msgstate *fsm = arg;
 
+	dbg_printf("enter");
+
 	if ((sfifo_used(&fsm->fifo) == 0) && (fsm->state == FTPD_QUIT)) {
 		ftpd_msgclose(pcb, fsm);
 		return ERR_OK;
@@ -1314,6 +1354,8 @@ static err_t ftpd_msgrecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t 
 {
 	char *text;
 	struct ftpd_msgstate *fsm = arg;
+
+	dbg_printf("enter");
 
 	if (err == ERR_OK && p != NULL) {
 
@@ -1372,6 +1414,7 @@ static err_t ftpd_msgrecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t 
 static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 {
 	struct ftpd_msgstate *fsm = arg;
+	dbg_printf("enter");
 
 	if (fsm == NULL)
 		return ERR_OK;
@@ -1404,6 +1447,7 @@ static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 static err_t ftpd_msgaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 {
 	struct ftpd_msgstate *fsm;
+	dbg_printf("enter");
 
 	/* Allocate memory for the structure that holds the state of the
 	   connection. */
@@ -1416,7 +1460,7 @@ static err_t ftpd_msgaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 	memset(fsm, 0, sizeof(struct ftpd_msgstate));
 
 	/* Initialize the structure. */
-	if (sfifo_init(&fsm->fifo, 2000) != 0) {
+	if (sfifo_init(&fsm->fifo, FtpdBufferSize) != 0) {
 		free(fsm);
 		return ERR_MEM;
 	}
