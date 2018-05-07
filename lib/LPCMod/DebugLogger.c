@@ -15,8 +15,6 @@
 #include "BootLPCMod.h"
 #include "lib/cromwell/CallbackTimer.h"
 
-#define MaxBuffSize 1024
-
 #define LogRotationDepth 5
 
 #define FlushInterval_us 50000
@@ -28,11 +26,10 @@ static unsigned char initDone = 0;
 static FIL activeLogHandle; /* _FS_LOCK has an extra slot to account for this file which isn't handled in FatFsAccessor */
 
 #define SizeOfTempBuffer 8 * 1024   /* 8KB */
-/* Should be dynamic to free once useless but MMU isn't up at that time */
 static char tempBufBeforeHDDInit[SizeOfTempBuffer];
 static unsigned int cursorInBuf = 0;
 
-static unsigned char processTempBuf(void);
+static void processTempBuf(void);
 static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs);
 static void writeString(const char* const string, unsigned char writeToLogFile);
 static void put(unsigned char writeToFile, const char* const string);
@@ -92,9 +89,12 @@ unsigned char logRotate(void)
 
 void forceFlushLog(void)
 {
-    processTempBuf();
-    FRESULT result = f_sync(&activeLogHandle);
-    XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
+    if(initDone)
+    {
+        processTempBuf();
+        FRESULT result = f_sync(&activeLogHandle);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
+    }
 }
 
 void printTextLogger(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, ...)
@@ -152,21 +152,23 @@ void lwipXBlastPrint(const char* const category, unsigned char lwipDbgLevel, con
     va_end(vargs);
 }
 
-static unsigned char processTempBuf(void)
+static void processTempBuf(void)
 {
     int writeCount;
-    XBlastLogger(DEBUG_LOGGER, DBG_LVL_INFO, "Dumping temp log buffer. len:%u", cursorInBuf);
-    writeCount = f_puts(tempBufBeforeHDDInit, &activeLogHandle);
-    XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts writeCount:%u", writeCount);
 
-    if(cursorInBuf != writeCount)
+    if(initDone)
     {
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_FATAL, "Temp log dump error:%u", writeCount);
-        return 1;
-    }
-    //free(tempBufBeforeHDDInit);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_INFO, "Dumping temp log buffer. len:%u", cursorInBuf);
+        writeCount = f_puts(tempBufBeforeHDDInit, &activeLogHandle);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts writeCount:%u", writeCount);
 
-    return 0;
+        if(cursorInBuf != writeCount)
+        {
+            XBlastLogger(DEBUG_LOGGER, DBG_LVL_FATAL, "Temp log dump error:%u", writeCount);
+        }
+
+    }
+    cursorInBuf = 0;
 }
 
 static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs)
@@ -202,37 +204,20 @@ static void writeString(const char* const string, unsigned char writeToLogFile)
 
 static void put(unsigned char writeToFile, const char* const string)
 {
-    FRESULT result;
     unsigned short len = strlen(string);
-    unsigned char dumpLogResult = 0;
 
-    if(initDone && writeToFile)
+    if((SizeOfTempBuffer * sizeof(char)) < cursorInBuf + len)
     {
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "WriteToLog:\"%s\"", string);
-        result = f_puts(string, &activeLogHandle);
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts result:%u", result);
+        processTempBuf();
     }
-    else
+
+    strcpy(tempBufBeforeHDDInit + cursorInBuf, string);
+    cursorInBuf += len;
+
+    if(writeToFile)
     {
-#if 0
-        if(NULL == tempBufBeforeHDDInit)
-        {
-            tempBufBeforeHDDInit = malloc(SizeOfTempBuffer * sizeof(char));
-            XBlastLogger(DEBUG_LOGGER, DBG_LVL_INFO, "Allocate temp log buffer while HDD init. %u bytes.", SizeOfTempBuffer * sizeof(char));
-            cursorInBuf = 0;
-        }
-#endif
-
-        if((SizeOfTempBuffer * sizeof(char)) < cursorInBuf + len)
-        {
-            dumpLogResult = processTempBuf();
-        }
-
-        if(0 == dumpLogResult)
-        {
-            strcpy(tempBufBeforeHDDInit + cursorInBuf, string);
-            cursorInBuf += len;
-        }
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Force flush to log:\"%s\"", string);
+        forceFlushLog();
     }
 }
 
