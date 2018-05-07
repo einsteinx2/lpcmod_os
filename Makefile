@@ -214,6 +214,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/strcasecmp.o
 OBJECTS-CROM += $(TOPDIR)/obj/memrchr.o
 OBJECTS-CROM += $(TOPDIR)/obj/strrchr.o
 OBJECTS-CROM += $(TOPDIR)/obj/cromSystem.o
+OBJECTS-CROM += $(TOPDIR)/obj/CallbackTimer.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastScriptEngine.o
 OBJECTS-CROM += $(TOPDIR)/obj/functionsAccessor.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettings.o

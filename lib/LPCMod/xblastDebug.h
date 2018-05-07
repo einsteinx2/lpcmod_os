@@ -11,6 +11,8 @@
 #include "DebugLogger.h"
 
 #define STRINGIFY(x) #x
+
+
 #define DBG_LVL_FATAL     5
 #define DBG_LVL_ERROR     4
 #define DBG_LVL_WARN      3
@@ -18,6 +20,11 @@
 #define DBG_LVL_DEBUG     1
 #define DBG_LVL_TRACE     0   /* Not implement for now */
 #define DBG_LVL_OFF DBG_LVL_FATAL + 1
+
+/* Force flushing buffer to log file */
+/* For critical debugging */
+/* To be OR'ed with DBG_LVL */
+#define DBG_FLG_DUMP      0x80
 
 
 #define CURRENT_DBG_LVL DBG_LVL_INFO

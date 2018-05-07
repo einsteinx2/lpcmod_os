@@ -23,6 +23,7 @@
 #include "misc/ConfirmDialog.h"
 #include "Gentoox.h"
 #include "lib/cromwell/cromString.h"
+#include "lib/time/timeManagement.h"
 
 //Probes CPLD for chip revision and return a single byte ID.
 //SmartXX compliant but need to mask out upper nibble
@@ -120,6 +121,7 @@ void quickboot(unsigned char bank)
     }
     I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) & 0xfb )); // clear noani-bit
     BootStopUSB();
+    forceFlushLog();
     I2CRebootQuick();
     while(1);
 }
@@ -283,6 +285,9 @@ void printTextSPI(const char* buffer)
         LPCMod_FastWriteIO(0x4, 0x4); // /CS to '1'
         buffer++;
     }
+
+    //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
+    wait_us_blocking(50);
 }
 
 #endif

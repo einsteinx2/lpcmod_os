@@ -40,6 +40,7 @@
 #include "xblast/HardwareIdentifier.h"
 #include "FlashDriver.h"
 #include "lib/time/timeManagement.h"
+#include "lib/cromwell/CallbackTimer.h"
 
 JPEG jpegBackdrop;
 
@@ -238,7 +239,8 @@ extern void BootResetAction ( void )
 #ifndef SILENT_MODE
     printk("           BOOT: start USB init\n");
 #endif
-
+    callbackTimer_init();
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_DEBUG, "CallbackTimer init done.");
     BootStartUSB();
     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "USB init done.");
 

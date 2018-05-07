@@ -72,6 +72,7 @@ void BootOriginalBios(FlashBank bank)
             I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
         }
 
+        forceFlushLog();
         I2CRebootQuick();
     }
 }
@@ -94,7 +95,7 @@ void BootModBios(FlashBank bank)
         {
             I2CTransmitWord(0x10, 0x1b00 + ( I2CTransmitByteGetReturn(0x10, 0x1b) | 0x04 )); // set noani-bit
         }
-
+        forceFlushLog();
         I2CRebootQuick();
     }
 }

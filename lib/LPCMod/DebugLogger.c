@@ -13,10 +13,13 @@
 #include "stdio.h"
 #include "lwip/debug.h" /* lwip */
 #include "BootLPCMod.h"
+#include "lib/cromwell/CallbackTimer.h"
 
 #define MaxBuffSize 1024
 
 #define LogRotationDepth 5
+
+#define FlushInterval_us 50000
 
 #define logFilename "xblast.log"
 static const char* const ActiveLogFileLocation = PathSep"MASTER_X"PathSep logFilename;
@@ -29,11 +32,11 @@ static FIL activeLogHandle; /* _FS_LOCK has an extra slot to account for this fi
 static char tempBufBeforeHDDInit[SizeOfTempBuffer];
 static unsigned int cursorInBuf = 0;
 
-static void processTempBuf(void);
+static unsigned char processTempBuf(void);
 static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs);
 static void writeString(const char* const string, unsigned char writeToLogFile);
 static void put(unsigned char writeToFile, const char* const string);
-static unsigned char assertWriteToFile(const char* const szDebugFlag);
+static unsigned char assertWriteToFile(const char* const szDebugFlag, unsigned char flushLogFlag);
 static const char* const getLogLevelString(unsigned char logLevel);
 
 void debugLoggerInit(void)
@@ -42,6 +45,7 @@ void debugLoggerInit(void)
     if(0 == logRotate())
     {
         processTempBuf();
+        newCallbackTimer(&forceFlushLog, FlushInterval_us);
         initDone = 1;
     }
 }
@@ -84,6 +88,13 @@ unsigned char logRotate(void)
     }
 
     return 0;
+}
+
+void forceFlushLog(void)
+{
+    processTempBuf();
+    FRESULT result = f_sync(&activeLogHandle);
+    XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
 }
 
 void printTextLogger(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, ...)
@@ -141,13 +152,21 @@ void lwipXBlastPrint(const char* const category, unsigned char lwipDbgLevel, con
     va_end(vargs);
 }
 
-static void processTempBuf(void)
+static unsigned char processTempBuf(void)
 {
     int writeCount;
-    XBlastLogger(DEBUG_LOGGER, DBG_LVL_INFO, "Dumping temp log buffer.");
+    XBlastLogger(DEBUG_LOGGER, DBG_LVL_INFO, "Dumping temp log buffer. len:%u", cursorInBuf);
     writeCount = f_puts(tempBufBeforeHDDInit, &activeLogHandle);
     XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts writeCount:%u", writeCount);
+
+    if(cursorInBuf != writeCount)
+    {
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_FATAL, "Temp log dump error:%u", writeCount);
+        return 1;
+    }
     //free(tempBufBeforeHDDInit);
+
+    return 0;
 }
 
 static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs)
@@ -155,8 +174,10 @@ static void stringFormat(const char* const debugFlag, unsigned char logLevel, co
     FRESULT result;
     char tempBuf[1024];
     unsigned char writeToLogfile;
+    unsigned char flushToLogFile = logLevel & DBG_FLG_DUMP;
+    logLevel &= ~((unsigned char)DBG_FLG_DUMP);
 
-    writeToLogfile = assertWriteToFile(debugFlag);
+    writeToLogfile = assertWriteToFile(debugFlag, flushToLogFile);
     sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
     writeString(tempBuf, writeToLogfile);
     vsprintf(tempBuf,buffer, *vargs);
@@ -166,19 +187,6 @@ static void stringFormat(const char* const debugFlag, unsigned char logLevel, co
     {
         writeString("\n", writeToLogfile);
     }
-
-    if(initDone && writeToLogfile)
-    {
-        result = f_sync(&activeLogHandle);
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Sync log to drive. result:%u", result);
-    }
-#ifdef SPITRACE
-    else
-    {
-        //If you miss characters, add delay function here (wait_us()). A couple microseconds should give enough time for the Arduino to catchup.
-        wait_us_blocking(50);
-    }
-#endif
 }
 
 static void writeString(const char* const string, unsigned char writeToLogFile)
@@ -196,7 +204,7 @@ static void put(unsigned char writeToFile, const char* const string)
 {
     FRESULT result;
     unsigned short len = strlen(string);
-    unsigned char delayOnSPI = 0;
+    unsigned char dumpLogResult = 0;
 
     if(initDone && writeToFile)
     {
@@ -204,7 +212,7 @@ static void put(unsigned char writeToFile, const char* const string)
         result = f_puts(string, &activeLogHandle);
         XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts result:%u", result);
     }
-    else if(0 == initDone)
+    else
     {
 #if 0
         if(NULL == tempBufBeforeHDDInit)
@@ -214,7 +222,13 @@ static void put(unsigned char writeToFile, const char* const string)
             cursorInBuf = 0;
         }
 #endif
-        if((SizeOfTempBuffer * sizeof(char)) > cursorInBuf + len)
+
+        if((SizeOfTempBuffer * sizeof(char)) < cursorInBuf + len)
+        {
+            dumpLogResult = processTempBuf();
+        }
+
+        if(0 == dumpLogResult)
         {
             strcpy(tempBufBeforeHDDInit + cursorInBuf, string);
             cursorInBuf += len;
@@ -222,7 +236,7 @@ static void put(unsigned char writeToFile, const char* const string)
     }
 }
 
-static unsigned char assertWriteToFile(const char* const szDebugFlag)
+static unsigned char assertWriteToFile(const char* const szDebugFlag, unsigned char flushLogFlag)
 {
     /* List of Debug categories that must not trigger Logfile writes */
 #define ForbiddenListLength 3
@@ -252,7 +266,7 @@ static unsigned char assertWriteToFile(const char* const szDebugFlag)
         }
     }
 
-    return 1;
+    return flushLogFlag ? 1 : 0;
 }
 
 static const char* const getLogLevelString(unsigned char logLevel)
