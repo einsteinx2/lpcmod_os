@@ -8,13 +8,14 @@
 #include "CallbackTimer.h"
 #include "lib/time/timeManagement.h"
 #include "stdlib.h"
+#include "lib/LPCMod/xblastDebug.h"
 #include <stddef.h>
 
 typedef struct TimerInstance_t
 {
     int id;
-    unsigned int interval_us;
-    unsigned int lastExec_us;
+    unsigned int interval_ms;
+    unsigned int lastExec_ms;
     callbackTimerHandler handler;
     struct TimerInstance_t* nextTimer;
 }TimerInstance_t;
@@ -34,17 +35,18 @@ void callbackTimer_execute()
 
     while(initDone && NULL != currentTimer)
     {
-        if(getElapseMicroSecondsSince(currentTimer->lastExec_us) >= currentTimer->interval_us)
+        if(getElapsedTimeSince(currentTimer->lastExec_ms) >= currentTimer->interval_ms)
         {
+            XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_DEBUG | DBG_FLG_SPI, "execute handler id:%u", currentTimer->id);
             (*currentTimer->handler)();
-            currentTimer->lastExec_us = getUS();
+            currentTimer->lastExec_ms = getMS();
         }
 
         currentTimer = currentTimer->nextTimer;
     }
 }
 
-int newCallbackTimer(callbackTimerHandler handler, int interval_us)
+int newCallbackTimer(callbackTimerHandler handler, int interval_ms)
 {
     TimerInstance_t* lastTimer = firstInstance;
     TimerInstance_t* newTimer;
@@ -70,11 +72,16 @@ int newCallbackTimer(callbackTimerHandler handler, int interval_us)
         timerId = lastTimer->id + 1;
         lastTimer->nextTimer = newTimer;
     }
+    else
+    {
+        firstInstance = newTimer;
+    }
+    XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_INFO, "Adding callback timer id:%u", timerId);
 
     newTimer->handler = handler;
     newTimer->id = timerId;
-    newTimer->interval_us = interval_us;
-    newTimer->lastExec_us = getUS();
+    newTimer->interval_ms = interval_ms;
+    newTimer->lastExec_ms = getMS();
 
     return 0;
 }
@@ -89,6 +96,7 @@ void stopCallbackTimer(int id)
         if(targetTimer->id == id)
         {
             previousTimer->nextTimer = targetTimer->nextTimer;
+            XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_INFO, "Removing callback timer id:%u", targetTimer->id);
             free(targetTimer);
             break;
         }
