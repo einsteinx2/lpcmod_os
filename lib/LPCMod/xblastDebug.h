@@ -21,10 +21,12 @@
 #define DBG_LVL_TRACE     0   /* Not implement for now */
 #define DBG_LVL_OFF DBG_LVL_FATAL + 1
 
-/* Force flushing buffer to log file */
 /* For critical debugging */
 /* To be OR'ed with DBG_LVL */
+/* Force flushing buffer to log file */
 #define DBG_FLG_DUMP      0x80
+/* Print only to SPI */
+#define DBG_FLG_SPI       0x40
 
 
 #define CURRENT_DBG_LVL DBG_LVL_INFO
@@ -48,6 +50,7 @@
 #define DEBUG_SCRIPT            DBG_LVL_INFO
 #define DEBUG_MISC              DBG_LVL_INFO
 #define DEBUG_SETTINGS          DBG_LVL_INFO
+#define DEBUG_CALLBACKTIMER     DBG_LVL_INFO
 
 #define DEBUG_USB               DBG_LVL_INFO
 
@@ -62,10 +65,12 @@
 #define DEBUG_MODE 1
 #endif
 
-#define XBlastLogger(category, level, string, ...) do { if(category <= level) printTextLogger(#category, level, __func__, string, ##__VA_ARGS__); }while(0)
+#define AllFlags (DBG_FLG_DUMP | DBG_FLG_SPI)
+
+#define XBlastLogger(category, level, string, ...) do { if(category <= ((level) & ~AllFlags)) printTextLogger(#category, level, __func__, string, ##__VA_ARGS__); }while(0)
 
 /* Only prints when DEBUG_USB is set at LVL_DEBUG or lower */
-#define USBDebugLogger(level, category, string, ...) do { if(category <= level) printTextLogger(#category, level, __func__, string, ##__VA_ARGS__); }while(0)
+#define USBDebugLogger(level, category, string, ...) do { if(category <= ((level) & ~AllFlags)) printTextLogger(#category, level, __func__, string, ##__VA_ARGS__); }while(0)
 #else
 #ifdef __FLASH_SIMULATOR__
 #include <stdio.h>
