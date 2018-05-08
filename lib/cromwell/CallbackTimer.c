@@ -13,9 +13,11 @@
 
 typedef struct TimerInstance_t
 {
-    int id;
-    unsigned int interval_ms;
+    unsigned int id;
     unsigned int lastExec_ms;
+    unsigned short interval_ms;
+    unsigned char singleRun;
+    unsigned char markForDeletion;
     callbackTimerHandler handler;
     struct TimerInstance_t* nextTimer;
 }TimerInstance_t;
@@ -32,6 +34,7 @@ void callbackTimer_init()
 void callbackTimer_execute()
 {
     TimerInstance_t* currentTimer = firstInstance;
+    TimerInstance_t* previousTimer = firstInstance;
 
     while(initDone && NULL != currentTimer)
     {
@@ -40,13 +43,33 @@ void callbackTimer_execute()
             XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_DEBUG | DBG_FLG_SPI, "execute handler id:%u", currentTimer->id);
             (*currentTimer->handler)();
             currentTimer->lastExec_ms = getMS();
+            if(currentTimer->singleRun)
+            {
+                XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_DEBUG, "Single use timer id:%u", currentTimer->id);
+                currentTimer->markForDeletion = 1;
+            }
         }
 
         currentTimer = currentTimer->nextTimer;
     }
+
+    currentTimer = firstInstance;
+    while(NULL != currentTimer)
+    {
+        if(currentTimer->markForDeletion)
+        {
+            stopCallbackTimer(currentTimer->id);
+            currentTimer = previousTimer;
+        }
+        else
+        {
+            previousTimer = currentTimer;
+            currentTimer = currentTimer->nextTimer;
+        }
+    }
 }
 
-int newCallbackTimer(callbackTimerHandler handler, int interval_ms)
+int newCallbackTimer(callbackTimerHandler handler, int interval_ms, unsigned char singleUseTimer)
 {
     TimerInstance_t* lastTimer = firstInstance;
     TimerInstance_t* newTimer;
@@ -70,18 +93,25 @@ int newCallbackTimer(callbackTimerHandler handler, int interval_ms)
             lastTimer = lastTimer->nextTimer;
         }
         timerId = lastTimer->id + 1;
+        if(0 == timerId)
+        {
+            XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_FATAL, "Ran out of timerId. Rollover.");
+        }
         lastTimer->nextTimer = newTimer;
     }
     else
     {
         firstInstance = newTimer;
     }
+
+
     XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_INFO, "Adding callback timer id:%u", timerId);
 
     newTimer->handler = handler;
     newTimer->id = timerId;
     newTimer->interval_ms = interval_ms;
     newTimer->lastExec_ms = getMS();
+    newTimer->singleRun = singleUseTimer ? 1 : 0;
 
     return 0;
 }
@@ -95,13 +125,22 @@ void stopCallbackTimer(int id)
     {
         if(targetTimer->id == id)
         {
-            previousTimer->nextTimer = targetTimer->nextTimer;
+            if(targetTimer == firstInstance)
+            {
+                firstInstance = firstInstance->nextTimer;
+            }
+            else
+            {
+                previousTimer->nextTimer = targetTimer->nextTimer;
+            }
             XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_INFO, "Removing callback timer id:%u", targetTimer->id);
             free(targetTimer);
-            break;
+            return;
         }
 
         previousTimer = targetTimer;
         targetTimer = targetTimer->nextTimer;
     }
+
+    XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_WARN, "Timer id:%u not found", id);
 }

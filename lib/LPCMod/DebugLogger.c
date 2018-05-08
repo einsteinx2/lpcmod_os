@@ -43,7 +43,7 @@ void debugLoggerInit(void)
     {
         initDone = 1;
         processTempBuf();
-        newCallbackTimer(&forceFlushLog, FlushInterval_ms);
+        newCallbackTimer(&forceFlushLog, FlushInterval_ms, IsPerpetualTimer);
     }
 }
 
