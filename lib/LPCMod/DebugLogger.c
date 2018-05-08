@@ -17,7 +17,7 @@
 
 #define LogRotationDepth 5
 
-#define FlushInterval_us 50000
+#define FlushInterval_ms 500
 
 #define logFilename "xblast.log"
 static const char* const ActiveLogFileLocation = PathSep"MASTER_X"PathSep logFilename;
@@ -31,7 +31,7 @@ static unsigned int cursorInBuf = 0;
 
 static void processTempBuf(void);
 static void stringFormat(const char* const debugFlag, unsigned char logLevel, const char* const functionName, const char* const buffer, const va_list* vargs);
-static void writeString(const char* const string, unsigned char writeToLogFile);
+static void writeString(const char* const string, unsigned char writeToLogFile, unsigned char spiPrintOnly);
 static void put(unsigned char writeToFile, const char* const string);
 static unsigned char assertWriteToFile(const char* const szDebugFlag, unsigned char flushLogFlag);
 static const char* const getLogLevelString(unsigned char logLevel);
@@ -41,9 +41,9 @@ void debugLoggerInit(void)
     activeLogHandle.obj.fs = NULL;
     if(0 == logRotate())
     {
-        processTempBuf();
-        newCallbackTimer(&forceFlushLog, FlushInterval_us);
         initDone = 1;
+        processTempBuf();
+        newCallbackTimer(&forceFlushLog, FlushInterval_ms);
     }
 }
 
@@ -80,7 +80,7 @@ unsigned char logRotate(void)
     XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "Open:%s.", ActiveLogFileLocation);
     if(FR_OK != result)
     {
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_ERROR, "Couldn't open log file.");
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_ERROR | DBG_FLG_SPI, "Couldn't open log file.");
         return 1;
     }
 
@@ -158,16 +158,17 @@ static void processTempBuf(void)
 
     if(initDone)
     {
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_INFO, "Dumping temp log buffer. len:%u", cursorInBuf);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG | DBG_FLG_SPI, "Dumping temp log buffer. len:%u", cursorInBuf);
         writeCount = f_puts(tempBufBeforeHDDInit, &activeLogHandle);
-        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG, "puts writeCount:%u", writeCount);
+        XBlastLogger(DEBUG_LOGGER, DBG_LVL_DEBUG | DBG_FLG_SPI, "puts writeCount:%u", writeCount);
 
-        if(cursorInBuf != writeCount)
+        if(cursorInBuf > writeCount)
         {
-            XBlastLogger(DEBUG_LOGGER, DBG_LVL_FATAL, "Temp log dump error:%u", writeCount);
+            XBlastLogger(DEBUG_LOGGER, DBG_LVL_FATAL | DBG_FLG_SPI, "Temp log dump error:%u", writeCount);
         }
 
     }
+    *tempBufBeforeHDDInit = '\0';
     cursorInBuf = 0;
 }
 
@@ -177,21 +178,22 @@ static void stringFormat(const char* const debugFlag, unsigned char logLevel, co
     char tempBuf[1024];
     unsigned char writeToLogfile;
     unsigned char flushToLogFile = logLevel & DBG_FLG_DUMP;
-    logLevel &= ~((unsigned char)DBG_FLG_DUMP);
+    unsigned char spiPrintOnly = logLevel & DBG_FLG_SPI;
+    logLevel &= ~((unsigned char)DBG_FLG_DUMP | DBG_FLG_SPI);
 
     writeToLogfile = assertWriteToFile(debugFlag, flushToLogFile);
-    sprintf(tempBuf, "[%s][%s][%s] ", getLogLevelString(logLevel), debugFlag, functionName);
-    writeString(tempBuf, writeToLogfile);
+    sprintf(tempBuf, "[%u][%s][%s][%s] ", getMS(), getLogLevelString(logLevel), debugFlag, functionName);
+    writeString(tempBuf, writeToLogfile, spiPrintOnly);
     vsprintf(tempBuf,buffer, *vargs);
-    writeString(tempBuf, writeToLogfile);
+    writeString(tempBuf, writeToLogfile, spiPrintOnly);
 
     if('\n' != tempBuf[strlen(tempBuf) - 1])
     {
-        writeString("\n", writeToLogfile);
+        writeString("\n", writeToLogfile, spiPrintOnly);
     }
 }
 
-static void writeString(const char* const string, unsigned char writeToLogFile)
+static void writeString(const char* const string, unsigned char writeToLogFile, unsigned char spiPrintOnly)
 {
     FRESULT result;
     /* write to SPI debugger, if applicable */
@@ -199,7 +201,10 @@ static void writeString(const char* const string, unsigned char writeToLogFile)
     printTextSPI(string);
 #endif
     /* Write to log file*/
-    put(writeToLogFile, string);
+    if(0 == spiPrintOnly)
+    {
+        put(writeToLogFile, string);
+    }
 }
 
 static void put(unsigned char writeToFile, const char* const string)
