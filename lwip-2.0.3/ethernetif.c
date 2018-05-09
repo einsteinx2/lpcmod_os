@@ -75,12 +75,15 @@
 #include "string.h"
 #include "stdlib.h"
 #include "lib/LPCMod/xblastDebug.h"
+#include "lib/cromwell/CallbackTimer.h"
 #include <stdarg.h>
 
 bool netFlashOver;
 WebServerOps currentWebServerOp;
 unsigned char* postProcessBuf;
 unsigned int postProcessBufSize;
+
+#define DHCP_WAIT_MS 10000 /* Max allowed time as per RFC2131 */
 
 #define LINK_SPEED_OF_YOUR_NETIF_IN_BPS 100000000
 
@@ -91,7 +94,7 @@ unsigned int postProcessBufSize;
 NetworkState currentNetworkState = NetworkState_Idle;
 static struct ip4_addr ipaddr, netmask, gw;
 static struct netif *netif = NULL;
-static int divisor = 0;
+static unsigned int callbackTimerId;
 
 void
 eth_transmit (const char *d, unsigned int t, unsigned int s, const void *p);
@@ -396,25 +399,32 @@ ethernetif_init(struct netif *netif)
   return ERR_OK;
 }
 
-int
-ebd_wait (u16_t time) {
-    unsigned long delay_ticks;
-    static unsigned long start_ticks = 0;
-    extern unsigned long currticks (void);
+static void dhcpFailCallback(void)
+{
+    if (dhcp_supplied_address(netif) == false)
+    {
+        //Not necessary, but polite.
+        dhcp_stop (netif);
+        IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
+                 LPCmodSettings.OSsettings.staticGateway[1],
+                 LPCmodSettings.OSsettings.staticGateway[2],
+                 LPCmodSettings.OSsettings.staticGateway[3]);
+        IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
+                 LPCmodSettings.OSsettings.staticIP[1],
+                 LPCmodSettings.OSsettings.staticIP[2],
+                 LPCmodSettings.OSsettings.staticIP[3]);
+        IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
+                 LPCmodSettings.OSsettings.staticMask[1],
+                 LPCmodSettings.OSsettings.staticMask[2],
+                 LPCmodSettings.OSsettings.staticMask[3]);
+        netif_set_addr(netif, &ipaddr, &netmask, &gw);
 
-    delay_ticks = time * 3579;
-    if (start_ticks == 0)
-        start_ticks = currticks ();
-
-	unsigned long ticks = currticks () - start_ticks;
-	if (ticks > delay_ticks) {
-		start_ticks = 0;
-		return 1;	//Delay's over
-	}
-	
-    return 0;   //not finished
+        dhcp_inform (netif);
+    }
+    currentNetworkState = NetworkState_ServerInit;
+    cromwellWarning();
+    XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerInit");
 }
-
 
 void run_lwip(void)
 {
@@ -459,6 +469,8 @@ void run_lwip(void)
 			dhcp_start (netif);
 			cromwellSuccess();
 			printk ("\n            Acquiring IP address. ");
+
+			callbackTimerId = newCallbackTimer(dhcpFailCallback, DHCP_WAIT_MS, IsSingleUseTimer);
 			currentNetworkState = NetworkState_DHCPStart;
 			XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_DHCPStart");
 		}
@@ -489,40 +501,10 @@ void run_lwip(void)
     	break;
     case NetworkState_DHCPStart:
 	    ethernetif_input(netif);
-		
-    	if (ebd_wait(250))
-    	{
-			if (divisor++ == 60 * 4) //1 minute timeout before forfeiting
-			{
-				if (dhcp_supplied_address(netif) == false)
-				{
-					//Not necessary, but polite.
-					dhcp_stop (netif);
-					IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
-							 LPCmodSettings.OSsettings.staticGateway[1],
-							 LPCmodSettings.OSsettings.staticGateway[2],
-							 LPCmodSettings.OSsettings.staticGateway[3]);
-					IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
-							 LPCmodSettings.OSsettings.staticIP[1],
-							 LPCmodSettings.OSsettings.staticIP[2],
-							 LPCmodSettings.OSsettings.staticIP[3]);
-					IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
-							 LPCmodSettings.OSsettings.staticMask[1],
-							 LPCmodSettings.OSsettings.staticMask[2],
-							 LPCmodSettings.OSsettings.staticMask[3]);
-					netif_set_addr(netif, &ipaddr, &netmask, &gw);
-
-					dhcp_inform (netif);
-				}
-				divisor=0;
-				currentNetworkState = NetworkState_ServerInit;
-				cromwellWarning();
-				XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerInit");
-			}
-		}
 
     	if(dhcp_supplied_address(netif))
     	{
+    	    stopCallbackTimer(callbackTimerId);
     		currentNetworkState = NetworkState_ServerInit;
 			cromwellSuccess();
 			XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerInit");
@@ -595,7 +577,6 @@ void startNetFlash(WebServerOps flashType)
     //From udp.c
     udp_pcbs = NULL;
 
-    divisor = 0;
     currentNetworkState = NetworkState_Init;
     postProcessBuf = NULL;
     postProcessBufSize = 0;
