@@ -69,21 +69,21 @@ void callbackTimer_execute()
     }
 }
 
-int newCallbackTimer(callbackTimerHandler handler, int interval_ms, unsigned char singleUseTimer)
+unsigned int newCallbackTimer(callbackTimerHandler handler, int interval_ms, unsigned char singleUseTimer)
 {
     TimerInstance_t* lastTimer = firstInstance;
     TimerInstance_t* newTimer;
-    int timerId = 0;
+    int timerId = 1;
 
     if(0 == initDone)
     {
-        return -1;
+        return 0;
     }
 
     newTimer = calloc(1, sizeof(TimerInstance_t));
     if(NULL == newTimer)
     {
-        return -1;
+        return 0;
     }
 
     if(NULL != lastTimer)
@@ -113,7 +113,7 @@ int newCallbackTimer(callbackTimerHandler handler, int interval_ms, unsigned cha
     newTimer->lastExec_ms = getMS();
     newTimer->singleRun = singleUseTimer ? 1 : 0;
 
-    return 0;
+    return newTimer->id;
 }
 
 void stopCallbackTimer(int id)
@@ -121,25 +121,28 @@ void stopCallbackTimer(int id)
     TimerInstance_t* targetTimer = firstInstance;
     TimerInstance_t* previousTimer = firstInstance;
 
-    while(initDone && NULL != targetTimer)
+    if(0 != id)
     {
-        if(targetTimer->id == id)
+        while(initDone && NULL != targetTimer)
         {
-            if(targetTimer == firstInstance)
+            if(targetTimer->id == id)
             {
-                firstInstance = firstInstance->nextTimer;
+                if(targetTimer == firstInstance)
+                {
+                    firstInstance = firstInstance->nextTimer;
+                }
+                else
+                {
+                    previousTimer->nextTimer = targetTimer->nextTimer;
+                }
+                XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_INFO, "Removing callback timer id:%u", targetTimer->id);
+                free(targetTimer);
+                return;
             }
-            else
-            {
-                previousTimer->nextTimer = targetTimer->nextTimer;
-            }
-            XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_INFO, "Removing callback timer id:%u", targetTimer->id);
-            free(targetTimer);
-            return;
-        }
 
-        previousTimer = targetTimer;
-        targetTimer = targetTimer->nextTimer;
+            previousTimer = targetTimer;
+            targetTimer = targetTimer->nextTimer;
+        }
     }
 
     XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_WARN, "Timer id:%u not found", id);

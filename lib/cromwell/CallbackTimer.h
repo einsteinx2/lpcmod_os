@@ -15,7 +15,7 @@ typedef void (*callbackTimerHandler)(void);
 
 void callbackTimer_init(void);
 void callbackTimer_execute(void);
-int newCallbackTimer(callbackTimerHandler handler, int interval_us, unsigned char singleUseTimer);
+unsigned int newCallbackTimer(callbackTimerHandler handler, int interval_us, unsigned char singleUseTimer);
 void stopCallbackTimer(int id);
 
 #endif /* LIB_CROMWELL_CALLBACKTIMER_H_ */
