@@ -560,7 +560,6 @@ static void send_next_directory(struct ftpd_datastate *fsd, struct tcp_pcb *pcb,
 static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
 	struct ftpd_datastate *fsd = arg;
-	dbg_printf("enter");
 
 	switch (fsd->msgfs->state) {
 	case FTPD_LIST:
@@ -576,7 +575,7 @@ static err_t ftpd_datasent(void *arg, struct tcp_pcb *pcb, u16_t len)
 		send_file(fsd, pcb);
 		break;
 	default:
-	    DBG(dbg_printf("Not supported"));
+	    DBG(dbg_printf("Not supported:%u", fsd->msgfs->state));
 		break;
 	}
 
@@ -631,7 +630,6 @@ static err_t ftpd_datarecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t
 static err_t ftpd_dataconnected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
-	dbg_printf("enter");
 
 	fsd->msgfs->datapcb = pcb;
 	fsd->connected = 1;
@@ -660,7 +658,7 @@ static err_t ftpd_dataconnected(void *arg, struct tcp_pcb *pcb, err_t err)
 		send_file(fsd, pcb);
 		break;
 	default:
-	    DBG(dbg_printf("Not supported"));
+	    DBG(dbg_printf("Not supported:%u", fsd->msgfs->state));
 		break;
 	}
 
@@ -670,7 +668,6 @@ static err_t ftpd_dataconnected(void *arg, struct tcp_pcb *pcb, err_t err)
 static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 {
 	struct ftpd_datastate *fsd = arg;
-    dbg_printf("enter");
 
 	fsd->msgfs->datapcb = pcb;
 	fsd->connected = 1;
@@ -699,7 +696,7 @@ static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 		send_file(fsd, pcb);
 		break;
 	default:
-	    DBG(dbg_printf("Not supported"));
+	    DBG(dbg_printf("Not supported:%u",fsd->msgfs->state));
 		break;
 	}
 
@@ -1414,7 +1411,6 @@ static err_t ftpd_msgrecv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t 
 static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 {
 	struct ftpd_msgstate *fsm = arg;
-	dbg_printf("enter");
 
 	if (fsm == NULL)
 		return ERR_OK;
@@ -1435,7 +1431,7 @@ static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 				send_file(fsm->datafs, fsm->datapcb);
 				break;
 			default:
-			    DBG(dbg_printf("Not supported"));
+			    DBG(dbg_printf("Not supported:%u", fsm->datafs->connected));
 				break;
 			}
 		}

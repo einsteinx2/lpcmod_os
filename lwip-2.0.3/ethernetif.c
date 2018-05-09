@@ -490,7 +490,7 @@ void run_lwip(void)
     case NetworkState_DHCPStart:
 	    ethernetif_input(netif);
 		
-    	if (ebd_wait(TCP_TMR_INTERVAL))
+    	if (ebd_wait(250))
     	{
 			if (divisor++ == 60 * 4) //1 minute timeout before forfeiting
 			{
