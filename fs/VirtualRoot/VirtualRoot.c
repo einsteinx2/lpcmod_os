@@ -51,12 +51,14 @@ static int pathProcess_GoingBack(void);
 
 static void combinePath(char* out, const char* add);
 
+static inline void setcwd(const char* const path);
+
 /*-----------------------------------------*/
 
 void VirtualRootInit(void)
 {
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
-    cwd[0] = cPathSep;
+    setcwd(PathSep);
 
     currentAccessor = NULL;
 
@@ -308,7 +310,7 @@ static int pathProcess_Absolute(const char* const path)
     if('\0' == path[1])
     {
         XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Back to vroot.");
-        strcpy(cwd, PathSep);
+        setcwd(PathSep);
         currentAccessor = NULL;
 
         return 0;
@@ -319,7 +321,7 @@ static int pathProcess_Absolute(const char* const path)
     if(0 == result)
     {
         currentAccessor = &FatFSAccess;
-        strcpy(cwd, path);
+        setcwd(path);
         return 0;
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
@@ -339,7 +341,7 @@ static int pathProcess_GoingForward(const char* const path)
         if(0 == FatFSAccess.chdir(workPath))
         {
             currentAccessor = &FatFSAccess;
-            strcpy(cwd, workPath);
+            setcwd(workPath);
 
             return 0;
         }
@@ -375,7 +377,7 @@ static int pathProcess_GoingBack(void)
     {
         XBlastLogger(DEBUG_VROOT, DBG_LVL_WARN, "Invalid path. Returning to root.");
         currentAccessor = NULL;
-        strcpy(cwd, PathSep);
+        setcwd(PathSep);
         return 0;
     }
 
@@ -389,12 +391,12 @@ static int pathProcess_GoingBack(void)
         if(0 == result)
         {
             XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Sucess. Path exist in FatFS");
-            strcpy(cwd, workPath);
+            setcwd(workPath);
         }
         else
         {
             currentAccessor = NULL;
-            strcpy(cwd, PathSep);
+            setcwd(PathSep);
         }
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
@@ -414,5 +416,11 @@ static void combinePath(char* out, const char* add)
         }
     }
     sprintf(out, "%s"PathSep"%s", cwd, add);
+}
+
+static inline void setcwd(const char* const path)
+{
+    XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "new cwd:\"%s\"", path);
+    strcpy(cwd, path);
 }
 
