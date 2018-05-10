@@ -71,7 +71,6 @@ ifeq ($(SPITRACE), 1)
 DEBUG_FLAGS += -DSPITRACE
 endif
 CROM_CFLAGS += $(DEBUG_FLAGS)
-ETH_CFLAGS += $(DEBUG_FLAGS)
 endif
 
 ifeq ($(TSOPCTRL), 1)
@@ -86,6 +85,7 @@ endif
 
 #DebugLogger always enabled. Make sure to properly set it in xblastDebug.h
 CROM_CFLAGS += -DDEBUGLOGGER
+ETH_CFLAGS += -DDEBUGLOGGER
 
 LDFLAGS-ROM     = -s -S -T $(TOPDIR)/scripts/ldscript-crom.ld
 LDFLAGS-XBEBOOT = -s -S -T $(TOPDIR)/scripts/xbeboot.ld
