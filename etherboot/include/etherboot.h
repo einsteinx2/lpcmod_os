@@ -5,12 +5,10 @@
 
 #include	"if_ether.h"
 
-//#define TFTM_DEBUG
-#ifdef TFTM_DEBUG
-#define dprintf(x) debugSPIPrint x
-#else
-#define dprintf(x)
-#endif
+#define _Args(format, ...) format, ##__VA_ARGS__
+#define STRIP_PARENS(X) X
+#define PASS_PARAMETERS(X) STRIP_PARENS( _Args X )
+#define dprintf(x) XBlastLogger(DEBUG_NETWORK, DBG_LVL_FATAL, PASS_PARAMETERS(x))
 
 #define ARP_CLIENT	0
 #define ARP_SERVER	1

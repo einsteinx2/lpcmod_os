@@ -42,9 +42,10 @@ int etherboot(void)
 {
 	struct dev* dev = &nic.dev;
 	//print_config();
+	XBlastLogger(DEBUG_NETWORK, DBG_LVL_INFO, "Init network interface");
 	if (eth_probe(dev) == -1)
 	{
-		printk("eth_probe failed\n");
+		XBlastLogger(DEBUG_NETWORK, DBG_LVL_FATAL, "eth_probe failed");
 		return 1;
 	}
 

@@ -51,6 +51,7 @@
 #define DEBUG_MISC              DBG_LVL_INFO
 #define DEBUG_SETTINGS          DBG_LVL_INFO
 #define DEBUG_CALLBACKTIMER     DBG_LVL_INFO
+#define DEBUG_NETWORK           DBG_LVL_INFO
 
 #define DEBUG_USB               DBG_LVL_INFO
 
