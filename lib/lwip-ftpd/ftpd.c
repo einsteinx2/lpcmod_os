@@ -1431,7 +1431,7 @@ static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 				send_file(fsm->datafs, fsm->datapcb);
 				break;
 			default:
-			    DBG(dbg_printf("Not supported:%u", fsm->datafs->connected));
+			    DBG(dbg_printf("Not supported:%u", fsm->state));
 				break;
 			}
 		}
