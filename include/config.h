@@ -36,8 +36,7 @@
 #undef DISPLAY_MBR_INFO
 
 #undef DEBUG_MODE
-// enable/ disable Etherboot
-#undef ETHERBOOT
+
 // enable/ disable LWIP
 #define LWIP
 

@@ -37,9 +37,6 @@ void freeTextMenuAllocMem(TEXTMENU* menu);
 //void FlashBios(void *);
 #endif
 
-#ifdef ETHERBOOT
-void BootFromEtherboot(void *);
-#endif
 void UiHeader(char *title);
 void UIFooter(void);
 

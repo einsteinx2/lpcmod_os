@@ -37,17 +37,18 @@
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif /* BYTE_ORDER */
 
-#if 0 //No longer needed in LwIP 2.0.0
+#define LWIP_NO_INTTYPES_H 1
+#define LWIP_NO_STDINT_H 1
+
 /* Define generic types used in lwIP */
 typedef unsigned   char    u8_t;
 typedef signed     char    s8_t;
 typedef unsigned   short   u16_t;
 typedef signed     short   s16_t;
-typedef unsigned   long    u32_t;
-typedef signed     long    s32_t;
+typedef unsigned   int    u32_t;
+typedef signed     int    s32_t;
 
 typedef u32_t mem_ptr_t;
-#endif
 #include "ctype.h"
 
 /* For LWIP_RAND */
