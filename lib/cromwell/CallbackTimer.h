@@ -11,6 +11,7 @@
 #define IsSingleUseTimer 1
 #define IsPerpetualTimer 0
 
+#define InvalidCallbackTimerId 0
 typedef void (*callbackTimerHandler)(void);
 
 void callbackTimer_init(void);

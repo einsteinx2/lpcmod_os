@@ -77,13 +77,13 @@ unsigned int newCallbackTimer(callbackTimerHandler handler, int interval_ms, uns
 
     if(0 == initDone)
     {
-        return 0;
+        return InvalidCallbackTimerId;
     }
 
     newTimer = calloc(1, sizeof(TimerInstance_t));
     if(NULL == newTimer)
     {
-        return 0;
+        return InvalidCallbackTimerId;
     }
 
     if(NULL != lastTimer)
@@ -93,8 +93,9 @@ unsigned int newCallbackTimer(callbackTimerHandler handler, int interval_ms, uns
             lastTimer = lastTimer->nextTimer;
         }
         timerId = lastTimer->id + 1;
-        if(0 == timerId)
+        if(InvalidCallbackTimerId == timerId)
         {
+            timerId = 1;
             XBlastLogger(DEBUG_CALLBACKTIMER, DBG_LVL_FATAL, "Ran out of timerId. Rollover.");
         }
         lastTimer->nextTimer = newTimer;
@@ -121,7 +122,7 @@ void stopCallbackTimer(int id)
     TimerInstance_t* targetTimer = firstInstance;
     TimerInstance_t* previousTimer = firstInstance;
 
-    if(0 != id)
+    if(InvalidCallbackTimerId != id)
     {
         while(initDone && NULL != targetTimer)
         {
