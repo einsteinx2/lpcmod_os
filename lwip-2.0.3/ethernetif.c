@@ -471,8 +471,15 @@ void run_lwip(void)
 			printk ("\n            Acquiring IP address. ");
 
 			callbackTimerId = newCallbackTimer(dhcpFailCallback, DHCP_WAIT_MS, IsSingleUseTimer);
-			currentNetworkState = NetworkState_DHCPStart;
-			XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_DHCPStart");
+			if(0 == callbackTimerId)
+			{
+			    dhcpFailCallback();
+			}
+			else
+			{
+                currentNetworkState = NetworkState_DHCPStart;
+                XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_DHCPStart");
+			}
 		}
 		else
 		{
