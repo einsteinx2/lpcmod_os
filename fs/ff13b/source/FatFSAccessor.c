@@ -363,8 +363,6 @@ int getActivePartName(unsigned char index, const char * *  out)
     {
         if(0 < isMounted(index / NbFATXPartPerHDD, index % NbFATXPartPerHDD))
         {
-            XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "11111");
-
             *out = PartitionNameStrings[index / NbFATXPartPerHDD][index % NbFATXPartPerHDD];
             index++;
             return index;
