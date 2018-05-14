@@ -8,6 +8,9 @@
 #define _Args(format, ...) format, ##__VA_ARGS__
 #define STRIP_PARENS(X) X
 #define PASS_PARAMETERS(X) STRIP_PARENS( _Args X )
+#define eprintf(x) XBlastLogger(DEBUG_NETWORK, DBG_LVL_FATAL, PASS_PARAMETERS(x))
+#define wprintf(x) XBlastLogger(DEBUG_NETWORK, DBG_LVL_WARN, PASS_PARAMETERS(x))
+#define iprintf(x) XBlastLogger(DEBUG_NETWORK, DBG_LVL_INFO, PASS_PARAMETERS(x))
 #define dprintf(x) XBlastLogger(DEBUG_NETWORK, DBG_LVL_DEBUG, PASS_PARAMETERS(x))
 
 #define ARP_CLIENT	0

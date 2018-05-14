@@ -379,7 +379,7 @@ static int reg_delay(int offset, u32 mask,
 		delaymax -= delay;
 		if (delaymax < 0) {
 			if (msg)
-				printf(msg);
+				wprintf((msg));
 			return 1;
 		}
 	} while ((readl(base + offset) & mask) != target);
@@ -516,7 +516,7 @@ static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 
 	if (reg_delay(NvRegMIIControl, NVREG_MIICTL_INUSE, 0,
 		      NV_MIIPHY_DELAY, NV_MIIPHY_DELAYMAX, NULL)) {
-		dprintf(("mii_rw of reg %d at PHY %d timed out.\n",
+		eprintf(("mii_rw of reg %d at PHY %d timed out.\n",
 			 miireg, addr));
 		retval = -1;
 	} else if (value != MII_READ) {
@@ -525,7 +525,7 @@ static int mii_rw(struct nic *nic __unused, int addr, int miireg,
 			 value, miireg, addr));
 		retval = 0;
 	} else if (readl(base + NvRegMIIStatus) & NVREG_MIISTAT_ERROR) {
-		dprintf(("mii_rw of reg %d at PHY %d failed.\n",
+		eprintf(("mii_rw of reg %d at PHY %d failed.\n",
 			 miireg, addr));
 		retval = -1;
 	} else {
@@ -574,7 +574,7 @@ static int phy_init(struct nic *nic)
 	    (LPA_10HALF | LPA_10FULL | LPA_100HALF |
 	    		LPA_100FULL | 0x800 | 0x400);
 	if (mii_rw(nic, np->phyaddr, MII_ADVERTISE, reg)) {
-		dprintf(("phy write to advertise failed.\n"));
+		eprintf(("phy write to advertise failed.\n"));
 		return 0x2;
 	}
 
@@ -586,7 +586,7 @@ static int phy_init(struct nic *nic)
 
 	/* reset the phy */
 	if (phy_reset(nic)) {
-		dprintf(("phy reset failed\n"));
+		eprintf(("phy reset failed\n"));
 		return 0x2;
 	}
 
@@ -597,14 +597,14 @@ static int phy_init(struct nic *nic)
 		phy_reserved &= ~(PHY_INIT1 | PHY_INIT2);
 		phy_reserved |= (PHY_INIT3 | PHY_INIT4);
 		if (mii_rw(nic, np->phyaddr, MII_RESV1, phy_reserved)) {
-			dprintf(("phy init failed.\n"));
+			eprintf(("phy init failed.\n"));
 			return 0x2;
 		}
 		phy_reserved =
 		    mii_rw(nic, np->phyaddr, MII_NCONFIG, MII_READ);
 		phy_reserved |= PHY_INIT5;
 		if (mii_rw(nic, np->phyaddr, MII_NCONFIG, phy_reserved)) {
-			dprintf(("phy init failed.\n"));
+		    eprintf(("phy init failed.\n"));
 			return 0x2;
 		}
 	}
@@ -613,7 +613,7 @@ static int phy_init(struct nic *nic)
 		    mii_rw(nic, np->phyaddr, MII_SREVISION, MII_READ);
 		phy_reserved |= PHY_INIT6;
 		if (mii_rw(nic, np->phyaddr, MII_SREVISION, phy_reserved)) {
-			dprintf(("phy init failed.\n"));
+		    eprintf(("phy init failed.\n"));
 			return 0x2;
 		}
 	}
@@ -749,8 +749,7 @@ static int update_linkspeed(struct nic *nic)
 #endif
 
 	if (!(mii_status & BMSR_LSTATUS)) {
-		printf
-		    ("no link detected by phy - falling back to 10HD.\n");
+		wprintf(("no link detected by phy - falling back to 10HD.\n"));
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 		retval = 0;
@@ -763,7 +762,7 @@ static int update_linkspeed(struct nic *nic)
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 		retval = 0;
-		printf("autoneg not completed - falling back to 10HD.\n");
+		wprintf(("autoneg not completed - falling back to 10HD.\n"));
 		goto set_speed;
 	}
 
@@ -789,7 +788,7 @@ static int update_linkspeed(struct nic *nic)
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 	} else {
-		printf("bad ability %hX - falling back to 10HD.", lpa);
+		wprintf(("bad ability %hX - falling back to 10HD.", lpa));
 		newls = NVREG_LINKSPEED_FORCE | NVREG_LINKSPEED_10;
 		newdup = 0;
 	}
@@ -798,7 +797,7 @@ static int update_linkspeed(struct nic *nic)
 	if (np->duplex == newdup && np->linkspeed == newls)
 		return retval;
 
-	dprintf(("changing link setting from %d/%s to %d/%s.\n",
+	iprintf(("changing link setting from %d/%s to %d/%s.\n",
 	       np->linkspeed, np->duplex ? "Full-Duplex": "Half-Duplex", newls, newdup ? "Full-Duplex": "Half-Duplex"));
 
 	np->duplex = newdup;
@@ -1025,7 +1024,7 @@ static int forcedeth_reset(struct nic *nic)
 	if (ret) {
 		//Start Connection netif_carrier_on(dev);
 	} else {
-		printf("no link during initialization.\n");
+		wprintf(("no link during initialization.\n"));
 	}
 
 	return ret;
@@ -1181,7 +1180,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 	if (pci->ioaddr == 0)
 		return 0;
 
-	dprintf(("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX\n",
+	iprintf(("forcedeth.c: Found %s, vendor=0x%hX, device=0x%hX\n",
 	       pci->name, pci->vendor, pci->dev_id));
 
 	/* point to private storage */
@@ -1218,9 +1217,8 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		 * Bad mac address. At least one bios sets the mac address
 		 * to 01:23:45:67:89:ab
 		 */
-		printf("Invalid Mac address detected: %!",
-		       nic->node_addr);
-		printf("Please complain to your hardware vendor.");
+		eprintf(("Invalid Mac address detected: %!", nic->node_addr));
+		eprintf(("Please complain to your hardware vendor."));
 		return 0;
 	}
 
@@ -1267,7 +1265,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		/* PHY in isolate mode? No phy attached and user wants to
 		 * test loopback? Very odd, but can be correct.
 		 */
-		dprintf
+		wprintf
 			(("%s: open: Could not find a valid PHY.\n", pci->name));
 	}
 
@@ -1277,7 +1275,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		phy_init(nic);
 	}
 
-	dprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s\n",
+	iprintf(("%s: forcedeth.c: subsystem: %hX:%hX bound to %s\n",
 		 pci->name, pci->vendor, pci->dev_id, pci->name));
 
 	forcedeth_reset(nic);
