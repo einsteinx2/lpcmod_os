@@ -56,6 +56,8 @@
 #include "lwip/priv/tcp_priv.h"
 #include "lwip/timeouts.h"
 
+#include "if_ether.h"
+
 
 #include "httpd.h"
 #include "ftpd.h"
@@ -140,7 +142,7 @@ low_level_init(struct netif *netif)
   memcpy (netif->hwaddr, forcedeth_hw_addr, ETHARP_HWADDR_LEN);
 
   /* maximum transfer unit */
-  netif->mtu = 1500;
+  netif->mtu = ETH_MAX_MTU;
   
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
@@ -184,7 +186,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
 #if 0
   struct ethernetif *ethernetif = netif->state;
 #endif
-  char buf[1500];
+  char buf[ETH_MAX_MTU + SIZEOF_ETH_HDR];
   char *bufptr;
   struct eth_hdr *h;
   struct pbuf *q;
@@ -240,7 +242,7 @@ low_level_input(struct netif *netif)
 {
   struct pbuf *p, *q;
   char *bufptr;
-  char buf[1500];
+  char buf[ETH_MAX_MTU + SIZEOF_ETH_HDR];
   int len;
 
   /* Obtain the size of the packet and put it into the "len"
