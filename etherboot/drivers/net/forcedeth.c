@@ -379,7 +379,7 @@ static int reg_delay(int offset, u32 mask,
 		delaymax -= delay;
 		if (delaymax < 0) {
 			if (msg)
-				wprintf((msg));
+				wprintf(("%s", msg));
 			return 1;
 		}
 	} while ((readl(base + offset) & mask) != target);
@@ -1217,7 +1217,7 @@ static int forcedeth_probe(struct dev *dev, struct pci_device *pci)
 		 * Bad mac address. At least one bios sets the mac address
 		 * to 01:23:45:67:89:ab
 		 */
-		eprintf(("Invalid Mac address detected: %!", nic->node_addr));
+		eprintf(("Invalid Mac address detected!"));
 		eprintf(("Please complain to your hardware vendor."));
 		return 0;
 	}
