@@ -976,6 +976,9 @@ int BootIdeInit(void)
 #endif
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_INFO, "UDMA%u supported by Master drive", nAta);
     }
+
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "IDE init done.");
+
     return 0;
 }
 

@@ -463,18 +463,9 @@ extern void BootResetAction ( void )
 #endif
 
 
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting IDE init.");
     BootIdeInit();
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "IDE init done.");
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting FatFS init.");
-    FatFS_init();
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "FatFS init done.");
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting VirtualRoot init.");
     VirtualRootInit();
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "VirtualRoot init done.");
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Starting DebugLogger init.");
     debugLoggerInit();
-    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "DebugLogger init done.");
 
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?

@@ -105,6 +105,8 @@ void FatFS_init(void)
             mountAll(i);
         }
     }
+
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "FatFS init done.");
 }
 
 int isFATXFormattedDrive(unsigned char driveNumber)

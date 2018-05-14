@@ -45,6 +45,8 @@ void debugLoggerInit(void)
         processTempBuf();
         newCallbackTimer(&forceFlushLog, FlushInterval_ms, IsPerpetualTimer);
     }
+
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "DebugLogger init done.");
 }
 
 unsigned char logRotate(void)

@@ -57,6 +57,7 @@ static inline void setcwd(const char* const path);
 
 void VirtualRootInit(void)
 {
+    FatFS_init();
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
     setcwd(PathSep);
 
@@ -78,6 +79,8 @@ void VirtualRootInit(void)
     FatFSAccess.opendir = fatxopendir;
     FatFSAccess.readdir = fatxreaddir;
     FatFSAccess.closedir = fatxclosedir;
+
+    XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "VirtualRoot init done.");
 }
 
 FILEX vroot_open(const char* path, FileOpenMode mode)
