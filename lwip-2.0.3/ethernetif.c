@@ -186,7 +186,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
 #if 0
   struct ethernetif *ethernetif = netif->state;
 #endif
-  char buf[ETH_MAX_MTU + SIZEOF_ETH_HDR];
+  char buf[ETH_MAX_MTU + SIZEOF_ETH_HDR + ETH_PAD_SIZE];
   char *bufptr;
   struct eth_hdr *h;
   struct pbuf *q;
@@ -242,7 +242,7 @@ low_level_input(struct netif *netif)
 {
   struct pbuf *p, *q;
   char *bufptr;
-  char buf[ETH_MAX_MTU + SIZEOF_ETH_HDR];
+  char buf[ETH_MAX_MTU + SIZEOF_ETH_HDR + ETH_PAD_SIZE];
   int len;
 
   /* Obtain the size of the packet and put it into the "len"
