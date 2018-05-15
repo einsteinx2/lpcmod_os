@@ -499,7 +499,7 @@ void FormatDriveFG(void* driveId)
 
     if(ConfirmDialog(string, 1) == false)
     {
-        if(fdisk(nDriveIndex, selectedLayout))
+        if(fatxfdisk(nDriveIndex, selectedLayout))
         {
             UiHeader("Error!!");
             //fail

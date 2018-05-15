@@ -246,7 +246,7 @@ int LPCMod_ReadCFGFromHDD(_LPCmodSettings *LPCmodSettingsPtr, _settingsPtrStruct
         memcpy((unsigned char *)LPCmodSettingsPtr, (unsigned char *)&LPCmodSettings, sizeof(_LPCmodSettings));
     }
 
-    if(isMounted(HDD_Master, Part_C))
+    if(fatxisMounted(HDD_Master, Part_C))
     {
         setCFGFileTransferPtr(LPCmodSettingsPtr, settingsStruct);
         XBlastLogger(DEBUG_SETTINGS, DBG_LVL_INFO, "Restoring XBlast OS Settings from cfg file");

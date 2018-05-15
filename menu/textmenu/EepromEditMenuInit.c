@@ -107,7 +107,7 @@ TEXTMENU* EEPROMFileRestoreMenuInit(void)
 
     XBlastLogger(DEBUG_EEPROM_DRIVER, DBG_LVL_DEBUG, "Listing eeproms in %s", getEEPROMDirectoryLocation());
 
-    if(isMounted(HDD_Master, Part_C))
+    if(fatxisMounted(HDD_Master, Part_C))
     {
         dirHandle = fatxopendir(getEEPROMDirectoryLocation());
         if(dirHandle)

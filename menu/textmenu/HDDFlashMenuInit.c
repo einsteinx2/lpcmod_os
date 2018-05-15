@@ -32,7 +32,7 @@ void HDDFlashMenuDynamic(void* unused)
 
     strcpy(menuPtr->szCaption, getBIOSDirectoryLocation() + strlen("MASTER_"));
 
-    if(isMounted(HDD_Master, Part_C))
+    if(fatxisMounted(HDD_Master, Part_C))
     {
         dirHandle = fatxopendir(getBIOSDirectoryLocation());
         if(dirHandle)

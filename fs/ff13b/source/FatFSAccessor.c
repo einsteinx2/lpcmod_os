@@ -102,7 +102,7 @@ void FatFS_init(void)
     {
         if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i))
         {
-            mountAll(i);
+            fatxmountAll(i);
         }
     }
 
@@ -115,7 +115,7 @@ int isFATXFormattedDrive(unsigned char driveNumber)
 }
 
 /* Will mount C, E, F, G, X, Y, Z if available*/
-int mountAll(unsigned char driveNumber)
+int fatxmountAll(unsigned char driveNumber)
 {
     unsigned char i;
     XboxPartitionTable tempTable;
@@ -181,7 +181,7 @@ int fatxmount(unsigned char driveNumber, unsigned char partitionNumber)
     return result;
 }
 
-int isMounted(unsigned char driveNumber, unsigned char partitionNumber)
+int fatxisMounted(unsigned char driveNumber, unsigned char partitionNumber)
 {
     if(NbDrivesSupported <= driveNumber)
     {
@@ -200,7 +200,7 @@ int isMounted(unsigned char driveNumber, unsigned char partitionNumber)
     return FatXFs[driveNumber][partitionNumber].fs_typex;
 }
 
-int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
+int fatxfdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
 {
     XboxPartitionTable workingMbr;
     unsigned long long diskSizeLba;
@@ -357,11 +357,11 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
     return 0;
 }
 
-int getActivePartName(unsigned char index, const char * *const  out)
+int fatxgetActivePartName(unsigned char index, const char * *const  out)
 {
     while((NbDrivesSupported * NbFATXPartPerHDD) > index)
     {
-        if(0 < isMounted(index / NbFATXPartPerHDD, index % NbFATXPartPerHDD))
+        if(0 < fatxisMounted(index / NbFATXPartPerHDD, index % NbFATXPartPerHDD))
         {
             *out = PartitionNameStrings[index / NbFATXPartPerHDD][index % NbFATXPartPerHDD];
             index++;

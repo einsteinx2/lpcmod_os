@@ -114,7 +114,7 @@ TEXTMENU *ToolsMenuInit(void)
         TextMenuAddItem(menuPtr, itemPtr);
     }
 */
-    if(isMounted(HDD_Master, Part_C))
+    if(fatxisMounted(HDD_Master, Part_C))
     {
         cfgFileInfo = fatxstat(getSettingsFileLocation());
         //Save xblast.cfg

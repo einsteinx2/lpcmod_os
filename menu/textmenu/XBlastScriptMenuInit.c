@@ -112,7 +112,7 @@ TEXTMENU* RunScriptMenuInit(void)
 
     strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
 
-    if(isMounted(HDD_Master, Part_C))
+    if(fatxisMounted(HDD_Master, Part_C))
     {
         dirHandle = fatxopendir(getScriptDirectoryLocation());
         if(dirHandle)
@@ -185,7 +185,7 @@ TEXTMENU* SaveScriptMenuInit(void)
 
     strcpy(menuPtr->szCaption, getScriptDirectoryLocation() + strlen("MASTER_"));
 
-    if(isMounted(HDD_Master, Part_C))
+    if(fatxisMounted(HDD_Master, Part_C))
     {
         dirHandle = fatxopendir(getScriptDirectoryLocation());
         if(dirHandle)

@@ -65,7 +65,7 @@ void VirtualRootInit(void)
 
     virtualRootCycler = 0;
 
-    FatFSAccess.getEntryName = getActivePartName;
+    FatFSAccess.getEntryName = fatxgetActivePartName;
     FatFSAccess.open = fatxopen;
     FatFSAccess.read = fatxread;
     FatFSAccess.write = fatxwrite;

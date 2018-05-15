@@ -181,7 +181,7 @@ void formatNewDrives(void)
             if(ConfirmDialog(ConfirmDialogString, 1) == false)
             {
                 XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "Formatting base partitions.");
-                fdisk(i, XboxDiskLayout_Base);
+                fatxfdisk(i, XboxDiskLayout_Base);
                 if(fatxmkfs(i, Part_C))
                 {
                     cromwellError();
