@@ -8,7 +8,11 @@
 #ifndef FS_DEBUGVFS_DEBUGVFS_H_
 #define FS_DEBUGVFS_DEBUGVFS_H_
 
-int getEntryName(unsigned char index, const char * *  out);
+#include "FatFSAccessor.h"
+
+void DebugVFS_init(void);
+
+int getEntryName(unsigned char index, const char * *const  out);
 FILEX open(const char* path, FileOpenMode mode);
 int read(FILEX handle, unsigned char* out, unsigned int size);
 int write(FILEX handle, const unsigned char* in, unsigned int size);
