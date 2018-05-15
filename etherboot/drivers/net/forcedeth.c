@@ -797,8 +797,8 @@ static int update_linkspeed(struct nic *nic)
 	if (np->duplex == newdup && np->linkspeed == newls)
 		return retval;
 
-	iprintf(("changing link setting from %d/%s to %d/%s.\n",
-	       np->linkspeed, np->duplex ? "Full-Duplex": "Half-Duplex", newls, newdup ? "Full-Duplex": "Half-Duplex"));
+	iprintf(("changing link setting from %uMbps/%s to %uMbps/%s.\n",
+	       np->linkspeed & NVREG_LINKSPEED_100 ? 100 : 10, np->duplex ? "Full-Duplex": "Half-Duplex", newls & NVREG_LINKSPEED_100 ? 100 : 10, newdup ? "Full-Duplex": "Half-Duplex"));
 
 	np->duplex = newdup;
 	np->linkspeed = newls;
