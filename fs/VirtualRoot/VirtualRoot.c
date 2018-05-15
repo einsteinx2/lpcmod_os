@@ -111,6 +111,9 @@ static inline void setcwd(const char* const path);
 void VirtualRootInit(void)
 {
     FatFS_init();
+#if DEBUGVFS
+    debugvfs_init();
+#endif
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
     setcwd(PathSep);
 
