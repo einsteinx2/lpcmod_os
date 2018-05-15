@@ -245,7 +245,7 @@
  *    2 byte alignment -> \#define MEM_ALIGNMENT 2
  */
 #if !defined MEM_ALIGNMENT || defined __DOXYGEN__
-#define MEM_ALIGNMENT                   2
+#define MEM_ALIGNMENT                   4
 #endif
 
 /**
@@ -253,7 +253,7 @@
  * a lot of data that needs to be copied, this should be set high.
  */
 #if !defined MEM_SIZE || defined __DOXYGEN__
-#define MEM_SIZE                        10000
+#define MEM_SIZE                        8192
 #endif
 
 /**
@@ -346,7 +346,7 @@
  * this should be set high.
  */
 #if !defined MEMP_NUM_PBUF || defined __DOXYGEN__
-#define MEMP_NUM_PBUF                   128
+#define MEMP_NUM_PBUF                   16
 #endif
 
 /**
@@ -492,7 +492,7 @@
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool.
  */
 #if !defined PBUF_POOL_SIZE || defined __DOXYGEN__
-#define PBUF_POOL_SIZE                  128
+#define PBUF_POOL_SIZE                  16
 #endif
 
 /** MEMP_NUM_API_MSG: the number of concurrently active calls to various

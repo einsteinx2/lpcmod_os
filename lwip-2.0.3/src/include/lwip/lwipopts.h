@@ -43,16 +43,16 @@
 /* MEM_ALIGNMENT: should be set to the alignment of the CPU for which
    lwIP is compiled. 4 byte alignment -> define MEM_ALIGNMENT to 4, 2
    byte alignment -> define MEM_ALIGNMENT to 2. */
-#define MEM_ALIGNMENT           2
+#define MEM_ALIGNMENT           4
 
 /* MEM_SIZE: the size of the heap memory. If the application will send
 a lot of data that needs to be copied, this should be set high. */
-#define MEM_SIZE                1024
+#define MEM_SIZE                8192
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
    sends a lot of data out of ROM (or other static memory), this
    should be set high. */
-#define MEMP_NUM_PBUF           128
+#define MEMP_NUM_PBUF           16
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
 #define MEMP_NUM_UDP_PCB        4
@@ -79,10 +79,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
-#define PBUF_POOL_SIZE          128
+#define PBUF_POOL_SIZE          16
 
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
-#define PBUF_POOL_BUFSIZE       128
+#define PBUF_POOL_BUFSIZE       1452
 
 /* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
    link level header. */
@@ -104,7 +104,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* TCP sender buffer space (pbufs). This must be at least = 2 *
    TCP_SND_BUF/TCP_MSS for things to work. */
-#define TCP_SND_QUEUELEN        4 * TCP_SND_BUF/TCP_MSS
+#define TCP_SND_QUEUELEN        8 * TCP_SND_BUF/TCP_MSS
 
 /* TCP receive window. */
 #define TCP_WND                 TCP_SND_BUF
