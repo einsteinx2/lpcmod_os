@@ -41,12 +41,14 @@ int debugvfsgetEntryName(unsigned char index, const char * *const  out)
 
 FILEX debugvfsopen(const char* path, FileOpenMode mode)
 {
-    if(0 == strcmp(path, ReadFileName) && (mode & FileOpenMode_Read) && !(mode & FileOpenMode_Write))
+    char checkPath[25];
+    sprintf(checkPath, PathSep"%s"PathSep"%s", PartName, ReadFileName);
+    if(0 == strcmp(path, checkPath) && (mode & FileOpenMode_Read) && !(mode & FileOpenMode_Write))
     {
         return ReadFileHandle;
     }
 
-    if(strcmp(path, ReadFileName) && !(mode & FileOpenMode_Read) && (mode & FileOpenMode_Write))
+    if(0 != strcmp(path, checkPath) && !(mode & FileOpenMode_Read) && (mode & FileOpenMode_Write))
     {
         return WriteFileHandle;
     }
@@ -106,8 +108,10 @@ int debugvfseof(FILEX handle)
 FileInfo debugvfsstat(const char* path)
 {
     FileInfo returnStruct;
+    char checkPath[25];
+    sprintf(checkPath, PathSep"%s"PathSep"%s", PartName, ReadFileName);
     memset(&returnStruct, 0x00, sizeof(FileInfo));
-    if(0 == strcmp(path, ReadFileName))
+    if(0 == strcmp(path, checkPath))
     {
         returnStruct.attributes = FileAttr_ReadOnly;
         returnStruct.nameLength = strlen(ReadFileName);
