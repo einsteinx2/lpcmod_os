@@ -22,7 +22,7 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 	-I$(TOPDIR)/lib/jpeg/ -I$(TOPDIR)/menu/actions -I$(TOPDIR)/menu/textmenu \
 	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/$(LWIPFOLDER) -I$(TOPDIR)/$(LWIPFOLDER)/src/include \
 	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps \
-	-I$(TOPDIR)/fs/VirtualRoot -I$(TOPDIR)/lib/lwip-ftpd \
+	-I$(TOPDIR)/fs/VirtualRoot -I$(TOPDIR)/fs/DebugVFS -I$(TOPDIR)/lib/lwip-ftpd \
 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include
 
 #These are intended to be non-overridable.
@@ -178,6 +178,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/ff.o
 OBJECTS-CROM += $(TOPDIR)/obj/diskio.o
 OBJECTS-CROM += $(TOPDIR)/obj/FatFSAccessor.o
 OBJECTS-CROM += $(TOPDIR)/obj/VirtualRoot.o
+OBJECTS-CROM += $(TOPDIR)/obj/DebugVFS.o
 OBJECTS-CROM += $(TOPDIR)/obj/minIni.o
 OBJECTS-CROM += $(TOPDIR)/obj/ProgressBar.o
 OBJECTS-CROM += $(TOPDIR)/obj/ConfirmDialog.o

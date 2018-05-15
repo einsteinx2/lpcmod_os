@@ -10,7 +10,11 @@
 #include "lib/LPCMod/xblastDebug.h"
 #include "string.h"
 #include "stdio.h"
+#include "DebugVFS.h"
 #include <limits.h>
+
+/* To enable DebugVFS */
+#define DEBUGVFS 1
 
 
 typedef struct
@@ -36,14 +40,63 @@ typedef struct
 
 /*-----------------------------------------*/
 
-static ChildFS_t* currentAccessor;
-static ChildFS_t FatFSAccess;
+static const ChildFS_t* currentChildAccessor;
+typedef enum
+{
+    AccessIndexStart = 0,
+    FatFSAccessIndex = AccessIndexStart,
+#if DEBUGVFS
+    DebugVFSAccessIndex,
+#endif
+    AccessIndexSize
+}AccessIndexEnum;
+
+
+static const ChildFS_t ChildAccessors[AccessIndexSize] =
+{
+ {
+     .getEntryName = fatxgetActivePartName,
+     .open = fatxopen,
+     .read = fatxread,
+     .write = fatxwrite,
+     .close = fatxclose,
+     .eof = fatxeof,
+     .stat = fatxstat,
+     .rename = fatxrename,
+     .mkdir = fatxmkdir,
+     .remove = fatxdelete,
+     .chdir = fatxchdir,
+     .opendir = fatxopendir,
+     .readdir = fatxreaddir,
+     .closedir = fatxclosedir,
+ }
+#if DEBUGVFS
+ ,{
+     .getEntryName = debugvfsgetEntryName,
+     .open = debugvfsopen,
+     .read = debugvfsread,
+     .write = debugvfswrite,
+     .close = debugvfsclose,
+     .eof = debugvfseof,
+     .stat = debugvfsstat,
+     .rename = debugvfsrename,
+     .mkdir = debugvfsmkdir,
+     .remove = debugvfsremove,
+     .chdir = debugvfschdir,
+     .opendir = debugvfsopendir,
+     .readdir = debugvfsreaddir,
+     .closedir = debugvfsclosedir,
+ }
+#endif
+};
+
 
 #define MaxPathLength 255
 static char cwd[MaxPathLength + sizeof('\0')];
 const static DIREX VirtualRootDirHandle = INT_MAX;
 
 static unsigned char virtualRootCycler;
+static unsigned char tempAccessorIndex;
 
 static int pathProcess_Absolute(const char* const path);
 static int pathProcess_GoingForward(const char* const path);
@@ -61,24 +114,10 @@ void VirtualRootInit(void)
     memset(cwd, '\0', sizeof(char) * (MaxPathLength + sizeof('\0')));
     setcwd(PathSep);
 
-    currentAccessor = NULL;
+    currentChildAccessor = NULL;
 
     virtualRootCycler = 0;
-
-    FatFSAccess.getEntryName = fatxgetActivePartName;
-    FatFSAccess.open = fatxopen;
-    FatFSAccess.read = fatxread;
-    FatFSAccess.write = fatxwrite;
-    FatFSAccess.close = fatxclose;
-    FatFSAccess.eof = fatxeof;
-    FatFSAccess.stat = fatxstat;
-    FatFSAccess.rename = fatxrename;
-    FatFSAccess.mkdir = fatxmkdir;
-    FatFSAccess.remove = fatxdelete;
-    FatFSAccess.chdir = fatxchdir;
-    FatFSAccess.opendir = fatxopendir;
-    FatFSAccess.readdir = fatxreaddir;
-    FatFSAccess.closedir = fatxclosedir;
+    tempAccessorIndex = AccessIndexStart;
 
     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "VirtualRoot init done.");
 }
@@ -88,9 +127,9 @@ FILEX vroot_open(const char* path, FileOpenMode mode)
     char workPath[300];
     combinePath(workPath, path);
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"  mode:%u", workPath, mode);
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->open(workPath, mode);
+        return currentChildAccessor->open(workPath, mode);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -99,9 +138,9 @@ FILEX vroot_open(const char* path, FileOpenMode mode)
 
 int vroot_read(FILEX handle, unsigned char* out, unsigned int size)
 {
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->read(handle, out, size);
+        return currentChildAccessor->read(handle, out, size);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -110,9 +149,9 @@ int vroot_read(FILEX handle, unsigned char* out, unsigned int size)
 
 int vroot_write(FILEX handle, const unsigned char* in, unsigned int size)
 {
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->write(handle, in, size);
+        return currentChildAccessor->write(handle, in, size);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -121,9 +160,9 @@ int vroot_write(FILEX handle, const unsigned char* in, unsigned int size)
 
 void vroot_close(FILEX handle)
 {
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        currentAccessor->close(handle);
+        currentChildAccessor->close(handle);
         return;
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
@@ -133,9 +172,9 @@ void vroot_close(FILEX handle)
 
 int vroot_eof(FILEX handle)
 {
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->eof(handle);
+        return currentChildAccessor->eof(handle);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -148,10 +187,10 @@ FileInfo vroot_stat(const char* path)
     char workPath[300];
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"", path);
 
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
         combinePath(workPath, path);
-        return currentAccessor->stat(workPath);
+        return currentChildAccessor->stat(workPath);
     }
 
     returnStruct.name[0] = '\0';
@@ -172,10 +211,10 @@ FileInfo vroot_stat(const char* path)
 int vroot_rename(const char* path, const char* newName)
 {
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "old:\"%s\" -> \"%s\"", path, newName);
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
         //TODO: Make sure newName has proper path */
-        return currentAccessor->rename(path, newName);
+        return currentChildAccessor->rename(path, newName);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -185,9 +224,9 @@ int vroot_rename(const char* path, const char* newName)
 int vroot_mkdir(const char* path)
 {
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"", path);
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->mkdir(path);
+        return currentChildAccessor->mkdir(path);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -197,9 +236,9 @@ int vroot_mkdir(const char* path)
 int vroot_remove(const char* path)
 {
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"", path);
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->remove(path);
+        return currentChildAccessor->remove(path);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!!  No file op in vroot.");
 
@@ -247,9 +286,9 @@ const char* vroot_getcwd(void)
 DIREX vroot_opendir(const char* path)
 {
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "path:\"%s\"", path);
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        return currentAccessor->opendir(path);
+        return currentChildAccessor->opendir(path);
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Returning vroot handle.");
 
@@ -259,10 +298,11 @@ DIREX vroot_opendir(const char* path)
 FileInfo vroot_readdir(DIREX handle)
 {
     FileInfo returnStruct;
+    const char* string = NULL;
 
-    if(VirtualRootDirHandle != handle && NULL != currentAccessor)
+    if(VirtualRootDirHandle != handle && NULL != currentChildAccessor)
     {
-        return currentAccessor->readdir(handle);
+        return currentChildAccessor->readdir(handle);
     }
 
     returnStruct.name[0] = '\0';
@@ -275,14 +315,30 @@ FileInfo vroot_readdir(DIREX handle)
     if(VirtualRootDirHandle == handle)
     {
         XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "readdir in vroot.");
-        /* For now only FatFS is populating Virtual Root */
-        const char*  string = NULL;
-        virtualRootCycler = FatFSAccess.getEntryName(virtualRootCycler, &string);
-        if(NULL != string)
+
+        if(AccessIndexSize > tempAccessorIndex)
         {
-            sprintf(returnStruct.name, "%s", string);
-            XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "found:\"%s\"", returnStruct.name);
-            returnStruct.nameLength = strlen(returnStruct.name);
+            while(AccessIndexSize <= tempAccessorIndex)
+            {
+                virtualRootCycler = ChildAccessors[tempAccessorIndex].getEntryName(virtualRootCycler, &string);
+                if(-1 != virtualRootCycler)
+                {
+                    break;
+                }
+                tempAccessorIndex++;
+                virtualRootCycler = 0;
+            }
+
+            if(NULL != string)
+            {
+                sprintf(returnStruct.name, "%s", string);
+                XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "found:\"%s\"", returnStruct.name);
+                returnStruct.nameLength = strlen(returnStruct.name);
+            }
+        }
+        else
+        {
+            virtualRootCycler = -1;
         }
     }
 
@@ -291,14 +347,15 @@ FileInfo vroot_readdir(DIREX handle)
 
 void vroot_closedir(DIREX handle)
 {
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        currentAccessor->closedir(handle);
+        currentChildAccessor->closedir(handle);
         return;
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Close vroot handle.");
 
     virtualRootCycler = 0;
+    tempAccessorIndex = AccessIndexStart;
 
     return;
 }
@@ -309,23 +366,27 @@ void vroot_closedir(DIREX handle)
 static int pathProcess_Absolute(const char* const path)
 {
     int result;
+    unsigned char childAccessorIterator;
     const char* sepPos = path;
     if('\0' == path[1])
     {
         XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Back to vroot.");
         setcwd(PathSep);
-        currentAccessor = NULL;
+        currentChildAccessor = NULL;
 
         return 0;
     }
 
-    result = FatFSAccess.chdir(sepPos);
-    XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "chdir:\"%s\"   result:%u.", sepPos, result);
-    if(0 == result)
+    for(childAccessorIterator = AccessIndexStart; childAccessorIterator < AccessIndexSize; childAccessorIterator++)
     {
-        currentAccessor = &FatFSAccess;
-        setcwd(path);
-        return 0;
+        result = ChildAccessors[childAccessorIterator].chdir(sepPos);
+        XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "chdir:\"%s\"   result:%u.", sepPos, result);
+        if(0 == result)
+        {
+            currentChildAccessor = &ChildAccessors[childAccessorIterator];
+            setcwd(path);
+            return 0;
+        }
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
 
@@ -335,18 +396,22 @@ static int pathProcess_Absolute(const char* const path)
 static int pathProcess_GoingForward(const char* const path)
 {
     char workPath[300];
+    unsigned char childAccessorIterator;
 
+    /* Not an absolute path */
     if(cPathSep != *path)
     {
         combinePath(workPath, path);
         XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "New path:\"%s\".", workPath);
-
-        if(0 == FatFSAccess.chdir(workPath))
+        for(childAccessorIterator = AccessIndexStart; childAccessorIterator < AccessIndexSize; childAccessorIterator++)
         {
-            currentAccessor = &FatFSAccess;
-            setcwd(workPath);
+            if(0 == ChildAccessors[childAccessorIterator].chdir(workPath))
+            {
+                currentChildAccessor = &ChildAccessors[childAccessorIterator];
+                setcwd(workPath);
 
-            return 0;
+                return 0;
+            }
         }
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
@@ -379,7 +444,7 @@ static int pathProcess_GoingBack(void)
     if(NULL == sepPos)
     {
         XBlastLogger(DEBUG_VROOT, DBG_LVL_WARN, "Invalid path. Returning to root.");
-        currentAccessor = NULL;
+        currentChildAccessor = NULL;
         setcwd(PathSep);
         return 0;
     }
@@ -387,9 +452,9 @@ static int pathProcess_GoingBack(void)
     sepPos[1] = '\0';
     XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "new path:\"%s\"", workPath);
 
-    if(NULL != currentAccessor)
+    if(NULL != currentChildAccessor)
     {
-        result = currentAccessor->chdir(workPath);
+        result = currentChildAccessor->chdir(workPath);
 
         if(0 == result)
         {
@@ -398,7 +463,7 @@ static int pathProcess_GoingBack(void)
         }
         else
         {
-            currentAccessor = NULL;
+            currentChildAccessor = NULL;
             setcwd(PathSep);
         }
     }
