@@ -705,7 +705,6 @@ static err_t ftpd_dataaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 
 static int open_dataconnection(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
-    dbg_printf("enter");
     DBG(dbg_printf("passive:%u", fsm->passive));
 	if (fsm->passive)
 		return 0;
@@ -732,6 +731,7 @@ static int open_dataconnection(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 	fsm->datapcb = tcp_new();
 
 	if (fsm->datapcb == NULL) {
+	    XBlastLogger(DEBUG_FTPD, DBG_LVL_WARN, "Could not allocate pcb");
 		sfifo_close(&fsm->datafs->fifo);
 		free(fsm->datafs);
 		send_msg(pcb, fsm, msg451);
@@ -813,6 +813,10 @@ static void cmd_port(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 
 static void cmd_quit(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate *fsm)
 {
+    if(fsm->datafs->vfs_file)
+    {
+        vfs_close(fsm->datafs->vfs_file);
+    }
 	send_msg(pcb, fsm, msg221);
 	fsm->state = FTPD_QUIT;
 }
@@ -931,6 +935,7 @@ static void cmd_stor(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 	send_msg(pcb, fsm, msg150stor, arg);
 
 	if (open_dataconnection(pcb, fsm) != 0) {
+	    XBlastLogger(DEBUG_FTPD, DBG_LVL_WARN, "Could not open data connection.");
 		vfs_close(vfs_file);
 		return;
 	}
@@ -1004,16 +1009,19 @@ static void cmd_pasv(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 		    dbg_printf("ERR_OK");
 			break;
 		}
+		XBlastLogger(DEBUG_FTPD, DBG_LVL_DEBUG, "Bind to %u failed", port);
 		if (start_port == port)
 		{
+		    XBlastLogger(DEBUG_FTPD, DBG_LVL_DEBUG, "Ran out of ports");
 		    dbg_printf("ERR_CLSD");
 			err = ERR_CLSD;
 		}
 		if (err == ERR_USE) {
+		    XBlastLogger(DEBUG_FTPD, DBG_LVL_DEBUG, "Port %u already in use", port);
 		    dbg_printf("ERR_USE");
 			continue;
 		} else {
-		    dbg_printf("Dataclose");
+		    dbg_printf("Port binding error. Dataclose");
 			ftpd_dataclose(fsm->datalistenpcb, fsm->datafs);
 			fsm->datalistenpcb = NULL;
 			fsm->datafs = NULL;
@@ -1054,6 +1062,10 @@ static void cmd_abrt(const char *arg, struct tcp_pcb *pcb, struct ftpd_msgstate 
 		tcp_abort(pcb);
 		sfifo_close(&fsm->datafs->fifo);
 		free(fsm->datafs);
+		if(fsm->datafs->vfs_file)
+		{
+		    vfs_close(fsm->datafs->vfs_file);
+		}
 		fsm->datafs = NULL;
 	}
 	dbg_printf("Abort");
@@ -1279,7 +1291,6 @@ static void send_msg(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm, char *msg, 
 	char buffer[1024];
 	int len;
 
-	dbg_printf("enter");
 
 	va_start(arg, msg);
 	vsprintf(buffer, msg, arg);
@@ -1288,7 +1299,10 @@ static void send_msg(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm, char *msg, 
 	strcpy(buffer + strlen(buffer), "\r\n");
 	len = strlen(buffer);
 	if (sfifo_space(&fsm->fifo) < len)
+	{
+	    XBlastLogger(DEBUG_FTPD, DBG_LVL_WARN, "Could not put message in fifo");
 		return;
+	}
 	sfifo_write(&fsm->fifo, buffer, len);
 	send_msgdata(pcb, fsm);
 }
@@ -1430,6 +1444,8 @@ static err_t ftpd_msgpoll(void *arg, struct tcp_pcb *pcb)
 			    DBG(dbg_printf("FTPD_RETR"));
 				send_file(fsm->datafs, fsm->datapcb);
 				break;
+			case FTPD_STOR:
+			    break;
 			default:
 			    DBG(dbg_printf("Not supported:%u", fsm->state));
 				break;
