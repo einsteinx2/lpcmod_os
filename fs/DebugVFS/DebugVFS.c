@@ -154,6 +154,13 @@ int debugvfsremove(const char* path)
 
 int debugvfschdir(const char* path)
 {
+    char tempPath[10];
+    sprintf(tempPath, PathSep"%s", PartName);
+
+    if(0 == strcmp(path, tempPath))
+    {
+        return 0;
+    }
     return -1;
 }
 

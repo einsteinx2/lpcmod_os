@@ -370,6 +370,7 @@ int fatxgetActivePartName(unsigned char index, const char * *const  out)
         index++;
     }
 
+    XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "End of list");
     return -1;
 }
 

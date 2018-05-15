@@ -95,7 +95,7 @@ static const ChildFS_t ChildAccessors[AccessIndexSize] =
 static char cwd[MaxPathLength + sizeof('\0')];
 const static DIREX VirtualRootDirHandle = INT_MAX;
 
-static unsigned char virtualRootCycler;
+static char virtualRootCycler;
 static unsigned char tempAccessorIndex;
 
 static int pathProcess_Absolute(const char* const path);
@@ -321,7 +321,7 @@ FileInfo vroot_readdir(DIREX handle)
 
         if(AccessIndexSize > tempAccessorIndex)
         {
-            while(AccessIndexSize <= tempAccessorIndex)
+            while(AccessIndexSize > tempAccessorIndex)
             {
                 virtualRootCycler = ChildAccessors[tempAccessorIndex].getEntryName(virtualRootCycler, &string);
                 if(-1 != virtualRootCycler)
@@ -329,6 +329,7 @@ FileInfo vroot_readdir(DIREX handle)
                     break;
                 }
                 tempAccessorIndex++;
+                XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Moving to ChildAccesor %u.", tempAccessorIndex);
                 virtualRootCycler = 0;
             }
 
@@ -408,6 +409,7 @@ static int pathProcess_GoingForward(const char* const path)
         XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "New path:\"%s\".", workPath);
         for(childAccessorIterator = AccessIndexStart; childAccessorIterator < AccessIndexSize; childAccessorIterator++)
         {
+            XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "Trying ChildAccessor %u", childAccessorIterator);
             if(0 == ChildAccessors[childAccessorIterator].chdir(workPath))
             {
                 currentChildAccessor = &ChildAccessors[childAccessorIterator];
@@ -415,6 +417,7 @@ static int pathProcess_GoingForward(const char* const path)
 
                 return 0;
             }
+            XBlastLogger(DEBUG_VROOT, DBG_LVL_DEBUG, "ChildAccessor %u fail", childAccessorIterator);
         }
     }
     XBlastLogger(DEBUG_VROOT, DBG_LVL_ERROR, "Error!!! Invalid path.");
