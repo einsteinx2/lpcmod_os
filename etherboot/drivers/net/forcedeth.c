@@ -712,8 +712,8 @@ static int alloc_rx(struct nic *nic __unused)
 		rx_ring[i].Length = cpu_to_le16(RX_NIC_BUFSIZE);
 		wmb();
 		rx_ring[i].Flags = cpu_to_le16(NV_RX_AVAIL);
-		      dprintf(("alloc_rx: Packet  %d marked as Available\n",
-		   refill_rx));
+		      dprintf(("alloc_rx: Packet  %d marked as Available.   len:%u",
+		   refill_rx, rx_ring[i].Length));
 		refill_rx++;
 	}
 	np->refill_rx = refill_rx;
@@ -1059,7 +1059,7 @@ static int forcedeth_poll(struct nic *nic)
 		wmb();
 		np->cur_rx++;
 		alloc_rx(nic);
-		dprintf(("incoming packet\n"));
+		dprintf(("incoming packet.  len:%u", len));
 		return 1;
 	}
 	return 0;		/* initially as this is called to flush the input */

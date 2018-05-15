@@ -250,7 +250,7 @@ low_level_input(struct netif *netif)
   if (!eth_poll_into (buf, &len))
     return NULL;
 
-  LWIP_DEBUGF(NETIF_DEBUG, ("Got new packet from low level nic.\n"));
+  LWIP_DEBUGF(NETIF_DEBUG, ("New packet from low level nic.  len:%u", len));
 #if ETH_PAD_SIZE
   len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
 #endif
