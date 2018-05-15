@@ -56,6 +56,7 @@
 #define DEBUG_USB               DBG_LVL_INFO
 
 #define DEBUG_FATX_FS           DBG_LVL_DEBUG
+#define DEBUG_DVFS              DBG_LVL_DEBUG
 #define DEBUG_VROOT             DBG_LVL_DEBUG
 #define DEBUG_FTPD              DBG_LVL_DEBUG
 #define DEBUG_CORE_FATFS        DBG_LVL_WARN    /* Not printed in text log to avoid logger loops */
