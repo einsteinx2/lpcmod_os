@@ -357,7 +357,7 @@ int fatxmkfs(unsigned char driveNumber, unsigned char partNumber)
     return 0;
 }
 
-int getActivePartName(unsigned char index, const char * *  out)
+int getActivePartName(unsigned char index, const char * *const  out)
 {
     while((NbDrivesSupported * NbFATXPartPerHDD) > index)
     {

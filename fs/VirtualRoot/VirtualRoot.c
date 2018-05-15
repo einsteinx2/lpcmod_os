@@ -15,7 +15,7 @@
 
 typedef struct
 {
-    int         (*getEntryName) (unsigned char index, const char * *  out);
+    int         (*getEntryName) (unsigned char index, const char * *const  out);
     FILEX       (*open)         (const char* path, FileOpenMode mode);
     int         (*read)         (FILEX handle, unsigned char* out, unsigned int size);
     int         (*write)        (FILEX handle, const unsigned char* in, unsigned int size);

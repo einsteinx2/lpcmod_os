@@ -90,7 +90,7 @@ int isMounted(unsigned char driveNumber, unsigned char partitionNumber);
 int fdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout);
 int fatxmkfs(unsigned char driveNumber, unsigned char partNumber);
 
-int getActivePartName(unsigned char index, const char * * out);
+int getActivePartName(unsigned char index, const char * *const out);
 
 FILEX fatxopen(const char* path, FileOpenMode mode);
 int fatxclose(FILEX handle);
