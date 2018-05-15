@@ -20,13 +20,13 @@ static const char *const ReadFileName = "DebugFile";
 #define WriteFileHandle 2
 static unsigned int fileCursor;
 
-void DebugVFS_init(void)
+void debugvfs_init(void)
 {
-    close(ReadFileHandle);
+    debugvfsclose(ReadFileHandle);
     cycler = 0;
 }
 
-int getEntryName(unsigned char index, const char * *const  out)
+int debugvfsgetEntryName(unsigned char index, const char * *const  out)
 {
     if(index == 0)
     {
@@ -39,7 +39,7 @@ int getEntryName(unsigned char index, const char * *const  out)
     return -1;
 }
 
-FILEX open(const char* path, FileOpenMode mode)
+FILEX debugvfsopen(const char* path, FileOpenMode mode)
 {
     if(0 == strcmp(path, ReadFileName) && (mode & FileOpenMode_Read) && !(mode & FileOpenMode_Write))
     {
@@ -54,7 +54,7 @@ FILEX open(const char* path, FileOpenMode mode)
     return 0;
 }
 
-int close(FILEX handle)
+int debugvfsclose(FILEX handle)
 {
     if(ReadFileHandle == handle)
     {
@@ -64,7 +64,7 @@ int close(FILEX handle)
     return 0;
 }
 
-int read(FILEX handle, unsigned char* out, unsigned int size)
+int debugvfsread(FILEX handle, unsigned char* out, unsigned int size)
 {
     unsigned int readSize = size;
     if(ReadFileHandle == handle)
@@ -82,7 +82,7 @@ int read(FILEX handle, unsigned char* out, unsigned int size)
     return -1;
 }
 
-int write(FILEX handle, const unsigned char* in, unsigned int size)
+int debugvfswrite(FILEX handle, const unsigned char* in, unsigned int size)
 {
     if(WriteFileHandle == handle)
     {
@@ -92,7 +92,7 @@ int write(FILEX handle, const unsigned char* in, unsigned int size)
 }
 
 
-int eof(FILEX handle)
+int debugvfseof(FILEX handle)
 {
     if(ReadFileHandle == handle)
     {
@@ -103,7 +103,7 @@ int eof(FILEX handle)
     return 0;
 }
 
-FileInfo stat(const char* path)
+FileInfo debugvfsstat(const char* path)
 {
     FileInfo returnStruct;
     memset(&returnStruct, 0x00, sizeof(FileInfo));
@@ -119,27 +119,27 @@ FileInfo stat(const char* path)
     return returnStruct;
 }
 
-int rename(const char* path, const char* newName)
+int debugvfsrename(const char* path, const char* newName)
 {
     return -1;
 }
 
-int mkdir(const char* path)
+int debugvfsmkdir(const char* path)
 {
     return -1;
 }
 
-int remove(const char* path)
+int debugvfsremove(const char* path)
 {
     return -1;
 }
 
-int chdir(const char* path)
+int debugvfschdir(const char* path)
 {
     return -1;
 }
 
-DIREX opendir(const char* path)
+DIREX debugvfsopendir(const char* path)
 {
     char tempPath[10];
     sprintf(tempPath, PathSep"%s", PartName);
@@ -153,7 +153,7 @@ DIREX opendir(const char* path)
     return 0;
 }
 
-FileInfo readdir(DIREX handle)
+FileInfo debugvfsreaddir(DIREX handle)
 {
 
     FileInfo returnStruct;
@@ -174,7 +174,7 @@ FileInfo readdir(DIREX handle)
     return returnStruct;
 }
 
-int closedir(DIREX handle)
+int debugvfsclosedir(DIREX handle)
 {
     if(RootFolderHandle == handle)
     {

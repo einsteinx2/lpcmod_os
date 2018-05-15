@@ -10,24 +10,24 @@
 
 #include "FatFSAccessor.h"
 
-void DebugVFS_init(void);
+void debugvfs_init(void);
 
-int getEntryName(unsigned char index, const char * *const  out);
-FILEX open(const char* path, FileOpenMode mode);
-int read(FILEX handle, unsigned char* out, unsigned int size);
-int write(FILEX handle, const unsigned char* in, unsigned int size);
-int close(FILEX handle);
+int debugvfsgetEntryName(unsigned char index, const char * *const  out);
+FILEX debugvfsopen(const char* path, FileOpenMode mode);
+int debugvfsread(FILEX handle, unsigned char* out, unsigned int size);
+int debugvfswrite(FILEX handle, const unsigned char* in, unsigned int size);
+int debugvfsclose(FILEX handle);
 
-int eof(FILEX handle);
-FileInfo stat(const char* path);
+int debugvfseof(FILEX handle);
+FileInfo debugvfsstat(const char* path);
 
-int rename(const char* path, const char* newName);
-int mkdir(const char* path);
-int remove(const char* path);
-int chdir(const char* path);
+int debugvfsrename(const char* path, const char* newName);
+int debugvfsmkdir(const char* path);
+int debugvfsremove(const char* path);
+int debugvfschdir(const char* path);
 
-DIREX opendir(const char* path);
-FileInfo readdir(DIREX handle);
-int closedir(DIREX handle);
+DIREX debugvfsopendir(const char* path);
+FileInfo debugvfsreaddir(DIREX handle);
+int debugvfsclosedir(DIREX handle);
 
 #endif /* FS_DEBUGVFS_DEBUGVFS_H_ */
