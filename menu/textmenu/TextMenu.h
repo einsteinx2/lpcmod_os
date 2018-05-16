@@ -59,7 +59,7 @@ typedef struct TEXTMENU {
     bool hideUncommittedChangesLabel;
 } TEXTMENU;
 
-extern char bypassConfirmDialog[50];
+extern char bypassConfirmDialog[];
 
 void TextMenuAddItem(TEXTMENU *menu, TEXTMENUITEM *newMenuItem);
 void TextMenuAddItemInOrder(TEXTMENU *menu, TEXTMENUITEM *newMenuItem);
