@@ -6,6 +6,7 @@
  */
 
 #include "FtpServer.h"
+#include "ftpd.h"
 
 void NetworkManager_ftpdInit(void)
 {

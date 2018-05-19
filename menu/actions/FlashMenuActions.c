@@ -123,7 +123,6 @@ void enableNetflash (void *flashType) {
             break;
         }
     }
-
 }
 
 void enableWebupdate (void *whatever) {

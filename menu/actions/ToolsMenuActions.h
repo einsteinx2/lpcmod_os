@@ -34,6 +34,8 @@ void nextA19controlModBootValue(void* itemPtr);
 
 bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr);
 
+void enableFTPServer(void *ignored);
+
 TEXTMENUITEM* saveEEPROMPtr;
 TEXTMENUITEM* restoreEEPROMPtr;
 TEXTMENUITEM* editEEPROMPtr;

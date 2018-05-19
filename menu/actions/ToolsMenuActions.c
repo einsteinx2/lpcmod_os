@@ -24,6 +24,9 @@
 #include "menu/misc/ConfirmDialog.h"
 #include "menu/misc/ProgressBar.h"
 #include "Gentoox.h"
+#include "video.h"
+#include "NetworkManager.h"
+#include "FtpServer.h"
 TEXTMENUITEM* saveEEPROMPtr;
 TEXTMENUITEM* restoreEEPROMPtr;
 TEXTMENUITEM* editEEPROMPtr;
@@ -375,4 +378,42 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr)
     }
 
     return true;        //Error
+}
+
+void enableFTPServer(void *ignored)
+{
+    char ipString[16];
+    BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+    printk ("\n\n            Starting network interface. ");
+    VIDEO_ATTR = 0xffc8c8c8;
+
+    if(NetworkState_Idle == NetworkManager_getState())
+    {
+        XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_INFO, "Starting network service");
+        NetworkManager_start();
+        cromwellSuccess();
+        while(NetworkState_Running != NetworkManager_getState())
+        {
+            cromwellLoop();
+        }
+    }
+    printk ("\n\n            Network Up. ");
+
+    NetworkManager_ftpdInit();
+    if(0 == NetworkManager_getIP(ipString))
+    {
+        cromwellError();
+        printk ("\n\n            Error starting FTP server. ");
+        UIFooter();
+        return;
+    }
+    cromwellSuccess();
+
+    printk ("\n\n            Go to 'ftp://%s'.\n",ipString);
+
+    while(cromwellLoop())
+    {
+        // Detect no active connection.
+        // kill service when requested so.
+    }
 }

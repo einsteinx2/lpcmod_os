@@ -154,6 +154,12 @@ TEXTMENU *ToolsMenuInit(void)
     }
 #endif
 
+    //Enable FTP Server
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Enable FTP Server");
+    itemPtr->functionPtr = enableFTPServer;
+    TextMenuAddItem(menuPtr, itemPtr);
+
     if(EepromSanityCheck(&LPCmodSettings.bakeeprom) == EEPROM_EncryptInvalid)
     {
         saveEEPROMPtr->nextMenuItem = editEEPROMPtr;

@@ -201,6 +201,7 @@ OBJECTS-CROM += $(TOPDIR)/obj/PowerManagement.o
 OBJECTS-CROM += $(TOPDIR)/obj/HardwareIdentifier.o
 OBJECTS-CROM += $(TOPDIR)/obj/NetworkManager.o
 OBJECTS-CROM += $(TOPDIR)/obj/HttpServer.o
+OBJECTS-CROM += $(TOPDIR)/obj/FtpServer.o
 #USB
 OBJECTS-CROM += $(TOPDIR)/obj/config.o 
 OBJECTS-CROM += $(TOPDIR)/obj/hcd-pci.o
