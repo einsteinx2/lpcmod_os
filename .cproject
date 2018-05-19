@@ -40,7 +40,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="fs/ff12b|lwip-2.0.1|lwip-2.0.0|lwip/src.old|trashcode" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="network|services|fs/ff12b|lwip-2.0.1|lwip-2.0.0|lwip/src.old|trashcode" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -98,7 +98,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="fs/ff12b|lwip-2.0.1|lwip-2.0.0|lwip/src.old|trashcode" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="network|services|fs/ff12b|lwip-2.0.1|lwip-2.0.0|lwip/src.old|trashcode" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

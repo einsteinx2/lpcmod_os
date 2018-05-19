@@ -137,12 +137,12 @@
  * - reset when pcb->sent is called
  */
 #if !defined HTTPD_MAX_RETRIES || defined __DOXYGEN__
-#define HTTPD_MAX_RETRIES                   4
+#define HTTPD_MAX_RETRIES                   16
 #endif
 
 /** The poll delay is X*500ms */
 #if !defined HTTPD_POLL_INTERVAL || defined __DOXYGEN__
-#define HTTPD_POLL_INTERVAL                 4
+#define HTTPD_POLL_INTERVAL                 64
 #endif
 
 /** Priority for tcp pcbs created by HTTPD (very low by default).

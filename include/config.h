@@ -9,9 +9,6 @@
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600
 #define VIDEO_PREFERRED_MODE VIDEO_MODE_640x480
 
-//Uncomment to include BIOS flashing support from CD
-#define FLASH
-
 //Uncomment to enable the 'advanced menu'
 #define ADVANCED_MENU
 

@@ -469,7 +469,6 @@ int LoadKernelCdrom(CONFIGENTRY *config) {
 }
 #endif
 
-#ifdef FLASH 
 int BootLoadFlashCD(int cdromId) {
     busyLED();
     long imageSize=0;
@@ -572,7 +571,6 @@ int BootLoadFlashCD(int cdromId) {
     FlashFileFromBuffer(fileBuf, imageSize, 1);
     return 0;
 }
-#endif //Flash
 
 #if 0
 void ExittoLinux(CONFIGENTRY *config) {

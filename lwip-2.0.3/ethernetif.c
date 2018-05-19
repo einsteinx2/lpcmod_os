@@ -47,56 +47,19 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
-#include "lwip/init.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "netif/etharp.h"
 #include "netif/ppp/pppoe.h"
-#include "lwip/dhcp.h"
-#include "lwip/priv/tcp_priv.h"
-#include "lwip/timeouts.h"
 
 #include "if_ether.h"
 
-
-#include "httpd.h"
-#include "ftpd.h"
-
-#include "WebServerOps.h"
-#include "xblast/settings/xblastSettingsDefs.h"
-#include "lib/cromwell/cromString.h"
-#include "Gentoox.h"
-#include "HDDMenuActions.h"
-#include "EepromEditMenuActions.h"
-#include "Gentoox.h"
-#include "FlashUi.h"
-#include "FlashDriver.h"
-#include "MenuActions.h"
-#include "BootIde.h"
-#include "video.h"
-#include "string.h"
-#include "stdlib.h"
-#include "lib/LPCMod/xblastDebug.h"
-#include "lib/cromwell/CallbackTimer.h"
-#include <stdarg.h>
-
-bool netFlashOver;
-WebServerOps currentWebServerOp;
-unsigned char* postProcessBuf;
-unsigned int postProcessBufSize;
-
-#define DHCP_WAIT_MS 10000 /* Max allowed time as per RFC2131 */
 
 #define LINK_SPEED_OF_YOUR_NETIF_IN_BPS 100000000
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
 #define IFNAME1 'b'
-
-NetworkState currentNetworkState = NetworkState_Idle;
-static struct ip4_addr ipaddr, netmask, gw;
-static struct netif *netif = NULL;
-static unsigned int callbackTimerId;
 
 void
 eth_transmit (const char *d, unsigned int t, unsigned int s, const void *p);
@@ -117,7 +80,7 @@ struct ethernetif {
 #endif
 
 /* Forward declarations. */
-static void  ethernetif_input(struct netif *netif);
+void  ethernetif_input(struct netif *netif);
 
 extern char forcedeth_hw_addr[6];
 
@@ -317,8 +280,7 @@ low_level_input(struct netif *netif)
  *
  * @param netif the lwip network interface structure for this ethernetif
  */
-static void
-ethernetif_input(struct netif *netif)
+void ethernetif_input(struct netif *netif)
 {
 #if 0
   struct ethernetif *ethernetif;
@@ -353,8 +315,7 @@ ethernetif_input(struct netif *netif)
  *         ERR_MEM if private data couldn't be allocated
  *         any other err_t on error
  */
-err_t
-ethernetif_init(struct netif *netif)
+err_t ethernetif_init(struct netif *netif)
 {
 #if 0
   struct ethernetif *ethernetif;
@@ -399,267 +360,4 @@ ethernetif_init(struct netif *netif)
   low_level_init(netif);
 
   return ERR_OK;
-}
-
-static void dhcpFailCallback(void)
-{
-    if (dhcp_supplied_address(netif) == false)
-    {
-        //Not necessary, but polite.
-        dhcp_stop (netif);
-        IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
-                 LPCmodSettings.OSsettings.staticGateway[1],
-                 LPCmodSettings.OSsettings.staticGateway[2],
-                 LPCmodSettings.OSsettings.staticGateway[3]);
-        IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
-                 LPCmodSettings.OSsettings.staticIP[1],
-                 LPCmodSettings.OSsettings.staticIP[2],
-                 LPCmodSettings.OSsettings.staticIP[3]);
-        IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
-                 LPCmodSettings.OSsettings.staticMask[1],
-                 LPCmodSettings.OSsettings.staticMask[2],
-                 LPCmodSettings.OSsettings.staticMask[3]);
-        netif_set_addr(netif, &ipaddr, &netmask, &gw);
-
-        dhcp_inform (netif);
-    }
-    currentNetworkState = NetworkState_ServerInit;
-    cromwellWarning();
-    XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerInit");
-}
-
-void run_lwip(void)
-{
-
-
-    switch(currentNetworkState)
-    {
-    case NetworkState_Idle:
-
-    	break;
-    case NetworkState_Init:
-        printk ("\n            TCP/IP initialization. ");
-    	lwip_init();
-    	cromwellSuccess();
-
-		netif = netif_find("eb");   //Trying to find previously configured network interface
-
-		if(netif == NULL)
-		{
-		    XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "No configured network interface found. Creating one.");
-			netif = (struct netif *)malloc(sizeof(struct netif));
-			//Will never be removed for entire duration of program execution so no free()...
-
-			//These will be overwritten by DHCP anyway if need be.
-			IP4_ADDR(&gw, 0,0,0,0);
-			IP4_ADDR(&ipaddr, 0,0,0,0);
-			IP4_ADDR(&netmask, 0,0,0,0);
-
-			netif_add (netif, &ipaddr, &netmask, &gw, NULL, ethernetif_init, ethernet_input);
-		}
-		else
-		{
-		    XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "Found previously configured network interface.");
-		}
-
-		netif_set_up(netif);
-
-		if (LPCmodSettings.OSsettings.useDHCP)
-		{
-			//Re-run DHCP discover anyways just in case lease was revoked.
-		    printk ("\n            Starting DHCP. ");
-			dhcp_start (netif);
-			cromwellSuccess();
-			printk ("\n            Acquiring IP address. ");
-
-			callbackTimerId = newCallbackTimer(dhcpFailCallback, DHCP_WAIT_MS, IsSingleUseTimer);
-			if(0 == callbackTimerId)
-			{
-			    dhcpFailCallback();
-			}
-			else
-			{
-                currentNetworkState = NetworkState_DHCPStart;
-                XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_DHCPStart");
-			}
-		}
-		else
-		{
-			//Not necessary, but polite.
-			dhcp_stop (netif);
-			IP4_ADDR(&gw, LPCmodSettings.OSsettings.staticGateway[0],
-					 LPCmodSettings.OSsettings.staticGateway[1],
-					 LPCmodSettings.OSsettings.staticGateway[2],
-					 LPCmodSettings.OSsettings.staticGateway[3]);
-			IP4_ADDR(&ipaddr, LPCmodSettings.OSsettings.staticIP[0],
-					 LPCmodSettings.OSsettings.staticIP[1],
-					 LPCmodSettings.OSsettings.staticIP[2],
-					 LPCmodSettings.OSsettings.staticIP[3]);
-			IP4_ADDR(&netmask, LPCmodSettings.OSsettings.staticMask[0],
-					 LPCmodSettings.OSsettings.staticMask[1],
-					 LPCmodSettings.OSsettings.staticMask[2],
-					 LPCmodSettings.OSsettings.staticMask[3]);
-			netif_set_addr(netif, &ipaddr, &netmask, &gw);
-
-			dhcp_inform (netif);
-
-			currentNetworkState = NetworkState_ServerInit;
-			XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerInit");
-		}
-		netif_set_default (netif);
-    	break;
-    case NetworkState_DHCPStart:
-	    ethernetif_input(netif);
-
-    	if(dhcp_supplied_address(netif))
-    	{
-    	    stopCallbackTimer(callbackTimerId);
-    		currentNetworkState = NetworkState_ServerInit;
-			cromwellSuccess();
-			XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerInit");
-    	}
-    	break;
-    case NetworkState_ServerInit:
-        printk ("\n\n            Go to 'http://%u.%u.%u.%u' to flash your BIOS.\n",
-            ((netif->ip_addr.addr) & 0xff),
-            ((netif->ip_addr.addr) >> 8 & 0xff),
-            ((netif->ip_addr.addr) >> 16 & 0xff),
-            ((netif->ip_addr.addr) >> 24 & 0xff));
-
-		httpd_init();
-		ftpd_init();
-
-		currentNetworkState = NetworkState_ServerRunning;
-		XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerRunning");
-    	break;
-    case NetworkState_ServerRunning:
-	    ethernetif_input(netif);
-
-    	if(netFlashOver == true)
-    	{
-    		currentNetworkState = NetworkState_ServerShuttingDown;
-    		XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_ServerShuttingDown");
-    	}
-    	break;
-    case NetworkState_ServerShuttingDown:
-    	dhcp_stop(netif);
-    	currentNetworkState = NetworkState_Cleanup;
-    	XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_Cleanup");
-    	break;
-    case NetworkState_Cleanup:
-        switch(currentWebServerOp)
-        {
-        case WebServerOps_BIOSFlash:
-        {
-            FlashProgress flashProgress = Flash_getProgress();
-            if(flashProgress.currentFlashOp == FlashOp_Idle)
-            {
-                currentNetworkState = NetworkState_Idle;
-            }
-        }
-        break;
-        default:
-            currentNetworkState = NetworkState_Idle;
-            break;
-        }
-    	break;
-    }
-
-    sys_check_timeouts();
-}
-
-void startNetFlash(WebServerOps flashType)
-{
-    currentWebServerOp = flashType;
-    //Init a couple of Lwip globals because they seem to assume declared pointers are set to NULL by default.
-    //From tcp.c
-    tcp_bound_pcbs = NULL;
-    tcp_listen_pcbs.listen_pcbs = NULL;
-    tcp_active_pcbs = NULL;
-    tcp_tw_pcbs = NULL;
-    //tcp_tmp_pcb = NULL; //Not needed anymore in 2.0.0
-
-    //from netif.c
-    netif_list = NULL;
-    netif_default = NULL;
-
-    //From udp.c
-    udp_pcbs = NULL;
-
-    currentNetworkState = NetworkState_Init;
-    postProcessBuf = NULL;
-    postProcessBufSize = 0;
-    netFlashOver = false;
-    XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_Init");
-}
-
-bool newPostProcessData(WebServerOps op, const unsigned char* buf, unsigned int size)
-{
-    //op param will be used in the future
-    //Maybe chain up operations?
-
-    // Do not overwrite a pending operation
-    if(postProcessBuf != NULL || postProcessBufSize != 0)
-    {
-        return false;
-    }
-
-    postProcessBuf = malloc(size);
-    memcpy(postProcessBuf, buf, size);
-    postProcessBufSize = size;
-
-    return true;
-}
-
-bool netflashPostProcess(void)
-{
-    extern void ClearScreen (void);
-
-    if(netFlashOver)
-    {
-        switch(currentWebServerOp)
-        {
-        case WebServerOps_BIOSFlash:
-            ClearScreen ();
-            FlashFileFromBuffer(postProcessBuf, postProcessBufSize, false);
-            break;
-        case WebServerOps_EEPROMFlash:
-            ClearScreen ();
-            updateEEPROMEditBufferFromInputBuffer(postProcessBuf, postProcessBufSize, true);
-            UIFooter();
-            break;
-        case WebServerOps_HDD0Lock:
-            ClearScreen ();
-
-            if((tsaHarddiskInfo[0].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
-            {
-                UnlockHDD(0, 0, postProcessBuf, false);    //Attempt Unlock only if SECURITY_UNLOCK was successful.
-            }
-            else
-            {
-                LockHDD(0, 0, postProcessBuf);
-            }
-            break;
-        case WebServerOps_HDD1Lock:
-            ClearScreen ();
-
-            if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
-            {
-                UnlockHDD(1, 1, postProcessBuf, false);       //Attempt Unlock only if SECURITY_UNLOCK was successful.
-            }
-            else
-            {
-                LockHDD(1, 1, postProcessBuf);
-            }
-            break;
-        }
-
-        free(postProcessBuf);
-        postProcessBuf = NULL;
-        postProcessBufSize = 0;
-
-        return true;
-    }
-
-    return false;
 }

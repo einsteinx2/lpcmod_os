@@ -21,7 +21,7 @@
 #include "FlashMenuActions.h"
 #include "Gentoox.h"
 #include "menu/misc/ConfirmDialog.h"
-#include "WebServerOps.h"
+#include "HttpServer.h"
 
 static const char* formatCommonStr = "\n           Format ";
 

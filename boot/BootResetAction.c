@@ -41,6 +41,7 @@
 #include "FlashDriver.h"
 #include "lib/time/timeManagement.h"
 #include "lib/cromwell/CallbackTimer.h"
+#include "NetworkManager.h"
 
 JPEG jpegBackdrop;
 
@@ -466,6 +467,7 @@ extern void BootResetAction ( void )
     BootIdeInit();
     VirtualRootInit();
     debugLoggerInit();
+    NetworkManager_init();
 
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?

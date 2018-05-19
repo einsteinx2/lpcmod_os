@@ -9,16 +9,13 @@
 #include "FlashDriver.h"
 #include "lib/time/timeManagement.h"
 #include "lib/LPCMod/LCDRingBuffer.h"
-#include "WebServerOps.h"
+#include "NetworkManager.h"
 #include "lib/LPCMod/BootLCD.h"
 #include "CallbackTimer.h"
 
 unsigned char cromwellLoop(void)
 {
-    if(currentNetworkState != NetworkState_Idle)
-    {
-        run_lwip();
-    }
+    NetworkManager_update();
 
     if(xLCD.enable)
     {

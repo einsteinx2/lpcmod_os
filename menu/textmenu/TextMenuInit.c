@@ -63,7 +63,6 @@ TEXTMENU *TextMenuInit(void)
     TextMenuAddItem(menuPtr, itemPtr);
 
 
-#ifdef FLASH
     if(isXBlastOnTSOP())
     {
         //FLASH MENU
@@ -102,7 +101,6 @@ TEXTMENU *TextMenuInit(void)
         itemPtr->dataPtrAlloc = true;
         TextMenuAddItem(menuPtr, itemPtr);
     }
-#endif
 
     //HDD MENU
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));

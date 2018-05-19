@@ -104,8 +104,9 @@
 #include <stdbool.h>
 
 #include "lib/LPCMod/BootLPCMod.h"
-#include "WebServerOps.h"
+#include "HttpServer.h"
 extern bool netFlashOver;
+extern struct tcp_pcb *httpdPcb;
 
 static bool killHttpd = false;
 static u8_t postBuf[1024 * 1024 + 512];
@@ -2141,8 +2142,8 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
       } else
 #endif /* LWIP_HTTPD_MAX_REQUEST_URI_LEN */
       {
-        LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("CurrentWebServerOps=%u\n", currentWebServerOp));
-        file_name = g_psDefaultFilenames[currentWebServerOp].name;
+        LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("CurrentWebServerOps=%u\n", getWebServerOps()));
+        file_name = g_psDefaultFilenames[getWebServerOps()].name;
       }
       LWIP_DEBUGF(HTTPD_DEBUG | LWIP_DBG_TRACE, ("Looking for %s...\n", file_name));
       err = fs_open(&hs->file_handle, file_name);
@@ -2589,6 +2590,10 @@ httpd_init(void)
 
   pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
   LWIP_ASSERT("httpd_init: tcp_new failed", pcb != NULL);
+  if(NULL != pcb)
+  {
+      httpdPcb = pcb;
+  }
   tcp_setprio(pcb, HTTPD_TCP_PRIO);
   /* set SOF_REUSEADDR here to explicitly bind httpd to multiple interfaces */
   err = tcp_bind(pcb, IP_ANY_TYPE, HTTPD_SERVER_PORT);
@@ -2887,7 +2892,7 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
 
         unsigned int biosSize = biosDataEnd - biosDataStart;
 
-        switch(currentWebServerOp)
+        switch(getWebServerOps())
         {
         case WebServerOps_BIOSFlash:
 
@@ -2968,7 +2973,7 @@ void httpd_post_finished(void *connection, char *response_uri, u16_t response_ur
         }
         hs->post_data_len = 0;
 
-        switch(currentWebServerOp)
+        switch(getWebServerOps())
         {
         case WebServerOps_BIOSFlash:
             if(invalidFile == true)

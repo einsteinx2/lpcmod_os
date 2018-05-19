@@ -23,9 +23,9 @@
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
 #include "lib/cromwell/cromSystem.h"
-#include "WebServerOps.h"
+#include "HttpServer.h"
+#include "NetworkManager.h"
 
-extern int etherboot(void);
 extern int BootLoadFlashCD(int cdromId);
 
 static const char* const biosDirectoryLocation = PathSep"MASTER_C"PathSep"BIOS";
@@ -36,7 +36,6 @@ const char* const getBIOSDirectoryLocation(void)
 }
 
 void FlashBiosFromHDD (void *fname) {
-#ifdef FLASH
     int res = 0;
     unsigned char fileBuf[1024 * 1024];
     unsigned int size;
@@ -78,51 +77,62 @@ void FlashBiosFromHDD (void *fname) {
     }
     
     return;
-#endif
 }
 
 void FlashBiosFromCD (void *cdromId) {
-#ifdef FLASH
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     BootLoadFlashCD (*(int *) cdromId);
-#endif
 }
 
 void enableNetflash (void *flashType) {
-#ifdef FLASH
-    static bool nicInit = false;
+    char ipString[16];
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     printk ("\n\n            Starting network interface. ");
     VIDEO_ATTR = 0xffc8c8c8;
 
-    if(nicInit == true || etherboot() == 0)
+    if(NetworkState_Idle == NetworkManager_getState())
     {
-        nicInit = true;
-        cromwellSuccess();
         XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_INFO, "Starting network service");
-        startNetFlash(*(WebServerOps *)flashType);
-        while(cromwellLoop())
+        NetworkManager_start();
+        cromwellSuccess();
+        while(NetworkState_Running != NetworkManager_getState())
         {
-            if(netflashPostProcess())
-            {
-                XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_INFO, "Killing network service");
-                break;
-            }
+            cromwellLoop();
         }
-
     }
-#endif
+    printk ("\n\n            Network Up. ");
+
+    NetworkManager_httpdInit(*(WebServerOps *)flashType);
+    if(0 == NetworkManager_getIP(ipString))
+    {
+        cromwellError();
+        printk ("\n\n            Error starting HTTP server. ");
+        FlashFooter();
+        return;
+    }
+    cromwellSuccess();
+
+    printk ("\n\n            Go to 'http://%s' to flash your BIOS.\n",ipString);
+
+    while(cromwellLoop())
+    {
+        if(netflashPostProcess())
+        {
+            XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_INFO, "Killing network service");
+            NetworkManager_httpdHalt();
+            break;
+        }
+    }
+
 }
 
 void enableWebupdate (void *whatever) {
-#ifdef FLASH
     BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
     printk ("\n\n");
     VIDEO_ATTR = 0xffc8c8c8;
 
     //initialiseNetwork ();
     //webUpdate ();
-#endif
 }
 
 void FlashFooter(void)

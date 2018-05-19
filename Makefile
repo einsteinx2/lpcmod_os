@@ -23,7 +23,8 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/$(LWIPFOLDER) -I$(TOPDIR)/$(LWIPFOLDER)/src/include \
 	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps \
 	-I$(TOPDIR)/fs/VirtualRoot -I$(TOPDIR)/fs/DebugVFS -I$(TOPDIR)/lib/lwip-ftpd \
-	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include
+	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include \
+	-I$(TOPDIR)/lib/network
 
 #These are intended to be non-overridable.
 CROM_CFLAGS=$(INCLUDE)
@@ -198,6 +199,8 @@ OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsChangeTracker.o
 OBJECTS-CROM += $(TOPDIR)/obj/xblastSettingsImportExport.o
 OBJECTS-CROM += $(TOPDIR)/obj/PowerManagement.o
 OBJECTS-CROM += $(TOPDIR)/obj/HardwareIdentifier.o
+OBJECTS-CROM += $(TOPDIR)/obj/NetworkManager.o
+OBJECTS-CROM += $(TOPDIR)/obj/HttpServer.o
 #USB
 OBJECTS-CROM += $(TOPDIR)/obj/config.o 
 OBJECTS-CROM += $(TOPDIR)/obj/hcd-pci.o

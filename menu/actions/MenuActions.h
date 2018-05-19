@@ -33,9 +33,6 @@ void freeTextMenuAllocMem(TEXTMENU* menu);
 //void BootFromCD(void *driveId);
 //void BootFromNet(void *whatever);
 
-#ifdef FLASH
-//void FlashBios(void *);
-#endif
 
 void UiHeader(char *title);
 void UIFooter(void);

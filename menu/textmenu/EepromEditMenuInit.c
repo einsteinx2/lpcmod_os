@@ -14,7 +14,7 @@
 #include "string.h"
 #include "stdio.h"
 #include "FatFSAccessor.h"
-#include "WebServerOps.h"
+#include "HttpServer.h"
 
 TEXTMENU* EEPROMFileRestoreMenuInit(void);
 

@@ -16,8 +16,8 @@
 #include "string.h"
 #include "xblast/HardwareIdentifier.h"
 #include "lib/LPCMod/BootLPCMod.h"
-#include "WebServerOps.h"
 #include "BootIde.h"
+#include "HttpServer.h"
 
 
 TEXTMENU* BankSelectMenuInit(void)
