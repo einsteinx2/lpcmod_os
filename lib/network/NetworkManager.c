@@ -174,9 +174,12 @@ void NetworkManager_update(void)
 
 void NetworkManager_start(void)
 {
-    if(nicInit == true || etherboot() == 0)
+    if(false == nicInit)
     {
-        nicInit = true;
+        if(0 == etherboot())
+        {
+            nicInit = true;
+        }
     }
     currentNetworkState = NetworkState_Init;
     XBlastLogger(DEBUG_LWIP, DBG_LVL_DEBUG, "currentNetworkState == NetworkState_Init");
