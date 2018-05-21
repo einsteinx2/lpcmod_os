@@ -39,7 +39,20 @@ void NetworkManager_httpdHalt(void)
 {
     if(netFlashOver)
     {
-        tcp_shutdown(httpdPcb, 1, 1);
+        tcp_arg(httpdPcb, NULL);
+        tcp_sent(httpdPcb, NULL);
+        tcp_recv(httpdPcb, NULL);
+        tcp_err(httpdPcb, NULL);
+        tcp_poll(httpdPcb, NULL, 0);
+        if(ERR_OK != tcp_close(httpdPcb))
+        {
+            XBlastLogger(DEBUG_NETWORK, DBG_LVL_WARN, "Could not close httpd cleanly.");
+            if(NULL != httpdPcb)
+            {
+                tcp_abort(httpdPcb);
+            }
+        }
+        httpdPcb = NULL;
     }
 }
 
