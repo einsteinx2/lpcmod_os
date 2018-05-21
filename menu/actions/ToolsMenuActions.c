@@ -411,9 +411,5 @@ void enableFTPServer(void *ignored)
 
     printk ("\n\n            Go to 'ftp://%s'.\n",ipString);
 
-    while(cromwellLoop())
-    {
-        // Detect no active connection.
-        // kill service when requested so.
-    }
+    UIFooter();
 }

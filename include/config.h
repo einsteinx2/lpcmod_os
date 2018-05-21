@@ -3,7 +3,7 @@
 #define PROG_NAME "XBlast OS"
 
 //XBlast OS version number
-#define VERSION "0.59"
+#define VERSION "0.60"
 
 // selects between the supported video modes, see boot.h for enum listing those available
 //#define VIDEO_PREFERRED_MODE VIDEO_MODE_800x600

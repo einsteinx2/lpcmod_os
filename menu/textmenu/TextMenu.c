@@ -18,6 +18,7 @@
 #include "lib/cromwell/cromString.h"
 #include "lib/time/timeManagement.h"
 #include "lib/LPCMod/xblastDebug.h"
+#include "NetworkManager.h"
 
 int breakOutOfMenu = 0;
 unsigned int temp, oldTemp; 
@@ -189,6 +190,14 @@ void TextMenuDraw(TEXTMENU* menu, TEXTMENUITEM *firstVisibleMenuItem, TEXTMENUIT
             VIDEO_ATTR=0x88c8c8c8;
             printk("Uncommitted changes: %u", uncommittedChanges);
         }
+    }
+
+    if(NetworkState_Running == NetworkManager_getState())
+    {
+        VIDEO_CURSOR_POSY = vmode.height - 30;
+        char ipString[20];
+        NetworkManager_getIP(ipString);
+        rightAlignPrintK(0, VIDEO_CURSOR_POSY, "IP: %s", ipString);
     }
 
     textMenuLCDPrint(menu, selectedItem);
