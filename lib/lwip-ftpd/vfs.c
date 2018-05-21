@@ -32,7 +32,7 @@
  */
 vfs_dirent_t dir_ent;
 
-static FILEX guard_for_the_whole_fs;
+static FILEX guard_for_the_whole_fs = 0;
 
 int vfs_read (void* buffer, int dummy, int len, vfs_file_t* file) {
     int result = vroot_read(*file, buffer, len);
@@ -78,6 +78,10 @@ void vfs_close(vfs_t* vfs) {
 		vroot_close(*vfs);
 		free(vfs);
 	}
+	else
+	{
+	    guard_for_the_whole_fs = 0;
+	}
 }
 
 int vfs_write (void* buffer, int dummy, int len, vfs_file_t* file) {
@@ -87,7 +91,13 @@ int vfs_write (void* buffer, int dummy, int len, vfs_file_t* file) {
 }
 
 vfs_t* vfs_openfs(void) {
+    guard_for_the_whole_fs = 1;
 	return &guard_for_the_whole_fs;
+}
+
+void closefs(void)
+{
+    guard_for_the_whole_fs = 0;
 }
 
 vfs_file_t* vfs_open(vfs_t* vfs, const char* filename, const char* mode) {
@@ -142,4 +152,9 @@ struct tm dummy = {
 };
 struct tm* gmtime(time_t* c_t) {
 	return &dummy;
+}
+
+unsigned char ftpdactive(void)
+{
+    return guard_for_the_whole_fs;
 }

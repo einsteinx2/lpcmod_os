@@ -83,4 +83,6 @@ void vfs_closedir(vfs_dir_t* dir);
 vfs_dir_t* vfs_opendir(vfs_t* vfs, const char* path);
 struct tm* gmtime(time_t *c_t);
 
+unsigned char ftpdactive(void);
+
 #endif /* INCLUDE_VFS_H */
