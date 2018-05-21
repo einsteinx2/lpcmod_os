@@ -9,6 +9,8 @@
 #define LIB_NETWORK_FTPSERVER_H_
 
 void NetworkManager_ftpdInit(void);
-void NetworkManager_ftpdHalt(void);
+#if 0
+unsigned char NetworkManager_ftpdHalt(void);
+#endif
 
 #endif /* LIB_NETWORK_FTPSERVER_H_ */

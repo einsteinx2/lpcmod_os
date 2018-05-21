@@ -355,6 +355,8 @@ struct ftpd_msgstate {
 	char *renamefrom;
 };
 
+extern struct tcp_pcb *ftpdPcb;
+
 static void send_msg(struct tcp_pcb *pcb, struct ftpd_msgstate *fsm, char *msg, ...);
 
 static void ftpd_dataerr(void *arg, err_t err)
@@ -1507,12 +1509,10 @@ static err_t ftpd_msgaccept(void *arg, struct tcp_pcb *pcb, err_t err)
 
 void ftpd_init(void)
 {
-	struct tcp_pcb *pcb;
-
 	vfs_load_plugin(vfs_default_fs);
 
-	pcb = tcp_new();
-	tcp_bind(pcb, IP_ADDR_ANY, 21);
-	pcb = tcp_listen(pcb);
-	tcp_accept(pcb, ftpd_msgaccept);
+	ftpdPcb = tcp_new();
+	tcp_bind(ftpdPcb, IP_ADDR_ANY, 21);
+	ftpdPcb = tcp_listen(ftpdPcb);
+	tcp_accept(ftpdPcb, ftpd_msgaccept);
 }
