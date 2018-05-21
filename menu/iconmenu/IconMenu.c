@@ -305,6 +305,7 @@ static void IconMenuDraw(int nXOffset, int nYOffset)
         VIDEO_CURSOR_POSY = vmode.height - 30;
         char ipString[20];
         NetworkManager_getIP(ipString);
+        VIDEO_ATTR=0x88c8c8c8;
         rightAlignPrintK(0, VIDEO_CURSOR_POSY, "IP: %s", ipString);
     }
 

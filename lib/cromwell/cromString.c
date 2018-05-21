@@ -82,7 +82,9 @@ unsigned int centerPrintK(int XPos, int YPos, const char *szFormat, ...)
 
 unsigned int rightAlignPrintK(int XPos, int YPos, const char *szFormat, ...)
 {
-    char szBuffer[512 * 2], singleLine[SingleLineMaxLength];
+#define DefaultOffset 120
+#define TempBufferSize 1024
+    char szBuffer[TempBufferSize], singleLine[SingleLineMaxLength];
     unsigned char singleLineLength;
     unsigned int wLength = 0, i = 0, startPos = 0;
     va_list argList;
@@ -90,11 +92,11 @@ unsigned int rightAlignPrintK(int XPos, int YPos, const char *szFormat, ...)
     wLength=(unsigned int) vsprintf(szBuffer, szFormat, argList);
     va_end(argList);
 
-    szBuffer[sizeof(szBuffer)-1]=0;
+    szBuffer[TempBufferSize-1]=0;
 
-    if (wLength>(sizeof(szBuffer)-1))
+    if (wLength>(TempBufferSize-1))
     {
-        wLength = sizeof(szBuffer)-1;
+        wLength = TempBufferSize-1;
     }
 
     szBuffer[wLength]='\0';
@@ -110,8 +112,8 @@ unsigned int rightAlignPrintK(int XPos, int YPos, const char *szFormat, ...)
                 singleLineLength = i - startPos >= (SingleLineMaxLength - 1) ? (SingleLineMaxLength - 2) : i - startPos + 1;
                 strncpy(singleLine, szBuffer + startPos, singleLineLength);
                 singleLine[singleLineLength + 1] = '\0';
-                unsigned int offset = (BootVideoGetStringTotalWidth(singleLine)/2);
-                VIDEO_CURSOR_POSX=(vmode.width - XPos - offset) * 4;
+                unsigned int offset = (BootVideoGetStringTotalWidth(singleLine));
+                VIDEO_CURSOR_POSX=(vmode.width - XPos - DefaultOffset - offset) * 4;
                 BootVideoChunkedPrint(singleLine);
                 startPos = i + 1;
             }
