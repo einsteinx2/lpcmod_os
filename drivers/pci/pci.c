@@ -334,8 +334,6 @@ void BootPciPeripheralInitialization()
     //---a 0xfffffaff DWORD AND mask starting from offset 0x08. Previously set at 0xfffffeff.
     //---Set both ports to compatibility mode. Leave all other settings at default.
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 8, PciReadDword(BUS_0, DEV_9, FUNC_0, 8)&0xfffffaff); //| 0x00000500);  for native
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x10, 0x000002f0);      //Set ATA command set register to start at 0x2F0(from 1F0)
-    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x14, 0x000004f6);      //Set ATA control register to start at 0x4F6(from 3F6)
     //---BAR register. 32bits
     //---bit0 hardwired to 1, bits15-4= base addr of IO space, same as XboxKernel sources.
     PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x20, 0x0000ff61);    // (BMIBA) Set Busmaster regs I/O base address 0xff60
