@@ -52,6 +52,7 @@
 #define DEBUG_SETTINGS          DBG_LVL_INFO
 #define DEBUG_CALLBACKTIMER     DBG_LVL_INFO
 #define DEBUG_NETWORK           DBG_LVL_INFO
+#define DEBUG_IRQ               DBG_LVL_DEBUG
 
 #define DEBUG_USB               DBG_LVL_INFO
 
@@ -81,12 +82,6 @@
 #define XBlastLogger(...)
 #define USBDebugLogger(...)
 #endif
-#endif
-
-#ifdef SPI_INT_TRACE
-#define debugSPIPrintInt(...) printTextSPI(__func__, ##__VA_ARGS__)
-#else
-#define debugSPIPrintInt(...)
 #endif
 
 #endif /* LIB_LPCMOD_XBLASTDEBUG_H_ */

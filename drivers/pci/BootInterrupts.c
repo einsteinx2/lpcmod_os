@@ -209,7 +209,7 @@ void IntHandlerCSmc(void)
     
     bStatus=I2CTransmitByteGetReturn(0x10, 0x11); // Query PIC for interrupt reason
     
-    debugSPIPrintInt("\n\nreturn byte : 0x%02X\n\n", bStatus);
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "\n\nreturn byte : 0x%02X\n", bStatus);
     // we do nothing, if there is not Interrupt reason
     if (bStatus==0x0)
     {
@@ -227,7 +227,7 @@ void IntHandlerCSmc(void)
             case 0: // POWERDOWN EVENT
                 //if(canPowerDown())
                 {
-                    debugSPIPrintInt("SMC Interrupt %d: Powerdown\n", nCountInterruptsSmc);
+                    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: Powerdown", nCountInterruptsSmc);
                     I2CTransmitWord(0x10, 0x0200);
                     I2CTransmitWord(0x10, 0x0100|b);
                     I2CTransmitWord(0x10, 0x0500|b);
@@ -251,7 +251,7 @@ void IntHandlerCSmc(void)
 
             case 1: // CDROM TRAY IS NOW CLOSED
                 traystate = ETS_CLOSED;
-                debugSPIPrintInt("SMC Interrupt %d: CDROM Tray now Closed\n", nCountInterruptsSmc);
+                XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: CDROM Tray now Closed", nCountInterruptsSmc);
                 DVD_TRAY_STATE = DVD_CLOSED;
                 break;
 
@@ -259,7 +259,7 @@ void IntHandlerCSmc(void)
                 traystate = ETS_OPEN_OR_OPENING;
                 DVD_TRAY_STATE = DVD_OPENING;
                 I2CTransmitWord(0x10, 0x0d02);
-                debugSPIPrintInt("SMC Interrupt %d: CDROM starting opening\n", nCountInterruptsSmc);
+                XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: CDROM starting opening", nCountInterruptsSmc);
                 break;
 
             case 3: // AV CABLE HAS BEEN PLUGGED IN
@@ -279,7 +279,7 @@ void IntHandlerCSmc(void)
                 break;
 
             case 4: // AV CABLE HAS BEEN UNPLUGGED
-                debugSPIPrintInt("SMC Interrupt %d: AV cable unplugged\n", nCountInterruptsSmc);
+                XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: AV cable unplugged", nCountInterruptsSmc);
                 VIDEO_AV_MODE = 0xff;
                 //vmode.m_bAvPack=0xff;
                 break;
@@ -288,18 +288,18 @@ void IntHandlerCSmc(void)
                 traystate = ETS_OPEN_OR_OPENING;
                 I2CTransmitWord(0x10, 0x0d04);
                 I2CTransmitWord(0x10, 0x0c00);
-                debugSPIPrintInt("SMC Interrupt %d: CDROM tray opening by Button press\n", nCountInterruptsSmc);
+                XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: CDROM tray opening by Button press", nCountInterruptsSmc);
                 bStatus&=~0x02; // kill possibility of conflicting closing report
                 break;
 
             case 6: // CDROM TRAY IS STARTING CLOSING
                 traystate = ETS_CLOSING;
                 DVD_TRAY_STATE = DVD_CLOSING;
-                debugSPIPrintInt("SMC Interrupt %d: CDROM tray starting closing\n", nCountInterruptsSmc);
+                XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: CDROM tray starting closing", nCountInterruptsSmc);
                 break;
 
             case 7: // UNKNOWN
-                debugSPIPrintInt("SMC Interrupt %d: b7 Reason code\n", nCountInterruptsSmc);
+                XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "SMC Interrupt %d: b7 Reason code", nCountInterruptsSmc);
                 break;
             }
         }
@@ -315,8 +315,8 @@ void IntHandlerCIde(void)
         return;
     }
 
-    IoInputByte(0x1f7);
-    debugSPIPrintInt("IDE Interrupt\n");
+    unsigned char statusReg = IoInputByte(0x1f7);
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG | DBG_FLG_SPI, "IDE Interrupt. status:%02X", statusReg);
     nCountInterruptsIde++;
 }
 
@@ -334,7 +334,7 @@ void IntHandlerUnusedC(void)
     {
         return;
     }
-    debugSPIPrintInt("Unhandled Interrupt\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Unhandled Interrupt");
     //printk("Unhandled Interrupt");
     nCountUnusedInterrupts++;
     //while(1) ;
@@ -348,7 +348,7 @@ void IntHandlerUnusedC2(void)
         return;
     }
 
-    debugSPIPrintInt("Unhandled Interrupt 2\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Unhandled Interrupt 2");
     nCountUnusedInterruptsPic2++;
 }
 
@@ -372,7 +372,7 @@ void IntHandler1C(void)
     {
         return;
     }
-    debugSPIPrintInt("USB Interrupt 1C\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "USB Interrupt 1C");
     USBGetEvents();
 }
 void IntHandler9C(void)
@@ -382,7 +382,7 @@ void IntHandler9C(void)
     {
         return;
     }
-    debugSPIPrintInt("USB Interrupt 9C\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "USB Interrupt 9C");
     USBGetEvents();
 }
 
@@ -393,7 +393,7 @@ void IntHandler2C(void)
     {
         return;
     }
-    debugSPIPrintInt("Interrupt 2\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 2");
 }
 
 void IntHandler3VsyncC(void)  // video VSYNC
@@ -408,7 +408,7 @@ void IntHandler4C(void)
     {
         return;
     }
-    debugSPIPrintInt("Interrupt 4\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 4");
 }
 void IntHandler5C(void)
 {
@@ -416,13 +416,13 @@ void IntHandler5C(void)
     {
         return;
     }
-    debugSPIPrintInt("Interrupt 5\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 5");
 }
 
 void IntHandler6C(void)
 {
 
-    debugSPIPrintInt("Interrupt 6\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 6");
 }
 
 void IntHandler7C(void)
@@ -431,12 +431,12 @@ void IntHandler7C(void)
     {
         return;
     }
-    debugSPIPrintInt("Interrupt 7\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 7");
 }
 
 void IntHandler8C(void)
 {
-    debugSPIPrintInt("Interrupt 8\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 8");
 }
 
 
@@ -446,12 +446,12 @@ void IntHandler10C(void)
     {
         return;
     }
-    debugSPIPrintInt("Interrupt 10\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 10");
 }
 
 void IntHandler13C(void)
 {
-    debugSPIPrintInt("Interrupt 13\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Interrupt 13");
 }
 
 void IntHandler15C(void)
@@ -460,10 +460,9 @@ void IntHandler15C(void)
     {
         return;
     }
-    debugSPIPrintInt("Unhandled Interrupt 15\n");
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG, "Unhandled Interrupt 15");
 }
 
-//void IntHandlerException0C(void) {    debugSPIPrintInt("CPU Exc: Divide by Zero\n");    while(1) ; }
 void IntHandlerException0C(void)
 {
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Divide by Zero");
@@ -498,7 +497,6 @@ void IntHandlerException6C(void)
     while(1) ;
 }
 
-//void IntHandlerException7C(void) {    debugSPIPrintInt("CPU Exc: Coprocessor Absent\n");    while(1) ; }
 void IntHandlerException7C(void)
 {
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Coprocessor Absent");
@@ -507,7 +505,6 @@ void IntHandlerException8C(void)
 {
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Double Fault");    while(1) ;
 }
-//void IntHandlerException9C(void) {    XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Copro Seg Overrun\n");    while(1) ; }
 void IntHandlerException9C(void)
 {
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Copro Seg Overrun");
@@ -536,7 +533,6 @@ void IntHandlerExceptionFC(void)
 {
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Reserved");    while(1) ;
 }
-//void IntHandlerException10C(void) {    XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Copro Error\n");    while(1) ; }
 void IntHandlerException10C(void)
 {
     XBlastLogger(DEBUG_EXCEPTIONS, DBG_LVL_FATAL, "CPU Exc: Copro Error");
