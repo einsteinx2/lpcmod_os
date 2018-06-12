@@ -3,7 +3,7 @@
 
 #include "boot.h"
 #include "BootFATX.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "stdlib.h"
 #include "string.h"
 #include "Gentoox.h"
