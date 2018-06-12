@@ -316,7 +316,7 @@ void IntHandlerCIde(void)
     }
 
     unsigned char statusReg = IoInputByte(0x1f7);
-    XBlastLogger(DEBUG_IRQ, DBG_LVL_DEBUG | DBG_FLG_SPI, "IDE Interrupt. status:%02X", statusReg);
+    XBlastLogger(DEBUG_IRQ, DBG_LVL_INFO | DBG_FLG_SPI, "IDE Interrupt. status:%02X", statusReg);
     nCountInterruptsIde++;
 }
 
