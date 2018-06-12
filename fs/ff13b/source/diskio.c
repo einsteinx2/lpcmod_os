@@ -68,7 +68,7 @@ DRESULT disk_read (
 {
 #define DEFAULT_RETRY_COUNT 3
     int returnValue;
-    //XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_INFO, "drv:%u  count=%u sector=0x%lX", pdrv, count, sector);
+
     returnValue = IdeDriver_Read(pdrv, buff, sector, count);
     if(returnValue)
     {
