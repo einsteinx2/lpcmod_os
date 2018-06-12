@@ -23,7 +23,6 @@
 #include "menu/misc/ConfirmDialog.h"
 #include "HttpServer.h"
 #include "BootHddKey.h"
-#include "BootHddKey.h"
 #include "IdeDriver.h"
 
 static const char* formatCommonStr = "\n           Format ";
