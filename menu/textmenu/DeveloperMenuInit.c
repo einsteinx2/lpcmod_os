@@ -12,12 +12,17 @@
 #include "DeveloperMenuActions.h"
 #include "lpcmod_v1.h"
 #include "string.h"
+#include "stdio.h"
 #include "xblast/HardwareIdentifier.h"
+#include "FatFSAccessor.h"
+
+void DeveloperFileOpsMenuDynamic(void* drive);
 
 TEXTMENU* DeveloperMenuInit(void)
 {
     TEXTMENUITEM* itemPtr;
     TEXTMENU* menuPtr;
+    unsigned char i;
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
     strcpy(menuPtr->szCaption, "Developer tools");
@@ -65,6 +70,21 @@ TEXTMENU* DeveloperMenuInit(void)
     itemPtr->functionPtr = settingsPrintData;
     itemPtr->functionDataPtr = NULL;
     TextMenuAddItem(menuPtr, itemPtr);
+
+    for(i = HDD_Master; i < NbDrivesSupported; i++)
+    {
+        if(isFATXFormattedDrive(i))
+        {
+            //File operations submenu.
+            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+            sprintf(itemPtr->szCaption, "%s: File op", i == HDD_Master ? "Master" : "Slave");
+            itemPtr->functionPtr = DeveloperFileOpsMenuDynamic;
+            itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+            *(unsigned char*)itemPtr->functionDataPtr = i;
+            itemPtr->dataPtrAlloc = 1;
+            TextMenuAddItem(menuPtr, itemPtr);
+        }
+    }
 /*
     //Boot BFM BIOS.
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -76,4 +96,23 @@ TEXTMENU* DeveloperMenuInit(void)
 
 
     return menuPtr;
+}
+
+void DeveloperFileOpsMenuDynamic(void* drive)
+{
+    TEXTMENUITEM* itemPtr;
+    TEXTMENU* menuPtr;
+    unsigned char nDriveIndex = *(unsigned char *)drive;
+
+    menuPtr = calloc(1, sizeof(TEXTMENU));
+    sprintf(menuPtr->szCaption, "%s: File op", nDriveIndex == HDD_Master ? "Master" : "Slave");
+
+    //Print LPCmodsettings struct data.
+    itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+    strcpy(itemPtr->szCaption, "Write To Y:");
+    itemPtr->functionPtr = WriteToYDrive;
+    itemPtr->functionDataPtr = drive;
+    TextMenuAddItem(menuPtr, itemPtr);
+
+    ResetDrawChildTextMenu(menuPtr);
 }

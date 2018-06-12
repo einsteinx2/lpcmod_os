@@ -20,4 +20,6 @@ void settingsPrintData(void * ignored);
 
 void printBiosIdentifier(void * ignored);
 
+void WriteToYDrive(void * drive);
+
 #endif

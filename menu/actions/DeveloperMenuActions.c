@@ -17,6 +17,7 @@
 #include "lib/cromwell/cromString.h"
 #include "lib/cromwell/cromSystem.h"
 #include "lib/time/timeManagement.h"
+#include "FatFSAccessor.h"
 #include "MenuActions.h"
 #include "FlashDriver.h"
 #include "string.h"
@@ -585,4 +586,203 @@ void printBiosIdentifier(void * ignored)
     }
 
     UIFooter();
+}
+
+void WriteToYDrive(void * drive)
+{
+#define MaxTestFileSizeInMb 700
+    unsigned short sizeInMB = 10;
+    unsigned char dataByteValue = 0x00;
+    unsigned char line = 0;
+    unsigned int i;
+    unsigned int startTime, endTime;
+    unsigned char repeatingBuf[1024 * 1024]; // 1MB
+#define fileName "XBlastTestFile.bin"
+    char fullPath[50];
+    const char* drivename;
+    bool refresh = true;
+#define ErrorSucess 1
+#define ErrorFail   2
+    unsigned int error = 0;
+    unsigned char nDriveIndex = *(unsigned char *)drive;
+    FILEX handle;
+
+    while(cromwellLoop())
+    {
+        if(refresh)
+        {
+            BootVideoClearScreen(&jpegBackdrop, 0, 0xffff);
+            VIDEO_ATTR=0xffffffff;
+            UiHeader("Write To Y:");
+            if(line == 0)
+            {
+                VIDEO_ATTR=0xffffef37;    //In yellow
+            }
+            else
+            {
+                VIDEO_ATTR=0xffffffff;
+            }
+            printk("\n\n\2           Size   : %uMB", sizeInMB);
+            if(line == 1)
+            {
+                VIDEO_ATTR=0xffffef37;    //In yellow
+            }
+            else
+            {
+                VIDEO_ATTR=0xffffffff;
+            }
+            printk("\n\n\2           Data seed : 0x%02X", dataByteValue);
+            if(line == 2)
+            {
+                VIDEO_ATTR=0xffffef37;    //In yellow
+            }
+            else
+            {
+                VIDEO_ATTR=0xffffffff;
+            }
+            printk("\n\n\2           Send");
+
+            if(error == ErrorSucess)
+            {
+                VIDEO_ATTR=0xffffffff;
+
+                printk("\n\n\n\n\n\2           Speed     : \2%.4fMB/s", (float)sizeInMB / ((float)endTime / 1000.0));
+            }
+            else if(error == ErrorFail)
+            {
+                VIDEO_ATTR=0xffff0000;
+                printk("\n\n\n\n\n\2           Operation fail");
+            }
+
+            refresh = false;
+        }
+
+        if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_A) == 1 || risefall_xpad_STATE(XPAD_STATE_START) == 1)
+        {
+            if(line == 0)
+            {
+                if(sizeInMB + 10 <= MaxTestFileSizeInMb)
+                {
+                    sizeInMB += 10;
+                }
+            }
+            else if(line == 1)
+            {
+                dataByteValue += 16;
+            }
+            else if(line == 2)
+            {
+                for(i = 0; i < 1024 * 1024; i++)
+                {
+                    repeatingBuf[i] = dataByteValue + i;
+                }
+                if(-1 != fatxgetActivePartName((nDriveIndex * NbFATXPartPerHDD) + Part_X, &drivename))
+                {
+                    sprintf(fullPath, "%s"PathSep fileName, drivename);
+                    fatxdelete(fullPath);
+                    handle = fatxopen(fullPath, FileOpenMode_CreateAlways | FileOpenMode_Write);
+                    startTime = getMS();
+                    if(handle)
+                    {
+                        for(i = 0; i < sizeInMB; i++)
+                        {
+                            if(-1 == fatxwrite(handle, repeatingBuf, 1024 * 1024))
+                            {
+                                // Error
+                                error = ErrorFail;
+                                break;
+                            }
+                        }
+                        fatxclose(handle);
+                    }
+                    else
+                    {
+                        error = ErrorFail;
+                    }
+                    endTime = getElapsedTimeSince(startTime);
+                }
+            }
+
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_RIGHT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_RIGHT) == 1) {
+            if(line == 0)
+            {
+                if(sizeInMB < MaxTestFileSizeInMb)
+                {
+                    sizeInMB += 1;
+                }
+            }
+            else if(line == 1 || line == 2)
+            {
+                dataByteValue += 1;
+            }
+
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_LEFT) == 1 || risefall_xpad_BUTTON(TRIGGER_XPAD_TRIGGER_LEFT) == 1)
+        {
+            if(line == 0)
+            {
+                if(sizeInMB > 1)
+                {
+                    sizeInMB -= 1;
+                }
+            }
+            else if(line == 1 || line == 2)
+            {
+                dataByteValue -= 1;
+            }
+
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_Y))
+        {
+            if(sizeInMB + 100 <= MaxTestFileSizeInMb)
+            {
+                sizeInMB += 100;
+            }
+            else
+            {
+                sizeInMB = MaxTestFileSizeInMb;
+            }
+
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_X))
+        {
+            if(sizeInMB < 101)
+            {
+                sizeInMB = 1;
+            }
+            else
+            {
+                sizeInMB -= 100;
+            }
+
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_DOWN) == 1)
+        {
+            if(line < 2)
+            {
+                line += 1;
+            }
+
+            refresh = true;
+        }
+        else if (risefall_xpad_BUTTON(TRIGGER_XPAD_PAD_UP) == 1)
+        {
+            if(line > 0)
+            {
+                line -= 1;
+            }
+
+            refresh = true;
+        }
+        else if(risefall_xpad_BUTTON(TRIGGER_XPAD_KEY_B) == 1 || risefall_xpad_STATE(XPAD_STATE_BACK) == 1)
+        {
+            break;
+        }
+    }
 }
