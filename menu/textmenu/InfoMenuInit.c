@@ -9,7 +9,7 @@
 
 #include "MenuInits.h"
 #include "include/boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "InfoMenuActions.h"
 #include "string.h"
 

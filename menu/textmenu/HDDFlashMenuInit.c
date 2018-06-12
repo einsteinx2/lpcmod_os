@@ -10,7 +10,7 @@
 #include "MenuInits.h"
 #include "FlashMenuActions.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "memory_layout.h"
 #include "FatFSAccessor.h"
 #include "string.h"

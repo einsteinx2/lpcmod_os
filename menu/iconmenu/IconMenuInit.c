@@ -13,7 +13,7 @@
 
 #include "MenuInits.h"
 #include "config.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "IconMenu.h"
 #include "MenuActions.h"
 #include <stddef.h>

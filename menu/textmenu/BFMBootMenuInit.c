@@ -9,7 +9,7 @@
  
 #include "MenuInits.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "memory_layout.h"
 #include "FatFSAccessor.h"
 #include "BFMBootMenuActions.h"

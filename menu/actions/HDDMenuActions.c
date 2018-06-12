@@ -8,7 +8,7 @@
  ***************************************************************************/
 #include "HDDMenuActions.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "video.h"
 #include "FatFSAccessor.h"
 #include "TextMenu.h"
@@ -22,6 +22,9 @@
 #include "Gentoox.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "HttpServer.h"
+#include "BootHddKey.h"
+#include "BootHddKey.h"
+#include "IdeDriver.h"
 
 static const char* formatCommonStr = "\n           Format ";
 
@@ -30,7 +33,7 @@ void AssertLockUnlock(void* customStructPtr)
     LockUnlockCommonParams* tempItemPtr = (LockUnlockCommonParams *)customStructPtr;
     unsigned char nIndexDrive = tempItemPtr->driveIndex;
 
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0002) == 0x0002)     //Drive is already locked
+    if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(nIndexDrive))     //Drive is already locked
     {
         UnlockHDD(nIndexDrive, 1, (unsigned char *)&eeprom, true);    //1 is for verbose
     }
@@ -39,7 +42,7 @@ void AssertLockUnlock(void* customStructPtr)
         LockHDD(nIndexDrive, 1, (unsigned char *)&eeprom);    //1 is for verbose
     }
 
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0002) == 0x0002)
+    if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(nIndexDrive))
     {
         sprintf(tempItemPtr->string1, "Unl");
         sprintf(tempItemPtr->string2, "Unl");
@@ -66,7 +69,7 @@ void AssertLockUnlockFromNetwork(void* customStructPtr)
 
     enableNetflash((void *)&temp);
 
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0002) == 0x0002)
+    if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(nIndexDrive))
     {
         sprintf(tempItemPtr->string1, "Unl");
         sprintf(tempItemPtr->string2, "Unl");
@@ -82,7 +85,6 @@ void AssertLockUnlockFromNetwork(void* customStructPtr)
 bool LockHDD(int nIndexDrive, bool verbose, unsigned char* eepromPtr)
 {
     unsigned char password[20];
-    unsigned uIoBase = tsaHarddiskInfo[nIndexDrive].m_fwPortBase;
     int i;
 
     if(eepromPtr == NULL)
@@ -128,7 +130,8 @@ bool LockHDD(int nIndexDrive, bool verbose, unsigned char* eepromPtr)
         dots();
     }
 
-    if(DriveSecurityChange(uIoBase, nIndexDrive, IDE_CMD_SECURITY_SET_PASSWORD, password))
+
+    if(IdeDriver_SetHDDPassword(nIndexDrive, password))
     {
 endExec:
         printk("\n           Locking drive failed");
@@ -159,7 +162,7 @@ int UnlockHDD(int nIndexDrive, bool verbose, unsigned char* eepromPtr, bool inte
     }
 
 
-    if(tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0010)            //Unlock attempt counter expired
+    if(IdeDriver_DeviceUnlockCounterExpired(nIndexDrive))            //Unlock attempt counter expired
     {
         printk("\n\n\n\n\n           \2Drive is now locked out.\n           \2Reboot system to reset HDD unlock capabilities.\n\n");
         UIFooter();
@@ -178,7 +181,7 @@ int UnlockHDD(int nIndexDrive, bool verbose, unsigned char* eepromPtr, bool inte
     userPassword[20] = '\0';
 
     //HDD security has been disable (ie already have access?)
-    if((tsaHarddiskInfo[nIndexDrive].m_securitySettings&0x0004)==0x0004)
+    if(IdeDriver_DeviceIsLocked(nIndexDrive))
     {
         //Do not try Master password unlock if eeprom pointer isn't pointing to internal eeprom image.
         if(internalEEPROM)
@@ -199,7 +202,7 @@ int UnlockHDD(int nIndexDrive, bool verbose, unsigned char* eepromPtr, bool inte
         }
         else
         {
-            if(HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_UNLOCK, userPassword, false))
+            if(IdeDriver_SecurityUnlock(nIndexDrive, userPassword, false))
             {
                 printk("\n\n           Unlock drive failed. Supplied EEPROM is not good!");
        	        result = -1;
@@ -210,7 +213,7 @@ int UnlockHDD(int nIndexDrive, bool verbose, unsigned char* eepromPtr, bool inte
     }
     
     
-    if(HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_DISABLE, userPassword, false))
+    if(IdeDriver_SecurityDisable(nIndexDrive, userPassword, false))
     {
         printk("\n\n           Unlock drive failed.");
         printk("\n           Password used was:");
@@ -259,15 +262,15 @@ bool masterPasswordUnlockSequence(int nIndexDrive)
 
     for(i = 0; i < 4; i++)
     {
-        if((tsaHarddiskInfo[nIndexDrive].m_securitySettings & 0x0010) == false)       //Drive is not locked out.
+        if(0 == IdeDriver_DeviceUnlockCounterExpired(nIndexDrive))       //Drive is not locked out.
         {
-            if(HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_UNLOCK, (char *)MasterPasswordList[i], true))
+            if(IdeDriver_SecurityUnlock(nIndexDrive, MasterPasswordList[i], true))
             {
                 printk("\n           Master Password(%s) Unlock failed...", MasterPasswordList[i]);
             }
             else
             {
-                HDD_SECURITY_SendATACommand(nIndexDrive, IDE_CMD_SECURITY_DISABLE, (char *)MasterPasswordList[i], true);
+                IdeDriver_SecurityDisable(nIndexDrive, MasterPasswordList[i], true);
                 printk("\n           Unlock Using Master Password %s successful.\n", MasterPasswordList[i]);
 
                 return true;
@@ -423,13 +426,13 @@ void DisplayHDDInfo(void* driveId)
     VIDEO_ATTR = 0xffffffff;
 
     printk("\n           Hard Disk Drive(%s)", nIndexDrive ? "slave":"master");
-    printk("\n\n           Model : %s", tsaHarddiskInfo[nIndexDrive].m_szIdentityModelNumber);
-    printk("\n           Serial : %s", tsaHarddiskInfo[nIndexDrive].m_szSerial);
-    printk("\n           Firmware : %s", tsaHarddiskInfo[nIndexDrive].m_szFirmware);
-    printk("\n           Capacity : %uGB", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal / (2*1024*1024));     //In GB
-    printk("\n           Sectors : %u ", tsaHarddiskInfo[nIndexDrive].m_dwCountSectorsTotal);
-    printk("\n           # conductors : %u ", tsaHarddiskInfo[nIndexDrive].m_bCableConductors);
-    printk("\n           Lock Status : %s ", ((tsaHarddiskInfo[nIndexDrive].m_securitySettings &0x0002)==0x0002) ? "Locked" : "Unlocked");
+    printk("\n\n           Model : %s", IdeDriver_GetModelNumber(nIndexDrive));
+    printk("\n           Serial : %s", IdeDriver_GetSerialNumber(nIndexDrive));
+    printk("\n           Firmware : %s", IdeDriver_GetFirmwareVersion(nIndexDrive));
+    printk("\n           Capacity : %uGB", IdeDriver_GetSectorCount(nIndexDrive) / (2*1024*1024));     //In GB
+    printk("\n           Sectors : %u ", IdeDriver_GetSectorCount(nIndexDrive));
+    printk("\n           # conductors : %u ", IdeDriver_GetCableConductorCount(nIndexDrive));
+    printk("\n           Lock Status : %s ", IdeDriver_DeviceIsLocked(nIndexDrive) ? "Locked" : "Unlocked");
     printk("\n           FATX Formatted? : %s ", isFATXFormattedDrive(nIndexDrive) ? "Yes" : "No");
 
     if(0 == fatx_getmbr(nIndexDrive, &mbr))
@@ -546,15 +549,15 @@ void AssertSMARTEnableDisable(void* customString)
     LockUnlockCommonParams* tempItemPtr = (LockUnlockCommonParams *)customString;
     unsigned char nIndexDrive = tempItemPtr->driveIndex;
 
-    if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled)        //Drive is already locked
+    if(IdeDriver_DeviceSMARTEnabled(nIndexDrive))        //Drive is already locked
     {
-        driveToggleSMARTFeature(nIndexDrive, 0xD9);          //0xD9 is subcommand for disabling SMART.
+        IdeDriver_ToggleSMARTFeature(nIndexDrive, false);
     }
     else
     {
-        driveToggleSMARTFeature(nIndexDrive, 0xD8);          //0xD8 is subcommand for enabling SMART.
+        IdeDriver_ToggleSMARTFeature(nIndexDrive, true);          //0xD8 is subcommand for enabling SMART.
     }
-    if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled)
+    if(IdeDriver_DeviceSMARTEnabled(nIndexDrive))
     {
         strcpy(tempItemPtr->string1, "Disable");
     }
@@ -573,9 +576,9 @@ void CheckSMARTRETURNSTATUS(void* customString)
 
     VIDEO_ATTR = 0xffffffff;
 
-    if(tsaHarddiskInfo[nIndexDrive].m_fSMARTEnabled)
+    if(IdeDriver_DeviceSMARTEnabled(nIndexDrive))
     {
-        pollReturn = driveSMARTRETURNSTATUS(nIndexDrive);
+        pollReturn = IdeDriver_SMARTReturnStatus(nIndexDrive);
         printk("\n\n\n\1          S.M.A.R.T. return ");
 
         if(pollReturn == 0)

@@ -11,10 +11,11 @@
 */
 
 #include "lib/cromwell/cromString.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "iso_fs.h"
 #include "string.h"
 #include "stdio.h"
+#include "stdlib.h"
 #include "ctype.h"
 
 int iso9660_name_translate(char *translated, char *old, unsigned len) {
@@ -64,7 +65,7 @@ unsigned long read_dir(int driveId, struct iso_directory_record *dir_read, char 
     }
     
     for(i = 0; i < (read_size >> ISOFS_BLOCK_BITS); i++) {
-        BootIdeReadSector(driveId, &buffer[i * ISOFS_BLOCK_SIZE], offset , 0, ISOFS_BLOCK_SIZE);
+        IdeDriver_Read(driveId, &buffer[i * ISOFS_BLOCK_SIZE], offset, ISOFS_BLOCK_SIZE);
         offset++;
     }
     
@@ -148,7 +149,7 @@ unsigned long read_file(int driveId, struct iso_directory_record *dir_read, char
     
     for(i = 0; i < (read_size >> ISOFS_BLOCK_BITS) ; i++) {
         memset(tmpbuff, 0x0, ISO_BLOCKSIZE);
-        BootIdeReadSector(driveId, tmpbuff, offset , 0, ISO_BLOCKSIZE);
+        IdeDriver_Read(driveId, tmpbuff, offset , ISO_BLOCKSIZE);
         offset++;
         if(((i+1) * ISO_BLOCKSIZE) > read_size) {
             memcpy(&buffer[i * ISO_BLOCKSIZE], tmpbuff, (i * ISO_BLOCKSIZE) - read_size);
@@ -172,7 +173,7 @@ int BootIso9660GetFile(int driveId, char *szcPath, unsigned char *pbaFile, unsig
     dir = (struct iso_directory_record *)malloc(sizeof(struct iso_directory_record));
     memset(dir,0x0,sizeof(struct iso_directory_record));
     
-    if(BootIdeReadSector(driveId, pvd, 16 , 0, ISO_BLOCKSIZE)) {
+    if(IdeDriver_Read(driveId, pvd, 16, ISO_BLOCKSIZE)) {
 //        printk("BootIso9660GetFile : Error read Sector\n");
         free(pvd);
         free(dir);

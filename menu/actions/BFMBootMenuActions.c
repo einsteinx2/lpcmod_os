@@ -10,7 +10,7 @@
 #include <lib/cromwell/cromString.h>
 #include "BFMBootMenuActions.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "FatFSAccessor.h"
 #include "video.h"
 #include "lpcmod_v1.h"

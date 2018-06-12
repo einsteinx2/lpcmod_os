@@ -9,7 +9,7 @@
 
 #include "MenuInits.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "SystemMenuActions.h"
 #include "lpcmod_v1.h"
 #include "string.h"

@@ -1,6 +1,7 @@
 #ifndef _ICONMENU_H_
 #define _ICONMENU_H_
 
+#include "boot.h"
 /***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *

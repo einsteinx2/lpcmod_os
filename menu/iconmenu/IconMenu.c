@@ -20,7 +20,7 @@
 #include "sha1.h"
 #include "FatFSAccessor.h"
 #include "cpu.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "MenuActions.h"
 #include "config.h"
 #include "IconMenu.h"

@@ -13,7 +13,7 @@
 #include "HDDMenuActions.h"
 #include "EepromEditMenuActions.h"
 #include "MenuActions.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 
 #include "lwip/apps/httpd.h"
 #include "lwip/tcp.h"
@@ -95,7 +95,7 @@ bool netflashPostProcess(void)
         case WebServerOps_HDD0Lock:
             ClearScreen ();
 
-            if(BootIdeDeviceIsLocked(0))     //Drive is already locked
+            if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(0))     //Drive is already locked
             {
                 UnlockHDD(0, 0, postProcessBuf, false);    //Attempt Unlock only if SECURITY_UNLOCK was successful.
             }
@@ -107,7 +107,7 @@ bool netflashPostProcess(void)
         case WebServerOps_HDD1Lock:
             ClearScreen ();
 
-            if((tsaHarddiskInfo[1].m_securitySettings &0x0002)==0x0002)     //Drive is already locked
+            if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(1))     //Drive is already locked
             {
                 UnlockHDD(1, 1, postProcessBuf, false);       //Attempt Unlock only if SECURITY_UNLOCK was successful.
             }

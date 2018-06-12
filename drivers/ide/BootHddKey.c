@@ -1,5 +1,6 @@
 
 #include "BootHddKey.h"
+#include "IdeHelpers.h"
 #include "lib/cromwell/cromString.h"
 #include "cromwell_types.h"
 #include "sha1.h"
@@ -8,32 +9,13 @@
 #include "BootEEPROM.h"
 #include <stdarg.h>
 
-int copy_swap_trim(unsigned char *dst, unsigned char *src, int len)
-{
-    unsigned char tmp;
-    int i;
-        for (i=0; i < len; i+=2) {
-        tmp = src[i];     //allow swap in place
-        dst[i] = src[i+1];
-        dst[i+1] = tmp;
-    }
-
-    --dst;
-    for (i=len; i>0; --i) {
-        if (dst[i] != ' ') {
-            dst[i+1] = 0;
-            break;
-        }
-    }
-    return i;
-}
-
 int HMAC1hddReset(int version,SHA1Context *context)
 {
-      SHA1Reset(context);
-    switch (version) {
+    SHA1Reset(context);
+    switch (version)
+    {
         case 9:
-              context->Intermediate_Hash[0] = 0x85F9E51A;
+            context->Intermediate_Hash[0] = 0x85F9E51A;
             context->Intermediate_Hash[1] = 0xE04613D2;
             context->Intermediate_Hash[2] = 0x6D86A50C;
             context->Intermediate_Hash[3] = 0x77C32E3C;
@@ -69,7 +51,8 @@ int HMAC1hddReset(int version,SHA1Context *context)
 int HMAC2hddReset(int version,SHA1Context *context)
 {
     SHA1Reset(context);
-    switch (version) {
+    switch (version)
+    {
         case 9:
             context->Intermediate_Hash[0] = 0x5D7A9C6B;
             context->Intermediate_Hash[1] = 0xE1922BEB;
@@ -132,6 +115,37 @@ void HMAC_SHA1( unsigned char *result,
 
 }
 
+int CalculateDrivePassword(int driveId, unsigned char *key, unsigned char *eepromPtr)
+{
+
+    unsigned char baMagic[0x200], baKeyFromEEPROM[0x10], baEeprom[0x30];
+    int nVersionHashing=0;
+    //Ick - forward decl. Should remove this.
+    unsigned int BootHddKeyGenerateEepromKeyData(unsigned char *eeprom_data,unsigned char *HDKey);
+
+    if(eepromPtr == NULL || key == NULL)
+    {
+        return 1;
+    }
+
+    memcpy(baEeprom, eepromPtr, 0x30); // first 0x30 bytes from EEPROM image we picked up earlier
+
+    memset(&baKeyFromEEPROM,0x00,0x10);
+    nVersionHashing = BootHddKeyGenerateEepromKeyData( baEeprom, baKeyFromEEPROM);
+    memset(&baMagic,0x00,0x200);
+    // Calculate the hdd pw from EEprom and Serial / Model Number
+    HMAC_SHA1 (&baMagic[2], baKeyFromEEPROM, 0x10,
+         tsaHarddiskInfo[driveId].m_szIdentityModelNumber,
+         tsaHarddiskInfo[driveId].m_length,
+         tsaHarddiskInfo[driveId].m_szSerial,
+         tsaHarddiskInfo[driveId].s_length);
+
+    //Failed to generate a key
+    if (nVersionHashing==0 || nVersionHashing == 13) return 1;
+
+    memcpy(key,&baMagic[2],20);
+    return 0;
+}
 
 void HMAC_hdd_calculation(int version,unsigned char *HMAC_result, ... )
 {
@@ -141,7 +155,8 @@ void HMAC_hdd_calculation(int version,unsigned char *HMAC_result, ... )
     va_start(args,HMAC_result);
 
     HMAC1hddReset(version, &context);
-    while(1) {
+    while(1)
+    {
         unsigned char *buffer = va_arg(args,unsigned char *);
         int length;
 

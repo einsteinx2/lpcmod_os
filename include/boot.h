@@ -91,45 +91,6 @@ typedef struct {  // inside an 8-byte protected mode interrupt vector
     unsigned short m_wHandlerLinearAddressHigh16;
 } ts_pm_interrupt;
 
-typedef enum {
-    EDT_UNKNOWN= 0,
-    EDT_XBOXFS
-} enumDriveType;
-
-typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE device after init
-    unsigned short m_fwPortBase;
-    unsigned short m_wCountHeads;
-    unsigned short m_wCountCylinders;
-    unsigned short m_wCountSectorsPerTrack;
-    unsigned long m_dwCountSectorsTotal; /* total */
-    unsigned char m_bLbaMode;    /* am i lba (0x40) or chs (0x00) */
-    unsigned char m_szIdentityModelNumber[40];
-    unsigned char term_space_1[2];
-    unsigned char m_szSerial[20];
-    unsigned char term_space_2[2];
-    char m_szFirmware[8];
-    unsigned char term_space_3[2];
-    unsigned char m_fDriveExists;
-    unsigned char m_fAtapi;  // true if a CDROM, etc
-    enumDriveType m_enumDriveType;
-    unsigned char m_bCableConductors;  // valid for device 0 if present
-    unsigned short m_wAtaRevisionSupported;
-    unsigned char s_length;
-    unsigned char m_length;
-    unsigned char m_bIORDY : 1;
-    unsigned char m_fDMAInit : 1;
-    unsigned char m_fFlushCacheSupported : 1;
-    unsigned char m_fFlushCacheExtSupported : 1;
-    unsigned char unused : 3;
-    unsigned short m_securitySettings; //This contains the contents of the ATA security regs
-    unsigned short m_masterPassSupport;
-    unsigned char m_maxBlockTransfer;  //Max number of blocks allowed in a single transfer.
-    unsigned short m_minPIOcycle;
-    bool m_fHasSMARTcapabilities;
-    bool m_fSMARTEnabled;
-    unsigned char m_SMARTFeaturesSupported;
-} tsHarddiskInfo;
-
 /////////////////////////////////
 // LED-flashing codes
 // or these together as argument to I2cSetFrontpanelLed
@@ -263,20 +224,6 @@ unsigned char PciReadByte(unsigned int bus, unsigned int dev, unsigned int func,
 unsigned int PciWriteDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off, unsigned int dw);
 unsigned int PciReadDword(unsigned int bus, unsigned int dev, unsigned int func, unsigned int reg_off);
 
-///////// BootIde.c
-
-extern tsHarddiskInfo tsaHarddiskInfo[];  // static struct stores data about attached drives
-int BootIdeInit(void);
-int BootIdeReadSector(int nDriveIndex, void * pbBuffer, unsigned int block, int byte_offset, int n_bytes);
-int BootIdeBootSectorHddOrElTorito(int nDriveIndex, unsigned char * pbaResult);
-int BootIdeAtapiAdditionalSenseCode(int nDrive, unsigned char * pba, int nLengthMaxReturn);
-int BootIdeSetTransferMode(int nIndexDrive, int nMode);
-int BootIdeSetMultimodeSectors(unsigned char nIndexDrive, unsigned char nbSectors);
-//int BootIdeSetPIOMode(unsigned char nIndexDrive, unsigned short cycleTime);
-int BootIdeWaitNotBusy(unsigned uIoBase);
-bool BootIdeAtapiReportFriendlyError(int nDriveIndex, char * szErrorReturn, int nMaxLengthError);
-void BootIdeAtapiPrintkFriendlyError(int nDriveIndex);
-
 ///////// BootUSB.c
 
 void BootStopUSB(void);
@@ -304,7 +251,6 @@ extern volatile TRAY_STATE traystate;
 
 extern void BootInterruptsWriteIdt(void);
 
-int copy_swap_trim(unsigned char *dst, unsigned char *src, int len);
 void HMAC_SHA1( unsigned char *result,
                 unsigned char *key, int key_length,
                 unsigned char *text1, int text1_length,

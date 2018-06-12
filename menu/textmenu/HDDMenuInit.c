@@ -9,7 +9,7 @@
 
 #include "MenuInits.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "FatFSAccessor.h"
 #include "HDDMenuActions.h"
 #include "string.h"
@@ -31,7 +31,7 @@ TEXTMENU* HDDMenuInit(void)
 
     for(i = 0; i < 2; ++i)
     {
-        if(tsaHarddiskInfo[i].m_fDriveExists && tsaHarddiskInfo[i].m_fAtapi == 0)
+        if(IdeDriver_DeviceConnected(i) && 0 == IdeDriver_DeviceIsATAPI(i))
         {
             //If it's not ATAPI, it must be IDE
             //Add menu entry for corresponding HDD
@@ -68,7 +68,7 @@ void HDDOperationsMenuDynamic(void* drive){
 
     sprintf(menuPtr->szCaption, "%s HDD", *nDriveIndex ? "Slave":"Master");
 
-    if((tsaHarddiskInfo[*nDriveIndex].m_securitySettings &0x0001)==0x0001)        //Drive Security feature supported.
+    if(IdeDriver_DeviceSecuritySupport(*nDriveIndex))        //Drive Security feature supported.
     {
         //HDD Lock/Unlock menu
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -85,7 +85,8 @@ void HDDOperationsMenuDynamic(void* drive){
     itemPtr->functionDataPtr = nDriveIndex;
     TextMenuAddItem(menuPtr, itemPtr);
 
-    if(tsaHarddiskInfo[*nDriveIndex].m_fHasSMARTcapabilities){
+    if(IdeDriver_DeviceSMARTCapable(*nDriveIndex))
+    {
         //S.M.A.R.T. menu
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));
         strcpy(itemPtr->szCaption, "S.M.A.R.T. menu");
@@ -113,7 +114,7 @@ void LargeHDDMenuDynamic(void* drive)
     unsigned char nDriveIndex = *(unsigned char *)drive;
     
     //Amount of free sectors after standard partitions
-    unsigned long nExtendSectors = BootIdeGetSectorCount(nDriveIndex) - XBOX_EXTEND_STARTLBA;
+    unsigned long nExtendSectors = IdeDriver_GetSectorCount(nDriveIndex) - XBOX_EXTEND_STARTLBA;
 
     menuPtr = calloc(1, sizeof(TEXTMENU));
     sprintf(menuPtr->szCaption, "Large HDD format options : %s", nDriveIndex ? "Slave":"Master");
@@ -180,7 +181,7 @@ void HDDSMARTOperationsMenuDynamic(void* drive)
 
     //SMART Enable/Disable
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    if(tsaHarddiskInfo[nDriveIndex].m_fSMARTEnabled)
+    if(IdeDriver_DeviceSMARTEnabled(nDriveIndex))
     {
         strcpy(itemPtr->szCaption, "Disable");
     }
@@ -246,7 +247,7 @@ void HDDFormatMenuDynamic(void* drive)
         TextMenuAddItem(menuPtr, itemPtr);
 
         //If there's enough sectors to make F and/or G drive(s).
-        if(BootIdeGetSectorCount(*nDriveIndex) >= (XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE))
+        if(IdeDriver_GetSectorCount(*nDriveIndex) >= (XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE))
         {
             //Format Larger drives option menu.
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
@@ -275,6 +276,8 @@ void HDDFormatMenuDynamic(void* drive)
         itemPtr->noSelect = NOSELECTERROR;
         TextMenuAddItem(menuPtr, itemPtr);
     }
+
+    ResetDrawChildTextMenu(menuPtr);
 }
 
 void HDDLockUnlockMenuDynamic(void* drive)
@@ -290,7 +293,7 @@ void HDDLockUnlockMenuDynamic(void* drive)
     //This drive is locked - produce an unlock menu
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    if((tsaHarddiskInfo[inputParam->driveIndex].m_securitySettings & 0x0002) == 0x0002)
+    if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(inputParam->driveIndex))
     {
         strcpy(itemPtr->szCaption, "Unl");
     }
@@ -306,7 +309,7 @@ void HDDLockUnlockMenuDynamic(void* drive)
     TextMenuAddItem(menuPtr, itemPtr);
 
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-    if((tsaHarddiskInfo[inputParam->driveIndex].m_securitySettings & 0x0002) == 0x0002)
+    if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(inputParam->driveIndex))
     {
         strcpy(itemPtr->szCaption,"Unl");
     }

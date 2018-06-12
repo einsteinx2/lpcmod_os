@@ -16,7 +16,7 @@
 #include "string.h"
 #include "xblast/HardwareIdentifier.h"
 #include "lib/LPCMod/BootLPCMod.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "HttpServer.h"
 
 
@@ -194,7 +194,7 @@ void BankSelectDynamic(void* bank)
 
     for (i = 0; i < 2; ++i)
     {
-        if(BootIdeDeviceConnected(i) && BootIdeDeviceIsATAPI(i))
+        if(IdeDriver_DeviceConnected(i) && IdeDriver_DeviceIsATAPI(i))
         {
             itemPtr = calloc(1, sizeof(TEXTMENUITEM));
             strcpy(itemPtr->szCaption, "CD Flash (image.bin)");// (hd%c)",i ? 'b':'a');
@@ -207,7 +207,7 @@ void BankSelectDynamic(void* bank)
     }
 
     //Only Master HDD will be supported here.
-    if(BootIdeDeviceConnected(0) && 0 == BootIdeDeviceIsATAPI(0))
+    if(IdeDriver_DeviceConnected(0) && 0 == IdeDriver_DeviceIsATAPI(0))
     {
         XBlastLogger(DEBUG_GENERAL_UI, DBG_LVL_DEBUG, "Generating menu for HDD%u", 0);
         itemPtr = calloc(1, sizeof(TEXTMENUITEM));

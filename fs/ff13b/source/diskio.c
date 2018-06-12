@@ -8,7 +8,7 @@
 /*-----------------------------------------------------------------------*/
 
 #include "diskio.h"		/* FatFs lower layer API */
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "lib/LPCMod/xblastDebug.h"
 #include <stdio.h>
 #include <errno.h>
@@ -29,8 +29,8 @@ DSTATUS disk_status (
 	BYTE pdrv		/* Physical drive nmuber to identify the drive */
 )
 {
-    DSTATUS status = tsaHarddiskInfo[pdrv].m_fDriveExists ? RES_OK : STA_NOINIT;
-    status |= tsaHarddiskInfo[pdrv].m_fAtapi ? STA_PROTECT : RES_OK;
+    DSTATUS status = IdeDriver_DeviceConnected(pdrv) ? RES_OK : STA_NOINIT;
+    status |= IdeDriver_DeviceIsATAPI(pdrv) ? STA_PROTECT : RES_OK;
     if(status)
     {
         XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "Error status %u", status);
@@ -67,16 +67,12 @@ DRESULT disk_read (
 )
 {
 #define DEFAULT_RETRY_COUNT 3
-    UINT i;
     int returnValue;
-    for(i = 0; i < count; i++)
+    //XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_INFO, "drv:%u  count=%u sector=0x%lX", pdrv, count, sector);
+    returnValue = IdeDriver_Read(pdrv, buff, sector, count);
+    if(returnValue)
     {
-        returnValue = BootIdeReadSector(pdrv, buff + (i* 512), sector + i, 0, 512);
-        if(returnValue)
-        {
-            XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      i=%u count=%u sector=0x%lX", returnValue, i, count, sector);
-            break;
-        }
+        XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      count=%u sector=0x%lX", returnValue, count, sector);
     }
 
 	return returnValue;
@@ -96,16 +92,12 @@ DRESULT disk_write (
 )
 {
 #define DEFAULT_RETRY_COUNT 3
-    UINT i;
     int returnValue;
-    for(i = 0; i < count; i++)
+
+    returnValue = IdeDriver_Write(pdrv, buff, sector, count);
+    if(returnValue)
     {
-        returnValue = BootIdeWriteSector(pdrv, buff + (i* 512), sector + i, 0);
-        if(returnValue)
-        {
-            XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      i=%u count=%u sector=0x%lX", returnValue, i, count, sector);
-            break;
-        }
+        XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u     count=%u sector=0x%lX", returnValue, count, sector);
     }
 
     return returnValue;
@@ -126,16 +118,16 @@ DRESULT disk_ioctl (
     DRESULT res = RES_PARERR;
     switch (cmd) {
     case CTRL_SYNC:         /* Nothing to do */
-        res = BootIdeFlushCache(pdrv);
+        res = IdeDriver_FlushCache(pdrv);
         break;
 
     case GET_SECTOR_COUNT:  /* Get number of sectors on the drive */
-        *(DWORD*)buff = BootIdeGetSectorCount(pdrv);
+        *(DWORD*)buff = IdeDriver_GetSectorCount(pdrv);
         res = RES_OK;
         break;
 
     case GET_SECTOR_SIZE:   /* Get size of sector for generic read/write */
-        *(WORD*)buff = BootIdeGetSectorSize(pdrv);
+        *(WORD*)buff = IdeDriver_GetSectorSize(pdrv);
         res = RES_OK;
         break;
 

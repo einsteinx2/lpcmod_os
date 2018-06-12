@@ -42,6 +42,7 @@
 #include "lib/time/timeManagement.h"
 #include "lib/cromwell/CallbackTimer.h"
 #include "NetworkManager.h"
+#include "IdeDriver.h"
 
 JPEG jpegBackdrop;
 
@@ -464,14 +465,14 @@ extern void BootResetAction ( void )
 #endif
 
 
-    BootIdeInit();
+    IdeDriver_Init();
     VirtualRootInit();
     debugLoggerInit();
     NetworkManager_init();
 
     //Load settings from xblast.cfg file if no settings were detected.
     //But first do we have a HDD on Master?
-    if(tsaHarddiskInfo[0].m_fDriveExists && tsaHarddiskInfo[0].m_fAtapi == false)
+    if(IdeDriver_DeviceConnected(0) && 0 == IdeDriver_DeviceIsATAPI(0))
     {
         XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_DEBUG, "Master HDD exist.");
         if(fFirstBoot == false)

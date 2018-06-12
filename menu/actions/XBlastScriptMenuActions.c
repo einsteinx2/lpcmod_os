@@ -8,7 +8,7 @@
  ***************************************************************************/
 #include "XBlastScriptMenuActions.h"
 #include "ToolsMenuActions.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "video.h"
 #include "lpcmod_v1.h"
 #include "memory_layout.h"

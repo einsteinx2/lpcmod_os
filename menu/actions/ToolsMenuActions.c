@@ -14,6 +14,7 @@
 #include "HDDMenuActions.h"
 #include "ResetMenuActions.h"
 #include "lpcmod_v1.h"
+#include "IdeDriver.h"
 #include "BootHddKey.h"
 #include "lib/LPCMod/BootLPCMod.h"
 #include "lib/cromwell/cromString.h"
@@ -317,9 +318,9 @@ bool replaceEEPROMContentFromBuffer(EEPROMDATA* eepromPtr)
 
     for(i = 0; i < 2; i++)               //Probe 2 possible drives
     {
-        if(tsaHarddiskInfo[i].m_fDriveExists && !tsaHarddiskInfo[i].m_fAtapi)  //If there's a HDD plugged on specified port
+        if(IdeDriver_DeviceConnected(i) && 0 == IdeDriver_DeviceIsATAPI(i))  //If there's a HDD plugged on specified port
         {
-            if((tsaHarddiskInfo[i].m_securitySettings &0x0002)==0x0002)        //If drive is locked
+            if(IdeDriver_LockSecurityLevel_Disabled != IdeDriver_GetSecurityLevel(i))        //If drive is locked
             {
                 if(UnlockHDD(i, 0, (unsigned char *)&eeprom, true))            //0 is for silent
                 {

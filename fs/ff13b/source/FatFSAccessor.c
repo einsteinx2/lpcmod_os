@@ -14,7 +14,7 @@
 #else
 #include "string.h"
 #include "stdio.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "lib/LPCMod/xblastDebug.h"
 #endif
 #include <stdarg.h>
@@ -100,7 +100,7 @@ void FatFS_init(void)
 
     for(i = 0; i < NbDrivesSupported; i++)
     {
-        if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i))
+        if(IdeDriver_DeviceConnected(i) && 0 == IdeDriver_DeviceIsATAPI(i))
         {
             fatxmountAll(i);
         }
@@ -214,7 +214,7 @@ int fatxfdisk(unsigned char driveNumber, XboxDiskLayout xboxDiskLayout)
     }
 
     /* Get drive size */
-    diskSizeLba = BootIdeGetSectorCount(driveNumber);
+    diskSizeLba = IdeDriver_GetSectorCount(driveNumber);
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "Disk LBA: %llu\n", diskSizeLba);
     XBlastLogger(DEBUG_FATX_FS, DBG_LVL_DEBUG, "fdisk selected layout: %u", xboxDiskLayout);
 

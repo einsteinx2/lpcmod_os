@@ -41,7 +41,7 @@
 #define DEBUG_FLASH_UI          DBG_LVL_INFO
 #define DEBUG_EXCEPTIONS        DBG_LVL_INFO
 #define DEBUG_IDE_DRIVER        DBG_LVL_INFO   /* Not printed in text log to avoid logger loops */
-#define DEBUG_IDE_LOCK          DBG_LVL_INFO
+#define DEBUG_IDE_LOCK          DBG_LVL_DEBUG
 #define DEBUG_VIDEO_DRIVER      DBG_LVL_INFO
 #define DEBUG_EEPROM_DRIVER     DBG_LVL_INFO
 #define DEBUG_LWIP              DBG_LVL_INFO
@@ -52,7 +52,7 @@
 #define DEBUG_SETTINGS          DBG_LVL_INFO
 #define DEBUG_CALLBACKTIMER     DBG_LVL_INFO
 #define DEBUG_NETWORK           DBG_LVL_INFO
-#define DEBUG_IRQ               DBG_LVL_DEBUG
+#define DEBUG_IRQ               DBG_LVL_INFO
 
 #define DEBUG_USB               DBG_LVL_INFO
 
@@ -60,7 +60,7 @@
 #define DEBUG_DVFS              DBG_LVL_DEBUG
 #define DEBUG_VROOT             DBG_LVL_DEBUG
 #define DEBUG_FTPD              DBG_LVL_DEBUG
-#define DEBUG_CORE_FATFS        DBG_LVL_WARN    /* Not printed in text log to avoid logger loops */
+#define DEBUG_CORE_FATFS        DBG_LVL_INFO    /* Not printed in text log to avoid logger loops */
 #define DEBUG_LOGGER            DBG_LVL_INFO   /* Will essentially double the string prints on SPI. Not printed in text log to avoid logger loops */
 
 #if DEBUG_USB < DBG_LVL_OFF

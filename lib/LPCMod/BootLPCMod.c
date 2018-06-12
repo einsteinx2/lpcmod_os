@@ -18,7 +18,7 @@
 #include "i2c.h"
 #include "boot.h"
 #include "stdio.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "MenuActions.h"
 #include "misc/ConfirmDialog.h"
 #include "Gentoox.h"
@@ -173,7 +173,7 @@ void formatNewDrives(void)
 
     for (i = 0; i < NbDrivesSupported; ++i)
     {
-        if(BootIdeDeviceConnected(i) && 0 == BootIdeDeviceIsATAPI(i) && XBOX_EXTEND_STARTLBA <= BootIdeGetSectorCount(i) &&  0 == BootIdeDeviceIsLocked(i) && 0 == isFATXFormattedDrive(i))
+        if(IdeDriver_DeviceConnected(i) && 0 == IdeDriver_DeviceIsATAPI(i) && XBOX_EXTEND_STARTLBA <= IdeDriver_GetSectorCount(i) &&  0 == IdeDriver_DeviceIsLocked(i) && 0 == isFATXFormattedDrive(i))
         {
             XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_INFO, "No FATX detected on %s HDD.", i ? "Slave" : "Master");
             char ConfirmDialogString[50];
@@ -213,7 +213,7 @@ void formatNewDrives(void)
                     break;
                 }
 
-                if((XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE) <= BootIdeGetSectorCount(i))
+                if((XBOX_EXTEND_STARTLBA + SYSTEM_LBASIZE) <= IdeDriver_GetSectorCount(i))
                 {
                     XBlastLogger(DEBUG_BOOT_LOG, DBG_LVL_DEBUG, "Show user extended partitions format options.");
                     DrawLargeHDDTextMenu(i);//Launch LargeHDDMenuInit textmenu.

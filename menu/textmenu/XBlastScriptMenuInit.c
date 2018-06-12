@@ -10,7 +10,7 @@
 #include "MenuInits.h"
 #include "XBlastScriptMenuActions.h"
 #include "boot.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "memory_layout.h"
 #include "FatFSAccessor.h"
 #include "lpcmod_v1.h"

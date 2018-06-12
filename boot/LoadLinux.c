@@ -12,7 +12,7 @@
 #include "memory_layout.h"
 #include "sha1.h"
 #include "cpu.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "config.h"
 #include "iso_fs.h"
 #include "lib/time/timeManagement.h"

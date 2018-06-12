@@ -10,7 +10,7 @@
 #include "MenuActions.h"
 #include "lpcmod_v1.h"
 #include "FlashUi.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "TextMenu.h"
 #include "boot.h"
 #include "video.h"
