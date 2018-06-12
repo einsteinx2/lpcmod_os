@@ -21,7 +21,8 @@ INCLUDE = -I$(TOPDIR)/grub -I$(TOPDIR)/include -I$(TOPDIR)/ -I./ -I$(TOPDIR)/fs/
 	-I$(TOPDIR)/startuploader -I$(TOPDIR)/drivers/cpu -I$(TOPDIR)/menu \
 	-I$(TOPDIR)/lib/jpeg/ -I$(TOPDIR)/menu/actions -I$(TOPDIR)/menu/textmenu \
 	-I$(TOPDIR)/menu/iconmenu -I$(TOPDIR)/$(LWIPFOLDER) -I$(TOPDIR)/$(LWIPFOLDER)/src/include \
-	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps \
+	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/ipv4 -I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip \
+	-I$(TOPDIR)/$(LWIPFOLDER)/src/include/lwip/apps \
 	-I$(TOPDIR)/fs/VirtualRoot -I$(TOPDIR)/fs/DebugVFS -I$(TOPDIR)/lib/lwip-ftpd \
 	-I$(TOPDIR)/etherboot/include -I$(TOPDIR)/etherboot/arch/i386/include \
 	-I$(TOPDIR)/lib/network
@@ -101,8 +102,14 @@ OBJECTS-CROM += $(TOPDIR)/obj/VideoInitialization.o
 OBJECTS-CROM += $(TOPDIR)/obj/conexant.o
 OBJECTS-CROM += $(TOPDIR)/obj/focus.o
 OBJECTS-CROM += $(TOPDIR)/obj/xcalibur.o
-OBJECTS-CROM += $(TOPDIR)/obj/BootIde.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootHddKey.o
+OBJECTS-CROM += $(TOPDIR)/obj/BootSmart.o
+OBJECTS-CROM += $(TOPDIR)/obj/IdeATAPI.o
+OBJECTS-CROM += $(TOPDIR)/obj/IdeConfig.o
+OBJECTS-CROM += $(TOPDIR)/obj/IdeDataAccess.o
+OBJECTS-CROM += $(TOPDIR)/obj/IdeHelpers.o 
+OBJECTS-CROM += $(TOPDIR)/obj/IdeInfo.o
+OBJECTS-CROM += $(TOPDIR)/obj/IdeLock.o
 OBJECTS-CROM += $(TOPDIR)/obj/rc4.o
 OBJECTS-CROM += $(TOPDIR)/obj/sha1.o
 OBJECTS-CROM += $(TOPDIR)/obj/BootVideoHelpers.o

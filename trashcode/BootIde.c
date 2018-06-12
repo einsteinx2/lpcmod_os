@@ -7,7 +7,7 @@
 #include "boot.h"
 //#include "shared.h"
 #include "BootEEPROM.h"
-#include "BootIde.h"
+#include "IdeDriver.h"
 #include "cromwell.h"
 #include "string.h"
 #include "stdio.h"
