@@ -85,7 +85,7 @@ int IdeDriver_AtapiAdditionalSenseCode(int nDriveIndex, unsigned char * pba, int
     nReturn=IoInputByte(IDE_REG_LBA_MID(uIoBase));
     nReturn |=IoInputByte(IDE_REG_LBA_HIGH(uIoBase))<<8;
     if(nReturn>nLengthMaxReturn) nReturn=nLengthMaxReturn;
-    BootIdeReadData(uIoBase, pba, nReturn);
+    BootIdeReadBlock(uIoBase, pba, nReturn);
 
     return nReturn;
 }
@@ -174,14 +174,14 @@ int Internal_ATAPIDataRead(int nDriveIndex, void * pbBuffer, unsigned int block,
     nReturn |=IoInputByte(IDE_REG_LBA_HIGH(uIoBase))<<8;
 
     if(nReturn>2048) nReturn=2048;
-    status = BootIdeReadData(uIoBase, pbBuffer, nReturn);
+    status = BootIdeReadBlock(uIoBase, pbBuffer, nReturn);
     if (status != 0)
     {
         while(1)
         {
             //XXX: Reduce wait delay length?
             wait_ms(50);
-            status = BootIdeReadData(uIoBase, pbBuffer, nReturn);
+            status = BootIdeReadBlock(uIoBase, pbBuffer, nReturn);
             if (status == 0)
             {
                 break;
