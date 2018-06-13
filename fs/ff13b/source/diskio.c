@@ -72,7 +72,7 @@ DRESULT disk_read (
     returnValue = IdeDriver_Read(pdrv, buff, sector, count);
     if(returnValue)
     {
-        XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u      count=%u sector=0x%lX", returnValue, count, sector);
+        XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u  drv:%u count=%u sector=0x%lX", returnValue, pdrv, count, sector);
     }
 
 	return returnValue;
@@ -97,7 +97,7 @@ DRESULT disk_write (
     returnValue = IdeDriver_Write(pdrv, buff, sector, count);
     if(returnValue)
     {
-        XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u     count=%u sector=0x%lX", returnValue, count, sector);
+        XBlastLogger(DEBUG_CORE_FATFS, DBG_LVL_FATAL, "!!!Error : %u  drv:%u count=%u sector=0x%lX", returnValue, pdrv, count, sector);
     }
 
     return returnValue;
