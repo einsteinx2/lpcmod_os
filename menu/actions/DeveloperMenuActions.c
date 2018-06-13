@@ -646,7 +646,7 @@ void WriteToYDrive(void * drive)
             {
                 VIDEO_ATTR=0xffffffff;
 
-                printk("\n\n\n\n\n\2           Speed     : \2%fMB/s", (float)sizeInMB / ((float)endTime / 1000.0));
+                printk("\n\n\n\n\n\2           Speed     : \2%uMB in %u ms", sizeInMB ,endTime);
             }
             else if(error == ErrorFail)
             {
