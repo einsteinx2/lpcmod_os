@@ -646,7 +646,7 @@ void WriteToYDrive(void * drive)
             {
                 VIDEO_ATTR=0xffffffff;
 
-                printk("\n\n\n\n\n\2           Speed     : \2%.4fMB/s", (float)sizeInMB / ((float)endTime / 1000.0));
+                printk("\n\n\n\n\n\2           Speed     : \2%fMB/s", (float)sizeInMB / ((float)endTime / 1000.0));
             }
             else if(error == ErrorFail)
             {
@@ -678,7 +678,7 @@ void WriteToYDrive(void * drive)
                 }
                 if(-1 != fatxgetActivePartName((nDriveIndex * NbFATXPartPerHDD) + Part_X, &drivename))
                 {
-                    sprintf(fullPath, "%s"PathSep fileName, drivename);
+                    sprintf(fullPath, PathSep"%s"PathSep fileName, drivename);
                     fatxdelete(fullPath);
                     handle = fatxopen(fullPath, FileOpenMode_CreateAlways | FileOpenMode_Write);
                     startTime = getMS();
@@ -694,6 +694,7 @@ void WriteToYDrive(void * drive)
                             }
                         }
                         fatxclose(handle);
+                        error = ErrorSucess;
                     }
                     else
                     {
