@@ -71,11 +71,12 @@ static int BootIdePIOWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
         maxSectorWriteCountPerCommand = 65536;
         ideWriteCommand = IDE_CMD_WRITE_EXT;
     }
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Total:%u sec. max:%u", n_sectors, maxSectorWriteCountPerCommand);
 
     while(sectorProcessedCount < n_sectors)
     {
         int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorWriteCountPerCommand ? maxSectorWriteCountPerCommand : n_sectors - sectorProcessedCount);
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write %u sectors", tempSectorCount);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
         if(sendATACommandAndSendData(nDriveIndex, ideWriteCommand, startSector, inBuffer + (logicalSectorSize * sectorProcessedCount), tempSectorCount % maxSectorWriteCountPerCommand))
         {
             XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
@@ -106,7 +107,12 @@ int IdeDriver_Write(int nDriveIndex, const void * pbBuffer, unsigned int startSe
     {
         return 1;
     }
-    return BootIdePIOWrite(nDriveIndex, pbBuffer, startSector, sectorCount);
+
+    if(0 == BootIdePIOWrite(nDriveIndex, pbBuffer, startSector, sectorCount))
+    {
+        return IdeDriver_FlushCache(nDriveIndex);
+    }
+    return 1;
 }
 
 int IdeDriver_FlushCache(int nDriveIndex)
