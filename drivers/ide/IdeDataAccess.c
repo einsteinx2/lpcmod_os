@@ -88,6 +88,69 @@ static int BootIdePIOWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
     return 0;
 }
 
+static int BootIdeDMARead(int nDriveIndex, unsigned char* outBuffer, unsigned long long startSector, int n_sectors)
+{
+    unsigned char ideReadCommand = IDE_CMD_READ_DMA; /* 28-bit LBA */
+    const int logicalSectorSize = tsaHarddiskInfo[nDriveIndex].m_logicalSectorSize;
+    int maxSectorReadCountPerCommand = 256;
+    int sectorProcessedCount = 0;
+
+    if((startSector + n_sectors) >= 0x10000000 )
+    {
+        /* Requires LBA48 */
+        maxSectorReadCountPerCommand = 65536;
+        ideReadCommand = IDE_CMD_READ_DMA_EXT;
+    }
+
+    while(sectorProcessedCount < n_sectors)
+    {
+        //TODO: Populate PRD and configure IDE BusMaster
+        int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorReadCountPerCommand ? maxSectorReadCountPerCommand : n_sectors - sectorProcessedCount);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Read %u sectors", tempSectorCount);
+        if(sendControlATACommand(nDriveIndex, ideReadCommand, startSector, NoFeatureField, tempSectorCount % maxSectorReadCountPerCommand))
+        {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
+            return 1;
+        }
+        sectorProcessedCount += tempSectorCount;
+    }
+
+    return 0;
+}
+
+
+static int BootIdeDMAWrite(int nDriveIndex, const unsigned char* inBuffer, unsigned long long startSector, int n_sectors)
+{
+    unsigned char ideWriteCommand = IDE_CMD_WRITE_DMA; /* 28-bit LBA */
+    const int logicalSectorSize = tsaHarddiskInfo[nDriveIndex].m_logicalSectorSize;
+    int maxSectorWriteCountPerCommand = 256;
+    int sectorProcessedCount = 0;
+
+    if((startSector + n_sectors) >= 0x10000000 )
+    {
+        /* Requires LBA48 */
+        maxSectorWriteCountPerCommand = 65536;
+        ideWriteCommand = IDE_CMD_WRITE_DMA_EXT;
+    }
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Total:%u sec. max:%u", n_sectors, maxSectorWriteCountPerCommand);
+
+    while(sectorProcessedCount < n_sectors)
+    {
+        //TODO: Populate PRD and configure IDE BusMaster
+        int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorWriteCountPerCommand ? maxSectorWriteCountPerCommand : n_sectors - sectorProcessedCount);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
+        if(sendControlATACommand(nDriveIndex, ideWriteCommand, startSector, NoFeatureField, tempSectorCount % maxSectorWriteCountPerCommand))
+        {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
+            return 1;
+        }
+        sectorProcessedCount += tempSectorCount;
+    }
+
+    return 0;
+}
+
+
 /* -------------------------------------------------------------------------------- */
 
 int IdeDriver_Read(int nDriveIndex, void * pbBuffer, unsigned int startSector, int sectorCount)
@@ -97,18 +160,33 @@ int IdeDriver_Read(int nDriveIndex, void * pbBuffer, unsigned int startSector, i
     {
         return Internal_ATAPIDataRead(nDriveIndex, pbBuffer, startSector, sectorCount);
     }
+
+    if(tsaHarddiskInfo[nDriveIndex].m_fUseDMA)
+    {
+        return BootIdeDMARead(nDriveIndex, pbBuffer, startSector, sectorCount);
+    }
+
     return BootIdePIORead(nDriveIndex, pbBuffer, startSector, sectorCount);
 }
 
 int IdeDriver_Write(int nDriveIndex, const void * pbBuffer, unsigned int startSector, int sectorCount)
 {
     /* Only PIO for now */
+    int writeResult;
     if(IdeDriver_DeviceIsATAPI(nDriveIndex))
     {
         return 1;
     }
 
-    if(0 == BootIdePIOWrite(nDriveIndex, pbBuffer, startSector, sectorCount))
+    if(tsaHarddiskInfo[nDriveIndex].m_fUseDMA)
+    {
+        writeResult = BootIdeDMAWrite(nDriveIndex, pbBuffer, startSector, sectorCount);
+    }
+    else
+    {
+        writeResult = BootIdePIOWrite(nDriveIndex, pbBuffer, startSector, sectorCount);
+    }
+    if(0 == writeResult)
     {
         return IdeDriver_FlushCache(nDriveIndex);
     }

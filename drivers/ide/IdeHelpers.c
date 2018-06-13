@@ -223,6 +223,7 @@ int BootIdeSendIdentifyDevice(int nDriveIndex)
     tsaHarddiskInfo[nDriveIndex].m_fFlushCacheSupported = identifyDataBuf[83] & (1 << 13) ? 1 : 0;
     tsaHarddiskInfo[nDriveIndex].m_SMARTErrorLoggingSupported = identifyDataBuf[84] & (1 << 0) ? 1 : 0;
     tsaHarddiskInfo[nDriveIndex].m_SMARTSelfTestSupported = identifyDataBuf[84] & (1 << 1) ? 1 : 0;
+    tsaHarddiskInfo[nDriveIndex].m_WriteDMAFuaSupported = identifyDataBuf[84] & (1 << 6) ? 1 : 0;
     tsaHarddiskInfo[nDriveIndex].m_fSMARTEnabled = identifyDataBuf[85] & (1 << 0) ? 1 : 0;
     tsaHarddiskInfo[nDriveIndex].m_bSecurityFeaturesEnabled = identifyDataBuf[85] & (1 << 1) ? 1 : 0;
     tsaHarddiskInfo[nDriveIndex].m_UltraDMAmodeSelected = (identifyDataBuf[88] >> 8) & 0b1111111;

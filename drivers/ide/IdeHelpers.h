@@ -26,6 +26,7 @@ typedef enum {
     ,
     IDE_CMD_WRITE_DMA_EXT = 0x35,
     IDE_CMD_WRITE_MULTIPLE_EXT = 0x39,
+    IDE_CMD_WRITE_DMA_FUA_EXT = 0x3D,   /* Writes and flush cache */
 
     IDE_CMD_DRIVE_DIAG = 0x90,
     IDE_CMD_SET_PARAMS = 0x91,
@@ -179,7 +180,8 @@ typedef enum
 typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE device after init
     unsigned short m_fwPortBase;
     unsigned char m_fDriveExists;
-    unsigned char m_fAtapi;  // true if a CDROM, etc
+    unsigned char m_fAtapi;     // true if a CDROM, etc
+    unsigned char m_fUseDMA;    // True if using DMA
 
     unsigned short m_wCountCylinders;           /* Word1 */
     unsigned short m_wCountHeads;               /* Word3 */
@@ -234,6 +236,7 @@ typedef struct tsHarddiskInfo {  // this is the retained knowledge about an IDE 
 
     unsigned char m_fHasSMARTcapabilities;      /* Word82,bit0 */
     unsigned char m_fSMARTEnabled;              /* Word85,bit0 */
+    unsigned char m_WriteDMAFuaSupported;       /* Word84,bit6 */
     unsigned char m_SMARTSelfTestSupported;     /* Word84,bit1 */
     unsigned char m_SMARTErrorLoggingSupported; /* Word84,bit0 */
 
