@@ -14,8 +14,7 @@
 
 tsHarddiskInfo tsaHarddiskInfo[2];  // static struct stores data about attached drives
 
-static int BootIdeWaitDataReady(unsigned uIoBase);
-static int BootIdeIssueAtaCommand(unsigned uIoBase, ide_command_t command, tsIdeCommandParams * params, bool skipFirstWait);
+static int BootIdeIssueAtaCommand(unsigned uIoBase, ide_command_t command, tsIdeCommandParams * params);
 static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short BlockSize);
 
 static void populateLBAField(tsIdeCommandParams* inout, int nDriveIndex, unsigned long long lba, bool isLBA48)
@@ -262,7 +261,6 @@ int BootIdeSendSoftReset(void)
 
 int sendControlATACommand(int nDriveIndex, ide_command_t command, unsigned long long startLBA, unsigned char FeatureField, unsigned short sectorCount)
 {
-#define DoNotSkipFirstWait false
     XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "drive:%u  command:0x%02X  start:%Lu, Feature:0x%02x, count:%u", nDriveIndex, command, startLBA, FeatureField, sectorCount);
 
     const unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
@@ -270,6 +268,7 @@ int sendControlATACommand(int nDriveIndex, ide_command_t command, unsigned long 
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_LBA | IDE_DH_DRIVE(nDriveIndex);
     tsicp.m_bPrecomp = FeatureField;
 
+    ide_polling(uIoBase, 0);
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);     //Select device first
     populateLBAField(&tsicp, nDriveIndex, startLBA, commandIsEXT(command));
     tsicp.m_bCountSector = sectorCount;
@@ -278,14 +277,7 @@ int sendControlATACommand(int nDriveIndex, ide_command_t command, unsigned long 
         tsicp.m_bCountSectorExt = (sectorCount >> 8);
     }
 
-
-    if(BootIdeWaitNotBusy(uIoBase))
-    {
-        //printk("  %d:  Not Ready\n", driveId);
-        return 1;
-    }
-
-    return BootIdeIssueAtaCommand(uIoBase, command, &tsicp, DoNotSkipFirstWait);
+    return BootIdeIssueAtaCommand(uIoBase, command, &tsicp);
 }
 
 int sendATACommandAndSendData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, const unsigned char* dataBuffer, unsigned int sizeInSectors)
@@ -305,7 +297,8 @@ int sendATACommandAndSendData(int nDriveIndex, ide_command_t command, unsigned l
             return 1;
         }
     }
-    return 0;
+
+    return ide_polling(uIoBase, 1);
 }
 
 int sendATACommandAndReceiveData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, unsigned char* dataBuffer, unsigned int sizeInSectors)
@@ -328,99 +321,63 @@ int sendATACommandAndReceiveData(int nDriveIndex, ide_command_t command, unsigne
     return 0;
 }
 
-int getATAData(int nDriveIndex, void* output, unsigned int length)
-{
-    const unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
-
-    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Reading %u bytes", length);
-
-    if(BootIdeReadBlock(uIoBase, output, length))
-    {
-        return 1;
-    }
-
-    return 0;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //  Helper routines
 //
 
-
-int BootIdeWaitNotBusy(unsigned uIoBase)
+int ide_polling(unsigned uIoBase, unsigned char advanced_check)
 {
-    unsigned char b = ATA_SR_BSY;                                //Start being busy
 
-    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); /* waste 100ns */
-    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); /* waste 100ns */
-    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); /* waste 100ns */
-    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); /* waste 100ns */
+   // (I) Delay 400 nanosecond for BSY to be set:
+   // -------------------------------------------------
+   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
 
-    while((b & ATA_SR_BSY) && !(b & ATA_SR_DRQ))          //Device is not ready until bit7(BSY) is cleared and bit3(DRQ) is set.
-    {
-        b = IoInputByte(IDE_REG_STATUS(uIoBase));
+   // (II) Wait for BSY to be cleared:
+   // -------------------------------------------------
+   while(IoInputByte(IDE_REG_STATUS(uIoBase)) & ATA_SR_BSY); // Wait for BSY to be zero.
 
-        if(b == 0 || (b & ATA_SR_DF))  //No device
-        {
-            return -1;
-        }
-    }
+   if (advanced_check) {
 
-    return b&0x01;         //bit0 == ERR
+      unsigned char state = IoInputByte(IDE_REG_STATUS(uIoBase)); // Read Status Register.
+
+      // (III) Check For Errors:
+      // -------------------------------------------------
+      if (state & ATA_SR_ERR)
+      {
+          XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Error %u raised.", IoInputByte(IDE_REG_ERROR(uIoBase)));
+          return 2; // Error.
+      }
+
+      // (IV) Check If Device fault:
+      // -------------------------------------------------
+      if (state & ATA_SR_DF )
+      {
+          XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Device Fault raised.");
+          return 1; // Device Fault.
+      }
+
+      // (V) Check DRQ:
+      // -------------------------------------------------
+      // BSY = 0; DF = 0; ERR = 0 so we should check for DRQ now.
+      if (0 == (state & ATA_SR_DRQ))
+      {
+          XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "DRQ not set.");
+          return 3; // DRQ should be set
+      }
+
+   }
+
+   return 0; // No Error.
+
 }
 
-
-static int BootIdeWaitDataReady(unsigned uIoBase)
+static int BootIdeIssueAtaCommand(unsigned uIoBase, ide_command_t command, tsIdeCommandParams * params)
 {
-    int i = 0x800000;
-//    wait_us(1);
-
-    //Assuming that the while assertion, i decrementing and if condition assertion all
-    //take only a single cycle per operation(very unlikely), it would take around 34ms
-    //for i to reach 0 with a CPU running at 733MHz. So no need for extra smalldelay here.
-    //Since our program is single-threaded anyway, there's not much harm in polling the
-    //HDD's STATUS register until the necessary state is reached.
-    do
-    {
-        if (((IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x88) == 0x08))       //DRQ bit raised and BSY bit cleared.
-        {
-            if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01)
-            {
-                XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Error bit raised.");
-                return 2;        //ERR bit raised, return 2.
-            }
-            return 0;                                                           //Everything good, move on.
-        }
-        i--;
-    } while (i != 0);
-
-    if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01)
-    {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Error bit raised after timed out.");
-        return 2;                //ERR bit raised.
-    }
-    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_WARN, "Timeout error.");
-    return 1;                                                                   //Timeout error.
-}
-
-static int BootIdeIssueAtaCommand(
-    unsigned uIoBase,
-    ide_command_t command,
-    tsIdeCommandParams * params, bool skipFirstWait)
-{
-    int n;
-
-    //IoInputByte(IDE_REG_STATUS(uIoBase));     //No need since we'll be checking ALT_STATUS register in BootIdeWaitNotBusy function.
-    if(!skipFirstWait)
-    {
-        n=BootIdeWaitNotBusy(uIoBase);
-        if(n == -1)    // as our command may be being used to clear the error, not a good policy to check too closely!
-        {
-            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Error on wait 1: ret=%d, error %02X", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
-            return n;
-        }
-    }
+    ide_polling(uIoBase, 0);
 
     IoOutputByte(IDE_REG_FEATURE(uIoBase), params->m_bPrecomp);
 
@@ -441,13 +398,6 @@ static int BootIdeIssueAtaCommand(
     IoOutputByte(IDE_REG_COMMAND(uIoBase), command);                //COMMAND REG
 //    wait_us(1);
 
-    n=BootIdeWaitNotBusy(uIoBase);
-    if(n)
-    {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Error on wait 2: ret=%d, error 0x%02X", n, IoInputByte(IDE_REG_ERROR(uIoBase)));
-        return n;
-    }
-
     return 0;
 }
 
@@ -456,10 +406,10 @@ int BootIdeReadBlock(unsigned uIoBase, void * buf, unsigned short BlockSize)
     unsigned short * ptr = (unsigned short *) buf;
     int n;
 
-    n = BootIdeWaitDataReady(uIoBase);
+    n = ide_polling(uIoBase, 1);
     if(n)
     {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Data not ready.  err:%u", n);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "fail: %d", n);
         return n;
     }
 
@@ -468,16 +418,6 @@ int BootIdeReadBlock(unsigned uIoBase, void * buf, unsigned short BlockSize)
         *ptr++ = IoInputWord(IDE_REG_DATA(uIoBase));
         BlockSize -= 2;
     }
-
-
-    n=BootIdeWaitNotBusy(uIoBase);
-    if(n)
-    {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Waiting for good status reg returned error : %d", n);
-        return n;
-    }
-
-    if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) return 2;     //ERR flag raised.
 
     return 0;
 }
@@ -489,11 +429,7 @@ static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short 
     register unsigned short * ptr = (unsigned short *) buf;
     int n;
 
-    n = BootIdeWaitDataReady(uIoBase);
-    if(n)
-    {
-        return n;
-    }
+    ide_polling(uIoBase, 0);
 
     while(BlockSize > 1)
     {
@@ -502,15 +438,6 @@ static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short 
         BlockSize -= 2;
         ptr++;
     }
-
-    n=BootIdeWaitNotBusy(uIoBase);
-    if(n)
-    {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Waiting for good status reg returned error : %d", n);
-        return n;
-    }
-
-    if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) return 2;     //ERR flag raised.
 
     return 0;
 }
@@ -522,9 +449,14 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, unsigned int size)
     unsigned short w;
     int n;
 
-    n=BootIdeWaitDataReady(uIoBase);
+    n=ide_polling(uIoBase, 1);
+    if(n)
+    {
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "error:%u", n);
+        return n;
+    }
 
-    wait_us_blocking(1);
+    //wait_us_blocking(1);
 
     w=IoInputByte(IDE_REG_LBA_MID(uIoBase));
     w|=(IoInputByte(IDE_REG_LBA_HIGH(uIoBase)))<<8;
@@ -542,13 +474,8 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, unsigned int size)
         size -= 2;
         ptr++;
     }
-    n=IoInputByte(IDE_REG_STATUS(uIoBase));
-    if(n&1)  // error
-    {
-        return 1;
-    }
-    wait_us_blocking(1);
-    n=BootIdeWaitNotBusy(uIoBase);
+
+    n=ide_polling(uIoBase, 1);
     if(n)
     {
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Waiting for good status reg returned error : %d", n);
@@ -570,13 +497,8 @@ int BootIdeIssueAtapiPacketCommandAndPacket(int nDriveIndex, unsigned char *pAta
     IoOutputByte(IDE_REG_DRIVEHEAD(uIoBase), tsicp.m_bDrivehead);
 
     tsicp.m_wCylinder=2048;
-    BootIdeWaitNotBusy(uIoBase);
-    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_ATAPI_PACKET, &tsicp, false))
-    {
-            return 1;
-    }
 
-    if(BootIdeWaitNotBusy(uIoBase))
+    if(BootIdeIssueAtaCommand(uIoBase, IDE_CMD_ATAPI_PACKET, &tsicp))
     {
         return 1;
     }
@@ -588,8 +510,9 @@ int BootIdeIssueAtapiPacketCommandAndPacket(int nDriveIndex, unsigned char *pAta
 
     if(pAtapiCommandPacket12Bytes[0]!=0x1e)
     {
-        if(BootIdeWaitDataReady(uIoBase))
+        if(ide_polling(uIoBase, 1))
         {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Error.");
             return 1;
         }
     }

@@ -257,11 +257,10 @@ int BootIdeSendSoftReset(void);
 int sendControlATACommand(int nDriveIndex, ide_command_t command, unsigned long long startLBA, unsigned char FeatureField, unsigned short sectorCount);
 int sendATACommandAndSendData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, const unsigned char* dataBuffer, unsigned int sizeInBytes);
 int sendATACommandAndReceiveData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, unsigned char* dataBuffer, unsigned int sizeInSectors);
-int getATAData(int nDriveIndex, void* output, unsigned int length);
 int BootIdeReadBlock(unsigned uIoBase, void * buf, unsigned short BlockSize);
 int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, unsigned int size);
 int BootIdeIssueAtapiPacketCommandAndPacket(int nDriveIndex, unsigned char *pAtapiCommandPacket12Bytes);
-int BootIdeWaitNotBusy(unsigned uIoBase);
+int ide_polling(unsigned uIoBase, unsigned char advanced_check);
 
 
 /*-----------------------------------------------------------------------------*/

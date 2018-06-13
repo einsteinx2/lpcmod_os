@@ -148,8 +148,6 @@ int Internal_ATAPIDataRead(int nDriveIndex, void * pbBuffer, unsigned int block,
         }
     }
 
-    BootIdeWaitNotBusy(uIoBase);
-
     if(n_bytes<2048)
     {
         return 1;

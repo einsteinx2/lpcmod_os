@@ -37,10 +37,6 @@ static int InternalSecurityChange(int driveId, const char *password, ide_command
     tsIdeCommandParams tsicp = IDE_DEFAULT_COMMAND;
     const unsigned int uIoBase = tsaHarddiskInfo[driveId].m_fwPortBase;
 
-    if(BootIdeWaitNotBusy(uIoBase))
-    {
-        return 1;
-    }
     tsicp.m_bDrivehead = IDE_DH_DEFAULT | IDE_DH_DRIVE(driveId);
 
     if (ide_cmd == IDE_CMD_SECURITY_SET_PASSWORD) {
