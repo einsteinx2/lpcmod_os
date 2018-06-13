@@ -48,7 +48,7 @@ static int BootIdePIORead(int nDriveIndex, unsigned char* outBuffer, unsigned lo
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Read %u sectors", tempSectorCount);
         if(sendATACommandAndReceiveData(nDriveIndex, ideReadCommand, startSector, outBuffer + (logicalSectorSize * sectorProcessedCount), tempSectorCount % maxSectorReadCountPerCommand))
         {
-            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error drive:%u  sec:%Lu", nDriveIndex, startSector);
             return 1;
         }
         sectorProcessedCount += tempSectorCount;
@@ -79,7 +79,7 @@ static int BootIdePIOWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
         if(sendATACommandAndSendData(nDriveIndex, ideWriteCommand, startSector, inBuffer + (logicalSectorSize * sectorProcessedCount), tempSectorCount % maxSectorWriteCountPerCommand))
         {
-            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "error drive:%u  sec:%Lu", nDriveIndex, startSector);
             return 1;
         }
         sectorProcessedCount += tempSectorCount;
@@ -109,7 +109,7 @@ static int BootIdeDMARead(int nDriveIndex, unsigned char* outBuffer, unsigned lo
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Read %u sectors", tempSectorCount);
         if(sendControlATACommand(nDriveIndex, ideReadCommand, startSector, NoFeatureField, tempSectorCount % maxSectorReadCountPerCommand))
         {
-            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error drive:%u  sec:%Lu", nDriveIndex, startSector);
             return 1;
         }
         sectorProcessedCount += tempSectorCount;
@@ -141,7 +141,7 @@ static int BootIdeDMAWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
         if(sendControlATACommand(nDriveIndex, ideWriteCommand, startSector, NoFeatureField, tempSectorCount % maxSectorWriteCountPerCommand))
         {
-            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error");
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "error drive:%u  sec:%Lu", nDriveIndex, startSector);
             return 1;
         }
         sectorProcessedCount += tempSectorCount;
