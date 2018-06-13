@@ -15,6 +15,7 @@
 #include "stdio.h"
 #include "xblast/HardwareIdentifier.h"
 #include "FatFSAccessor.h"
+#include "IdeDriver.h"
 
 void DeveloperFileOpsMenuDynamic(void* drive);
 
@@ -73,16 +74,19 @@ TEXTMENU* DeveloperMenuInit(void)
 
     for(i = HDD_Master; i < NbDrivesSupported; i++)
     {
-        if(isFATXFormattedDrive(i))
+        if(IdeDriver_DeviceConnected(i) && 0 == IdeDriver_DeviceIsATAPI(i))
         {
-            //File operations submenu.
-            itemPtr = calloc(1, sizeof(TEXTMENUITEM));
-            sprintf(itemPtr->szCaption, "%s: File op", i == HDD_Master ? "Master" : "Slave");
-            itemPtr->functionPtr = DeveloperFileOpsMenuDynamic;
-            itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
-            *(unsigned char*)itemPtr->functionDataPtr = i;
-            itemPtr->dataPtrAlloc = 1;
-            TextMenuAddItem(menuPtr, itemPtr);
+            if(isFATXFormattedDrive(i))
+            {
+                //File operations submenu.
+                itemPtr = calloc(1, sizeof(TEXTMENUITEM));
+                sprintf(itemPtr->szCaption, "%s: File op", i == HDD_Master ? "Master" : "Slave");
+                itemPtr->functionPtr = DeveloperFileOpsMenuDynamic;
+                itemPtr->functionDataPtr = malloc(sizeof(unsigned char));
+                *(unsigned char*)itemPtr->functionDataPtr = i;
+                itemPtr->dataPtrAlloc = 1;
+                TextMenuAddItem(menuPtr, itemPtr);
+            }
         }
     }
 /*
