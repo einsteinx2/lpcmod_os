@@ -16,7 +16,7 @@ tsHarddiskInfo tsaHarddiskInfo[2];  // static struct stores data about attached 
 
 static int BootIdeWaitDataReady(unsigned uIoBase);
 static int BootIdeIssueAtaCommand(unsigned uIoBase, ide_command_t command, tsIdeCommandParams * params, bool skipFirstWait);
-static int BootIdeWriteData(unsigned uIoBase, const void * buf, unsigned int size);
+static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short BlockSize);
 
 static void populateLBAField(tsIdeCommandParams* inout, int nDriveIndex, unsigned long long lba, bool isLBA48)
 {
@@ -130,10 +130,11 @@ int BootIdeSendIdentifyDevice(int nDriveIndex)
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "IDE_CMD_IDENTIFY successful.");
     }
 
-    if(getATAData(nDriveIndex, identifyDataBuf, IDE_SECTOR_SIZE))
+    if(BootIdeReadBlock(tsaHarddiskInfo[nDriveIndex].m_fwPortBase, identifyDataBuf, IDE_SECTOR_SIZE))
     {
         return 1;
     }
+    BootIdeReadBlock(nDriveIndex, identifyDataBuf, IDE_SECTOR_SIZE);
 
     tsaHarddiskInfo[nDriveIndex].m_fDriveExists = 1;
 
@@ -290,34 +291,41 @@ int sendControlATACommand(int nDriveIndex, ide_command_t command, unsigned long 
 int sendATACommandAndSendData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, const unsigned char* dataBuffer, unsigned int sizeInSectors)
 {
     const unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+    const unsigned short SectorSize = tsaHarddiskInfo[nDriveIndex].m_logicalSectorSize;
 
     if(sendControlATACommand(nDriveIndex, command, startLBA, NoFeatureField, sizeInSectors))
     {
         return 1;
     }
 
-
-    BootIdeWriteData(uIoBase, dataBuffer, sizeInSectors * tsaHarddiskInfo[nDriveIndex].m_logicalSectorSize);
-
-    if (BootIdeWaitNotBusy(uIoBase))
+    for(unsigned int i = 0; i < sizeInSectors; i++)
     {
-        return 1;
+        if(BootIdeWriteBlock(uIoBase, dataBuffer + (i * SectorSize), SectorSize))
+        {
+            return 1;
+        }
     }
-
     return 0;
 }
 
 int sendATACommandAndReceiveData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, unsigned char* dataBuffer, unsigned int sizeInSectors)
 {
     const unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+    const unsigned short SectorSize = tsaHarddiskInfo[nDriveIndex].m_logicalSectorSize;
 
     if(sendControlATACommand(nDriveIndex, command, startLBA, NoFeatureField, sizeInSectors))
     {
         return 1;
     }
 
-
-    return getATAData(nDriveIndex, dataBuffer, sizeInSectors * tsaHarddiskInfo[nDriveIndex].m_logicalSectorSize);
+    for(unsigned int i = 0; i < sizeInSectors; i++)
+    {
+        if(BootIdeReadBlock(uIoBase, dataBuffer + (i * SectorSize), SectorSize))
+        {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int getATAData(int nDriveIndex, void* output, unsigned int length)
@@ -326,8 +334,7 @@ int getATAData(int nDriveIndex, void* output, unsigned int length)
 
     XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Reading %u bytes", length);
 
-    BootIdeWaitDataReady(uIoBase);
-    if(BootIdeReadData(uIoBase, output, length))
+    if(BootIdeReadBlock(uIoBase, output, length))
     {
         return 1;
     }
@@ -444,45 +451,22 @@ static int BootIdeIssueAtaCommand(
     return 0;
 }
 
-int BootIdeReadData(unsigned uIoBase, void * buf, unsigned int size)
+int BootIdeReadBlock(unsigned uIoBase, void * buf, unsigned short BlockSize)
 {
     unsigned short * ptr = (unsigned short *) buf;
-    if (BootIdeWaitDataReady(uIoBase))
-    {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Data not ready...");
-        return 1;
-    }
-
-    while (size > 1)
-    {
-        *ptr++ = IoInputWord(IDE_REG_DATA(uIoBase));
-        size -= 2;
-    }
-
-
-    if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01)
-    {
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Ended with an error.");
-        return 2;
-    }
-    return 0;
-}
-
-
-// issues a block of data ATA-style
-static int BootIdeWriteData(unsigned uIoBase, const void * buf, unsigned int size)
-{
-    register unsigned short * ptr = (unsigned short *) buf;
     int n;
 
-    n=BootIdeWaitDataReady(uIoBase);
-
-    while (size > 1)
+    n = BootIdeWaitDataReady(uIoBase);
+    if(n)
     {
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Data not ready.  err:%u", n);
+        return n;
+    }
 
-        IoOutputWord(IDE_REG_DATA(uIoBase), *ptr);
-        size -= 2;
-        ptr++;
+    while (BlockSize > 1)
+    {
+        *ptr++ = IoInputWord(IDE_REG_DATA(uIoBase));
+        BlockSize -= 2;
     }
 
 
@@ -498,6 +482,38 @@ static int BootIdeWriteData(unsigned uIoBase, const void * buf, unsigned int siz
     return 0;
 }
 
+
+// issues a block of data ATA-style
+static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short BlockSize)
+{
+    register unsigned short * ptr = (unsigned short *) buf;
+    int n;
+
+    n = BootIdeWaitDataReady(uIoBase);
+    if(n)
+    {
+        return n;
+    }
+
+    while(BlockSize > 1)
+    {
+
+        IoOutputWord(IDE_REG_DATA(uIoBase), *ptr);
+        BlockSize -= 2;
+        ptr++;
+    }
+
+    n=BootIdeWaitNotBusy(uIoBase);
+    if(n)
+    {
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "Waiting for good status reg returned error : %d", n);
+        return n;
+    }
+
+    if(IoInputByte(IDE_REG_STATUS(uIoBase)) & 0x01) return 2;     //ERR flag raised.
+
+    return 0;
+}
 
 
 int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, unsigned int size)
