@@ -127,7 +127,7 @@ int BootIdeSetTransferMode(int nIndexDrive, int nMode)
     {
         IoOutputByte(0xff60+2, 0x62); // DMA possible for both drives
 
-        //IoOutputByte(IDE_REG_CONTROL(tsaHarddiskInfo[nIndexDrive].m_fwPortBase), 0x08); // enable interrupt
+        IoOutputByte(IDE_REG_CONTROL(tsaHarddiskInfo[nIndexDrive].m_fwPortBase), 0x00); // enable interrupt
         IoOutputByte(IDE_REG_FEATURE(tsaHarddiskInfo[nIndexDrive].m_fwPortBase), 0x01); // enable DMA
     }
     return BootIdeSendSetFeatures(nIndexDrive, 0x03, nMode);
