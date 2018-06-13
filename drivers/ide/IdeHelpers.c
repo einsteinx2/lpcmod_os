@@ -133,7 +133,6 @@ int BootIdeSendIdentifyDevice(int nDriveIndex)
     {
         return 1;
     }
-    BootIdeReadBlock(nDriveIndex, identifyDataBuf, IDE_SECTOR_SIZE);
 
     tsaHarddiskInfo[nDriveIndex].m_fDriveExists = 1;
 
@@ -299,7 +298,7 @@ int sendATACommandAndSendData(int nDriveIndex, ide_command_t command, unsigned l
         }
     }
 
-    return ide_polling(uIoBase, 1);
+    return ide_polling(uIoBase, 0);
 }
 
 int sendATACommandAndReceiveData(int nDriveIndex, ide_command_t command, unsigned long long startLBA, unsigned char* dataBuffer, unsigned int sizeInSectors)
@@ -329,7 +328,7 @@ int sendATACommandAndReceiveData(int nDriveIndex, ide_command_t command, unsigne
 
 int ide_polling(unsigned uIoBase, unsigned char advanced_check)
 {
-
+    unsigned char state = ATA_SR_BSY;
    // (I) Delay 400 nanosecond for BSY to be set:
    // -------------------------------------------------
    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
@@ -339,11 +338,12 @@ int ide_polling(unsigned uIoBase, unsigned char advanced_check)
 
    // (II) Wait for BSY to be cleared:
    // -------------------------------------------------
-   while(IoInputByte(IDE_REG_STATUS(uIoBase)) & ATA_SR_BSY); // Wait for BSY to be zero.
+   while(state & ATA_SR_BSY) // Wait for BSY to be zero.
+   {
+       state = IoInputByte(IDE_REG_STATUS(uIoBase));
+   }
 
    if (advanced_check) {
-
-      unsigned char state = IoInputByte(IDE_REG_STATUS(uIoBase)); // Read Status Register.
 
       // (III) Check For Errors:
       // -------------------------------------------------
@@ -430,7 +430,7 @@ static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short 
     register unsigned short * ptr = (unsigned short *) buf;
     int n;
 
-    ide_polling(uIoBase, 0);
+    ide_polling(uIoBase, 1);
 
     while(BlockSize > 1)
     {
@@ -450,7 +450,7 @@ int BootIdeWriteAtapiData(unsigned uIoBase, void * buf, unsigned int size)
     unsigned short w;
     int n;
 
-    n=ide_polling(uIoBase, 1);
+    n=ide_polling(uIoBase, 0);
     if(n)
     {
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "error:%u", n);
