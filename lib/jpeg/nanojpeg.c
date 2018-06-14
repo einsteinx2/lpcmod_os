@@ -250,7 +250,7 @@ int main(int argc, char* argv[]) {
 #if NJ_USE_LIBC
 //    #include <stdlib.h>
 //    #include <string.h>
-#include "boot.h"
+#include "stdlib.h"
 #include "string.h"
 
 #define njAllocMem malloc

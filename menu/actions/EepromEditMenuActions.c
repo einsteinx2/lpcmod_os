@@ -15,7 +15,7 @@
 #include "MenuActions.h"
 #include "string.h"
 #include "stdio.h"
-#include "boot.h"
+#include "stdlib.h"
 #include "menu/misc/OnScreenKeyboard.h"
 #include "menu/misc/ConfirmDialog.h"
 #include "xblast/HardwareIdentifier.h"

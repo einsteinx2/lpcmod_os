@@ -17,6 +17,7 @@
 #include "conexant.h"
 #include "focus.h"
 #include "string.h"
+#include "boot.h"
 #include "xblast/settings/xblastSettingsDefs.h"
 
 #define ADR(x) (x / 2 - 0x17)

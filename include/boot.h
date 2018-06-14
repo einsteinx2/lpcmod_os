@@ -176,33 +176,12 @@ static __inline unsigned int IoInputDword(unsigned short wAds) {
 
 void BootPciInterruptEnable(void);
 
-    // boot process
-int BootPerformPicChallengeResponseAction(void);
-
-typedef struct _LIST_ENTRY {
-    struct _LIST_ENTRY *m_plistentryNext;
-    struct _LIST_ENTRY *m_plistentryPrevious;
-} LIST_ENTRY;
-
-void ListEntryInsertAfterCurrent(LIST_ENTRY *plistentryCurrent, LIST_ENTRY *plistentryNew);
-void ListEntryRemove(LIST_ENTRY *plistentryCurrent);
-
-////////// BootPerformXCodeActions.c
-
-int BootPerformXCodeActions(void);
 
 #include "BootEEPROM.h"
 #include "BootParser.h"
 
-////////// BootStartBios.c
-
-void StartBios(CONFIGENTRY *config,int nActivePartition, int nFATXPresent,int bootfrom);
-int BootMenu(CONFIGENTRY *config,int nDrive,int nActivePartition, int nFATXPresent);
-
 ////////// BootResetActions.c
-void ClearIDT (void);
 void BootResetAction(void);
-void BootCpuCache(bool fEnable) ;
 void BiosCmosWrite(unsigned char bAds, unsigned char bData);
 unsigned char BiosCmosRead(unsigned char bAds);
 
@@ -236,8 +215,6 @@ extern struct xpad_data XPAD_current[4];
 extern struct xpad_data XPAD_last[4];
 
 void MemoryManagementInitialization(void * pvStartAddress, unsigned int dwTotalMemoryAllocLength);
-void * malloc(size_t size);
-void free(void *);
 
 extern volatile int nCountI2cinterrupts, nCountUnusedInterrupts, nCountUnusedInterruptsPic2, nCountInterruptsSmc, nCountInterruptsIde;
 typedef enum {

@@ -13,9 +13,8 @@
 */
 #include "focus.h"
 #include "encoder.h"
-#include "boot.h"
 #include "string.h"
-
+#include <stdbool.h>
 
 typedef struct _focus_pll_settings
 {

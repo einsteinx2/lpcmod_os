@@ -75,6 +75,7 @@ return dest;
 
 
 #else
+#include "stdlib.h"
 #include "boot.h"
 #include "../lib/cromwell/cromString.h"
 #include "lib/time/timeManagement.h"

@@ -19,7 +19,7 @@
 
 //#include <linux/xboxfbctl.h>
 //include "xboxfb.h"
-#include "boot.h"
+#include "stdlib.h"
 #include "encoder.h"
 
 int conexant_calc_mode(xbox_video_mode * mode, struct riva_regs * riva_out);

@@ -27,7 +27,7 @@
 
 //#include <linux/xboxfbctl.h>
 #include "VideoInitialization.h"
-#include "boot.h"
+#include "stdlib.h"
 
 typedef struct {
     double m_dHzBurstFrequency;

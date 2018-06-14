@@ -1,4 +1,5 @@
 #include "boot.h"
+#include "stdlib.h"
 #include "i2c.h"
 #include "string.h"
 // by ozpaulb@hotmail.com 2002-07-14
