@@ -17,6 +17,14 @@ tsHarddiskInfo tsaHarddiskInfo[2];  // static struct stores data about attached 
 static int BootIdeIssueAtaCommand(unsigned uIoBase, ide_command_t command, tsIdeCommandParams * params);
 static int BootIdeWriteBlock(unsigned uIoBase, const void * buf, unsigned short BlockSize);
 
+static void _400nsDelay(unsigned uIoBase)
+{
+    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+    IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+}
+
 static void populateLBAField(tsIdeCommandParams* inout, int nDriveIndex, unsigned long long lba, bool isLBA48)
 {
     if(isLBA48)
@@ -51,6 +59,7 @@ static int commandIsEXT(ide_command_t command)
     case IDE_CMD_WRITE_EXT:
     case IDE_CMD_WRITE_DMA_EXT:
     case IDE_CMD_WRITE_MULTIPLE_EXT:
+    case IDE_CMD_WRITE_DMA_FUA_EXT:
     case IDE_CMD_CACHE_FLUSH_EXT:
         return 1;
     default:
@@ -331,10 +340,7 @@ int ide_polling(unsigned uIoBase, unsigned char advanced_check)
     unsigned char state = ATA_SR_BSY;
    // (I) Delay 400 nanosecond for BSY to be set:
    // -------------------------------------------------
-   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
-   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
-   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
-   IoInputByte(IDE_REG_ALTSTATUS(uIoBase)); // Reading Alternate Status Port wastes 100ns.
+   _400nsDelay(uIoBase);
 
    // (II) Wait for BSY to be cleared:
    // -------------------------------------------------
