@@ -12,8 +12,10 @@
 #include "xblast/HardwareIdentifier.h"
 #include "BootHddKey.h"
 #include "lib/cromwell/cromString.h"
+#include <limits.h>
 
 static int BootIdeSendSetFeatures(int nIndexDrive, unsigned char featureSelect, unsigned short valueInSectorCount);
+static void setIDEDMA_PCI(unsigned char drive, UltraDMAMode mode);
 
 static void invalidateDeviceInfoStruct(unsigned char deviceIndex)
 {
@@ -182,6 +184,8 @@ int BootIdeSetTransferMode(int nIndexDrive, UltraDMAMode nMode)
         return 1;
     }
 
+    setIDEDMA_PCI(nIndexDrive, nMode);
+
     tsaHarddiskInfo[nIndexDrive].m_fUseDMA = 1;
 
     return 0;
@@ -197,4 +201,28 @@ static int BootIdeSendSetFeatures(int nIndexDrive, unsigned char featureSelect, 
         return 1;
     }
     return BootIdeSendIdentifyDevice(nIndexDrive);
+}
+
+static void setIDEDMA_PCI(unsigned char drive, UltraDMAMode mode)
+{
+#define UDMA_PCI_ENMODE 0x80    /* 1: Use bit 6 to determine UDMA mode. 0: Use Set Features ATA command */
+#define UDMA_PCI_UDMAEN 0x40    /* 1: Enable UDMA */
+    const unsigned char modeBitCfg[] =
+    {
+     0x02,  /* Ultra DMA Mode 0 */
+     0x01,  /* Ultra DMA Mode 1 */
+     0x00,  /* Ultra DMA Mode 2 */
+     0x04,  /* Ultra DMA Mode 3 */
+     0x05,  /* Ultra DMA Mode 4 */
+     0x06   /* Ultra DMA Mode 5 */
+    };
+    unsigned int reg = PciReadDword(BUS_0, DEV_9, FUNC_0, 0x60);
+    unsigned int singleConfig = UDMA_PCI_ENMODE | UDMA_PCI_UDMAEN;
+    singleConfig |= modeBitCfg[convertUltraDMAMode(mode)];
+    singleConfig <<= (24 - (8 * drive));
+
+    reg &= ((unsigned int)UINT_MAX & ~(unsigned int)(UCHAR_MAX << (24 - (8 * drive))));
+    reg |= singleConfig;
+    XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write Dword 0x%08X", reg);
+    PciWriteDword(BUS_0, DEV_9, FUNC_0, 0x60, reg);
 }
