@@ -111,7 +111,7 @@ void DeveloperFileOpsMenuDynamic(void* drive)
     menuPtr = calloc(1, sizeof(TEXTMENU));
     sprintf(menuPtr->szCaption, "%s: File op", nDriveIndex == HDD_Master ? "Master" : "Slave");
 
-    //Print LPCmodsettings struct data.
+    //Write dummy for to Y drive.
     itemPtr = calloc(1, sizeof(TEXTMENUITEM));
     strcpy(itemPtr->szCaption, "Write To Y:");
     itemPtr->functionPtr = WriteToYDrive;
