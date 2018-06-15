@@ -21,13 +21,27 @@ typedef struct {                 //PRD table entry. 8 bytes in length
     unsigned short endoftable : 1;
 }__attribute__((packed))PRD;    //No filling. SHouldn't matter since its elements makes it already aligned.
 
-typedef struct PRDT{
+typedef struct {
     PRD __attribute__((aligned(4)))PRD1;      //All aligned on a Dword boundary
     PRD __attribute__((aligned(4)))PRD2;
     PRD __attribute__((aligned(4)))PRD3;
     PRD __attribute__((aligned(4)))PRD4;
-}__attribute__((packed, aligned(64 * 1024))) PRDTable;  //Aligned on a 64K boundary.
+}__attribute__((packed, aligned(64 * 1024))) PRDTable_t;  //Aligned on a 64K boundary.
                                                         //So no crossing unless struct is > 64K in size.
+static PRDTable_t prdTable;
+/* Go with a single PRD for now */
+#define MaxDMATransfer_bytes 64 * 1024
+static unsigned char prd1Buf[MaxDMATransfer_bytes]__attribute__((aligned(64 * 1024)));
+
+void InternalIde_SetPRD1(void* bufAddr, unsigned short size, unsigned char endOfTable)
+{
+    prdTable.PRD1.address = (unsigned int)bufAddr;
+    prdTable.PRD1.byteCount = size;
+    prdTable.PRD1.endoftable = endOfTable;
+
+    IoOutputDword(BM_REG_PRDT(DMA_BUSMASTER_BASE), (unsigned int)&prdTable);
+}
+
 static int BootIdePIORead(int nDriveIndex, unsigned char* outBuffer, unsigned long long startSector, int n_sectors)
 {
     unsigned char ideReadCommand = IDE_CMD_READ_MULTI_RETRY; /* 28-bit LBA */
@@ -104,14 +118,28 @@ static int BootIdeDMARead(int nDriveIndex, unsigned char* outBuffer, unsigned lo
 
     while(sectorProcessedCount < n_sectors)
     {
-        //TODO: Populate PRD and configure IDE BusMaster
         int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorReadCountPerCommand ? maxSectorReadCountPerCommand : n_sectors - sectorProcessedCount);
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Read %u sectors", tempSectorCount);
+        InternalIde_SetPRD1(prd1Buf, tempSectorCount * logicalSectorSize, 1);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "DMA Read %u sectors", tempSectorCount);
         if(sendControlATACommand(nDriveIndex, ideReadCommand, startSector, NoFeatureField, tempSectorCount % maxSectorReadCountPerCommand))
         {
             XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "error drive:%u  sec:%Lu", nDriveIndex, startSector);
             return 1;
         }
+
+        // Set BusMaster register
+        if(setBusMasterCommandRegister(1, 1))
+        {
+            return 1;
+        }
+
+        if(dma_polling(nDriveIndex))
+        {
+            return 1;
+        }
+
+        memcpy(outBuffer + (sectorProcessedCount * logicalSectorSize), prd1Buf, tempSectorCount * logicalSectorSize);
+
         sectorProcessedCount += tempSectorCount;
     }
 
@@ -136,14 +164,27 @@ static int BootIdeDMAWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
 
     while(sectorProcessedCount < n_sectors)
     {
-        //TODO: Populate PRD and configure IDE BusMaster
         int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorWriteCountPerCommand ? maxSectorWriteCountPerCommand : n_sectors - sectorProcessedCount);
-        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
+        memcpy(prd1Buf, inBuffer + (sectorProcessedCount * logicalSectorSize), tempSectorCount * logicalSectorSize);
+        InternalIde_SetPRD1(prd1Buf, tempSectorCount * logicalSectorSize, 1);
+        XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "DMA Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
         if(sendControlATACommand(nDriveIndex, ideWriteCommand, startSector, NoFeatureField, tempSectorCount % maxSectorWriteCountPerCommand))
         {
             XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_FATAL, "error drive:%u  sec:%Lu", nDriveIndex, startSector);
             return 1;
         }
+
+        // Set BusMaster register
+        if(setBusMasterCommandRegister(0, 1))
+        {
+            return 1;
+        }
+
+        if(dma_polling(nDriveIndex))
+        {
+            return 1;
+        }
+
         sectorProcessedCount += tempSectorCount;
     }
 

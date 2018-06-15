@@ -62,10 +62,12 @@ typedef enum {
 
 ////////////////////////////////////
 // IDE types and constants
-#define IDE_SECTOR_SIZE         0x200
+#define IDE_SECTOR_SIZE               0x200
 #define IDE_BASE1                     (0x1F0u) /* primary controller */
 
 #define IDE_REG_EXTENDED_OFFSET       (0x204u) /* 0x3F4 */
+
+#define DMA_BUSMASTER_BASE            (0xff60u) /* set so in pci config routine */
 
 /* Read/Write registers*/
 #define IDE_REG_DATA(base)              ((base) + 0u) /* word register */
@@ -111,6 +113,13 @@ Normal command output(receiving from ATA device) will require a read on the foll
     -Status
 */
 
+#define BM_REG_COMMAND(base)   ((base) + 0u)   // Command register. R/W.
+#define BM_REG_STATUS(base)    ((base) + 2u)   // Status register. R/W.
+#define BM_REG_PRDT(base)      ((base) + 4u)   // PRD table register. R/W. 32-bits addr for PRD table struct. 4-bytes long.
+
+///////////////////////////
+// ATA controller
+//
 /* Status Register bits */
 #define ATA_SR_BSY     0x80    // Busy
 #define ATA_SR_DRDY    0x40    // Drive ready
@@ -137,6 +146,21 @@ Normal command output(receiving from ATA device) will require a read on the foll
 #define ATA_CTRL_SRST   0x04    // 1: Software reset entire bus
 #define ATA_CTRL_HOB    0x80    // 1: Read back the High Order Byte of the last LBA48 value sent to an IO port
 
+
+///////////////////////////
+// Bus Master controller
+//
+/* Command Register bits */
+#define BM_CMD_RW        0x08    // Read/Write bit. RW. 0: Writing to disk. 1: Reading from disk.
+#define BM_CMD_STRT      0x01    // Start/Stop bit. R/W. Write 1 to start transfer.
+
+/* Status Register bits */
+#define BM_SR_SO        0x80    // Simplex Only. RO. 0: can use both DMA channels at the same time.
+#define BM_SR_DMA1C     0x40    // Drive 1 DMA Capable. R/W.
+#define BM_SR_DMA0C     0x20    // Drive 0 DMA Capable. R/W.
+#define BM_SR_IRQ       0x04    // Interrupt. R/W. Signal interrupt raised. Clear by writing 1 to it.
+#define BM_SR_ERR       0x02    // Error. R/W. Signal error occurred. Clear by writing 1 to it.
+#define BM_SR_ACTIVE    0x01    // Active. RO.
 
 
 typedef struct {
@@ -269,8 +293,15 @@ int ide_polling(unsigned uIoBase, unsigned char advanced_check);
 /*-----------------------------------------------------------------------------*/
 /* ATA controller config*/
 /*-----------------------------------------------------------------------------*/
-int BootIdeSetTransferMode(int nIndexDrive, int nMode);
+int BootIdeSetTransferMode(int nIndexDrive, UltraDMAMode nMode);
 int BootIdeEnableWriteCache(int nIndexDrive, bool enable);
 
+
+/*-----------------------------------------------------------------------------*/
+/* Bus Master config*/
+/*-----------------------------------------------------------------------------*/
+int dma_polling(unsigned char nDriveIndex);
+void resetBusMasterStatusRegister(void);
+int setBusMasterCommandRegister(bool readFromDisk, bool startTx);
 
 #endif /* DRIVERS_IDE_IDEHELPERS_H_ */

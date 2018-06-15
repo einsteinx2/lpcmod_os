@@ -382,6 +382,47 @@ int ide_polling(unsigned uIoBase, unsigned char advanced_check)
 
 }
 
+int dma_polling(unsigned char nDriveIndex)
+{
+    const unsigned int uIoBase = tsaHarddiskInfo[nDriveIndex].m_fwPortBase;
+    unsigned char state = 0;
+
+    while(0 == (state & BM_SR_IRQ)) // Wait for BSY to be zero.
+    {
+        state = IoInputByte(BM_REG_STATUS(DMA_BUSMASTER_BASE));
+    }
+
+    if(state & BM_SR_ERR)
+    {
+        return 1;
+    }
+
+    ide_polling(uIoBase, 0);
+
+    return 0;
+}
+
+void resetBusMasterStatusRegister(void)
+{
+    IoOutputByte(BM_REG_STATUS(DMA_BUSMASTER_BASE), BM_SR_DMA1C | BM_SR_DMA0C | BM_SR_IRQ | BM_SR_ERR); // DMA possible for both drives
+}
+
+int setBusMasterCommandRegister(bool readFromDisk, bool startTx)
+{
+    unsigned char state = IoInputByte(BM_REG_COMMAND(DMA_BUSMASTER_BASE));
+
+    if(state & BM_CMD_STRT)
+    {
+        /* Already started */
+        return 1;
+    }
+
+    state = readFromDisk ? BM_CMD_RW : 0 | startTx ? BM_CMD_STRT : 0;
+    IoOutputByte(BM_REG_COMMAND(DMA_BUSMASTER_BASE), state);
+
+    return 0;
+}
+
 static int BootIdeIssueAtaCommand(unsigned uIoBase, ide_command_t command, tsIdeCommandParams * params)
 {
     ide_polling(uIoBase, 0);
