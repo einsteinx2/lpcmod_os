@@ -37,6 +37,7 @@ void InternalIde_SetPRD1(void* bufAddr, unsigned short size, unsigned char endOf
 {
     prdTable.PRD1.address = (unsigned int)bufAddr;
     prdTable.PRD1.byteCount = size;
+    prdTable.PRD1.reserved = 0;
     prdTable.PRD1.endoftable = endOfTable;
 
     IoOutputDword(BM_REG_PRDT(DMA_BUSMASTER_BASE), (unsigned int)&prdTable);
@@ -119,7 +120,7 @@ static int BootIdeDMARead(int nDriveIndex, unsigned char* outBuffer, unsigned lo
     while(sectorProcessedCount < n_sectors)
     {
         int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorReadCountPerCommand ? maxSectorReadCountPerCommand : n_sectors - sectorProcessedCount);
-        InternalIde_SetPRD1(prd1Buf, tempSectorCount * logicalSectorSize, 1);
+        InternalIde_SetPRD1(prd1Buf, tempSectorCount * logicalSectorSize % (unsigned int)MaxDMATransfer_bytes, 1);
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "DMA Read %u sectors", tempSectorCount);
         if(sendControlATACommand(nDriveIndex, ideReadCommand, startSector, NoFeatureField, tempSectorCount % maxSectorReadCountPerCommand))
         {
@@ -130,11 +131,13 @@ static int BootIdeDMARead(int nDriveIndex, unsigned char* outBuffer, unsigned lo
         // Set BusMaster register
         if(setBusMasterCommandRegister(1, 1))
         {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Set BusMaster error");
             return 1;
         }
 
         if(dma_polling(nDriveIndex))
         {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "DMA polling error");
             return 1;
         }
 
@@ -166,7 +169,7 @@ static int BootIdeDMAWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
     {
         int tempSectorCount = (n_sectors - sectorProcessedCount > maxSectorWriteCountPerCommand ? maxSectorWriteCountPerCommand : n_sectors - sectorProcessedCount);
         memcpy(prd1Buf, inBuffer + (sectorProcessedCount * logicalSectorSize), tempSectorCount * logicalSectorSize);
-        InternalIde_SetPRD1(prd1Buf, tempSectorCount * logicalSectorSize, 1);
+        InternalIde_SetPRD1(prd1Buf, tempSectorCount * logicalSectorSize % (unsigned int)MaxDMATransfer_bytes, 1);
         XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_DEBUG, "DMA Write %u sec. Proc:%u", tempSectorCount, sectorProcessedCount);
         if(sendControlATACommand(nDriveIndex, ideWriteCommand, startSector, NoFeatureField, tempSectorCount % maxSectorWriteCountPerCommand))
         {
@@ -177,11 +180,13 @@ static int BootIdeDMAWrite(int nDriveIndex, const unsigned char* inBuffer, unsig
         // Set BusMaster register
         if(setBusMasterCommandRegister(0, 1))
         {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "Set BusMaster error");
             return 1;
         }
 
         if(dma_polling(nDriveIndex))
         {
+            XBlastLogger(DEBUG_IDE_DRIVER, DBG_LVL_ERROR, "DMA polling error");
             return 1;
         }
 
