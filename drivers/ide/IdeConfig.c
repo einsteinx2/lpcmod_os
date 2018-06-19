@@ -27,12 +27,16 @@ static void invalidateDeviceInfoStruct(unsigned char deviceIndex)
 static unsigned char convertUltraDMAMode(UltraDMAMode inMode)
 {
     unsigned char result = 0;
+    unsigned char count;
     if(0 != inMode)
     {
-        while(0 == (inMode & 0x01))
+        for(count = 0; count < 7; count++)
         {
+            if(inMode & 0x01)
+            {
+                result = count;
+            }
             inMode >>= 1;
-            result++;
         }
     }
 
@@ -165,7 +169,7 @@ int BootIdeSetTransferMode(int nIndexDrive, UltraDMAMode nMode)
     //TODO: make it more robust, check back if settings stuck
     IoOutputByte(DMA_BUSMASTER_BASE+2, 0x62); // DMA possible for both drives
 
-    //IoOutputByte(IDE_REG_CONTROL(tsaHarddiskInfo[nIndexDrive].m_fwPortBase), 0x00); // enable interrupt
+    IoOutputByte(IDE_REG_CONTROL(tsaHarddiskInfo[nIndexDrive].m_fwPortBase), 0x00); // enable interrupt
     IoOutputByte(IDE_REG_FEATURE(tsaHarddiskInfo[nIndexDrive].m_fwPortBase), 0x01); // enable DMA
 #define ULTRA_DMA_MODE 0x40u
     if(BootIdeSendSetFeatures(nIndexDrive, 0x03, ULTRA_DMA_MODE | mode))
