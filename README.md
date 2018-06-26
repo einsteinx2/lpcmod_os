@@ -18,7 +18,7 @@ Currently building successfully with gcc-4, gcc-5 and gcc-6.
 
 A Virtual Machine image is available for download. It is ready to go for building Cromwell-Based software.
 
-Link for dowwnload: [Google Drive](https://drive.google.com/open?id=0ByW8G3SxcyoNfnphaElDb3VoNFE1NWx1WnYzNHYyN2ZIVHM0QU55N0RnNzBlU2dNYXp6N00)
+Link for dowwnload: [Google Drive](https://drive.google.com/drive/folders/1gb-PGhSQmvJLW4VFF1y_tesKdOr_IGHN?usp=sharing)
 
 ### Who do I talk to? ###
 
