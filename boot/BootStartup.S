@@ -112,11 +112,9 @@ start_linux:
 	xor	%eax, %eax
 	lldt %ax
 
-	// Reload CS as 0010 from the new GDT using a far jump
-	.byte 0xEA          // jmp far 0010:reload_cs
-	.long reload_cs
-	.word 0x0010
-.align 16
+	// Reload CS as 0008 from the new GDT using a far jump
+	jmp $0x010, $reload_cs
+
 reload_cs:
 
 	// CS is now a valid entry in the GDT.  Set SS, DS, and ES to valid
