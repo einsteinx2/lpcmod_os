@@ -40,16 +40,14 @@ Cromwellconfig:
 .align 16
 tableGdt:
 	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // 0x00 dummy
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9a, 0xcf, 0x00 // 0x08 code32
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9a, 0xcf, 0x00 // 0x10 code32
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x92, 0xcf, 0x00 // 0x18 data32
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9a, 0x8f, 0x00 // 0x20 code16 (8f indicates 4K granularity, ie, huge limit)
-	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x92, 0x8f, 0x00 // 0x28 data16
+	.byte 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 // 0x08 dummy
+	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x9b, 0xcf, 0x00 // 0x10 code32
+	.byte 0xff, 0xff, 0x00, 0x00, 0x00, 0x93, 0xcf, 0x00 // 0x18 data32
 
 tableGdtDescriptor:
 	// This is the GDT header having 8 bytes
-	.word tableGdtDescriptor-tableGdt  // 30 byte GDT
-	.long GDT_LOC                      // GDT located at 0xA0000
+	.word tableGdtDescriptor-tableGdt - 1  // Size - 1byte
+	.long tableGdt                      // GDT location
 	.word 0                            // Padding
 tableGdtEnd:
 
@@ -83,7 +81,7 @@ start_linux:
 	mov %eax, %cr3
 
 	// We kill the Local Descriptor Table
-        xor	%eax, %eax
+    xor	%eax, %eax
 	lldt	%ax
 
 	// DR6/DR7: Clear the debug registers
@@ -95,25 +93,15 @@ start_linux:
 	mov %eax, %dr2
 	mov %eax, %dr3
 
-
-	// IMPORTANT!  Linux expects the GDT located at a specific position,
-	// 0xA0000, so we have to move it there.
-
-	// Copy the GDT to its final location
-	movl $GDT_LOC, %edi
-	movl $tableGdt, %esi
-	movl $(tableGdtEnd-tableGdt)/4, %ecx
-	rep movsl
-
 	// Load the new GDT
-	lgdt GDT_LOC+(tableGdtDescriptor-tableGdt)
+	lgdt tableGdtDescriptor
 
 	// Kill the LDT, if any
 	xor	%eax, %eax
 	lldt %ax
 
-	// Reload CS as 0008 from the new GDT using a far jump
-	jmp $0x010, $reload_cs
+	// Reload CS as 0010 from the new GDT using a far jump
+	jmp $0x0010, $reload_cs
 
 reload_cs:
 

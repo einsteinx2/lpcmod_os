@@ -7,8 +7,7 @@
 #define KERNEL_SETUP   0x90000
 /* command line must not be overwritten, place it in unused setup area */
 #define CMD_LINE_LOC (KERNEL_SETUP+0x0800)
-/* place GDT at 0xA0000 */
-#define GDT_LOC 0xA0000
+
 /* place IDT at 0xB0000 */
 #define IDT_LOC 0xB0000
 /* the protected mode part of the kernel has to reside at 1 MB in RAM */
