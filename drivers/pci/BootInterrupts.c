@@ -118,7 +118,7 @@ const ISR_PREP isrprep[] =
 void BootInterruptsWriteIdt(void)
 {
 
-    volatile ts_pm_interrupt* ptspmi = (volatile ts_pm_interrupt *)(0xb0000);  // ie, start of IDT area
+    volatile ts_pm_interrupt* ptspmi = (volatile ts_pm_interrupt *)(IDT_LOC);  // ie, start of IDT area
     int n, n1 = 0;
 
     // init storage used by ISRs
