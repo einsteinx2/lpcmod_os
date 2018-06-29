@@ -140,7 +140,7 @@ void BootInterruptsWriteIdt(void)
 
     for(n = 0; n < 0x100; n++)   // have to do 256
     {
-        ptspmi[n].m_wSelector = 0x08;
+        ptspmi[n].m_wSelector = 0x08;   // Must match appropriate code segment in GDT
         ptspmi[n].m_wType = 0x8e00;  // interrupt gate, 32-bit
         if(n == isrprep[n1].m_bInterruptCpu)   // is it next on our prep list?  If so, stick it in
         {
