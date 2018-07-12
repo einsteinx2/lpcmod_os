@@ -10,4 +10,5 @@
 /boot_vml/disk/vmlboot
 /boot_eth/ethboot
 !/bin/2blimage.bin
-!/bin/*.script
+!/bin/*.script/
+/**/src/apps/httpd/fsdata.c
